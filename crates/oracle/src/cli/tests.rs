@@ -57,7 +57,7 @@ fn movie_options_parse_without_opening_paths() {
     assert_eq!(request.native.len(), 1);
     assert!(!request.memories);
     assert!(request.positions_only && request.ranges);
-    assert!(request.streams.unwrap().picture);
+    assert_eq!(request.streams, Some(crate::Streams::PpuAndApuLog));
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn movie_repeated_options_keep_last_values_and_accumulate_native_lists() {
         Some((PathBuf::from("two.csv"), PathBuf::from("two")))
     );
     assert_eq!(request.native.len(), 2);
-    assert!(request.streams.unwrap().picture);
+    assert_eq!(request.streams, Some(crate::Streams::PpuAndApuLog));
 }
 
 #[test]
@@ -195,7 +195,6 @@ fn corpus_options_parse_without_acquiring_outputs() {
         "$80:8000,818000",
         "--cache",
         "missing.cache",
-        "--cache-pictures",
     ]))
     .unwrap();
     assert_eq!(request.only, ["one", "two"]);

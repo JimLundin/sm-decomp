@@ -14,7 +14,7 @@ mod requests;
 mod tests;
 
 use crate::lsnes::Lsnes;
-use crate::{FrameRecord, NmiKind, Start, Tiers};
+use crate::{FrameRecord, NmiKind, Start, Streams};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -210,9 +210,9 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
     }
     .unwrap_or_else(|error| fail(error));
     let mut pending_save: Option<PendingSave> = None;
-    if let Some(tiers) = streams {
+    if let Some(streams) = streams {
         oracle
-            .record_streams(tiers)
+            .record_streams(streams)
             .unwrap_or_else(|error| fail(error));
     }
     let mut history: std::collections::VecDeque<Box<[u8]>> = std::collections::VecDeque::new();
@@ -566,7 +566,7 @@ fn read_corpus_lock(path: &Path) -> crate::lock::Lock {
     if header.oracle.emulator != oracle.emulator
         || header.oracle.version != oracle.version
         || header.oracle.fixes != oracle.fixes
-        || !crate::lsnes::compatible_server(header.oracle.server)
+        || header.oracle.server != crate::lsnes::server_sha256()
     {
         fail(format!("{}: incompatible oracle", path.display()));
     }
@@ -598,7 +598,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
         watched_pcs,
         lean,
         cache,
-        cache_pictures,
     } = requests::CorpusRequest::parse(arguments)?;
     let rom =
         std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
@@ -608,12 +607,8 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
             fail(format!("{id}: no such row in the lock"));
         }
     }
-    let tiers = Tiers {
-        picture: matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
-        apu_log: cache.is_some(),
-    };
     let observing = crate::corpus::Observe {
-        tiers,
+        streams: cache.is_some().then_some(Streams::PpuAndApuLog),
         watch: &watched_pcs,
         lean,
         ..Default::default()
@@ -641,7 +636,7 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
         let mut frame = 0u64;
         let mut cached = cache.as_deref().map(|root| {
-            crate::cache::Writer::create(root, id, cache_pictures)
+            crate::cache::Writer::create(root, id)
                 .map(|writer| writer.watching(&watched_pcs))
                 .unwrap_or_else(|error| fail(format!("{}: {error}", root.display())))
         });
@@ -723,15 +718,11 @@ fn trace(arguments: &[String]) {
         crate::corpus::Sources::read(Path::new(bundle), row).unwrap_or_else(|error| fail(error));
     let range = from.parse().unwrap_or(0)..=to.parse().unwrap_or(0);
     let mut frame = 0usize;
-    let tiers = Tiers {
-        picture: false,
-        apu_log: true,
-    };
     let result = crate::corpus::run_row_with(
         &rom,
         sources,
         &crate::corpus::Observe {
-            tiers,
+            streams: Some(Streams::PpuAndApuLog),
             ..Default::default()
         },
         &mut |record| {
@@ -781,10 +772,7 @@ fn measure(arguments: &[String]) {
             &rom,
             sources,
             &crate::corpus::Observe {
-                tiers: Tiers {
-                    picture: false,
-                    apu_log: true,
-                },
+                streams: Some(Streams::PpuAndApuLog),
                 watch: &crate::measure::WATCHED,
                 peek: Some(crate::measure::PEEK),
                 ..crate::corpus::Observe::default()

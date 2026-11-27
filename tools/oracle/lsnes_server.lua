@@ -9,7 +9,6 @@
 --   V <path>                     save the state at the frame boundary that
 --                                ends the coming step: after its cut, or
 --                                inside its NMI, but before the next NMI
---   R                            press reset for the coming frame
 --   W <offset hex> <word hex>    write a little-endian word to work RAM
 --                                ($7E:0000 + offset); asked for before a
 --                                resumed run's state has loaded, right
@@ -93,7 +92,6 @@ local dangling = os.getenv("OH_START") ~= nil
 local nmi_s, nmi_pc, nmi_frame, in_nmi = nil, nil, nil, false
 local reads, nmi_reads = 0, 0
 local wait_entry = nil
-local reset_next = false
 -- Work-RAM writes waiting for the start state: a load requested at start
 -- happens at the coming frame boundary, after the first requests are read.
 local loading, pending_writes = os.getenv("OH_START") ~= nil, {}
@@ -122,27 +120,22 @@ local function abort(message)
     exec("quit-emulator")
 end
 
--- The record's optional streams (request `T <picture> <apu log> <ppu>`, each
--- 0|1), appended after the memories as "OHS1", a flag byte (bit 0 picture as
--- dots, 1 APU log, 2 PPU registers, 3 picture as PNG) and the parts in that
--- order, PPU first:
+-- The record's optional streams (request `T <apu log> <ppu>`, each 0|1),
+-- appended after the memories as "OHS1", a flag byte (bit 1 APU log, bit 2
+-- PPU registers) and the parts, PPU first:
 --   PPU registers  the record's PpuRegisters bytes up to `setini`, rebuilt
 --                  from memory.getregisters() at the cut, then $43x0-$43xA
 --   APU log        u32 count, then (kind 0 write | 1 read, port, value) for
 --                  each CPU access to $2140-$2143 in the interval
---   picture        gui.screenshot_bitmap() once lsnes holds the frame
---                  (on_frame): as PNG, u32 length then the base64 text of
---                  save_png(); as dots, u16 width, u16 height, then each
---                  dot's 8-bit R, G, B
 -- Without a T request the record is unchanged.
-local streams = {picture = false, apu = false, ppu = false}
+local streams = {apu = false, ppu = false}
 local in_main, apu_registered = true, false
 local apu_log, apu_cut, ppu_cut = {}, {}, ""
 
 local function set_streams(rest)
-    local p, a, q = rest:match("^(%d) (%d) (%d)$")
-    if p == nil then abort("bad streams request: " .. rest); return end
-    streams.picture, streams.apu, streams.ppu = p == "1", a == "1", q == "1"
+    local a, q = rest:match("^(%d) (%d)$")
+    if a == nil then abort("bad streams request: " .. rest); return end
+    streams.apu, streams.ppu = a == "1", q == "1"
     if streams.apu and not apu_registered then
         -- Registered from the main chunk only, as with every callback here.
         if not in_main then abort("APU log asked for after the first step"); return end
@@ -227,41 +220,15 @@ local function cut_streams(r)
     apu_cut, apu_log = apu_log, {}
 end
 
--- The picture as lsnes's own PNG of the screenshot, base64 (one C++ call),
--- or with OH_PICTURE_DOTS set as each dot read by pget (the slow reference
--- the PNG was checked against).
-local picture_dots = os.getenv("OH_PICTURE_DOTS") ~= nil
-
-local function picture_bytes()
-    local bitmap = gui.screenshot_bitmap()
-    if not picture_dots then
-        local text = bitmap:save_png()
-        return u32(#text) .. text
-    end
-    local width, height = bitmap:size()
-    local rows = {u16(width), u16(height)}
-    for y = 0, height - 1 do
-        local row = {}
-        for x = 0, width - 1 do
-            local color = bitmap:pget(x, y)
-            row[#row + 1] = string.char(math.floor(color / 65536) % 256, math.floor(color / 256) % 256, color % 256)
-        end
-        rows[#rows + 1] = table.concat(row)
-    end
-    return table.concat(rows)
-end
-
 local function send_streams()
-    if not (streams.picture or streams.apu or streams.ppu) then return "" end
-    local picture = streams.picture and (picture_dots and 1 or 8) or 0
-    local flags = picture + (streams.apu and 2 or 0) + (streams.ppu and 4 or 0)
+    if not (streams.apu or streams.ppu) then return "" end
+    local flags = (streams.apu and 2 or 0) + (streams.ppu and 4 or 0)
     local parts = {"OHS1", u8(flags)}
     if streams.ppu then parts[#parts + 1] = ppu_cut end
     if streams.apu then
         parts[#parts + 1] = u32(#apu_cut)
         parts[#parts + 1] = table.concat(apu_cut)
     end
-    if streams.picture then parts[#parts + 1] = picture_bytes() end
     return table.concat(parts)
 end
 
@@ -284,12 +251,6 @@ local function read_request()
             save_path = rest
         elseif op == "T" then
             set_streams(rest)
-        elseif op == "R" then
-            if committed ~= nil then
-                abort("reset asked for after its frame's input was committed")
-                return
-            end
-            reset_next = true
         elseif op == "W" then
             local offset, value = rest:match("^(%x+) (%x+)$")
             offset, value = tonumber(offset, 16), tonumber(value, 16)
@@ -334,10 +295,9 @@ local function capture(kind, pc, r)
 end
 
 -- One record per step; then the next requests.
--- A measurement trace (OH_TRACE: hex addresses, comma-separated; OH_TRACE_LOG;
--- `oracle movie --trace` is the LakeSnes side): the beam at each watched
--- address, and a "cut" line after each record, so the client's steps delimit
--- the trace. lsnes fires exec callbacks on operand fetches too, so watch
+-- The watched-PC trace (OH_TRACE: hex addresses, comma-separated; OH_TRACE_LOG):
+-- the beam at each watched address, and a "cut" line after each record, so the
+-- client's steps delimit the trace. lsnes fires exec callbacks on operand fetches too, so watch
 -- instruction starts only. A write callback on $420B never fired here.
 local trace_path = os.getenv("OH_TRACE_LOG")
 local trace = {}
@@ -422,7 +382,6 @@ on_input = guarded(function()
     for index = 0, 11 do
         input.set(0, index, math.floor(frame_pad / 2 ^ (15 - index)) % 2)
     end
-    if reset_next then input.reset(); reset_next = false end
 end)
 
 on_frame_emulated = guarded(function()
@@ -441,11 +400,9 @@ on_frame_emulated = guarded(function()
     boundary_send = true
 end)
 
--- lsnes runs on_frame_emulated before it hands the frame just emulated to its
--- screen buffer, and on_frame after it, before the next frame's on_input. So a
--- record due at the boundary is sent here, where gui.screenshot_bitmap holds
--- that frame's picture. A record owed to the RTI is sent there, inside the
--- next lsnes frame and so after the hand-over: the same frame's picture.
+-- lsnes runs on_frame after on_frame_emulated, before the next frame's
+-- on_input. A record due at the boundary is sent here; a record owed to the
+-- RTI is sent there, inside the next lsnes frame.
 on_frame = guarded(function()
     if not boundary_send then return end
     boundary_send = false

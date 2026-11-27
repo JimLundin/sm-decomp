@@ -53,7 +53,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         Content::new(art, power).map_err(|_| data_failure(None, "cinematic weapon content"))?;
     let offset =
         usize::try_from(first).map_err(|_| data_failure(Some(first), "missile row offset"))?;
-    let mut records = cache.records_without_pictures().skip(offset);
+    let mut records = cache.records().skip(offset);
     let mut read = |cut| {
         let (actual, frame) = records
             .next()

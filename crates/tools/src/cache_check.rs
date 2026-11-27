@@ -62,9 +62,6 @@ pub fn run(args: &[String]) -> Result<String, String> {
     }
     let invalid = |error| format!("{id}: {error}");
     let cache = Cache::open(root, row).map_err(invalid)?;
-    if cache.pictures() {
-        return Err(format!("{id}: expected a lean cache"));
-    }
     let mut captured = cache.watched().to_vec();
     if !requested.is_empty() {
         for address in requested.split(',') {
@@ -95,7 +92,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if end != cache.bytes() {
         return Err(format!("{id}: unindexed cache bytes"));
     }
-    for record in cache.records_without_pictures() {
+    for record in cache.records() {
         record.map_err(invalid)?;
     }
     if carry_watches {

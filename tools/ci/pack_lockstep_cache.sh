@@ -4,11 +4,10 @@
 #
 #   ROWS="ROW..." tools/ci/pack_lockstep_cache.sh <cache-dir> <rom> [out-dir]
 #
-# <cache-dir> holds one directory per row: the lean tier (lean.txt, lean.bin) or
-# the full tier (index.txt, records.bin), and hits.txt when it was recorded with
-# watches; `tools cache-lean` turns a full tier into a lean one. ROWS lists the
-# rows. The tar is deterministic, so its name is a hash of its contents: the same
-# cache packs to the same name. xz -9e because the records are snapshots of nearly the same
+# <cache-dir> holds one directory per row: lean.txt, lean.bin, and hits.txt when
+# it was recorded with watches. ROWS lists the rows. The tar is deterministic, so
+# its name is a hash of its contents: the same cache packs to the same name. xz -9e
+# because the records are snapshots of nearly the same
 # state: 627 MB pack to about 1 MB, and the runner unpacks them in seconds.
 # Encryption matches the seed bundles (docs/ORACLE.md): AES-256-CBC,
 # PBKDF2 with 200000 iterations and SHA-256, passphrase
@@ -32,12 +31,7 @@ fi
 
 read -ra rows <<<"$ROWS"
 for row in "${rows[@]}"; do
-  if [ -f "$cache/$row/lean.txt" ]; then
-    files="lean.txt lean.bin"
-  else
-    files="index.txt records.bin"
-  fi
-  for file in $files; do
+  for file in lean.txt lean.bin; do
     if [ ! -f "$cache/$row/$file" ]; then
       echo "$cache/$row/$file: missing" >&2
       exit 1

@@ -1,23 +1,21 @@
-//! The record cache's lean tier: each record without its picture, its memories kept as the
-//! bytes that changed since the record before.
+//! The record cache's encoding: each record with its memories kept as the bytes that changed
+//! since the record before.
 //!
-//! Lockstep, the domain harnesses and the free run read a record's registers and its five
-//! memories (WRAM, VRAM, CGRAM, OAM, SRAM), never its picture, which is a third of a frame
-//! that has one. From one frame to the next the memories change in a few hundred bytes, so
-//! a row's records form a chain: a record holds its other parts in [`codec`]'s encoding,
-//! then its memories as runs of changed bytes over the record before's. Every
-//! [`KEY_INTERVAL`]th record holds them whole, so a reader can start part way.
+//! From one frame to the next the five memories (WRAM, VRAM, CGRAM, OAM, SRAM) change in a
+//! few hundred bytes, so a row's records form a chain: a record holds its other parts in
+//! [`codec`]'s encoding, then its memories as runs of changed bytes over the record before's.
+//! Every [`KEY_INTERVAL`]th record holds them whole, so a reader can start part way.
 //!
-//! The hits stay out, as in the full tier: the cache keeps them in `hits.txt`.
+//! The hits stay out: the cache keeps them in `hits.txt`.
 //!
 //! A record is the magic, the version, a kind byte (0 whole, 1 changes), the length and
-//! bytes of the rest of the record in [`codec`]'s encoding without the picture and with
-//! empty memories, the five memories' lengths in bytes, then either the memories' bytes or
+//! bytes of the rest of the record in [`codec`]'s encoding without the picture or hits and
+//! with empty memories, the five memories' lengths in bytes, then either the memories' bytes or
 //! the number of runs and each run's unchanged bytes before it, its length and its bytes.
 //! VRAM and CGRAM are little-endian words, as [`codec`] writes them.
 
 use crate::FrameRecord;
-use crate::codec::{self, CodecError, PictureMode};
+use crate::codec::{self, CodecError};
 
 /// The bytes every lean record starts with.
 pub const MAGIC: [u8; 4] = *b"SMFL";
@@ -70,7 +68,7 @@ pub fn encode(record: &FrameRecord, memories: &mut Memories, whole: bool, out: &
         ..record.clone()
     };
     let mut rest_bytes = Vec::new();
-    codec::encode(&rest, PictureMode::Drop, &mut rest_bytes);
+    codec::encode(&rest, &mut rest_bytes);
     push_len(out, rest_bytes.len());
     out.extend_from_slice(&rest_bytes);
     lengths.iter().for_each(|&length| push_len(out, length));
@@ -146,7 +144,7 @@ fn decode_into(bytes: &[u8], memories: &mut Memories) -> Result<FrameRecord, Cod
         [tag] => return Err(CodecError::BadTag { field: "kind", tag }),
     };
     let rest_len = r.len("rest")?;
-    let mut record = codec::decode_with(r.take("rest", rest_len)?, PictureMode::Drop)?;
+    let mut record = codec::decode(r.take("rest", rest_len)?)?;
     let mut lengths = [0; 5];
     for length in &mut lengths {
         *length = r.len("lengths")?;

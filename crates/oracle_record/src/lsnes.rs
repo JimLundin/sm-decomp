@@ -3,8 +3,7 @@
 //! (`seeds/<capture>/NNNN.record`).
 //!
 //! Its own module, outside the emulator crate, so `verify` and `tools` read a bundle's seed
-//! records without linking an emulator. The picture stays undecoded here ([`RawPicture`]):
-//! mapping lsnes's screenshot back to BGR555 is the backend's (`oracle::lsnes`).
+//! records without linking an emulator.
 
 use crate::{
     ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters,
@@ -28,10 +27,8 @@ const STREAMS_MAGIC: &[u8; 4] = b"OHS1";
 const PPU_BYTES: usize = 58 + 88;
 
 /// The stream flags after [`STREAMS_MAGIC`].
-const PICTURE_RGB: u8 = 1;
 const APU_LOG: u8 = 2;
 const PPU: u8 = 4;
-const PICTURE_PNG: u8 = 8;
 
 /// Why raw record bytes don't decode.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,6 +43,8 @@ pub enum RawError {
     NoStreamsHeader,
     /// The streams end early; this many stream bytes were there.
     StreamsCutShort(usize),
+    /// The stream flags name a stream the server doesn't send.
+    UnknownStreams(u8),
 }
 
 impl fmt::Display for RawError {
@@ -56,24 +55,9 @@ impl fmt::Display for RawError {
             Self::Kind(kind) => write!(f, "kind {kind}"),
             Self::NoStreamsHeader => write!(f, "no streams header"),
             Self::StreamsCutShort(length) => write!(f, "streams cut short at {length} bytes"),
+            Self::UnknownStreams(flags) => write!(f, "unknown stream flags {flags:#04x}"),
         }
     }
-}
-
-/// The picture a record carries, as lsnes sent it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RawPicture<'a> {
-    /// lsnes's screenshot as a base64 PNG.
-    Png(&'a [u8]),
-    /// The screenshot's 8-bit RGB triples, line by line.
-    Rgb {
-        /// Its width in dots.
-        width: usize,
-        /// Its height in lines.
-        height: usize,
-        /// The triples.
-        rgb: &'a [u8],
-    },
 }
 
 /// A record with no state yet, sized for the memories [`decode`] fills.
@@ -156,16 +140,12 @@ fn decode_ppu(bytes: &[u8]) -> PpuRegisters {
 }
 
 /// Decodes `bytes` into `record`, whose memories keep their last values when the record
-/// carries none, and returns the picture undecoded. `record.picture` is left `None` and
-/// `record.index` untouched: the caller sets both.
+/// carries none. `record.index` is left untouched for the caller to set.
 ///
 /// # Errors
 ///
 /// [`RawError`] when the bytes aren't a whole record.
-pub fn decode<'a>(
-    bytes: &'a [u8],
-    record: &mut FrameRecord,
-) -> Result<Option<RawPicture<'a>>, RawError> {
+pub fn decode(bytes: &[u8], record: &mut FrameRecord) -> Result<(), RawError> {
     if bytes.len() < HEADER || &bytes[..4] != b"OHR1" {
         return Err(RawError::NoHeader(bytes.len()));
     }
@@ -230,20 +210,19 @@ pub fn decode<'a>(
 }
 
 /// The optional streams after the memories ([`STREAMS_MAGIC`]).
-fn decode_streams<'a>(
-    record: &mut FrameRecord,
-    bytes: &'a [u8],
-) -> Result<Option<RawPicture<'a>>, RawError> {
+fn decode_streams(record: &mut FrameRecord, bytes: &[u8]) -> Result<(), RawError> {
     record.apu_log.clear();
-    record.picture = None;
     if bytes.is_empty() {
-        return Ok(None);
+        return Ok(());
     }
     let short = || RawError::StreamsCutShort(bytes.len());
     let Some((STREAMS_MAGIC, rest)) = bytes.split_first_chunk::<4>() else {
         return Err(RawError::NoStreamsHeader);
     };
     let (&flags, mut rest) = rest.split_first().ok_or_else(short)?;
+    if flags & !(PPU | APU_LOG) != 0 {
+        return Err(RawError::UnknownStreams(flags));
+    }
     if flags & PPU != 0 {
         let (ppu, after) = rest.split_at_checked(PPU_BYTES).ok_or_else(short)?;
         record.ppu = decode_ppu(ppu);
@@ -252,7 +231,7 @@ fn decode_streams<'a>(
     if flags & APU_LOG != 0 {
         let (count, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
         let count = usize::try_from(u32::from_le_bytes(*count)).map_err(|_| short())?;
-        let (log, after) = after
+        let (log, _) = after
             .split_at_checked(count.saturating_mul(3))
             .ok_or_else(short)?;
         record
@@ -272,24 +251,8 @@ fn decode_streams<'a>(
                         apu_cycle: 0,
                     }),
             );
-        rest = after;
     }
-    if flags & PICTURE_PNG != 0 {
-        let (length, after) = rest.split_first_chunk::<4>().ok_or_else(short)?;
-        let length = usize::try_from(u32::from_le_bytes(*length)).map_err(|_| short())?;
-        let text = after.get(..length).ok_or_else(short)?;
-        Ok(Some(RawPicture::Png(text)))
-    } else if flags & PICTURE_RGB != 0 {
-        let (size, rgb) = rest.split_first_chunk::<4>().ok_or_else(short)?;
-        let width = usize::from(u16::from_le_bytes([size[0], size[1]]));
-        let height = usize::from(u16::from_le_bytes([size[2], size[3]]));
-        if rgb.len() != width * height * 3 {
-            return Err(short());
-        }
-        Ok(Some(RawPicture::Rgb { width, height, rgb }))
-    } else {
-        Ok(None)
-    }
+    Ok(())
 }
 
 /// A seed's raw record ([`decode`] into a [`blank`] record), refused when it lacks the

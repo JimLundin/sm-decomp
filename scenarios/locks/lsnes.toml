@@ -1,5 +1,5 @@
 format = 2
-oracle = { emulator = "lsnes-bsnes", version = "rr2-beta23 (bsnes v085)", server = "833e4df966372d1277ecc1449fb59f9ba61c527b691336c6f87f09b3c5090ee9", fixes = [] }
+oracle = { emulator = "lsnes-bsnes", version = "rr2-beta23 (bsnes v085)", server = "181bf15b54e211f8980334db77efd4a4f2694e5e2667484f416f24e29bd56966", fixes = [] }
 bundles = [{ name = "relock-v2-lsnes-c5db2305181b2d46.tar.gz.enc", sha256 = "6516bc303398e2a9a1403763c7176756d00fe75be7c13b704c696195b9a19c65" }]
 
 [[row]]
