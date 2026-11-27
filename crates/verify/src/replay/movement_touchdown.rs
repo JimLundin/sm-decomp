@@ -201,21 +201,29 @@ impl Expected {
     }
 }
 
-pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let Start::CacheCut { frame: start } = case.start else {
-        return Err(data_failure(None, "touchdown seed cut"));
-    };
-    let cut = case.end.cut_inclusive;
+fn seed_record(
+    sources: &Sources,
+    row: &str,
+    cut: u64,
+) -> Result<oracle_record::FrameRecord, Outcome> {
     let record_lock = std::fs::read_to_string(&sources.lock)
         .map_err(|_| data_failure(None, "record lock file"))?;
     let record_lock =
         Lock::parse(&record_lock).map_err(|_| data_failure(None, "record lock schema"))?;
     let row = record_lock
-        .row(&RowId(case.row.clone()))
+        .row(&RowId(row.to_owned()))
         .ok_or_else(|| data_failure(None, "touchdown locked row"))?;
     let cache =
         Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "touchdown cache pins"))?;
-    let before = record(&cache, start)?;
+    record(&cache, cut)
+}
+
+pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    let Start::CacheCut { frame: start } = case.start else {
+        return Err(data_failure(None, "touchdown seed cut"));
+    };
+    let cut = case.end.cut_inclusive;
+    let before = seed_record(sources, &case.row, start)?;
     let wram = &before.wram;
     let files = case.fixture_pair()?;
     let sender = case.sender_packet()?;

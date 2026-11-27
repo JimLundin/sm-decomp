@@ -73,13 +73,9 @@ impl SenderPacket {
                 .filter(|offer| offer.cut == order.cut)
                 .map(|offer| (offer.group, offer.cue))
                 .eq(order.offers.iter().copied())
-        }) && offers.windows(2).all(|pair| {
-            pair[0].cut != pair[1].cut
-                || pair[0].group == pair[1].group
-                || self
-                    .simultaneous
-                    .iter()
-                    .any(|order| order.cut == pair[0].cut)
+        }) && !offers.windows(2).any(|pair| {
+            matches!(pair, [first, second] if first.cut == second.cut && first.group != second.group
+                && !self.simultaneous.iter().any(|order| order.cut == first.cut))
         })
     }
 }
