@@ -2,6 +2,7 @@
 
 use crate::cache::Cache;
 use crate::lock::{Lock, Row, RowId};
+use crate::replay::cache_failure;
 use crate::replay::readers::record;
 use crate::replay::{data_failure, result::Outcome};
 use crate::report::seeds;
@@ -224,10 +225,8 @@ impl<'a> Rows<'a> {
                 .reached
                 .get(self.opened.len())
                 .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
-            self.opened.push(
-                Cache::open(self.cache, row)
-                    .map_err(|_| data_failure(None, "record cache pins"))?,
-            );
+            self.opened
+                .push(Cache::open(self.cache, row).map_err(cache_failure(None))?);
         }
         let cache = self
             .opened

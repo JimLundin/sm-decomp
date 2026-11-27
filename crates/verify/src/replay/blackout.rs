@@ -11,6 +11,7 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
 use super::{Sources, data_failure, production_failure, result::Outcome};
+use crate::replay::cache_failure;
 use crate::{
     cache::Cache,
     lock::{Lock, RowId},
@@ -98,7 +99,7 @@ fn cache(case: &Case, sources: &Sources) -> Result<Cache, Outcome> {
             "blackout cached window",
         ));
     }
-    Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "blackout pinned cache"))
+    Cache::open(&sources.cache, row).map_err(cache_failure(None))
 }
 
 fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Outcome> {

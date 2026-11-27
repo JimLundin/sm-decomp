@@ -47,6 +47,7 @@ mod touched_cells;
 mod weapons;
 mod zebes;
 
+use crate::cache::CacheError;
 use compare::{CompareFault, Observation};
 use index::{Case, Start};
 use result::{CaseResult, Counts, Outcome};
@@ -124,6 +125,11 @@ fn data_failure(cut: Option<u64>, source: &str) -> Outcome {
         cut,
         source: source.to_owned(),
     }
+}
+
+/// A row's cache that can't be read at `cut`, as its [`CacheError`] says.
+fn cache_failure(cut: Option<u64>) -> impl FnOnce(CacheError) -> Outcome {
+    move |error| data_failure(cut, &error.to_string())
 }
 
 fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Outcome {

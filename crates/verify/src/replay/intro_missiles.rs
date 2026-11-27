@@ -5,6 +5,7 @@ mod inputs;
 mod observe;
 
 use super::{Sources, compare::Observation, data_failure, index::Case, readers, result::Outcome};
+use crate::replay::cache_failure;
 use crate::{cache::Cache, lock::RowId};
 use canonical::model::Model;
 use data::rom::Rom;
@@ -37,8 +38,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
             "missile row horizon",
         ));
     }
-    let cache =
-        Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "missile record pins"))?;
+    let cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
     let bad_rom = || data_failure(None, "missile player ROM");
     let image =
         Rom::new(std::fs::read(&sources.rom).map_err(|_| bad_rom())?).map_err(|_| bad_rom())?;
@@ -57,8 +57,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
     let mut read = |cut| {
         let (actual, frame) = records
             .next()
-            .and_then(Result::ok)
-            .ok_or_else(|| data_failure(Some(cut), "missile record cut"))?;
+            .ok_or_else(|| data_failure(Some(cut), "missile record cut"))?
+            .map_err(cache_failure(Some(cut)))?;
         if actual.0 != cut {
             return Err(data_failure(Some(cut), "missile record coordinate"));
         }
