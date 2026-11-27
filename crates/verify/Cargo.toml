@@ -1,9 +1,9 @@
 [package]
 name = "verify"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "The oracle record to State decoder, the stream projections, facts and lock comparison"
 
 [dependencies]
@@ -41,12 +41,12 @@ screens_options = { path = "../clean/screens_options" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 import = { path = "../import" }
-enum-map = "=3.1.0"
+enum-map.workspace = true
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }
 runtime = { path = "../runtime" }
-serde = { version = "=1.0.229", features = ["derive"] }
-toml = "=1.2.1"
+serde = { workspace = true, features = ["derive"] }
+toml.workspace = true
 
 [lints]
 workspace = true

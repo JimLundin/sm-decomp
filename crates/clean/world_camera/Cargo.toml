@@ -1,18 +1,18 @@
 [package]
 name = "world_camera"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "The camera model, built from its behaviour spec"
 
 [dependencies]
 types = { path = "../types" }
 
-serde = { version = "=1.0.229", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-toml = "=1.2.1"
+toml.workspace = true
 
 [lints]
 workspace = true

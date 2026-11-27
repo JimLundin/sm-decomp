@@ -11,7 +11,7 @@
 # control runs `git status` under its workspace), and a session writes the export.
 #
 # The clean workspace shape, inside the export and in this repository alike:
-#   Cargo.toml                         generated: members below, the root's [workspace.lints]
+#   Cargo.toml                         generated: clean members, shared package settings, dependencies and lints
 #   crates/clean/types/                package `types`: the domain types an implementer
 #                                      needs (speeds, poses as enums, tables as typed records)
 #   crates/clean/CRATE/                package CRATE, the domain with dashes as underscores:
@@ -83,49 +83,9 @@ for entry in "${entries[@]}"; do
 done
 [ ${#present[@]} -gt 0 ] && git archive --format=tar "$sha" -- "${present[@]}" | tar -x -m -C "$dest"
 
-# The empty clean crates, where COMMIT has none. Their lints are the workspace's.
-scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE]]
-  [ -e "$dest/$1/Cargo.toml" ] && return 0
-  mkdir -p "$dest/$1/src"
-  {
-    printf '[package]\nname = "%s"\nversion = "0.1.0"\nedition = "2024"\nlicense = "MIT"\n' "$2"
-    printf 'publish = false\ndescription = "%s"\n\n[dependencies]\n' "$3"
-    [ -n "${5:-}" ] && printf '%s\n' "$5"
-    [ -n "${6:-}" ] && printf '\n[dev-dependencies]\n%s\n' "$6"
-    printf '\n[lints]\nworkspace = true\n'
-  } >"$dest/$1/Cargo.toml"
-  printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
-}
-# A new model crate gets, at allowed_deps.txt's pins, enum-map for its own tables keyed by an
-# enum (so a key type needn't move into the shared types to be one), and the vector reader as
-# dev-dependencies: toml, and serde with its derive to declare the vectors' shape.
-enum_tables=$(awk '$1 == "enum-map" { printf "enum-map = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
-vector_parser=$(awk '$1 == "serde" { printf "serde = { version = \"%s\", features = [\"derive\"] }\n", $2 }
-  $1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
-scaffold crates/clean/types types "The domain types the clean models share" \
-  "The domain types the clean models share: quantities, poses and tables in player terms."
+# Supply the workspace tables the clean crates use and scaffold any missing package.
 crate=$(model_package "$domain")
-scaffold "crates/clean/$crate" "$crate" \
-  "The $domain model, built from its behaviour spec" \
-  "The $domain model, built from its behaviour spec alone." \
-  "types = { path = \"../types\" }
-$enum_tables" "$vector_parser"
-
-# The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
-{
-  printf '[workspace]\nresolver = "3"\n'
-  printf 'members = ["crates/clean/types", "crates/clean/%s"]\n\n' "$crate"
-  # The lint sections alone. A comment after their last line heads the next section (the
-  # release profile's), which the export doesn't have, so it goes too.
-  git show "$sha:Cargo.toml" | awk '
-    /^\[/ { on = ($0 ~ /^\[workspace\.lints\./) }
-    on { kept[++n] = $0 }
-    END {
-      while (n > 0 && kept[n] ~ /^[ \t]*(#.*)?$/) n--
-      for (i = 1; i <= n; i++) print kept[i]
-      print ""
-    }'
-} >"$dest/Cargo.toml"
+"${SM_PY:-python3}" -I "$cleanroom_dir/export_workspace.py" "$sha" "$dest" "$domain" "$crate"
 printf '/target\n' >"$dest/.gitignore"
 
 # The lock and the registry crates, so cargo resolves offline to the versions this repository

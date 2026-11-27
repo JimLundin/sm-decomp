@@ -1,9 +1,9 @@
 [package]
 name = "game"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "Production clean model ownership and exact output encoding"
 
 [dependencies]
@@ -39,8 +39,8 @@ screens_file_select = { path = "../clean/screens_file_select" }
 screens_options = { path = "../clean/screens_options" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
-enum-map = "=3.1.0"
-serde = { version = "=1.0.229", features = ["derive"] }
+enum-map.workspace = true
+serde = { workspace = true, features = ["derive"] }
 
 [lints]
 workspace = true

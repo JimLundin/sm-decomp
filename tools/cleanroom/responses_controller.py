@@ -626,7 +626,8 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         "writable": ["crates/clean/types/", folders[0] + "/"],
         "mode": mode,
         "trusted_files": [*(str(lane / name) for name in runner_files), str(lane / "brief.txt"),
-                          str(here / "responses_controller.py"), str(here / "launch_stream.py")],
+                          str(here / "responses_controller.py"), str(here / "launch_stream.py"),
+                          str(here / "check_manifest.py")],
         "environment": environment, "commands": commands,
     }
     config["trusted_files"] += [str(p) for p in here.iterdir() if p.is_file() and p.suffix in (".sh", ".awk", ".txt")]

@@ -17,7 +17,7 @@ scenarios/vectors/{domain}.toml
 # The implementer's process and the design it builds to, written for the clean room.
 .agents/skills/implementer/SKILL.md
 docs/cleanroom/DESIGN.md
-# Toolchain and lint configuration. The workspace lints are copied into the generated Cargo.toml.
+# Toolchain and lint configuration. The generated Cargo.toml carries the clean crates' workspace settings.
 rust-toolchain.toml
 .gitattributes
 

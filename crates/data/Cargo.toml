@@ -1,15 +1,15 @@
 [package]
 name = "data"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "IDs, the ROM decoder, typed content, profiles, the portable records and the shared digest"
 
 [dependencies]
 canonical = { path = "../canonical" }
 types = { path = "../clean/types" }
-serde = { version = "=1.0.229", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 
 [lints]
 workspace = true
