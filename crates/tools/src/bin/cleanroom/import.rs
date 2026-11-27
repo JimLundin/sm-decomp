@@ -551,22 +551,41 @@ impl Import {
                 "{out}a patch didn't apply; the branch is at {scaffolded}"
             ));
         }
+        self.applied(&before, &scaffolded, out)?;
+        self.clippy(&before, commits, out)
+    }
+
+    /// Checks what `git am` left: no path outside the clean crates, and the code rules over the
+    /// branch's crates as applied, since a three-way merge can leave other code than the export
+    /// holds. On a refusal the branch goes back to BEFORE.
+    fn applied(&self, before: &str, scaffolded: &str, out: &mut String) -> Result<(), String> {
         let outside: Vec<String> =
             output(
                 self.repo_git()
-                    .args(["diff", "--name-only", &scaffolded, "HEAD"]),
+                    .args(["diff", "--name-only", scaffolded, "HEAD"]),
             )?
             .lines()
             .filter(|p| refused(p, &self.model).is_some())
             .map(str::to_owned)
             .collect();
+        let found = rules::check(&self.repo, &rules::Policy::load(&self.repo)?)?;
+        if outside.is_empty() && found.is_empty() {
+            return Ok(());
+        }
+        output(self.repo_git().args(["reset", "-q", "--hard", before]))?;
+        for finding in &found {
+            let _ = writeln!(out, "{finding}");
+        }
         if !outside.is_empty() {
-            return Err(format!(
+            let _ = writeln!(
+                out,
                 "applied changes outside the clean crates: {}",
                 outside.join(" ")
-            ));
+            );
         }
-        self.clippy(&before, commits, out)
+        Err(format!(
+            "{out}the applied branch fails the checks; nothing applied"
+        ))
     }
 
     fn clippy(
@@ -1001,6 +1020,42 @@ mod tests {
             .rules(&round.base.join("head"), &mut out)
             .unwrap_err();
         assert!(refusal.contains("build.rs"), "{refusal}");
+    }
+
+    #[test]
+    fn the_code_rules_run_again_on_the_applied_branch() {
+        let round = Round::new("applied");
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(Path::parent)
+            .unwrap();
+        for path in ["Cargo.toml", "tools/cleanroom/allowed_deps.txt"] {
+            write(
+                &round.repo,
+                path,
+                &fs::read_to_string(repo.join(path)).unwrap(),
+            );
+        }
+        run(&round.repo, &["add", "-A"]);
+        run(&round.repo, &["commit", "-q", "-m", "trusted"]);
+        let before = run(&round.repo, &["rev-parse", "HEAD"]);
+        write(&round.repo, &format!("{MODEL}/build.rs"), "fn main() {}\n");
+        run(&round.repo, &["add", "-A"]);
+        run(&round.repo, &["commit", "-q", "-m", "applied"]);
+        let applied = run(&round.repo, &["rev-parse", "HEAD"]);
+        let import = Import {
+            repo: round.repo.clone(),
+            domain: "world-haze".to_owned(),
+            model: MODEL.to_owned(),
+            mirror: Mirror::of(&round.lane.export, &round.base.join("mirror.git"), 1024).unwrap(),
+            root: String::new(),
+        };
+        let mut out = String::new();
+        let refusal = import
+            .applied(before.trim(), applied.trim(), &mut out)
+            .unwrap_err();
+        assert!(refusal.contains("build.rs"), "{refusal}");
+        assert_eq!(run(&round.repo, &["rev-parse", "HEAD"]), before);
     }
 
     #[test]
