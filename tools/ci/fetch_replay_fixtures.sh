@@ -6,8 +6,4 @@ if [[ $# != 2 && $# != 3 ]]; then
   exit 2
 fi
 here=$(cd "$(dirname "$0")" && pwd)
-if [[ $# == 2 ]]; then
-  echo "Fetching audio_native"
-  bash "$here/fetch_audio_native.sh" "$1" "$2"
-fi
 exec "${SM_PY:-python3}" "$here/fetch_replay_fixtures.py" "$@"
