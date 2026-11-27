@@ -5,6 +5,7 @@ use super::index::Case;
 use super::result::Outcome;
 use super::{audio, data_failure, movement};
 use crate::cache::Cache;
+use crate::replay::cache_failure;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
 };
@@ -155,9 +156,7 @@ pub(super) fn record(cache: &Cache, cut: u64) -> Result<oracle_record::FrameReco
         .iter()
         .find(|entry| entry.frame == crate::lock::Frame(cut))
         .ok_or_else(|| data_failure(Some(cut), "record cut"))?;
-    cache
-        .record(entry)
-        .map_err(|_| data_failure(Some(cut), "record bytes"))
+    cache.record(entry).map_err(cache_failure(Some(cut)))
 }
 
 impl InputReader {

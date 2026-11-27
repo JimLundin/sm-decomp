@@ -1,5 +1,6 @@
 //! Movement and consumer stimuli, admitted independently of the later touchdown observations.
 
+use crate::replay::cache_failure;
 use std::{
     collections::VecDeque,
     path::{Path, PathBuf},
@@ -213,8 +214,7 @@ fn seed_record(
     let row = record_lock
         .row(&RowId(row.to_owned()))
         .ok_or_else(|| data_failure(None, "touchdown locked row"))?;
-    let cache =
-        Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "touchdown cache pins"))?;
+    let cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
     record(&cache, cut)
 }
 

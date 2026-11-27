@@ -4,6 +4,7 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
 };
 use super::{appearance, camera, compare::Observation, hud};
+use crate::replay::cache_failure;
 use crate::{cache::Cache, lock::RowId};
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -296,8 +297,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "early Map locked row"))?;
-    let cache = Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "early Map record cache"))?;
+    let cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
     let origin = record(&cache, window.origin)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,

@@ -6,6 +6,7 @@ use super::result::Outcome;
 use super::{Sources, audio, data_failure, movement};
 use crate::cache::Cache;
 use crate::lock::RowId;
+use crate::replay::cache_failure;
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
@@ -166,10 +167,8 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
             "comparison beyond locked row",
         ));
     }
-    let input_cache = Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "input record cache pins"))?;
-    let expected_cache = Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "expected record cache pins"))?;
+    let input_cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
+    let expected_cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
     if let Some(witness) = case.ordinary_witness() {
         witness.qualify_origin(&expected_cache)?;
     }

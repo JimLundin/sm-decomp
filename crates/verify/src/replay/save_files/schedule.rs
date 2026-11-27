@@ -2,6 +2,7 @@
 
 use crate::cache::Cache;
 use crate::lock::{RowId, Start};
+use crate::replay::cache_failure;
 use crate::replay::{Sources, data_failure, index::Case, readers::record, result::Outcome};
 use crate::report::seeds;
 use game::exact::save_files::BootProgress;
@@ -128,9 +129,7 @@ impl SaveSchedule {
             lock.row(&RowId(id.to_owned()))
                 .ok_or_else(|| data_failure(None, "battery source row"))
         };
-        let open = |row| {
-            Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "pinned battery cache"))
-        };
+        let open = |row| Cache::open(&sources.cache, row).map_err(cache_failure(None));
         let mut row = locked(&case.row)?;
         if row.start != Start::PowerOn {
             return Err(data_failure(Some(0), "cold battery source"));

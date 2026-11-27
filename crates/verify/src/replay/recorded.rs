@@ -11,6 +11,7 @@ use super::result::Outcome;
 use super::{Sources, appearance, camera, data_failure, production_failure, progress, weapons};
 use crate::cache::Cache;
 use crate::lock::RowId;
+use crate::replay::cache_failure;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
@@ -402,14 +403,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             "comparison beyond locked row",
         ));
     }
-    let inputs = Box::new(
-        Cache::open(&sources.cache, row)
-            .map_err(|_| data_failure(None, "input record cache pins"))?,
-    );
-    let expected = Box::new(
-        Cache::open(&sources.cache, row)
-            .map_err(|_| data_failure(None, "expected record cache pins"))?,
-    );
+    let inputs = Box::new(Cache::open(&sources.cache, row).map_err(cache_failure(None))?);
+    let expected = Box::new(Cache::open(&sources.cache, row).map_err(cache_failure(None))?);
     if let Some(witness) = case.ordinary_witness() {
         witness.qualify_origin(&inputs)?;
     }
