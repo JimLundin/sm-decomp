@@ -2,10 +2,6 @@
 
 pub(super) mod escape;
 
-mod published_intro;
-
-pub(super) use published_intro::normalize as normalize_published_intro;
-
 use super::index::{Borrowed, Case, InputProvider, Responsibility, Start};
 use super::intro_sources::{Join, Room};
 use super::save_files::SaveSource;
@@ -27,7 +23,7 @@ struct Operation {
 
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum Selection {
+pub(super) enum Selection {
     #[default]
     All,
     Movement,
@@ -41,7 +37,7 @@ enum Selection {
 }
 
 impl Selection {
-    fn applies(&self, case: &Case, origin: Option<escape::Origin>) -> bool {
+    pub(super) fn applies(&self, case: &Case, origin: Option<escape::Origin>) -> bool {
         match self {
             Self::All => true,
             Self::Movement => case.responsibilities == [Responsibility::Movement],
@@ -133,6 +129,22 @@ pub(super) fn resolve(
     })
 }
 
+pub(super) fn published_operation(
+    case: &Case,
+    name: &str,
+) -> Result<Option<Borrowed>, &'static str> {
+    let operation = OPERATIONS
+        .as_ref()
+        .and_then(|sources| sources.get(name))
+        .ok_or("unknown published source operation")?;
+    if operation.selection.applies(case, None) {
+        return resolve(name, None, String::new())
+            .map(Some)
+            .ok_or("invalid published source operation");
+    }
+    Ok(None)
+}
+
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum Declaration {
@@ -198,18 +210,9 @@ fn valid_for(case: &Case, origin: Option<escape::Origin>) -> bool {
     let Some(operations) = OPERATIONS.as_ref() else {
         return false;
     };
-    let mut supported = operations
+    let required: Vec<_> = operations
         .values()
-        .filter(|op| op.readers.contains(&case.inputs))
-        .peekable();
-    if supported.peek().is_none() {
-        return !case
-            .borrowed
-            .iter()
-            .any(|input| operations.values().any(|op| op.describes(input)));
-    }
-    let required: Vec<_> = supported
-        .filter(|op| op.selection.applies(case, origin))
+        .filter(|op| op.readers.contains(&case.inputs) && op.selection.applies(case, origin))
         .collect();
     case.borrowed.len() == required.len()
         && required

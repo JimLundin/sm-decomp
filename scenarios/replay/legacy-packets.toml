@@ -327,3 +327,66 @@ operations = ["recorded-movement-animation", "recorded-movement-frame"]
 sources = [
     { dependency = "movement.landing-neighbours", provider = "preceding pinned record and imported pose content", fields = ["room and actors", "controller", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"], phase = "before movement" },
 ]
+
+[[source_migration.scoped-intro-inputs]]
+operations = ["intro-work-completion", "intro-polled-buttons"]
+sources = [{ dependency = "platform", provider = "pinned NMI completion", fields = ["work finished"], phase = "cut" }]
+
+[[source_migration.intro-room-join]]
+selection = { intro-room = "fight" }
+operations = ["intro-room-fight-start"]
+sources = [{ dependency = "intro-rooms.start", provider = "page-one-movie-press", fields = ["intro.page-one-ready", "controller.new"], phase = "at-frame-start" }]
+
+[[source_migration.intro-room-join]]
+operations = ["intro-room-completion", "intro-room-demo", "intro-room-appearance"]
+sources = [{ dependency = "intro-rooms.turn", provider = "bounded-demo-and-platform", fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"], phase = "around-room-join" }]
+
+[[source_migration.intro-room-join]]
+selection = { intro-room = "discovery" }
+operations = ["intro-room-discovery-start"]
+sources = [{ dependency = "intro-rooms.start", provider = "scoped-page-two-handoff", fields = ["intro.discovery-start"], phase = "at-frame-start" }]
+
+[[source_migration.flashback-segments]]
+handoff = { row = "any-intro-0568", cut = 1650 }
+operations = ["flashback-page-handoff", "flashback-stage-timing"]
+sources = [{ dependency = "intro.setup-and-clock", provider = "locked lean cache", fields = ["any-intro-0568 cut 1650 latched press and inherited background Y", "cinematic counter parity", "return dissolve reaches zero"], phase = "start and after-stage actor phase" }]
+
+[[source_migration.flashback-segments]]
+operations = ["flashback-room-play", "flashback-publication-camera"]
+sources = [{ dependency = "room.after-motion-play", provider = "locked lean cache Samus and prior weapon slots", fields = ["Samus whole X", "flying missile shots with position and slot precedence", "camera origin"], phase = "after movement and weapon advance, with the camera read at publication" }]
+
+[[source_migration.cinematic-actor-segments]]
+operations = ["playback-room-entry", "playback-actor-opportunity"]
+sources = [{ dependency = "intro-and-platform", provider = "pinned cinematic actor gate, work counter, entry placement and fade count", fields = ["intro.scene-start", "intro.room-actors", "platform.actor-pad-opportunity", "intro.crossfade"], phase = "scene setup or post-stage actor opportunity before the later scene-object hide" }]
+
+[[source_migration.save-file-schedule]]
+operations = ["scheduled-cartridge-request", "scheduled-boot-frontier"]
+sources = [{ dependency = "platform.boot", provider = "observed diagnostic and initial erase frontiers", fields = ["clear frontiers", "mirror test frontier", "restore frontier"], phase = "in-progress boot operations" }]
+
+[[source_migration.save-file-schedule]]
+operations = ["save-arrival-capture", "save-escape-capture"]
+sources = [{ dependency = "cartridge.capture", provider = "preceding locked cut's working profile, progress and maps", fields = ["options and profile", "persistent progress", "explored area maps", "live explored grid", "location", "save opportunities"], phase = "before selection and each save" }]
+
+[[source_migration.intro-missile-inputs]]
+operations = ["intro-missile-terrain", "intro-missile-room", "intro-missile-presentation"]
+sources = [{ dependency = "platform.publication-and-world", provider = "pinned lean record", fields = ["view origin", "room grid and width in screens", "drawing gate", "NMI completion"], phase = "work and presentation" }]
+
+[[source_migration.scoped-intro-delivery-inputs]]
+operations = ["intro-delivery-work", "intro-polled-buttons"]
+sources = [{ dependency = "platform", provider = "pinned NMI completion and the independently qualified discovery start interruption", fields = ["work phase"], phase = "cut" }]
+
+[[source_migration.scoped-intro-delivery-inputs]]
+operations = ["intro-discovery-start-track", "intro-delivery-track-wait"]
+sources = [{ dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work" }]
+
+[[source_migration.discovery-segments]]
+operations = ["discovery-after-motion", "discovery-publication-camera"]
+sources = [{ dependency = "room.after-movement", provider = "locked lean records", fields = ["whole Samus centre", "camera scroll"], phase = "after the room and before discovery's turn" }]
+
+[[source_migration.preceding-cut-hud-inputs]]
+operations = []
+sources = [{ dependency = "hud.inert-drop-and-turn-on-inputs", provider = "complete-production-alternative-equivalence", fields = ["drops-before", "drops-after", "collected", "map-turned-on", "mother-brain-falls"], phase = "before-HUD-entry" }]
+
+[[source_migration.native-search-inputs]]
+operations = []
+sources = [{ dependency = "complete independent movement observations", provider = "independently reviewed native-search-work-v2 source projection", fields = ["complete reached", "complete inside"], phase = "selector424 through complete movement return" }]

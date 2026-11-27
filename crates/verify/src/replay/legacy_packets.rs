@@ -1,9 +1,11 @@
 //! Packet identities and source descriptions from published replay indices.
 
+use super::borrowed::Selection;
 use super::index::{
     Borrowed, Case, ConnectedPacket, FixturePair, InputProvider, NativeProjection, Qualification,
     SenderOfferControl,
 };
+use super::intro_sources::{Join, RecordCut};
 use super::native_search::Coordinates;
 use serde::Deserialize;
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -19,6 +21,7 @@ struct Search {
 #[derive(Deserialize)]
 struct Packets {
     movement_sources: Vec<PublishedSources>,
+    source_migration: BTreeMap<InputProvider, Vec<PublishedSources>>,
     ordinary_witness: BTreeMap<String, super::recorded::Witness>,
     save_schedule: BTreeMap<String, super::index::SaveSchedule>,
     intro_join: BTreeMap<String, PublishedJoin>,
@@ -43,74 +46,104 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
 struct PublishedSources {
     sources: Vec<Borrowed>,
     operations: Vec<String>,
+    #[serde(default)]
+    selection: Selection,
+    handoff: Option<RecordCut>,
+}
+
+fn same_source(source: &Borrowed, input: &Borrowed) -> bool {
+    source.provider == input.provider
+        && input.describes(&source.dependency, &source.fields, &source.phase)
 }
 
 impl PublishedSources {
-    fn matches(&self, rows: &[Borrowed]) -> bool {
-        self.sources.len() == rows.len()
-            && self.sources.iter().all(|s| {
-                rows.iter().any(|r| {
-                    s.provider == r.provider && r.describes(&s.dependency, &s.fields, &s.phase)
-                })
-            })
-    }
-
-    fn expand(&self, case: &mut Case) -> Result<(), &'static str> {
-        let operations = self
-            .operations
+    fn complete(&self, rows: &[Borrowed]) -> bool {
+        self.sources
             .iter()
-            .map(|op| {
-                super::borrowed::resolve(op, None, String::new())
-                    .ok_or("unknown published source operation")
-            })
-            .collect::<Result<_, _>>()?;
-        let published = std::mem::replace(&mut case.borrowed, operations);
-        case.qualifications
-            .extend(published.into_iter().map(Qualification::Published));
-        Ok(())
+            .all(|source| rows.iter().filter(|row| same_source(source, row)).count() == 1)
+    }
+
+    fn matches(&self, rows: &[Borrowed]) -> bool {
+        rows.len() == self.sources.len() && self.complete(rows)
     }
 }
 
-fn take_note(case: &mut Case, dependency: &str) {
-    case.borrowed.retain(|row| {
-        if row.dependency == dependency {
-            case.qualifications
-                .push(Qualification::Published(row.clone()));
-            false
-        } else {
-            true
-        }
-    });
-}
-
-pub(super) fn read_ordinary_sources(case: &mut Case) -> Result<(), &'static str> {
-    if case.inputs == InputProvider::PrecedingCutHudInputs {
-        take_note(case, "hud.inert-drop-and-turn-on-inputs");
+fn expand(case: &mut Case, recipes: &[&PublishedSources]) -> Result<(), &'static str> {
+    if recipes.is_empty() {
         return Ok(());
     }
+    for recipe in recipes {
+        if !recipe.complete(&case.borrowed) {
+            return Err("incomplete or duplicate published source");
+        }
+        if recipe.handoff.as_ref().is_some_and(|pin| {
+            !matches!(
+                &case.intro_join, Some(Join::Flashback { handoff, .. }) if handoff == pin
+            )
+        }) {
+            return Err("published flashback handoff");
+        }
+    }
+    for input in std::mem::take(&mut case.borrowed) {
+        let Some(recipe) = recipes
+            .iter()
+            .find(|r| r.sources.iter().any(|source| same_source(source, &input)))
+        else {
+            case.borrowed.push(input);
+            continue;
+        };
+        if recipe
+            .sources
+            .first()
+            .is_some_and(|first| same_source(first, &input))
+        {
+            for name in &recipe.operations {
+                if let Some(operation) = super::borrowed::published_operation(case, name)? {
+                    case.borrowed.push(operation);
+                }
+            }
+        }
+        case.qualifications.push(Qualification::Published(input));
+    }
+    Ok(())
+}
+
+pub(super) fn read_sources(case: &mut Case) -> Result<(), &'static str> {
     let packets = PACKETS.as_ref().ok_or("published source catalogue")?;
+    if let Some(migrations) = packets.source_migration.get(&case.inputs) {
+        let selected: Vec<_> = migrations
+            .iter()
+            .filter(|r| r.selection.applies(case, None))
+            .collect();
+        if selected.iter().any(|r| {
+            r.sources
+                .iter()
+                .any(|s| case.borrowed.iter().any(|input| same_source(s, input)))
+        }) {
+            expand(case, &selected)?;
+        }
+    }
     let recipe = if case.inputs == InputProvider::PrecedingCutMovementInputs {
         packets
             .movement_sources
             .iter()
-            .find(|recipe| recipe.matches(&case.borrowed))
+            .find(|r| r.matches(&case.borrowed))
     } else if case.inputs == InputProvider::NativeSearchInputs {
-        take_note(case, "complete independent movement observations");
         case.start
             .native_opportunity()
             .and_then(|(_, pin, at)| {
                 packets
                     .native_search
                     .get(pin)
-                    .filter(|s| s.coordinates == at)
+                    .filter(|search| search.coordinates == at)
             })
             .map(|search| &search.borrowed)
-            .filter(|recipe| recipe.matches(&case.borrowed))
+            .filter(|r| r.matches(&case.borrowed))
     } else {
         None
     };
     if let Some(recipe) = recipe {
-        recipe.expand(case)?;
+        expand(case, &[recipe])?;
     }
     Ok(())
 }

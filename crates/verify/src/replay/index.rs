@@ -1483,8 +1483,7 @@ impl TryFrom<IndexDocument> for Index {
                 case.inputs = InputProvider::SaveFileBoundaries;
             }
             super::legacy_packets::read_intro_join(case)?;
-            super::borrowed::normalize_published_intro(case)?;
-            super::legacy_packets::read_ordinary_sources(case)?;
+            super::legacy_packets::read_sources(case)?;
             if case.inputs.uses_played_witnesses() {
                 case.played_witnesses =
                     Some(match (case.played_witnesses.take(), &shared_witnesses) {
@@ -3620,6 +3619,23 @@ mod tests {
     #[test]
     fn public_recipe_cannot_add_unwitnessed_rules_or_relabel_scope() {
         let index = Index::parse(INDEX).unwrap();
+        let mut boundary = index
+            .cases
+            .iter()
+            .find(|c| c.inputs == super::InputProvider::Unavailable)
+            .unwrap()
+            .clone();
+        boundary.borrowed.push(super::Borrowed {
+            dependency: "control".into(),
+            provider: "missing-provider".into(),
+            fields: vec!["invented-input".into()],
+            phase: "before".into(),
+            claim: "observed".into(),
+        });
+        assert!(matches!(
+            boundary.validate(),
+            Err(IndexFault::InvalidCase(_))
+        ));
         let mut case = index.cases.first().unwrap().clone();
         case.rules.push("samus-movement/SpaceJump".to_owned());
         assert!(case.validate().is_err());
