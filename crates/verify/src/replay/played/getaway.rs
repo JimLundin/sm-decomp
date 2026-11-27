@@ -280,7 +280,6 @@ pub(in crate::replay) fn run(
             .radius(state.movement.0.pose)
             .ok_or_else(|| data_failure(None, "getaway pose body"))
     };
-    let null = actual(&state, &appearance, radius(&state)?);
     let mut digest = Vec::new();
     let mut restored = Vec::new();
     for cut in start.saturating_add(1)..=case.end.cut_inclusive {
@@ -291,6 +290,7 @@ pub(in crate::replay) fn run(
         );
         let input = input(&inputs.record(prior)?.wram, &movement)?;
         let body = radius(&state)?;
+        let null = actual(&state, &appearance, body);
         let publication = advance(&mut state, &input, content, cut)?;
         let expected = expected(case, cut, &records.record(cut)?.wram, &appearance)?;
         compared(cut, &expected.fields, &actual(&state, &appearance, body))?;

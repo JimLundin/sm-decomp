@@ -348,7 +348,8 @@ impl ActualReader {
         }
     }
 
-    pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
+    /// Observe the carried State before sampling this cut, with no new actions or publications.
+    pub fn held(&self, production: &Production, cut: u64) -> Result<Vec<Observation>, Outcome> {
         match self {
             Self::Intro => super::played::intro::indexed::initial(production),
             Self::Flashback => super::flashback::actual(
@@ -377,7 +378,7 @@ impl ActualReader {
                 &game::production::blackout::Output::default(),
                 *late,
             ),
-            Self::Departure => super::departure::actual(production, 0),
+            Self::Departure => super::departure::actual(production, cut),
             Self::LandingSite => super::landing_site::actual(production),
             Self::Zebes { integrated, scene } => {
                 super::zebes::initial(production, scene, *integrated)

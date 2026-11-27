@@ -81,9 +81,6 @@ pub(super) fn run(
     let first = case
         .first_cut()
         .ok_or_else(|| data_failure(None, "shaft actor comparison window"))?;
-    // The admitted room has no shaft actors. Holding that state preserves its RNG and
-    // cannot supply a shaft state or a new request.
-    let frozen = [frame::random_observation(run.state.frame.random)];
     let mut digest = Vec::new();
     for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
@@ -97,6 +94,12 @@ pub(super) fn run(
         if cut < first {
             step(run).map_err(|outcome| at(cut, outcome))?;
         } else {
+            let mut frozen = super::super::shaft_native::actual(&run.state, None);
+            frozen.push(frame::random_observation(run.state.frame.random));
+            frozen.extend(super::super::room_video::held_shaft(
+                &run.state.room_video,
+                cut,
+            )?);
             let pending = run.state.room_video.pending_platform().is_some();
             let mut restored = Checkpoint::capture(run)
                 .and_then(|saved| saved.restore(run))

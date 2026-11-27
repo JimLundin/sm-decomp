@@ -188,7 +188,7 @@ pub(super) fn expected(frame: &Frame<'_>) -> Result<Vec<Observation>, Outcome> {
     Ok(observations)
 }
 
-pub(super) fn actual(state: &State, outputs: &Outputs) -> Vec<Observation> {
+pub(super) fn actual(state: &State, outputs: Option<&Outputs>) -> Vec<Observation> {
     let Some(shaft) = &state.station.escape_shaft else {
         return Vec::new();
     };
@@ -233,8 +233,8 @@ pub(super) fn actual(state: &State, outputs: &Outputs) -> Vec<Observation> {
                     vent.offset.0.y,
                 )
             }),
-        outputs.shaft_overlay_placement.is_some(),
-        outputs.elevator_reach.map(|arrival| {
+        outputs.is_some_and(|out| out.shaft_overlay_placement.is_some()),
+        outputs.and_then(|out| out.elevator_reach).map(|arrival| {
             let [fade_delay, fade_count] = arrival.scene_fade;
             [
                 u16::from(arrival.hold),
@@ -244,7 +244,7 @@ pub(super) fn actual(state: &State, outputs: &Outputs) -> Vec<Observation> {
         }),
         shaft.locked,
     );
-    observations.extend(effects::actual(outputs.shaft_actors));
+    observations.extend(effects::actual(outputs.and_then(|out| out.shaft_actors)));
     observations.extend(effect_pool::actual(shaft.effects.slots()));
     let clocks = &shaft.actor_clocks;
     let overlay = clocks.overlay();

@@ -759,6 +759,59 @@ fn arrival_stages_enemies_and_initializes_idle_hdma() {
     }
 }
 
+fn held_overlay(oam: &game::state::video::Oam) -> Vec<u8> {
+    oam.low
+        .iter()
+        .take(12)
+        .flat_map(|entry| [entry.x, entry.y, entry.tile, entry.attributes])
+        .chain(oam.high.iter().take(3).copied())
+        .collect()
+}
+
+fn platform_low(words: &[u16]) -> Vec<u8> {
+    words.iter().map(|word| word.to_le_bytes()[0]).collect()
+}
+
+pub(super) fn held_shaft(room: &RoomVideo, cut: u64) -> Result<Vec<Observation>, Outcome> {
+    let words = |span| {
+        room.video
+            .memory
+            .vram
+            .get(span)
+            .ok_or_else(|| super::data_failure(Some(cut), "held shaft VRAM"))
+    };
+    let bytes = |field: &str, bytes| Observation {
+        field: field.into(),
+        bytes,
+    };
+    Ok(vec![
+        bytes(
+            "room-video.shaft-overlay-strip",
+            words(0x7000..0x7200)?
+                .iter()
+                .copied()
+                .flat_map(u16::to_le_bytes)
+                .collect(),
+        ),
+        bytes(
+            "room-video.shaft-platform-low",
+            platform_low(words(0x060e..0x0612)?),
+        ),
+        bytes(
+            "room-video.shaft-platform-pending",
+            vec![u8::from(room.pending_platform().is_some())],
+        ),
+        bytes(
+            "room-video.shaft-overlay-prepared",
+            held_overlay(&room.video.batch.oam),
+        ),
+        bytes(
+            "room-video.shaft-overlay-published",
+            held_overlay(&room.video.memory.oam),
+        ),
+    ])
+}
+
 fn compare_shaft_picture(
     room: &RoomVideo,
     record: &oracle_record::FrameRecord,
@@ -795,13 +848,7 @@ fn compare_shaft_picture(
             .get(512..515)
             .ok_or_else(|| super::data_failure(Some(cut), "shaft OAM high"))?;
         let native = native_low.iter().chain(native_high).copied().collect();
-        let played = oam
-            .low
-            .iter()
-            .take(12)
-            .flat_map(|entry| [entry.x, entry.y, entry.tile, entry.attributes])
-            .chain(oam.high.iter().take(3).copied())
-            .collect();
+        let played = held_overlay(oam);
         record_pair(cut, field, native, played, (expected, actual))?;
         record_pair(
             cut,
@@ -845,12 +892,11 @@ fn compare_shaft_picture(
             .vram
             .get(span)
             .ok_or_else(|| super::data_failure(Some(cut), "played platform VRAM"))?;
-        let low = |words: &[u16]| words.iter().map(|word| word.to_le_bytes()[0]).collect();
         record_pair(
             cut,
             "room-video.shaft-platform-low",
-            low(native),
-            low(played),
+            platform_low(native),
+            platform_low(played),
             (expected, actual),
         )?;
     }

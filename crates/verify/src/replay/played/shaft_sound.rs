@@ -196,13 +196,13 @@ fn expected(wram: &[u8], (row, local): (&str, u64), cut: u64) -> Result<Expected
     ))
 }
 
-fn actual(run: &Run<'_>, output: &played::Outputs) -> ExpectedCut {
+fn actual(run: &Run<'_>, offer: Option<audio_transport::Offer>) -> ExpectedCut {
     let state = &run.state.shaft_sound;
     observations(
         state.permission,
         state.sender.queue.cues(),
         &state.sender.progress,
-        output.shaft_sound_offer,
+        offer,
         state.request,
     )
 }
@@ -254,18 +254,10 @@ pub(in crate::replay) fn run(
     };
     let mut live = Run::admit(&previous, &content, &sources.rom, &case.row)?;
     let mut pending = None;
-    let seed = &live.state.shaft_sound;
-    let null = observations(
-        seed.permission,
-        seed.sender.queue.cues(),
-        &seed.sender.progress,
-        None,
-        seed.request,
-    );
     compared(
         SEED,
         &expected(&previous.wram, (ORIGIN, SEED), SEED)?.fields,
-        &null.fields,
+        &actual(&live, None).fields,
     )?;
     let mut digest = Vec::new();
     let replayed = (|| {
@@ -284,10 +276,15 @@ pub(in crate::replay) fn run(
                 place,
             };
             let mut restored = (cut > START).then(|| restore(&live, cut)).transpose()?;
+            let null = actual(&live, None);
             let outputs = step.advance(&mut live)?;
             if let Some(restored) = restored.as_mut() {
                 let observed = expected(&current.wram, place, cut)?;
-                compared(cut, &observed.fields, &actual(&live, &outputs.1).fields)?;
+                compared(
+                    cut,
+                    &observed.fields,
+                    &actual(&live, outputs.1.shaft_sound_offer).fields,
+                )?;
                 step.check_continuation(restored, &live, &outputs)?;
                 result.counts.restorations = result.counts.restorations.saturating_add(1);
                 runner::record_cut(result, &mut digest, &observed, &null.fields, cut)?;

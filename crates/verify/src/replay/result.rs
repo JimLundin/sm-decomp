@@ -51,9 +51,9 @@ pub struct Counts {
     pub publications: usize,
     /// Compared physical replies.
     pub replies: usize,
-    /// Cuts also matched by the unchanged seed.
+    /// Cuts also matched by holding the preceding State and inputs without issuing new outputs.
     pub null_cuts: usize,
-    /// Fields also matched by the unchanged seed.
+    /// Semantic fields also matched by that held step.
     pub null_fields: usize,
     /// Completed checkpoints proven through completion or a held boundary.
     pub restorations: usize,

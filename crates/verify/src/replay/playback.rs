@@ -482,3 +482,38 @@ pub(super) fn initial(production: &Production) -> Result<Vec<Observation>, Outco
         },
     )
 }
+
+#[test]
+fn holding_a_started_scene_keeps_its_phase_without_reissuing_the_handoff() {
+    let mut production = Production::admit(
+        ProductionSeed::Playback(ScenePhase::Off),
+        ProductionContent::Playback(
+            data::assets::playback::ScenePad {
+                battle: Vec::new(),
+                approach: Vec::new(),
+                watch: Vec::new(),
+            }
+            .into(),
+        ),
+        ProductionRules::Playback,
+    )
+    .unwrap();
+    let cut = Cut {
+        start: Some(SceneStart::Battle),
+        actor: None,
+    };
+    let output = production.advance(AdvanceInput::Playback(cut)).unwrap();
+    let mut reader = ActualReader::Playback;
+    let started = reader
+        .accept(
+            &InputReader::Playback(vec![cut]),
+            &production,
+            output,
+            FIRST,
+        )
+        .unwrap();
+    let held = reader.held(&production, FIRST + 1).unwrap();
+    assert!(started.contains(&Observation::quantity("playback.start", 1)));
+    assert!(held.contains(&Observation::quantity("playback.phase", 1)));
+    assert!(held.contains(&Observation::quantity("playback.start", -1)));
+}

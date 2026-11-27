@@ -133,7 +133,6 @@ pub(super) fn run(
         inputs: &inputs,
         expected: &expectation,
     };
-    let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
     if matches!(actual, ActualReader::StandingBody | ActualReader::ShaftHud) {
@@ -144,6 +143,7 @@ pub(super) fn run(
     let mut stop = None;
     let mut compare_cuts = || -> Result<(), Outcome> {
         for cut in &schedule {
+            let null = actual.held(&production, *cut)?;
             let expected = match reader.execute(&mut production, &mut actual, *cut) {
                 Ok(compared) => compared,
                 Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
@@ -355,6 +355,80 @@ mod tests {
     use crate::replay::{
         Sources, admission, index::Index, readers::ExpectedReader, result::Outcome,
     };
+
+    #[test]
+    fn the_null_holds_the_last_draw_through_new_and_missing_samples() {
+        use crate::replay::{
+            compare::Observation,
+            jump_history,
+            readers::{ActualReader, AdmittedCase, ExpectedCut, InputReader},
+            result::{CaseResult, Counts},
+        };
+        use JumpButton::{Held, Up};
+        use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
+        use samus_movement::{DrawnJumpHistory, JumpButton, JumpHeld};
+
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let mut case = index
+            .cases
+            .into_iter()
+            .find(|case| case.id.0 == "movement/passage-jump-history")
+            .unwrap();
+        let draws = [Some(Held), Some(Held), None, None, Some(Up)];
+        let expected = [(0_u8, 1), (1, 1), (1, 1), (1, 1), (0, 0)].map(|(count, pad)| {
+            let fields = vec![
+                Observation {
+                    field: "movement.drawn-jump-held".into(),
+                    bytes: vec![count, 0, 0],
+                },
+                Observation::quantity("movement.last-draw-jump", pad),
+            ];
+            ExpectedCut {
+                semantic_count: fields.len(),
+                semantics: fields.clone(),
+                fields,
+                output_count: 0,
+                replies: 0,
+            }
+        });
+        let start = jump_history::START;
+        case.end.cut_inclusive = start + 5;
+        case.checkpoints = false;
+        let content = ProductionContent::JumpHistory;
+        let rules = ProductionRules::JumpHistory;
+        let production = Production::admit(
+            ProductionSeed::JumpHistory(DrawnJumpHistory {
+                jump_held: JumpHeld::NONE,
+                last_draw: Up,
+            }),
+            content.clone(),
+            rules.clone(),
+        )
+        .unwrap();
+        let admitted = AdmittedCase {
+            production,
+            rules,
+            content,
+            inputs: InputReader::JumpHistory(draws.to_vec()),
+            expected: ExpectedReader::JumpHistory(expected.to_vec()),
+            actual: ActualReader::JumpHistory,
+            schedule: ((start + 1)..=case.end.cut_inclusive).collect(),
+        };
+        let mut result = CaseResult {
+            id: case.id.clone(),
+            kind: case.kind,
+            row: case.row.clone(),
+            start_cut: Some(start),
+            end_cut: case.end.cut_inclusive,
+            counts: Counts::default(),
+            outcome: Outcome::Pass,
+            observation_sha256: String::new(),
+            limits: Vec::new(),
+        };
+        super::run(&case, admitted, &mut result).unwrap();
+        assert_eq!((result.counts.cuts, result.counts.fields), (5, 10));
+        assert_eq!((result.counts.null_cuts, result.counts.null_fields), (2, 6));
+    }
 
     #[test]
     fn an_early_difference_keeps_the_matching_prefix_digest() {

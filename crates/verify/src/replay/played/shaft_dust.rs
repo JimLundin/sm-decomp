@@ -251,13 +251,25 @@ pub(in crate::replay) fn run(
     };
     let mut run = Run::admit(&previous, &content, &sources.rom, &case.row)?;
     let mut witness = Witness::default();
-    let null = actual(&run, looks(&run)?)?;
     for cut in seed.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
         let place = (row.as_str(), local);
+        let null = (cut > frame)
+            .then(|| {
+                let mut fields = actual(&run, looks(&run)?)?.to_vec();
+                if local == 17 {
+                    let video = &run.state.room_video.video;
+                    fields.push(following_vent(
+                        &oam_bytes(&video.batch.oam),
+                        &oam_bytes(&video.memory.oam),
+                    )?);
+                }
+                Ok::<_, Outcome>(fields)
+            })
+            .transpose()?;
         let fields = run.step(controller, &previous, &current, cut, place)?;
-        if cut > frame {
+        if let Some(null) = null {
             witness.cut(
                 &run,
                 &Cut {
