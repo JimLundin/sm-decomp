@@ -50,11 +50,12 @@ impl<T: serde::de::DeserializeOwned> Fixture<T> {
     fn window(
         path: &Path,
         file: &FixtureFile,
+        row: &str,
         cut: u64,
         at: impl Fn(&T) -> u64,
     ) -> Result<T, Outcome> {
         let fixture: Self = file.read(path)?;
-        if fixture.schema != 1 || fixture.row != sender_offer::SOURCE_ROW {
+        if fixture.schema != 1 || fixture.row != row {
             return Err(data_failure(None, "touchdown fixture origin"));
         }
         let mut windows = fixture
@@ -178,6 +179,7 @@ impl Inputs {
 pub(super) struct Expected {
     path: PathBuf,
     observations: FixtureFile,
+    sender: sender_offer::SenderPacket,
     cut: u64,
     source_id: usize,
 }
@@ -190,10 +192,11 @@ impl Expected {
         let captured = Fixture::<observations::Captured>::window(
             &self.path,
             &self.observations,
+            &self.sender.row,
             cut,
             |window| window.cut,
         )?;
-        let fifo = sender_offer::contact_fifo(&self.path, self.source_id, cut)?;
+        let fifo = sender_offer::contact_fifo(&self.path, &self.sender, self.source_id, cut)?;
         captured.compare_with(&fifo)
     }
 }
@@ -215,8 +218,11 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let before = record(&cache, start)?;
     let wram = &before.wram;
     let files = case.fixture_pair()?;
+    let sender = case.sender_packet()?;
     let observed =
-        Fixture::<Borrowed>::window(&sources.native, &files.inputs, cut, |window| window.cut)?;
+        Fixture::<Borrowed>::window(&sources.native, &files.inputs, &case.row, cut, |window| {
+            window.cut
+        })?;
     let content = movement::Content::load(&sources.rom)?;
     let samus = movement::seed(wram)?;
     let preceding = movement::input(wram, samus.pose, &content)?;
@@ -224,8 +230,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         .read(wram)
         .ok()
         .and_then(|id| data::assets::samus::map::key_of(data::pose::PoseId(id)));
-    let owned_contact =
-        sender_offer::contact_ingress(&sources.native, cut, observed.contact_seed_master_ticks)?;
+    let owned_contact = sender_offer::contact_ingress(
+        &sources.native,
+        sender,
+        cut,
+        observed.contact_seed_master_ticks,
+    )?;
     let [first, second] = observed.current_solid_actors;
     if observed.movement_seed_cut != start
         || observed.room_terrain_source_cut != start
@@ -286,6 +296,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         expected: ExpectedReader::MovementTouchdown(Expected {
             path: sources.native.clone(),
             observations: files.expected.clone(),
+            sender: sender.clone(),
             cut,
             source_id: owned_contact.source_id,
         }),

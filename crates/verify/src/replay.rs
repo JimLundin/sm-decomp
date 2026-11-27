@@ -25,6 +25,7 @@ mod landing_site;
 mod legacy_packets;
 mod movement;
 mod movement_touchdown;
+mod native_packets;
 mod native_search;
 mod playback;
 pub mod played;
