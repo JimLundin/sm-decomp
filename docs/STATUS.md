@@ -388,8 +388,10 @@ keeps is gone the next frame (samus-movement's backward leap let go). He takes o
 lands both airborne hits. Room 6 plays 1,270 cuts from its seed. At cut 1,262
 the flyby requests the shove after Samus moves. The locked door releases
 leftward movement on 1,264 and the first ordinary turn lands on 1,265.
-CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
-`played`. It is a diagnostic, not yet an indexed obligation.
+The reviewed runs in `scenarios/replay/played.toml`, this one among them, are a required
+witness. CI's replay job runs `replay::played::tests::reviewed_runs_hold`, which fails when a
+run's held cuts or its stop differ from the list. Dispatched with the target `played`, CI also
+prints the M0 row's run from its seed and from cut 6.
 
 The planted faults of the responsibility `played` stop that run, or the run of another Ceres row
 from its seed. A pad one frame stale fails the runner's pad alignment check. The others are a
@@ -417,9 +419,39 @@ The M0 row never shows a door blocking her: a fault that drops the doors' boxes 
 motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play; the door of
 Ridley's room locks behind her, out of her way. Only the unit
 test of a door that opens in the frame still blocking her catches it. Retiring the indexed
-case `movement-ceres/carried-position-proximity` lost its gating obligation, which the
-diagnostic played run compares but does not gate. That loss is accepted until the played run
-is indexed.
+case `movement-ceres/carried-position-proximity` left its fields to the played runs, which
+compare them at every cut as a required witness.
+
+### Scoped cases the played runs hold
+
+The power-on run holds the movie through `chain-any-0011-DF45` cut 2123, and the reviewed runs
+of each Ceres row hold their own rows. A scoped or integrated case inside that span is retired
+when the played runs compare every field it compared at every cut it compared, under its name or
+as the same record quantity under another. Each of its planted faults then names a played run
+that it stops, or a remaining case that compares the same behaviour on the alternative route.
+`hud/locked-shaft-publication` is the one exception. The played runs compare its HUD and grid at
+cuts 165 to 239, but the tilemap its queued transfer publishes there is compared only by the
+required witness `locked_shaft_publishes_timer_then_standing`. The
+[transition](../scenarios/replay/transition.toml) names each retired case and the runs that
+replace it.
+
+The indexed cases still inside that span each compare something no played run does:
+
+- `landing-site/receiving-prefix` compares cut 2125, past where every played run stops.
+- The two blackout cases compare the shaft's packed scene, the battery and the requests, and
+  the two standing body cases compare the standing figure's strips, which no played run
+  compares whole.
+- The intro, intro room, flashback, discovery and cinematic missile cases compare the scenes'
+  events, palette publications, caret, block marks, sounds and pictures.
+- `save-files/power-on-through-ceres` compares the battery during the boot's memory test.
+- `ridley/ordinary-picture` compares the door's append to the fight's OAM.
+- `movement/getaway-shove-door` compares the getaway's own State.
+- `movement/escape-leap-landing` compares the floor response of a backward leap's landing.
+- `audio-sender/shaft-bursts` compares the sender's queue, permission and progress.
+- `enemy-interactions/shaft-actor-picture` compares the locked prefixes and the mounted vents.
+- `connected-ordinary/early-mini-map` checks that the early map reads her position after her
+  moves, which no played run tells apart, and the two connected cases hold the faults of the
+  connected owner it shares.
 
 ### The intro's opening and page 1
 
