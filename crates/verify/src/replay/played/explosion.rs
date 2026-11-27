@@ -428,7 +428,8 @@ mod tests {
         let sources = super::super::tests::sources();
         let ending = super::super::play(&sources, "any-power-on", 0, 15_196).unwrap();
         assert_eq!((ending.held, ending.stop), (15_196, super::Stop::End));
-        assert!(ending.seed_held.is_empty());
+        let no_seed: &[&str] = &[];
+        assert_eq!(ending.seed_held, no_seed);
     }
 
     #[test]

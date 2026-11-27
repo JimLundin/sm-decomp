@@ -7,11 +7,11 @@ use serde::Deserialize;
 use super::Outcome;
 
 /// The reviewed played runs, from the repository root.
-pub(crate) const PATH: &str = "scenarios/replay/played.toml";
+pub const PATH: &str = "scenarios/replay/played.toml";
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct Listed {
+pub struct Listed {
     pub(crate) movie: String,
     pub(crate) run: Vec<Listing>,
 }
@@ -37,7 +37,7 @@ impl Listed {
 /// A run in cuts of its lock row and in movie frames.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct Listing {
+pub struct Listing {
     pub(crate) row: String,
     pub(crate) start: u64,
     pub(crate) end: u64,
