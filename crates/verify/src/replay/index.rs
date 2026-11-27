@@ -405,7 +405,7 @@ pub struct FixtureFile {
 
 impl FixtureFile {
     pub(super) fn valid(&self) -> bool {
-        let component = |part: &str| fixture_component(part) && !part.contains(['\\', ':', '\0']);
+        let component = |part: &str| fixture_component(part) && !part.contains('\0');
         self.path
             .split_once('/')
             .is_some_and(|(directory, name)| component(directory) && component(name))
@@ -1189,8 +1189,6 @@ mod tests {
             "fixture/..",
             "/outside/file",
             "dir/sub/file",
-            "dir/..\\file",
-            "C:/file",
         ] {
             first.fixture.as_mut().unwrap().expected.path = path.to_owned();
             assert!(first.validate().is_err(), "{path}");

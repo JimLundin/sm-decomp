@@ -7,8 +7,8 @@ codes. Addresses are the bank logs' (`$TEMP/c4a/logs*`, https://patrickjohnston.
 ## How the spec was made
 
 Behaviour first: the 32 rows in `tools/oracle/movement_rows.txt`, cached in
-`$TEMP/collab/more-caches/cache`, were dumped per frame (`$TEMP/obs-ground/dump`, driven by
-`$TEMP/respec-motion/one.ps1`, output in `$TEMP/respec-motion/out`) and read over time. The
+`$TEMP/collab/more-caches/cache`, were dumped per frame (`$TEMP/obs-ground/dump`, output in
+`$TEMP/respec-motion/out`) and read over time. The
 previous spec's arithmetic, which was pinned from the bank logs, was reused only for exact values
 and edge cases. Vectors come from `$TEMP/respec-motion/scripts/vec.pl` (frame selection), `tag.pl`
 (entries) and `lead.pl` (perceivable quantities and lead-ins); the constructed ones were worked by

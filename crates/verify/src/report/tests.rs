@@ -15,10 +15,6 @@ fn committed_readme_is_current() {
 fn a_changed_readme_is_stale() {
     let fresh = "# sm-decomp\n\n| a | 1 |\n";
     assert_eq!(current_at(PATH, fresh, fresh), Ok(()));
-    assert_eq!(
-        current_at(PATH, &fresh.replace('\n', "\r\n"), fresh),
-        Ok(())
-    );
     assert!(current_at(PATH, "# sm-decomp\n\n| a | 2 |\n", fresh).is_err());
     assert!(current_at(PATH, "", fresh).is_err());
 }

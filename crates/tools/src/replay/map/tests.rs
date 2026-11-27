@@ -265,8 +265,6 @@ fn unsafe_dangling_and_undeclared_targets_and_invalid_selectors_fail_closed() {
     for path in [
         "../AGENTS.md",
         "/AGENTS.md",
-        "C:/AGENTS.md",
-        "crates\\game\\src\\production.rs",
         "crates/game/src/missing.rs",
         "crates/game/src",
     ] {

@@ -16,7 +16,7 @@ newer() { awk -v a="$(mtime "$1")" -v b="$(mtime "$2")" 'BEGIN { exit !(a > b) }
 linked() { [ "$(stat -c %i "$1")" = "$(stat -c %i "$2")" ]; }
 cd "$tmp" || exit 1
 mkdir repo && cd repo || exit 1
-git init -q -b main . && git config commit.gpgsign false && git config core.autocrlf false
+git init -q -b main . && git config commit.gpgsign false
 printf 'target/\n' >.gitignore
 echo same >same.rs && echo old >changed.rs && echo gone >deleted.rs
 git add -A && git commit -q -m seed

@@ -30,9 +30,9 @@ pub fn check(root: &Path) -> Result<(), String> {
     current_at(readme::PATH, &committed, &fresh)
 }
 
-/// Whether the committed page at `path` is the fresh one; CRLF line endings don't count.
+/// Whether the committed page at `path` is the fresh one.
 fn current_at(path: &str, committed: &str, fresh: &str) -> Result<(), String> {
-    if committed.replace("\r\n", "\n") == fresh {
+    if committed == fresh {
         Ok(())
     } else {
         Err(format!(

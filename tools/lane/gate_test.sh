@@ -56,7 +56,7 @@ for name in faults owners; do
     "r'$ran'" "$name" "$name" "$name" >"$path"
 done
 git -C "$repo" init -q -b lane/test
-git -C "$repo" -c core.autocrlf=false add -A
+git -C "$repo" add -A
 git -C "$repo" -c user.name=fixture -c user.email=fixture@invalid commit -qm "Invented tree"
 
 # Runs the gate in the scratch repository with the environment given as arguments.

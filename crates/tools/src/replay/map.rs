@@ -58,7 +58,6 @@ pub(super) enum Fault {
 
 fn safe_path(root: &Path, path: &str) -> Result<(), Fault> {
     if path.is_empty()
-        || path.contains(['\\', ':'])
         || path
             .split('/')
             .any(|part| part.is_empty() || part == "." || part == "..")

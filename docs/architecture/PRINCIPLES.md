@@ -197,7 +197,7 @@ Code is idiomatic Rust, not transpiled C. Preserve the original's behaviour, not
 - Name checks with a function that says what it checks, never a no-op expression such as `[(); N][i];`.
 - Use `From`/`TryFrom` and `wrapping_*` instead of chains of `as` casts.
 - Use `std::fs` and owned buffers.
-- Store text files as UTF-8 with LF line endings (the Quality workflow enforces LF).
+- Store text files as UTF-8 with LF line endings.
 
 Model the domain with types, not raw numbers:
 
