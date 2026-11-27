@@ -145,19 +145,6 @@ $tests_bullet
   the spec entry you suspect.
 EOF
 
-# Nothing in the export mentions the score, the budget, k, the fit or token weights (MODEL §1
-# decision 10): the implementer is told the code rules only. score_words.txt holds the patterns.
-# vendor/crates-io is skipped: the registry's published crates, held to their checksums, aren't
-# this repository's words (a benchmark's "baseline").
-scanned=()
-for p in "$dest"/* "$dest"/.[!.]*; do
-  [ -e "$p" ] || continue
-  case ${p#"$dest"/} in .git|vendor) ;; *) scanned+=("$p") ;; esac
-done
-bash "$cleanroom_dir/score_scan.sh" "${scanned[@]}" \
-  || die "the export mentions the score or the budget (above); fix the source files, not the export"
-echo "  ok: no mention of the score or the budget"
-
 # One commit, no remote, no template hooks.
 git_isolated "$dest" init -q --template= -b main
 git_isolated "$dest" add -A

@@ -9,7 +9,6 @@
 # each way out from inside (the home, the canary record, the temporary folder, the checkout, a
 # search from /, writes into the lane, the network, the key) and the relay passing a request to
 # a fake API with the key added. It needs Docker.
-# The probe builds the same cleanroom scanner as score_scan_test.sh.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd -P)

@@ -3,7 +3,7 @@
 # lines already stripped by strip_line (comments gone, strings blanked to "", char literals to
 # ''), and lint_file(TEST) reports, calling the host's finding(TAG, DETAIL) once per finding;
 # TEST is 1 when the whole file is test code (a tests/ directory or a tests.rs file). A token
-# lexer and the size counter's regions, not a parser.
+# lexer and MODEL §4's regions, not a parser.
 #   -v denied="..."  lints the workspace denies by name (and its denied groups), space-separated
 #
 # lint-attr      (L1) outside test code, an #[expect]/#[warn] that names a lint in `denied`. A
@@ -12,9 +12,9 @@
 #                clippy::allow_attributes and allow_attributes_without_reason.
 # magic-literal  (L2) a number other than 0 or 1 in logic. Exempt: test code, attributes,
 #                struct/enum/union/type items, a constant's head, a constant's value while it is
-#                data (the counter's L3: literals, paths, tuples, arrays, struct literals and
-#                calls whose arguments are data), the value of an exhaustive lookup's arm (the
-#                counter's lookups: a guard-free `match` of two or more arms, or an `enum_map!`,
+#                data (L3, MODEL §4: literals, paths, tuples, arrays, struct literals and
+#                calls whose arguments are data), the value of an exhaustive lookup's arm (as
+#                MODEL §4 defines it: a guard-free `match` of two or more arms, or an `enum_map!`,
 #                each arm a variant, constant or literal key, keys nested in a tuple variant
 #                with no binding included, `=>` and a data value naming no
 #                local; a key's own number is still refused), an array length (`[T; N]`,
@@ -100,7 +100,7 @@ function ends_item(p) {
   return p == 0 || (kind[p] == "punct" && text[p] == ";") || (kind[p] == "open" && text[p] == "{") \
     || kind[p] == "close" || (kind[p] == "word" && (text[p] == "pub" || text[p] == "mut"))
 }
-# Whether the tokens a..b-1, a constant's value, hold behaviour, as the size counter's L3 decides:
+# Whether the tokens a..b-1, a constant's value, hold behaviour, as MODEL §4's L3 decides:
 # anything but one data expression. Data is a literal, a minus on a literal, a reference to data,
 # a path (a constant, an enum variant, a unit struct), a tuple, an array (`[a, b]`, `[a; N]`), a
 # struct literal whose fields are data, a call of a path whose every argument is data
@@ -271,9 +271,9 @@ function lookup_rows(a, b,   k, d, s, rows, arrow) {
   }
   return rows
 }
-# Marks the values of each exhaustive lookup in logic as data, as the size counter does (verify::size
-# `lookups`): a guard-free `match` of two or more arms, and an `enum_map!`, whose every arm maps a
-# lookup_pattern to a lookup_value. Only the values: a pattern's number is still a magic literal.
+# Marks the values of each exhaustive lookup in logic as data, as MODEL §4 does: a guard-free
+# `match` of two or more arms, and an `enum_map!`, whose every arm maps a lookup_pattern to a
+# lookup_value. Only the values: a pattern's number is still a magic literal.
 function lookups(   a, o, e, k) {
   for (a = 1; a <= n; a++) {
     if (region[a] != "logic" || kind[a] != "word") continue

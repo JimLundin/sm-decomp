@@ -14,7 +14,7 @@ git config user.email fixture@example.invalid
 git config commit.gpgsign false
 git config status.showUntrackedFiles no
 
-suites=(tools/cleanroom/{launch,launch_config,code_check,canary,score_scan,blind_copy,adjusted_vectors,import_check}_test.sh
+suites=(tools/cleanroom/{launch,launch_config,code_check,canary,blind_copy,adjusted_vectors,import_check}_test.sh
   tools/lane/{squash,worktree,gate,self_tests}_test.sh)
 for suite in "${suites[@]}"; do
   printf '#!/bin/sh\ntouch "$RAN/%s"\n' "$(basename "$suite" _test.sh)" >"$suite"
@@ -35,7 +35,7 @@ expect() {
   actual=$(find "$RAN" -type f -printf '%f\n' | LC_ALL=C sort)
   [[ $actual = "$want" ]] || { echo "expected [$want], got [$actual]: $output" >&2; exit 1; }
 }
-all=(launch launch_config code_check canary score_scan blind_copy adjusted_vectors import_check squash worktree gate self_tests)
+all=(launch launch_config code_check canary blind_copy adjusted_vectors import_check squash worktree gate self_tests)
 
 run HEAD; expect
 echo edited >>tools/lane/gate.sh

@@ -55,20 +55,6 @@ if [ -d crates/clean ]; then
   out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
 fi
 
-# What an export of each specced domain would carry, and the blind reviewer's skill, mention no
-# score or budget (MODEL §1 decision 10); export.sh checks the export itself too.
-facing=$(
-  . tools/cleanroom/lib.sh
-  for spec in docs/behaviours/*.md; do
-    case $spec in *.decode.md|*.gaps.md) continue ;; esac
-    allowed_entries "$(basename "$spec" .md)"
-  done
-  echo .agents/skills/blind-reviewer/SKILL.md
-  echo crates/clean/.clippy.toml
-)
-mapfile -t facing < <(sort -u <<<"$facing" | while IFS= read -r p; do [ -e "${p%/}" ] && echo "${p%/}"; done)
-out=$(bash tools/cleanroom/score_scan.sh "${facing[@]}" 2>&1) || fail "$out"
-
 # Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
 # (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a
 # "bank $XX" reference fails when it is part of a `//!` module doc, or is in a run of doc

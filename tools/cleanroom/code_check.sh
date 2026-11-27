@@ -23,13 +23,13 @@
 #     one without reason = "..." are the forbidden clippy::allow_attributes(_without_reason).
 #   magic-literal  (L2) a number other than 0 or 1 in logic. Allowed in test code (tests/,
 #     tests.rs, #[cfg(test)] items), attributes, struct/enum/union/type items, a constant's or
-#     static's head and value while the value is data (L3, as `tools size` decides: literals,
+#     static's head and value while the value is data (L3, MODEL §4: literals,
 #     paths, tuples, arrays, struct literals, calls whose every argument is data and ranges
 #     whose two ends are literals or paths; a method
 #     call, an operator, control flow, a closure or a macro makes it logic), the values of an
 #     exhaustive lookup (a guard-free `match` of two or more arms, or an `enum_map!`, each arm a
-#     variant, constant or literal key, `=>` and a data value naming no local, as `tools size`
-#     counts it; a key's own number is still refused), array lengths and tuple fields.
+#     variant, constant or literal key, `=>` and a data value naming no local, as
+#     MODEL §4 defines it; a key's own number is still refused), array lengths and tuple fields.
 #   variant-import (L4) a `use` outside test code that imports an enum's variants (`use Kind::A`,
 #     `use Kind::{A, B}`, `use Kind::*`). The three rules are lint_scan.awk.
 # Manifest: lints-key (no `[lints] workspace = true`) edition (not 2024)
