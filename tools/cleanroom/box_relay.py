@@ -10,7 +10,9 @@ What passes is an allow-list, since the box chooses every byte it sends: GET or 
 origin-form target (`/...`) under the base URL's path and `v1/`, its segments plain names and
 its query plain characters; the request goes to the configured host with its own Host header,
 and only the headers a client of the API sends (content type, accept, user agent, anthropic-*,
-x-stainless-*, x-claude-*, x-app) go with it.
+x-stainless-*, x-claude-*, x-app) go with it. A JSON body that asks the API itself to reach
+outside (a web search or fetch tool, an MCP server, a document or image by URL) is refused, so
+the API is no way to the web.
 
   serve SOCKET AUTH [PARENT]  outside: AUTH (a file, or - for stdin, so it touches no disk) is an
                               object of the top-level settings members launch.sh collects
@@ -20,6 +22,7 @@ x-stainless-*, x-claude-*, x-app) go with it.
                               the box's base URL, a placeholder credential and the model and
                               CLAUDE_CODE_DISABLE_* lines; the other ANTHROPIC_* lines (custom
                               headers among them) stay with the relay.
+  env AUTH PORT               the same, as the box's environment, a KEY=VALUE a line.
   box PORT SOCKET SECONDS -- ARGV
                               inside: listens on 127.0.0.1:PORT, runs ARGV, stops it after
                               SECONDS, exits with its status.
@@ -60,6 +63,25 @@ QUERY = re.compile(r"[A-Za-z0-9._~=&,-]*")
 METHODS = ("GET", "POST")
 HELPER_SECONDS = 300
 MAX_BODY = 64 << 20
+OUTSIDE = re.compile(r"(web_search|web_fetch|mcp)\w*|url")
+
+
+def reaches_outside(item: object) -> bool:
+    if isinstance(item, dict):
+        kind = item.get("type")
+        if "mcp_servers" in item or (isinstance(kind, str) and OUTSIDE.fullmatch(kind)):
+            return True
+        return any(reaches_outside(value) for value in item.values())
+    if isinstance(item, list):
+        return any(reaches_outside(value) for value in item)
+    return False
+
+
+def body_reaches_outside(body: bytes) -> bool:
+    try:
+        return reaches_outside(json.loads(body))
+    except ValueError:
+        return False
 
 
 def load_auth(path: str) -> tuple[dict[str, str], str | None]:
@@ -82,7 +104,7 @@ def upstream(env: dict[str, str]) -> urllib.parse.SplitResult:
     return url
 
 
-def settings(auth: str, port: int) -> None:
+def box_env(auth: str, port: int) -> dict[str, str]:
     env, helper = load_auth(auth)
     base = upstream(env)
     out = {k: v for k, v in env.items() if BOX_SETTINGS.fullmatch(k)}
@@ -96,7 +118,11 @@ def settings(auth: str, port: int) -> None:
     if not (helper or any(k in env for k in CREDENTIALS)):
         sys.exit("box_relay: no credential: no apiKeyHelper, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN")
     out[kind] = PLACEHOLDER
-    print(f'  "env": {json.dumps(out, sort_keys=True)},')
+    return out
+
+
+def settings(auth: str, port: int) -> None:
+    print(f'  "env": {json.dumps(box_env(auth, port), sort_keys=True)},')
 
 
 class Credential:
@@ -185,6 +211,10 @@ def serve(sock_path: str, auth: str, parent: int | None) -> None:
                 self.send_error(400, "a body of an explicit length only")
                 return
             body = self.rfile.read(length) if length else b""
+            if body_reaches_outside(body):
+                sys.stderr.write("box_relay: refused a request that asks the API to reach outside\n")
+                self.send_error(403, "the API may not reach outside for the box")
+                return
             headers = {k.lower(): v for k, v in self.headers.items() if HEADERS.fullmatch(k.lower())}
             dropped = sorted({k.lower() for k in self.headers if not HEADERS.fullmatch(k.lower())}
                              - {"host", "content-length", "connection", "authorization", "x-api-key"})
@@ -338,6 +368,10 @@ def main() -> int:
     args = sys.argv[1:]
     if len(args) in (3, 4) and args[0] == "serve":
         serve(args[1], args[2], int(args[3]) if len(args) == 4 else None)
+        return 0
+    if len(args) == 3 and args[0] == "env":
+        for key, value in sorted(box_env(args[1], int(args[2])).items()):
+            print(f"{key}={value}")
         return 0
     if len(args) == 3 and args[0] == "settings":
         settings(args[1], int(args[2]))

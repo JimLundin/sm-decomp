@@ -40,6 +40,24 @@ class Target(unittest.TestCase):
                 self.assertIsNone(box_relay.allowed_target(t, PREFIX))
 
 
+class Body(unittest.TestCase):
+    def test_a_request_that_reaches_outside_is_refused(self):
+        for body in [{"tools": [{"type": "web_search_20250305", "name": "web_search"}]},
+                     {"tools": [{"type": "web_fetch_20250910", "name": "web_fetch"}]},
+                     {"mcp_servers": [{"type": "url", "url": "https://x"}]},
+                     {"messages": [{"role": "user", "content": [
+                         {"type": "document", "source": {"type": "url", "url": "https://x/a.pdf"}}]}]}]:
+            with self.subTest(body=body):
+                self.assertTrue(box_relay.body_reaches_outside(json.dumps(body).encode()))
+
+    def test_the_cli_s_own_requests_pass(self):
+        body = {"model": "m", "tools": [{"name": "Bash", "description": "web_search url",
+                                         "input_schema": {"type": "object"}}],
+                "messages": [{"role": "user", "content": [{"type": "text", "text": '"type": "url"'}]}]}
+        self.assertFalse(box_relay.body_reaches_outside(json.dumps(body).encode()))
+        self.assertFalse(box_relay.body_reaches_outside(b"not json"))
+
+
 class Settings(unittest.TestCase):
     def run_settings(self, env):
         out = subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "settings", "-", "8765"],
@@ -56,6 +74,13 @@ class Settings(unittest.TestCase):
                                "ANTHROPIC_MODEL": "opus", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
         self.assertIn("ANTHROPIC_CUSTOM_HEADERS", err)
         self.assertNotIn("secret", err)
+
+    def test_the_box_environment_is_the_same_lines(self):
+        env = {"ANTHROPIC_BASE_URL": "https://gw.example/p", "ANTHROPIC_API_KEY": "k-secret"}
+        out = subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "env", "-", "8765"],
+                             input=json.dumps({"env": env}), capture_output=True, text=True, check=True)
+        self.assertEqual(out.stdout.splitlines(), ["ANTHROPIC_API_KEY=cleanroom-relay",
+                                                   "ANTHROPIC_BASE_URL=http://127.0.0.1:8765/p"])
 
 
 class Relay(unittest.TestCase):

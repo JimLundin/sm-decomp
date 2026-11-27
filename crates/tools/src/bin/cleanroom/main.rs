@@ -17,6 +17,7 @@ mod lexicon;
 mod mirror;
 mod process;
 mod rules;
+mod run;
 mod scan;
 mod text;
 
@@ -30,7 +31,9 @@ use lexicon::{Lexicon, Plain};
 use scan::{Allow, Class, Finding};
 
 const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN BRIEF\n       \
+                     cleanroom run NAME [BRIEF]\n       \
                      cleanroom import NAME\n       \
+                     cleanroom test\n       \
                      cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
@@ -324,7 +327,10 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.as_slice() {
         [command, rest @ ..] if command == "export" => run_export(rest),
+        [command, name] if command == "run" => run::run(name, None),
+        [command, name, brief] if command == "run" => run::run(name, Some(Path::new(brief))),
         [command, name] if command == "import" => import::run(name),
+        [command] if command == "test" => run::test(),
         [command, rest @ ..] if command == "check" => run_check(rest),
         [command, rest @ ..] if command == "scan" => run_scan(rest),
         [command, rest @ ..] if command == "mirror" => run_mirror(rest),
