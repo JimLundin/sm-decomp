@@ -348,6 +348,43 @@ pub(super) fn passing() -> Passing {
 }
 
 #[test]
+fn each_falling_frame_leaves_the_camera_at_her_new_remembered_centre() {
+    let mut state = state(Vec::new());
+    state.samus.movement.0.vertical.speed = Wrapping(0x1_4000);
+    let content = content();
+    let input = inputs(types::Buttons::default());
+    for _ in 0..2 {
+        let before = state.samus.movement.0.position;
+        assert_eq!(state.camera.0.seen(), before);
+        state
+            .step(&input, &passing(), &hud_frame(), &content, &rules())
+            .unwrap();
+        let after = state.samus.movement.0.position;
+        assert!(after.y > before.y);
+        assert_eq!(state.camera.0.seen(), after);
+    }
+}
+
+#[test]
+fn two_finished_room_frames_draw_twice_and_wrap_their_own_counters() {
+    let mut state = state(Vec::new());
+    state.frame.count = FrameCount(254);
+    state.frame.finished_frames = u16::MAX;
+    let mut sequence = state.frame.random;
+    let content = content();
+    let input = inputs(types::Buttons::default());
+    for (hud_count, finished) in [(255, 0), (0, 1)] {
+        game_random::advance_random(&mut sequence);
+        state
+            .step(&input, &passing(), &hud_frame(), &content, &rules())
+            .unwrap();
+        assert_eq!(state.frame.count.0, hud_count);
+        assert_eq!(state.frame.finished_frames, finished);
+        assert_eq!(state.frame.random, sequence);
+    }
+}
+
+#[test]
 fn first_active_draw_reads_the_last_draw_after_a_poll_gap() {
     use samus_movement::JumpButton;
     use types::{Buttons, button::JUMP};
