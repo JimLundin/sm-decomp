@@ -13,8 +13,10 @@ from pathlib import Path
 from unittest.mock import patch
 from typing import Any
 
-from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, check_domain, check_domain_owners, completed_test, main, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
+from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict, artifacts,
+                                  built_with, candidates, check_domains, check_domain_owners,
+                                  completed_test, main, padded, parameter_entries, patched_runs,
+                                  probe, prove, probe_test, rule_owners, test_target)
 
 SPEC = """\
 ### Fixed
@@ -40,13 +42,13 @@ def vector(body: str) -> str:
     return REFERENCE + "\n[[vector]]\n" + body
 
 
-def model(path: Path, step_rule: str = "step", id_ends: str = "") -> Callable[[], bool]:
+def model(step_rule: str = "step", id_ends: str = "") -> Callable[[str], bool]:
     """An invented model: a vector passes when its after is its before plus the step, 1 unless
     its rules say otherwise; `step_rule` names the rule the model reads, and every id must end
     with `id_ends`."""
 
-    def run() -> bool:
-        rows = tomllib.loads(path.read_text(encoding="utf-8"))["vector"]
+    def run(text: str) -> bool:
+        rows = tomllib.loads(text)["vector"]
         ids = [row["id"] for row in rows]
         return len(set(ids)) == len(ids) and all(i.endswith(id_ends) for i in ids) and all(
             row["after"] == row["before"] + row.get("rules", {}).get(step_rule, 1)
@@ -56,17 +58,37 @@ def model(path: Path, step_rule: str = "step", id_ends: str = "") -> Callable[[]
     return run
 
 
+def fake_test(directory: Path, text: bytes, receipt: Path, step_rule: str = "step") -> Path:
+    """An executable that holds TEXT verbatim, as a vector test built with it does, and answers
+    as libtest does for `model`, appending its arguments and the vectors it read to RECEIPT."""
+    executable = directory / "vectors-fake"
+    executable.write_bytes(
+        f"#!{sys.executable}\n".encode()
+        + b"import sys, tomllib\nTEXT = rb\'\'\'" + text + b"\'\'\'\n"
+        + f"""rows = tomllib.loads(TEXT.decode())["vector"]
+with open({str(receipt)!r}, "a") as receipt:
+    receipt.write(repr((sys.argv[1:], TEXT.decode().rstrip())) + "\\n")
+if "rules" not in rows[-1] and {step_rule!r} == "crash":
+    sys.exit(126)
+ok = all(row["after"] == row["before"] + row.get("rules", {{}}).get("step", 1) for row in rows)
+name = sys.argv[1] if len(sys.argv) > 1 else "direct"
+status = "ok" if ok else "FAILED"
+print("running 1 test")
+print(f"test {{name}} ... {{status}}")
+print(f"test result: {{status}}. {{int(ok)}} passed; {{int(not ok)}} failed; 0 ignored; "
+      "0 measured; 0 filtered out; finished in 0.00s")
+sys.exit(0 if ok else 101)
+""".encode())
+    executable.chmod(0o755)
+    return executable
+
+
 class AdjustedVectors(unittest.TestCase):
     def proof(self, vectors: str, step_rule: str = "step",
               id_ends: str = "") -> dict[str, Verdict]:
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            path.write_text(vectors, encoding="utf-8", newline="\n")
-            try:
-                return prove(path, parameter_entries(SPEC), model(path, step_rule, id_ends),
-                             {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})})
-            finally:
-                self.assertEqual(path.read_text(encoding="utf-8"), vectors)
+        return prove(vectors, parameter_entries(SPEC),
+                     {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})},
+                     model(step_rule, id_ends))
 
     def test_the_spec_names_its_parameter_entries(self) -> None:
         self.assertEqual(parameter_entries(SPEC), ["Step", "Margin"])
@@ -125,77 +147,53 @@ class AdjustedVectors(unittest.TestCase):
     def test_a_fixed_count_adapter_accepts_control_and_refutes_reference(self) -> None:
         text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
                       "before = 2\nafter = 5\n")
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            original = text.encode("utf-8")
-            path.write_bytes(original)
-            run_model = model(path)
-            observed: list[tuple[list[str], bool]] = []
+        run_model = model()
+        observed: list[tuple[list[str], bool]] = []
 
-            def fixed_count_adapter() -> bool:
-                rows = tomllib.loads(path.read_text(encoding="utf-8"))["vector"]
-                passed = len(rows) == 2 and run_model()
-                observed.append(([row["id"] for row in rows], passed))
-                return passed
+        def fixed_count_adapter(probed: str) -> bool:
+            rows = tomllib.loads(probed)["vector"]
+            passed = len(rows) == 2 and run_model(probed)
+            observed.append(([row["id"] for row in rows], passed))
+            return passed
 
-            self.assertEqual(prove(path, ["Step"], fixed_count_adapter, {"step": frozenset({"Step"})}),
-                             {"Step": Proven("adjusted", ())})
-            self.assertEqual(observed, [(["reference", "adjusted"], True),
-                                        (["reference", "adjusted-probe"], False),
-                                        (["reference", "adjusted-probe"], True)])
-            self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(prove(text, ["Step"], {"step": frozenset({"Step"})}, fixed_count_adapter),
+                         {"Step": Proven("adjusted", ())})
+        self.assertEqual(observed, [(["reference", "adjusted"], True),
+                                    (["reference", "adjusted-probe"], False),
+                                    (["reference", "adjusted-probe"], True)])
 
     def test_dependent_failure_cannot_credit_an_ignored_direct_parameter(self) -> None:
         for step, after, expected in ((3, 3, Unproven()), (3, 5, Proven("adjusted", ()))):
             text = vector(f'id = "adjusted"\nentries = ["Step"]\nrules = {{ step = {step} }}\n'
                           f'before = 2\nafter = {after}\n')
             text += f'[[dependent]]\nbase = "adjusted"\nrules = {{ step = {step} }}\n'
-            with tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "demo.toml"
-                original = text.replace("\n", "\r\n").encode()
-                path.write_bytes(original)
-                calls = []
-                def complete() -> bool:
-                    calls.append("complete")
-                    data = tomllib.loads(path.read_text())
-                    v = data["vector"][1]
-                    dep = data["dependent"][0]
-                    return model(path, "ignored" if after == 3 else "step")() and dep["base"] == v["id"] and dep["rules"] == v["rules"]
-                def direct() -> bool:
-                    calls.append("direct")
-                    data = tomllib.loads(path.read_text())
-                    self.assertEqual(data["dependent"], tomllib.loads(text)["dependent"])
-                    return model(path, "ignored" if after == 3 else "step")()
-                self.assertEqual(prove(path, ["Step"], complete,
-                                       {"step": frozenset({"Step"})}, direct), {"Step": expected})
-                self.assertEqual(calls[:2], ["complete", "direct"])
-                self.assertEqual(calls.count("complete"), 1)
-                self.assertEqual(path.read_bytes(), original)
+            text = text.replace("\n", "\r\n")
 
-    def test_failed_direct_baseline_and_runner_error_restore_original_bytes(self) -> None:
+            def direct(probed: str) -> bool:
+                self.assertEqual(tomllib.loads(probed)["dependent"],
+                                 tomllib.loads(text)["dependent"])
+                return model("ignored" if after == 3 else "step")(probed)
+
+            self.assertEqual(prove(text, ["Step"], {"step": frozenset({"Step"})}, direct),
+                             {"Step": expected})
+
+    def test_a_failed_baseline_or_a_runner_error_refuses(self) -> None:
         text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
                       'before = 2\nafter = 5\n')
         for failure_call in (1, 2, 3):
-            with tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "demo.toml"
-                original = text.encode()
-                path.write_bytes(original)
-                calls = 0
-                def direct() -> bool:
-                    nonlocal calls
-                    calls += 1
-                    if calls == failure_call:
-                        raise CannotProbe("runner failure")
-                    return model(path)()
-                with self.assertRaises(CannotProbe):
-                    prove(path, ["Step"], model(path), {"step": frozenset({"Step"})}, direct)
-                self.assertEqual(path.read_bytes(), original)
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            path.write_bytes(text.encode())
-            with self.assertRaises(CannotProbe):
-                prove(path, ["Step"], model(path), {"step": frozenset({"Step"})}, lambda: False)
-            self.assertEqual(path.read_bytes(), text.encode())
+            calls = 0
+
+            def direct(probed: str) -> bool:
+                nonlocal calls
+                calls += 1
+                if calls == failure_call:
+                    raise CannotProbe("runner failure")
+                return model()(probed)
+
+            with self.subTest(failure_call=failure_call), self.assertRaises(CannotProbe):
+                prove(text, ["Step"], {"step": frozenset({"Step"})}, direct)
+        with self.assertRaises(CannotProbe):
+            prove(text, ["Step"], {"step": frozenset({"Step"})}, lambda _: False)
 
     def test_exact_selection_requires_one_named_nonignored_completed_test(self) -> None:
         good = (b"running 1 test\ntest direct ... ok\n"
@@ -210,38 +208,100 @@ class AdjustedVectors(unittest.TestCase):
             with self.subTest(output=output), self.assertRaises(CannotProbe):
                 completed_test(subprocess.CompletedProcess([], 0, output), 101, "direct")
 
-    def test_domain_runs_full_baseline_then_exact_direct_baseline_and_probes(self) -> None:
+    def demo(self, root: Path, text: str, selection: str | None) -> Path:
+        spec = root / "docs/behaviours/demo.md"
+        spec.parent.mkdir(parents=True)
+        spec.write_text("### Step\n- switch: Parameter.\n", newline="\n")
+        metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text('[owners]\nstep = ["Step"]\n', newline="\n")
+        if selection is not None:
+            (metadata.parent.parent / "adjusted_probe_tests.toml").write_text(
+                f'[tests]\ndemo = "{selection}"\n', newline="\n")
+        (root / "crates/clean/demo").mkdir(parents=True)
+        path = root / "scenarios/vectors/demo.toml"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(text.encode())
+        return path
+
+    def test_one_build_per_domain_answers_every_probe_of_its_vectors(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      'before = 2\nafter = 5\n') + '[[dependent]]\nbase = "adjusted"\n'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            spec = root / "docs/behaviours/demo.md"
-            spec.parent.mkdir(parents=True)
-            spec.write_text("### Step\n- switch: Parameter.\n", newline="\n")
-            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
-            metadata.parent.mkdir(parents=True)
-            metadata.write_text('[owners]\nstep = ["Step"]\n', newline="\n")
-            (metadata.parent.parent / "adjusted_probe_tests.toml").write_text(
-                '[tests]\ndemo = "direct"\n', newline="\n")
-            path = root / "scenarios/vectors/demo.toml"
-            path.parent.mkdir(parents=True)
-            text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
-                          'before = 2\nafter = 5\n') + '[[dependent]]\nbase = "adjusted"\n'
-            path.write_bytes(text.encode())
-            calls = []
-            def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
-                calls.append((command, path.read_bytes()))
-                passed = model(path)()
-                status = "ok" if passed else "FAILED"
-                output = (f"running 1 test\ntest direct ... {status}\n"
-                          f"test result: {status}. {int(passed)} passed; {int(not passed)} failed; "
-                          "0 ignored; 0 measured; 2 filtered out; finished in 0.00s\n").encode()
-                return subprocess.CompletedProcess(command, 0 if passed else 101, output)
-            with patch("adjusted_vectors_run.test_command", return_value=["runner"]), \
-                 patch("adjusted_vectors_run.subprocess.run", side_effect=runner):
-                self.assertEqual(check_domain(root, "demo"), 0)
-            self.assertEqual([c for c, _ in calls], [["runner"]] +
-                             [["runner", "--", "direct", "--exact"]] * 3)
-            self.assertEqual([b for _, b in calls[:2]], [text.encode()] * 2)
+            path = self.demo(root, text, "direct")
+            receipt = root / "receipt"
+            builds: list[bytes] = []
+
+            def build(_root: Path, crates: list[str]) -> dict[str, Path]:
+                self.assertEqual(crates, ["demo"])
+                builds.append(path.read_bytes())
+                built = root / f"build-{len(builds)}"
+                built.mkdir()
+                return {"demo": fake_test(built, path.read_bytes(), receipt)}
+
+            with patch("adjusted_vectors_run.build", side_effect=build), \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(check_domains(root, ["demo"]), 0)
+            self.assertIn("adjusted: demo: Step depends on its rules in adjusted", output.getvalue())
             self.assertEqual(path.read_bytes(), text.encode())
+            self.assertEqual(builds[0], text.encode())
+            self.assertEqual(builds[1].rstrip(b"\n"), text.encode().rstrip(b"\n"))
+            runs = [eval(line) for line in receipt.read_text().splitlines()]
+            self.assertEqual([arguments for arguments, _ in runs],
+                             [[]] + [["direct", "--exact"]] * 3)
+            self.assertEqual([tomllib.loads(t)["vector"][1]["id"] for _, t in runs],
+                             ["adjusted", "adjusted", "adjusted-probe", "adjusted-probe"])
+            self.assertEqual(["rules" in tomllib.loads(t)["vector"][1] for _, t in runs],
+                             [True, True, False, True])
+
+    def test_patched_runs_write_every_copy_and_refuse_a_test_without_one(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            built = padded('[[vector]]\nid = "a"\nbefore = 2\nafter = 3\n', 64)
+            executable = root / "image"
+            executable.write_bytes(b"head" + built + b"middle" + built + b"tail")
+            executable.chmod(0o555)
+            scratch = root / "scratch"
+            scratch.mkdir()
+            with patch("adjusted_vectors_run.passes", return_value=True) as passes:
+                run = patched_runs(executable, built, root, None, scratch)
+                self.assertTrue(run('[[vector]]\nid = "b"\n'))
+                probe_bytes = padded('[[vector]]\nid = "b"\n', 64)
+                self.assertEqual((scratch / "image").read_bytes(),
+                                 b"head" + probe_bytes + b"middle" + probe_bytes + b"tail")
+                self.assertEqual(passes.call_args.args, (scratch / "image", root, None))
+                with self.assertRaises(CannotProbe):
+                    run("x" * 65)
+            self.assertEqual(executable.read_bytes(), b"head" + built + b"middle" + built + b"tail")
+            with self.assertRaises(CannotProbe):
+                patched_runs(executable, padded("other", 64), root, None, scratch)
+
+    def test_the_build_files_are_restored_whatever_happens(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            path.write_bytes(b"committed\r\n")
+            seen: list[bytes] = []
+
+            def build(_root: Path, _crates: list[str]) -> dict[str, Path]:
+                seen.append(path.read_bytes())
+                raise CannotProbe("the vector tests don't build")
+
+            with patch("adjusted_vectors_run.build", side_effect=build), \
+                    self.assertRaises(CannotProbe):
+                built_with(Path(directory), {path: b"padded\n\n"}, ["demo"])
+            self.assertEqual(seen, [b"padded\n\n"])
+            self.assertEqual(path.read_bytes(), b"committed\r\n")
+
+    def test_cargo_messages_name_each_executable_and_its_package(self) -> None:
+        output = b"\n".join([
+            b'{"reason":"compiler-artifact","manifest_path":"/r/crates/clean/demo/Cargo.toml",'
+            b'"executable":"/r/target/debug/deps/vectors-1"}',
+            b'{"reason":"compiler-artifact","manifest_path":"/r/crates/clean/types/Cargo.toml",'
+            b'"executable":null}',
+            b'{"reason":"build-finished","success":true}'])
+        self.assertEqual([(a.manifest.parent.name, a.executable.name) for a in artifacts(output)],
+                         [("demo", "vectors-1")])
 
     def test_linked_files_require_valid_reviewed_test_selection(self) -> None:
         text = REFERENCE + '[[dependent]]\nbase = "reference"\n'
@@ -281,7 +341,7 @@ class AdjustedVectors(unittest.TestCase):
                         del expected["vector"][1]["rules"]
                     self.assertEqual(tomllib.loads(probe(text, candidate, keep_rules)), expected)
 
-    def test_a_probe_id_collision_is_refused_and_restored(self) -> None:
+    def test_a_probe_id_collision_is_refused(self) -> None:
         text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
                       "before = 2\nafter = 5\n").replace('"reference"', '"adjusted-probe"')
         with self.assertRaises(CannotProbe):
@@ -296,39 +356,30 @@ class AdjustedVectors(unittest.TestCase):
     def test_shared_vector_proves_each_executed_parameter_separately(self) -> None:
         text = vector('id = "shared"\nentries = ["Step", "Margin"]\n'
                       'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 14\n')
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            path.write_text(text, encoding="utf-8", newline="\n")
-            probes: list[dict[str, int]] = []
+        probes: list[dict[str, int]] = []
 
-            def run() -> bool:
-                rows = tomllib.loads(path.read_text(encoding="utf-8"))["vector"]
-                rules = rows[1].get("rules", {})
-                probes.append(rules)
-                return len(rows) == 2 and all(
-                    row["after"] == row["before"] + row.get("rules", {}).get("step", 1)
-                    + row.get("rules", {}).get("margin", 0) for row in rows)
+        def run(probed: str) -> bool:
+            rows = tomllib.loads(probed)["vector"]
+            rules = rows[1].get("rules", {})
+            probes.append(rules)
+            return len(rows) == 2 and all(
+                row["after"] == row["before"] + row.get("rules", {}).get("step", 1)
+                + row.get("rules", {}).get("margin", 0) for row in rows)
 
-            self.assertEqual(prove(path, ["Step", "Margin"], run,
-                                   {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})}),
-                             {"Step": Proven("shared", ("Margin",)),
-                              "Margin": Proven("shared", ("Step",))})
-            self.assertIn({"margin": 9}, probes)
-            self.assertIn({"step": 3}, probes)
-            self.assertEqual(path.read_text(encoding="utf-8"), text)
+        self.assertEqual(prove(text, ["Step", "Margin"],
+                               {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})}, run),
+                         {"Step": Proven("shared", ("Margin",)),
+                          "Margin": Proven("shared", ("Step",))})
+        self.assertIn({"margin": 9}, probes)
+        self.assertIn({"step": 3}, probes)
 
-    def test_missing_unknown_or_ambiguous_ownership_refuses_and_restores(self) -> None:
+    def test_missing_unknown_or_ambiguous_ownership_refuses(self) -> None:
         text = vector('id = "shared"\nentries = ["Step", "Margin"]\n'
                       'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 5\n')
         for owners in ({}, {"step": frozenset({"Step"}), "margin": frozenset({"Unknown"})},
                        {"step": frozenset({"Step"}), "margin": frozenset({"Step", "Margin"})}):
-            with self.subTest(owners=owners), tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "demo.toml"
-                original = text.encode("utf-8")
-                path.write_bytes(original)
-                with self.assertRaises(CannotProbe):
-                    prove(path, ["Step", "Margin"], model(path), owners)
-                self.assertEqual(path.read_bytes(), original)
+            with self.subTest(owners=owners), self.assertRaises(CannotProbe):
+                prove(text, ["Step", "Margin"], owners, model())
 
     def test_the_owners_check_refuses_an_unowned_override_and_runs_no_test(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -360,34 +411,24 @@ class AdjustedVectors(unittest.TestCase):
                       'before = 2\nafter = 5\n\n[[vector]]\n'
                       'id = "margin"\nentries = ["Margin"]\nrules = { step = 4 }\n'
                       'before = 2\nafter = 6\n')
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            original = text.encode("utf-8")
-            path.write_bytes(original)
-            self.assertEqual(prove(path, ["Step", "Margin"], model(path),
-                                   {"step": frozenset({"Step", "Margin"})}),
-                             {"Step": Proven("step", ()), "Margin": Proven("margin", ())})
-            self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(prove(text, ["Step", "Margin"], {"step": frozenset({"Step", "Margin"})},
+                               model()),
+                         {"Step": Proven("step", ()), "Margin": Proven("margin", ())})
 
-    def test_runner_error_after_a_probe_propagates_and_restores(self) -> None:
+    def test_runner_error_after_a_probe_propagates(self) -> None:
         text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
                       'before = 2\nafter = 5\n')
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            original = text.encode("utf-8")
-            path.write_bytes(original)
-            calls = 0
+        calls = 0
 
-            def run() -> bool:
-                nonlocal calls
-                calls += 1
-                if calls == 2:
-                    raise OSError()
-                return True
+        def run(_: str) -> bool:
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError()
+            return True
 
-            with self.assertRaises(OSError):
-                prove(path, ["Step"], run, {"step": frozenset({"Step"})})
-            self.assertEqual(path.read_bytes(), original)
+        with self.assertRaises(OSError):
+            prove(text, ["Step"], {"step": frozenset({"Step"})}, run)
 
     def test_selective_replacement_preserves_nested_unrelated_overrides(self) -> None:
         for rules in ('rules = { step = 3, margin = { values = [9, 8] } }\n',
@@ -430,37 +471,29 @@ class AdjustedVectors(unittest.TestCase):
                 with self.subTest(code=code, output=output), self.assertRaises(CannotProbe):
                     completed_test(subprocess.CompletedProcess([], code, output), failure_code)
 
-    def test_reference_only_subprocess_launch_failure_cannot_prove_a_parameter(self) -> None:
+    def test_reference_only_crash_or_launch_failure_cannot_prove_a_parameter(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 1 }\n'
+                      'before = 2\nafter = 3\n')
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            spec = root / "docs/behaviours/demo.md"
-            spec.parent.mkdir(parents=True)
-            spec.write_text("### Step\n- switch: Parameter.\n", encoding="utf-8", newline="\n")
-            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
-            metadata.parent.mkdir(parents=True)
-            metadata.write_text('[owners]\nstep = ["Step"]\n', encoding="utf-8", newline="\n")
-            path = root / "scenarios/vectors/demo.toml"
-            path.parent.mkdir(parents=True)
-            text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 1 }\n'
-                          'before = 2\nafter = 3\n')
-            path.write_text(text, encoding="utf-8", newline="\n")
-            runner = root / "runner.py"
-            receipt = root / "receipt.txt"
-            runner.write_text("import sys,tomllib\nfrom pathlib import Path\n"
-                              "row=tomllib.loads(Path(sys.argv[1]).read_text())['vector'][1]\n"
-                              "with Path(sys.argv[2]).open('a') as receipt: receipt.write(str('rules' in row)+chr(10))\n"
-                              "if 'rules' not in row: sys.exit(126)\n"
-                              "print('running 1 test')\n"
-                              "print('test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')\n",
-                              encoding="utf-8", newline="\n")
-            with patch("adjusted_vectors_run.test_command", return_value=[sys.executable, str(runner), str(path), str(receipt)]):
+            path = self.demo(root, text, None)
+            receipt = root / "receipt"
+
+            def build(_root: Path, _crates: list[str]) -> dict[str, Path]:
+                built = root / f"build-{len(list(root.glob('build-*')))}"
+                built.mkdir()
+                return {"demo": fake_test(built, path.read_bytes(), receipt, "crash")}
+
+            with patch("adjusted_vectors_run.build", side_effect=build):
                 with self.assertRaises(CannotProbe):
-                    check_domain(root, "demo")
-            self.assertEqual(receipt.read_text(encoding="utf-8").splitlines(), ["True", "False"])
-            self.assertEqual(path.read_text(encoding="utf-8"), text)
-            with patch("adjusted_vectors_run.subprocess.run", side_effect=OSError()):
-                with self.assertRaises(CannotProbe):
-                    check_domain(root, "demo")
+                    check_domains(root, ["demo"])
+                self.assertEqual(["rules" in tomllib.loads(t)["vector"][-1] for _, t in
+                                  map(eval, receipt.read_text().splitlines())],
+                                 [True, True, False])
+                self.assertEqual(path.read_text(encoding="utf-8"), text)
+            with patch("adjusted_vectors_run.build", return_value={"demo": root / "missing"}), \
+                    self.assertRaises(CannotProbe):
+                check_domains(root, ["demo"])
             self.assertEqual(path.read_text(encoding="utf-8"), text)
 
     def test_linux_selects_dedicated_vectors_or_library_adapter(self) -> None:
@@ -468,14 +501,12 @@ class AdjustedVectors(unittest.TestCase):
             root = Path(directory)
             tests = root / "crates/clean/demo/tests"
             tests.mkdir(parents=True)
-            self.assertEqual(test_command("demo", root),
-                             ["cargo", "test", "--locked", "-p", "demo", "--lib"])
+            self.assertEqual(test_target("demo", root), ("--lib",))
             # An unrelated integration target doesn't replace a unit-based adapter.
             (tests / "other.rs").write_text("// Invented target.\n", encoding="utf-8")
-            self.assertEqual(test_command("demo", root)[-1], "--lib")
+            self.assertEqual(test_target("demo", root), ("--lib",))
             (tests / "vectors.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-            self.assertEqual(test_command("demo", root),
-                             ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
+            self.assertEqual(test_target("demo", root), ("--test", "vectors"))
 
     def test_nested_vectors_select_the_integration_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -483,18 +514,17 @@ class AdjustedVectors(unittest.TestCase):
             tests = root / "crates/clean/demo/tests/vectors"
             tests.mkdir(parents=True)
             (tests / "main.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-            self.assertEqual(test_command("demo", root),
-                             ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
+            self.assertEqual(test_target("demo", root), ("--test", "vectors"))
 
     def test_owners_selects_the_check_and_its_domains(self) -> None:
         for arguments, owners, probed in ((["--owners"], ["alpha", "beta"], []),
                                           (["--owners", "beta"], ["beta"], []),
-                                          ([], [], ["alpha", "beta"]),
-                                          (["beta"], [], ["beta"])):
+                                          ([], [], [["alpha", "beta"]]),
+                                          (["beta"], [], [["beta"]])):
             with self.subTest(arguments=arguments), \
                     patch("adjusted_vectors_run.domains", return_value=["alpha", "beta"]), \
                     patch("adjusted_vectors_run.check_domain_owners") as owners_check, \
-                    patch("adjusted_vectors_run.check_domain", return_value=0) as probe_check:
+                    patch("adjusted_vectors_run.check_domains", return_value=0) as probe_check:
                 self.assertEqual(main(arguments), 0)
                 self.assertEqual([c.args[1] for c in owners_check.call_args_list], owners)
                 self.assertEqual([c.args[1] for c in probe_check.call_args_list], probed)

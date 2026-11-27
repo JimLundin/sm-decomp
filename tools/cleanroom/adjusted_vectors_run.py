@@ -12,8 +12,15 @@ with two probes, one at a time, and runs the test on each:
 
 A rules table that is empty, repeats the reference values or changes something the case
 doesn't reach leaves the reference probe passing, and the entry stays unproven. So a model
-that ignores an adjusted value fails that entry's vector in the domain's test. The vector file
-is restored whatever happens.
+that ignores an adjusted value fails that entry's vector in the domain's test.
+
+The vector test embeds its vector file with include_str!, and a clean crate reads no file and
+no environment variable, so a probe can't reach a built test any other way. The runner builds
+every domain's test once as committed and runs it whole. It then builds the test once more with
+the vector file padded by blank lines to the most bytes a probe can take, and restores the file
+whatever happens. Each probe, padded to that length, is written over every copy of the padded
+file in a copy of that executable, which then runs. Each build takes one cargo run per kind of
+test target, over all domains together, and the domains' tests run one process per CPU.
 
 tools/cleanroom/adjusted_rule_owners/DOMAIN.toml maps each vector-format rule subtree to
 its reviewed Parameter entry owners: [owners], rule = ["Entry"]. Ownership means the
@@ -22,7 +29,6 @@ removes only that entry's overrides, keeping every unrelated override fixed. Mis
 unknown ownership refuses a probe. If multiple owners of an overridden rule co-occur in
 a candidate's entries, that witness is ambiguous and is refused. Separate witnesses can
 prove entries that share a parameter. This proves entry adjustability, not each knob.
-
 
 When linked cases inherit ordinary vectors, adjusted_probe_tests.toml names the reviewed
 exact direct-vector test. The committed complete suite and selected test must both pass
@@ -33,17 +39,22 @@ probing. No dependent reference, expectation or override is edited.
 
 Usage: adjusted_vectors_run.py [--owners] [DOMAIN...], from the repository root; with no
 DOMAIN, every spec with a vector file and a clean crate. --owners checks only the ownership and
-test selection a probe needs, and runs no test: tools/lane/gate.sh's form. Exit 1 when an entry has adjusted vectors and none
-depends on its rules; 2 when a domain can't be probed (its test fails as committed, or fails
-the control); else 0. An entry no vector adjusts is listed and left to adjusted_vectors.sh,
+test selection a probe needs, and runs no test: tools/lane/gate.sh's form. Exit 1 when an
+entry has adjusted vectors and none depends on its rules; 2 when a domain can't be probed (its
+test doesn't build, fails as committed, holds no verbatim copy of its vector file, or fails the
+control); else 0. An entry no vector adjusts is listed and left to adjusted_vectors.sh,
 which gates it at the domain's spec round.
 """
 
+import functools
+import json
 import re
 import subprocess
 import sys
+import tempfile
 import tomllib
 from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -63,6 +74,7 @@ class Candidate:
     index: int
     id: str
     entries: frozenset[str]
+    rules: frozenset[str]
 
 
 def parameter_entries(spec: str) -> list[str]:
@@ -78,8 +90,9 @@ def parameter_entries(spec: str) -> list[str]:
     return found
 
 
+@functools.lru_cache(maxsize=2)
 def parsed(text: str, what: str) -> dict[str, Any]:
-    """TOML text as a table; a syntax error refuses, naming WHAT."""
+    """TOML text as a table, which callers don't change; a syntax error refuses, naming WHAT."""
     try:
         return tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
@@ -96,7 +109,8 @@ def vectors(text: str) -> list[dict[str, Any]]:
 def candidates(text: str) -> list[Candidate]:
     """The vectors whose rules table isn't empty."""
     return [
-        Candidate(index, str(row.get("id", "")), frozenset(row.get("entries", [])))
+        Candidate(index, str(row.get("id", "")), frozenset(row.get("entries", [])),
+                  frozenset(row["rules"]))
         for index, row in enumerate(vectors(text))
         if row.get("rules")
     ]
@@ -130,8 +144,6 @@ def without_rules(lines: list[str]) -> list[str]:
 
 def inline_toml(value: Any) -> str:
     """Encode parsed rule values as TOML; unsupported values refuse rather than drift."""
-    import json
-
     if isinstance(value, dict):
         return "{ " + ", ".join(json.dumps(k) + " = " + inline_toml(v)
                                 for k, v in value.items()) + " }"
@@ -153,7 +165,7 @@ def probe(text: str, candidate: Candidate, keep_rules: bool,
     The entire parsed file is checked against the expected replacement, so other vectors,
     globals and arrays cannot change as a side effect of the text edit.
     """
-    original = tomllib.loads(text)
+    original = parsed(text, "the vector file")
     original_rows = vectors(text)
     probe_id = candidate.id + PROBE_SUFFIX
     ids = [row.get("id") for row in original_rows]
@@ -224,44 +236,46 @@ def check_owners(text: str, entries: list[str], owners: dict[str, frozenset[str]
     """Each override of each adjusted vector has one reviewed owner among the vector's entries,
     and every owner is a Parameter entry of the spec."""
     for candidate in candidates(text):
-        for rule in vectors(text)[candidate.index]["rules"]:
+        for rule in candidate.rules:
             if rule not in owners or not owners[rule] or not owners[rule].issubset(entries):
                 raise CannotProbe(f"{candidate.id}: missing or unknown owner for {rule}")
             if len(owners[rule].intersection(candidate.entries)) > 1:
                 raise CannotProbe(f"{candidate.id}: ambiguous owners for {rule}")
 
 
-def prove(path: Path, entries: list[str], run: Callable[[], bool],
-          owners: dict[str, frozenset[str]],
-          run_probe: Callable[[], bool] | None = None) -> dict[str, Verdict]:
-    """Each Parameter entry's verdict, from probes of the vectors that adjust it."""
-    original = path.read_bytes()
-    text = original.decode("utf-8")
-    if not run():
-        raise CannotProbe("the vector test fails on the committed vectors")
-    if run_probe is not None:
-        if not run_probe():
-            raise CannotProbe("the selected direct-vector test fails on committed vectors")
-    else:
-        run_probe = run
+def owned(candidate: Candidate, entry: str, owners: dict[str, frozenset[str]]) -> frozenset[str]:
+    return frozenset(rule for rule in candidate.rules if entry in owners[rule])
+
+
+def probe_size(text: str) -> int:
+    """The most bytes a probe of TEXT can take: a probe adds its id's suffix, may move what
+    rules the vector keeps into one inline table and ends the file with a newline."""
+    rows = vectors(text)
+    return len(text.encode("utf-8")) + 1 + max(
+        (len(f"{PROBE_SUFFIX}rules = {inline_toml(rows[c.index]['rules'])}\n".encode("utf-8"))
+         for c in candidates(text)), default=0)
+
+
+def prove(text: str, entries: list[str], owners: dict[str, frozenset[str]],
+          run: Callable[[str], bool]) -> dict[str, Verdict]:
+    """Each Parameter entry's verdict, from runs of the test on probes of the vectors that
+    adjust it."""
+    if not run(text):
+        raise CannotProbe("the probed test fails on the committed vectors")
     adjusting_candidates = candidates(text)
     check_owners(text, entries, owners)
     depending: dict[tuple[str, str], bool] = {}
 
     def depends(candidate: Candidate, entry: str) -> bool:
         key = (candidate.id, entry)
-        removed = frozenset(rule for rule in vectors(text)[candidate.index]["rules"]
-                            if entry in owners[rule])
+        removed = owned(candidate, entry, owners)
         if not removed:
             return False
         if key not in depending:
-            path.write_bytes(probe(text, candidate, keep_rules=False,
-                                   remove_rules=removed).encode("utf-8"))
-            fails_at_reference = not run_probe()
-            if fails_at_reference:
-                path.write_bytes(probe(text, candidate, keep_rules=True).encode("utf-8"))
-                if not run_probe():
-                    raise CannotProbe(f"{candidate.id}: the test refuses a copy of it")
+            fails_at_reference = not run(probe(text, candidate, keep_rules=False,
+                                               remove_rules=removed))
+            if fails_at_reference and not run(probe(text, candidate, keep_rules=True)):
+                raise CannotProbe(f"{candidate.id}: the test refuses a copy of it")
             depending[key] = fails_at_reference
         return depending[key]
 
@@ -276,10 +290,7 @@ def prove(path: Path, entries: list[str], run: Callable[[], bool],
         return next((Proven(c.id, others(c, entry)) for c in adjusting if depends(c, entry)),
                     Unproven())
 
-    try:
-        return {entry: verdict(entry) for entry in entries}
-    finally:
-        path.write_bytes(original)
+    return {entry: verdict(entry) for entry in entries}
 
 
 SUMMARY = re.compile(
@@ -316,11 +327,98 @@ def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int
     raise CannotProbe("test completion and process status disagree")
 
 
-def test_command(crate: str, root: Path) -> list[str]:
+def test_target(crate: str, root: Path) -> tuple[str, ...]:
     tests = root / "crates/clean" / crate / "tests"
     dedicated = (tests / "vectors.rs").is_file() or (tests / "vectors/main.rs").is_file()
-    command = ["cargo", "test", "--locked", "-p", crate]
-    return command + (["--test", "vectors"] if dedicated else ["--lib"])
+    return ("--test", "vectors") if dedicated else ("--lib",)
+
+
+@dataclass(frozen=True)
+class Artifact:
+    """An executable cargo built, and the manifest of its package."""
+
+    manifest: Path
+    executable: Path
+
+
+def artifacts(output: bytes) -> list[Artifact]:
+    """The executables in cargo's JSON messages."""
+    found: list[Artifact] = []
+    for line in output.decode("utf-8").splitlines():
+        message = json.loads(line)
+        if (isinstance(message, dict) and message.get("reason") == "compiler-artifact"
+                and isinstance(message.get("manifest_path"), str)
+                and isinstance(message.get("executable"), str)):
+            found.append(Artifact(Path(message["manifest_path"]), Path(message["executable"])))
+    return found
+
+
+def build(root: Path, crates: list[str]) -> dict[str, Path]:
+    """Each crate's vector test executable, from one cargo run per kind of target."""
+    groups: dict[tuple[str, ...], list[str]] = {}
+    for crate in crates:
+        groups.setdefault(test_target(crate, root), []).append(crate)
+    built: dict[str, Path] = {}
+    for target, members in groups.items():
+        command = ["cargo", "test", "--locked", "--no-run",
+                   "--message-format=json-render-diagnostics",
+                   *(word for crate in members for word in ("-p", crate)), *target]
+        try:
+            result = subprocess.run(command, cwd=root, capture_output=True, check=False)
+        except OSError as error:
+            raise CannotProbe("cargo could not be launched") from error
+        if result.returncode != 0:
+            sys.stderr.buffer.write(result.stderr)
+            raise CannotProbe("the vector tests don't build")
+        built.update({a.manifest.parent.name: a.executable for a in artifacts(result.stdout)})
+    missing = [crate for crate in crates if crate not in built]
+    if missing:
+        raise CannotProbe(f"cargo built no vector test for {', '.join(missing)}")
+    return {crate: built[crate] for crate in crates}
+
+
+def passes(executable: Path, cwd: Path, selection: str | None) -> bool:
+    command = [str(executable), *((selection, "--exact") if selection is not None else ())]
+    try:
+        result = subprocess.run(command, cwd=cwd, capture_output=True, check=False)
+    except OSError as error:
+        raise CannotProbe("the test runner could not be launched") from error
+    return completed_test(result, failure_code=101, selected=selection)
+
+
+def padded(text: str, size: int) -> bytes:
+    """TEXT, then blank lines up to SIZE bytes, which a TOML parser reads as TEXT."""
+    data = text.encode("utf-8")
+    if len(data) > size:
+        raise CannotProbe("a probe is longer than the vector file the test was built with")
+    return data + b"\n" * (size - len(data))
+
+
+def patched_runs(executable: Path, built: bytes, cwd: Path, selection: str | None,
+                 scratch: Path) -> Callable[[str], bool]:
+    """Runs of copies of EXECUTABLE, built with the vector file BUILT, in which another vector
+    file of BUILT's length replaces each copy of BUILT it holds. Each copy is a new file: Linux
+    refuses to write a file that has run."""
+    image = bytearray(executable.read_bytes())
+    offsets: list[int] = []
+    at = image.find(built)
+    while at >= 0:
+        offsets.append(at)
+        at = image.find(built, at + len(built))
+    if not offsets:
+        raise CannotProbe(f"{executable.name} holds no verbatim copy of its vector file")
+    copy = scratch / executable.name
+
+    def run(text: str) -> bool:
+        data = padded(text, len(built))
+        for offset in offsets:
+            image[offset:offset + len(data)] = data
+        copy.unlink(missing_ok=True)
+        copy.write_bytes(image)
+        copy.chmod(0o755)
+        return passes(copy, cwd, selection)
+
+    return run
 
 
 def rule_owners(root: Path, domain: str, required: bool) -> dict[str, frozenset[str]]:
@@ -363,31 +461,48 @@ def probe_test(root: Path, domain: str, text: str) -> str | None:
     return selected
 
 
-def check_domain(root: Path, domain: str) -> int:
+@dataclass(frozen=True)
+class Domain:
+    """What a domain's proof reads: its spec's Parameter entries, its vectors, their rule
+    owners and its direct-vector test."""
+
+    name: str
+    entries: list[str]
+    text: str
+    owners: dict[str, frozenset[str]]
+    selected: str | None
+
+    @property
+    def crate(self) -> str:
+        return self.name.replace("-", "_")
+
+    def path(self, root: Path) -> Path:
+        return root / "scenarios/vectors" / f"{self.name}.toml"
+
+
+def load(root: Path, name: str) -> Domain:
+    spec = (root / "docs/behaviours" / f"{name}.md").read_text(encoding="utf-8")
+    text = (root / "scenarios/vectors" / f"{name}.toml").read_text(encoding="utf-8")
+    selected = probe_test(root, name, text)
+    owners = rule_owners(root, name, bool(candidates(text)))
+    return Domain(name, parameter_entries(spec), text, owners, selected)
+
+
+def built_with(root: Path, files: dict[Path, bytes], crates: list[str]) -> dict[str, Path]:
+    """BUILD with each path in FILES holding its bytes; the files are restored whatever
+    happens."""
+    originals = {path: path.read_bytes() for path in files}
+    try:
+        for path, data in files.items():
+            path.write_bytes(data)
+        return build(root, crates)
+    finally:
+        for path, original in originals.items():
+            path.write_bytes(original)
+
+
+def report(domain: str, verdicts: dict[str, Verdict]) -> int:
     """Print the domain's verdicts; the number of entries whose adjusted vectors prove nothing."""
-    spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
-    crate = domain.replace("-", "_")
-
-    vector_path = root / "scenarios/vectors" / f"{domain}.toml"
-    selected = probe_test(root, domain, vector_path.read_text(encoding="utf-8"))
-
-    def run(selection: str | None = None) -> bool:
-        command = test_command(crate, root)
-        if selection is not None:
-            command = command + ["--", selection, "--exact"]
-        try:
-            result = subprocess.run(command, cwd=root, capture_output=True,
-                                    check=False)
-        except OSError as error:
-            raise CannotProbe("the test runner could not be launched") from error
-        return completed_test(result, failure_code=101,
-                              selected=selection)
-
-    entries = parameter_entries(spec)
-    vector_path = root / "scenarios/vectors" / f"{domain}.toml"
-    owners = rule_owners(root, domain, bool(candidates(vector_path.read_text(encoding="utf-8"))))
-    verdicts = prove(vector_path, entries, run, owners,
-                     (lambda: run(selected)) if selected is not None else None)
     for entry, verdict in verdicts.items():
         match verdict:
             case Unadjusted():
@@ -401,9 +516,47 @@ def check_domain(root: Path, domain: str) -> int:
                 print(f"adjusted: {domain}: {entry} depends on its rules in {vector}, which "
                       f"also names {', '.join(shared_with)}")
     proven = sum(1 for verdict in verdicts.values() if isinstance(verdict, Proven))
-    print(f"adjusted: {domain}: {proven} of {len(entries)} Parameter entries have a vector "
+    print(f"adjusted: {domain}: {proven} of {len(verdicts)} Parameter entries have a vector "
           "that fails when its owned overrides are removed")
     return sum(1 for verdict in verdicts.values() if isinstance(verdict, Unproven))
+
+
+def verdicts_of(domain: Domain, cwd: Path, executable: Path,
+                built: bytes | None) -> dict[str, Verdict]:
+    with tempfile.TemporaryDirectory() as scratch:
+        run: Callable[[str], bool] = (
+            patched_runs(executable, built, cwd, domain.selected, Path(scratch))
+            if built is not None
+            else lambda _: passes(executable, cwd, domain.selected))
+        try:
+            return prove(domain.text, domain.entries, domain.owners, run)
+        except CannotProbe as error:
+            raise CannotProbe(f"{domain.name}: {error}") from None
+
+
+def check_domains(root: Path, names: list[str]) -> int:
+    """Prove each domain, one process per CPU; the number of entries whose adjusted vectors
+    prove nothing."""
+    loaded = [load(root, name) for name in names]
+    cwds = [root / "crates/clean" / domain.crate for domain in loaded]
+    committed = build(root, [domain.crate for domain in loaded])
+    with ProcessPoolExecutor() as pool:
+        baselines = pool.map(passes, [committed[domain.crate] for domain in loaded], cwds,
+                             [None] * len(loaded))
+        for domain, passed in zip(loaded, baselines, strict=True):
+            if not passed:
+                raise CannotProbe(f"{domain.name}: the vector test fails on the committed vectors")
+        probed = [domain for domain in loaded if candidates(domain.text)]
+        for domain in probed:
+            check_owners(domain.text, domain.entries, domain.owners)
+        files = {domain.path(root): padded(domain.text, probe_size(domain.text))
+                 for domain in probed}
+        executables = committed | built_with(root, files, [domain.crate for domain in probed])
+        proofs = [pool.submit(verdicts_of, domain, cwd, executables[domain.crate],
+                              files.get(domain.path(root)))
+                  for domain, cwd in zip(loaded, cwds, strict=True)]
+        return sum(report(domain.name, proof.result())
+                   for domain, proof in zip(loaded, proofs, strict=True))
 
 
 def domains(root: Path) -> list[str]:
@@ -415,18 +568,15 @@ def domains(root: Path) -> list[str]:
     )
 
 
-def check_domain_owners(root: Path, domain: str) -> None:
+def check_domain_owners(root: Path, name: str) -> None:
     """The ownership and test selection a probe of the domain needs, checked running no test."""
-    spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
-    text = (root / "scenarios/vectors" / f"{domain}.toml").read_text(encoding="utf-8")
-    probe_test(root, domain, text)
-    owners = rule_owners(root, domain, bool(candidates(text)))
+    domain = load(root, name)
     try:
-        check_owners(text, parameter_entries(spec), owners)
+        check_owners(domain.text, domain.entries, domain.owners)
     except CannotProbe as error:
         # A vector's id alone doesn't say which domain's owners lack the rule.
-        raise CannotProbe(f"{domain}: {error}") from None
-    print(f"adjusted: {domain}: every adjusted vector's overrides have a reviewed owner")
+        raise CannotProbe(f"{name}: {error}") from None
+    print(f"adjusted: {name}: every adjusted vector's overrides have a reviewed owner")
 
 
 def main(arguments: list[str]) -> int:
@@ -436,11 +586,11 @@ def main(arguments: list[str]) -> int:
         arguments = arguments[1:]
     unproven = 0
     try:
-        for domain in arguments or domains(root):
-            if owners_only:
+        if owners_only:
+            for domain in arguments or domains(root):
                 check_domain_owners(root, domain)
-            else:
-                unproven += check_domain(root, domain)
+        else:
+            unproven = check_domains(root, arguments or domains(root))
     except CannotProbe as error:
         print(f"adjusted_vectors_run: {error}", file=sys.stderr)
         return 2
