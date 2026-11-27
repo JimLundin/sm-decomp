@@ -7,7 +7,7 @@ use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility, Start,
 };
 use super::readers::{
-    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
+    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
 use super::{Sources, data_failure, production_failure, result::Outcome};
 use crate::{
@@ -92,18 +92,6 @@ pub(super) fn valid(case: &Case) -> bool {
         && case.expectations.outputs == outputs
 }
 
-pub(super) struct Tape<T> {
-    first: u64,
-    values: Vec<T>,
-}
-impl<T> Tape<T> {
-    pub(super) fn at(&self, cut: u64) -> Result<&T, Outcome> {
-        cut.checked_sub(self.first)
-            .and_then(|n| usize::try_from(n).ok())
-            .and_then(|n| self.values.get(n))
-            .ok_or_else(|| data_failure(Some(cut), "blackout schedule"))
-    }
-}
 impl Tape<blackout::Cut> {
     pub(super) fn advance(
         &self,
@@ -197,14 +185,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         content,
         rules,
         schedule,
-        inputs: InputReader::Blackout(Tape {
-            first,
-            values: inputs,
-        }),
-        expected: ExpectedReader::Blackout(Tape {
-            first,
-            values: expected,
-        }),
+        inputs: InputReader::Blackout(Tape::new(first, inputs)),
+        expected: ExpectedReader::Blackout(Tape::new(first, expected)),
         actual: if body {
             ActualReader::StandingBody
         } else if hud {

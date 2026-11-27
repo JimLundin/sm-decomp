@@ -10,9 +10,26 @@ use game::production::{
 };
 use game::state::owned::OwnedState;
 
+pub(super) struct Tape<T> {
+    first: u64,
+    values: Vec<T>,
+}
+impl<T> Tape<T> {
+    pub(super) const fn new(first: u64, values: Vec<T>) -> Self {
+        Self { first, values }
+    }
+
+    pub(super) fn at(&self, cut: u64) -> Result<&T, Outcome> {
+        cut.checked_sub(self.first)
+            .and_then(|n| usize::try_from(n).ok())
+            .and_then(|n| self.values.get(n))
+            .ok_or_else(|| data_failure(Some(cut), "cut outside recorded tape"))
+    }
+}
+
 pub(super) enum InputReader {
     Explosion(super::explosion::Tape<game::production::played::explosion::Cut>),
-    Blackout(super::blackout::Tape<game::production::blackout::Cut>),
+    Blackout(Tape<game::production::blackout::Cut>),
     Intro(super::played::intro::indexed::Inputs),
     IntroRooms(super::intro_rooms::Inputs),
     Flashback(super::flashback::Inputs),
@@ -20,7 +37,7 @@ pub(super) enum InputReader {
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
     ShaftEntry(Vec<game::production::shaft_entry::Opportunity>),
-    JumpHistory(Vec<Option<samus_movement::JumpButton>>),
+    JumpHistory(Tape<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
     LandingSite(super::landing_site::Inputs),
@@ -40,7 +57,7 @@ pub(super) enum InputReader {
 
 pub(super) enum ExpectedReader {
     Explosion(super::explosion::Tape<ExpectedCut>),
-    Blackout(super::blackout::Tape<ExpectedCut>),
+    Blackout(Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
     IntroRooms(Box<super::intro_rooms::Expected>),
     Flashback(super::flashback::Expectations),
@@ -48,7 +65,7 @@ pub(super) enum ExpectedReader {
     SaveFiles(super::save_files::Expected),
     IntroMissiles(super::intro_missiles::Expected),
     ShaftEntry(Vec<ExpectedCut>),
-    JumpHistory(Vec<ExpectedCut>),
+    JumpHistory(Tape<ExpectedCut>),
     Discovery(super::discovery::Expectations),
     Departure(super::departure::Tape<ExpectedCut>),
     LandingSite(Box<[ExpectedCut; 2]>),
@@ -84,7 +101,9 @@ pub(super) enum ActualReader {
         integrated: bool,
         scene: types::zebes::ZebesScene,
     },
-    EarlyMap,
+    EarlyMap {
+        carry_cut: u64,
+    },
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
@@ -336,9 +355,11 @@ impl ActualReader {
             (Self::Audio(aliases), InputReader::Audio(_), ProductionOutputs::Audio) => {
                 audio::actual(production, aliases)
             }
-            (Self::EarlyMap, InputReader::EarlyMap(_), ProductionOutputs::Connected(_)) => {
-                super::early_map::actual(production, Some(cut))
-            }
+            (
+                Self::EarlyMap { carry_cut },
+                InputReader::EarlyMap(_),
+                ProductionOutputs::Connected(_),
+            ) => super::early_map::actual(production, Some(cut), cut == *carry_cut),
             (
                 Self::Movement,
                 InputReader::Movement { .. },
@@ -383,7 +404,9 @@ impl ActualReader {
             Self::Zebes { integrated, scene } => {
                 super::zebes::initial(production, scene, *integrated)
             }
-            Self::EarlyMap => super::early_map::actual(production, None),
+            Self::EarlyMap { carry_cut } => {
+                super::early_map::actual(production, None, cut == *carry_cut)
+            }
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer(group) => super::sender_offer::actual(production, *group),
@@ -432,13 +455,12 @@ impl ExpectedReader {
             Self::Intro(expected) => expected.read(cut),
             Self::IntroRooms(expected) => expected.read(cut),
             Self::Explosion(expected) => expected.read(cut),
-            Self::Blackout(tape) => tape.at(cut).cloned(),
+            Self::Blackout(tape) | Self::JumpHistory(tape) => tape.at(cut).cloned(),
             Self::Flashback(expected) => expected.at(cut),
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::ShaftEntry(tape) => super::shaft_entry::at(tape, cut).cloned(),
-            Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),
             Self::LandingSite(expected) => match cut {

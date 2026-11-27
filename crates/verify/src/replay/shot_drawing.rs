@@ -1,6 +1,7 @@
 //! The scoped ordinary power insertion observes ordered contact and exact sprite bytes.
 
-use super::index::FixtureFile;
+use super::index::{Case, FixtureFile};
+use super::readers::Tape;
 use super::{compare::Observation, data_failure, result::Outcome, weapons};
 use enemy_interactions::{
     Centre, ContactBox, ContactConditions, DoorContact, ProtectionFrames, Radii,
@@ -16,13 +17,8 @@ use serde::Deserialize;
 use std::path::Path;
 use weapons_projectiles as beam;
 
-pub(super) const ROW: &str = "chain-any-0003-DFD7";
-pub(super) const START: u64 = 156;
-pub(super) const END: u64 = 161;
-const FIRST: u64 = START + 1;
-
 #[derive(Deserialize)]
-struct Tape<T> {
+struct Capture<T> {
     row: String,
     admission_cut: u64,
     #[serde(alias = "opportunity")]
@@ -30,25 +26,19 @@ struct Tape<T> {
 }
 
 fn load<T: serde::de::DeserializeOwned>(
+    case: &Case,
     root: &Path,
     file: &FixtureFile,
     number: impl Fn(&T) -> u64,
-) -> Result<Vec<T>, Outcome> {
-    let tape: Tape<T> = file.read(root)?;
-    if tape.row != ROW
-        || tape.admission_cut != START
-        || !tape.cut.iter().map(number).eq(FIRST..=END)
+) -> Result<Tape<T>, Outcome> {
+    let window = case.cache_window()?;
+    let tape: Capture<T> = file.read(root)?;
+    if (tape.row.as_str(), tape.admission_cut) != (window.row, window.origin)
+        || !tape.cut.iter().map(number).eq(window.cuts.clone())
     {
         return Err(data_failure(None, "scoped shot fixture"));
     }
-    Ok(tape.cut)
-}
-
-fn at<T>(tape: &[T], cut: u64) -> Result<&T, Outcome> {
-    cut.checked_sub(FIRST)
-        .and_then(|offset| usize::try_from(offset).ok())
-        .and_then(|offset| tape.get(offset))
-        .ok_or_else(|| data_failure(Some(cut), "scoped shot fixture cut"))
+    Ok(Tape::new(*window.cuts.start(), tape.cut))
 }
 
 #[derive(Deserialize)]
@@ -116,18 +106,22 @@ impl Actor {
 }
 
 impl InputCut {
-    pub(super) fn load(root: &Path, file: &FixtureFile) -> Result<Vec<Self>, Outcome> {
-        load(root, file, |input: &Self| input.cut)
+    pub(super) fn load(
+        case: &Case,
+        root: &Path,
+        file: &FixtureFile,
+    ) -> Result<Tape<Self>, Outcome> {
+        load(case, root, file, |input: &Self| input.cut)
     }
 
     pub(super) fn advance(
-        tape: &[Self],
+        tape: &Tape<Self>,
         wram: &[u8],
         content: &weapons::Content,
         cut: u64,
         production: &mut game::production::Production,
     ) -> Result<game::production::ProductionOutputs, Outcome> {
-        let observed = at(tape, cut)?;
+        let observed = tape.at(cut)?;
         let input = weapons::ordinary_input(wram, content)?;
         if (
             input.update.cannon.shoot,
@@ -223,18 +217,22 @@ fn entry(index: u16, low: [u8; 4], high_pair: u8) -> Vec<u8> {
 }
 
 impl ExpectedCut {
-    pub(super) fn load(root: &Path, file: &FixtureFile) -> Result<Vec<Self>, Outcome> {
-        load(root, file, |record: &Self| record.number)
+    pub(super) fn load(
+        case: &Case,
+        root: &Path,
+        file: &FixtureFile,
+    ) -> Result<Tape<Self>, Outcome> {
+        load(case, root, file, |record: &Self| record.number)
     }
 
     pub(super) fn read(
-        tape: &[Self],
+        tape: &Tape<Self>,
         wram: &[u8],
         content: &weapons::Content,
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
         let mut fields = weapons::expected(wram, content)?;
-        fields.extend(at(tape, cut)?.outputs(content)?);
+        fields.extend(tape.at(cut)?.outputs(content)?);
         Ok(fields)
     }
 

@@ -1241,6 +1241,9 @@ impl FixtureFile {
 pub struct FixturePair {
     /// Provider whose typed readers consume these files.
     pub provider: InputProvider,
+    /// Capture repository revision recorded by early Map input fixtures.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
     /// File read for admission.
     pub inputs: FixtureFile,
     /// File read by the provider's comparison reader.
@@ -1248,8 +1251,23 @@ pub struct FixturePair {
 }
 
 impl FixturePair {
+    pub(super) fn repository(&self) -> Option<&str> {
+        self.repository.as_deref().or_else(|| {
+            super::legacy_packets::fixture(self.provider)?
+                .repository
+                .as_deref()
+        })
+    }
+
     fn valid(&self) -> bool {
+        let revision_valid = if self.provider == InputProvider::EarlyMapInputs {
+            self.repository()
+                .is_some_and(|revision| valid_hex(revision, 40))
+        } else {
+            self.repository.is_none()
+        };
         self.provider.uses_fixture_pair()
+            && revision_valid
             && self.inputs.path != self.expected.path
             && self.inputs.sha256 != self.expected.sha256
             && self.inputs.valid()
@@ -2333,12 +2351,6 @@ fn movement_provider_valid(
     use ObservationId as O;
     if case.inputs == InputProvider::PassageJumpDraws {
         return recorded
-            && case.start
-                == Start::CacheCut {
-                    frame: super::jump_history::START,
-                }
-            && case.row == super::jump_history::ROW
-            && case.end.cut_inclusive == super::jump_history::END
             && case.content == ContentProvider::PassageJump
             && case.expectations.fields == [O::DrawnJumpHeld, O::LastDrawJump]
             && case.expectations.outputs.is_empty()
@@ -2429,14 +2441,7 @@ fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
     case.inputs == InputProvider::ScopedShotDrawingInputs
         && case.kind == CaseKind::Scoped
         && case.expectations.provider == ExpectedProvider::PinnedShotDrawingObservations
-        && case.row == super::shot_drawing::ROW
-        && matches!(
-            case.start,
-            Start::CacheCut {
-                frame: super::shot_drawing::START
-            }
-        )
-        && case.end.cut_inclusive == super::shot_drawing::END
+        && case.cache_window().is_ok()
         && case.expectations.outputs
             == [
                 O::ContactConsumedMarkers,
@@ -2462,10 +2467,9 @@ fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> 
 fn early_map_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
-        && (case.fixture.is_some() || case.id.0 == "connected-ordinary/early-mini-map")
-        && case.row == "chain-any-0003-DFD7"
-        && matches!(case.start, Start::CacheCut { frame: 78 })
-        && case.end.cut_inclusive == 80
+        && case.cache_window().is_ok_and(|window| {
+            window.origin > 0 && window.origin.checked_add(2) == Some(case.end.cut_inclusive)
+        })
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::NativeEarlyMap
         && case.responsibilities
@@ -3027,7 +3031,34 @@ fn start_valid(case: &Case) -> bool {
     }
 }
 
+pub(super) struct Window<'a> {
+    pub row: &'a str,
+    pub origin: u64,
+    pub cuts: std::ops::RangeInclusive<u64>,
+}
+
+impl<'a> Window<'a> {
+    pub(super) fn after(case: &'a Case, origin: u64) -> Result<Self, super::result::Outcome> {
+        let first = origin
+            .checked_add(1)
+            .filter(|cut| *cut <= case.end.cut_inclusive)
+            .ok_or_else(|| super::data_failure(Some(origin), "empty replay window"))?;
+        Ok(Self {
+            row: &case.row,
+            origin,
+            cuts: first..=case.end.cut_inclusive,
+        })
+    }
+}
+
 impl Case {
+    pub(super) fn cache_window(&self) -> Result<Window<'_>, super::result::Outcome> {
+        let Start::CacheCut { frame } = self.start else {
+            return Err(super::data_failure(None, "cache window origin"));
+        };
+        Window::after(self, frame)
+    }
+
     pub(super) fn fixture_pair(&self) -> Result<&FixturePair, super::result::Outcome> {
         self.fixture
             .as_ref()
@@ -3243,7 +3274,11 @@ impl Index {
 /// Whether a hash is exactly 64 lowercase hexadecimal digits.
 #[must_use]
 pub fn valid_hash(hash: &str) -> bool {
-    hash.len() == 64
+    valid_hex(hash, 64)
+}
+
+fn valid_hex(hash: &str, width: usize) -> bool {
+    hash.len() == width
         && hash
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))

@@ -4,10 +4,7 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
 };
 use super::{appearance, camera, compare::Observation, hud};
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-};
+use crate::{cache::Cache, lock::RowId};
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed,
@@ -17,7 +14,7 @@ use game::state::owned::OwnedState;
 
 use super::{
     Sources, connected, data_failure,
-    index::{Case, FixtureFile},
+    index::{Case, FixtureFile, Window},
     movement,
     result::Outcome,
 };
@@ -109,29 +106,29 @@ struct SourceMap {
 }
 
 fn inputs(
-    native: &Path,
-    file: &FixtureFile,
+    source: Borrowed,
+    window: &Window<'_>,
+    repository: Option<&str>,
     seed: &[u8],
     content: &connected::Content,
     [prior, first_pad, second_pad]: [u16; 3],
 ) -> Result<[Current; 2], Outcome> {
-    let source: Borrowed = file.read(native)?;
     if source.format != "scoped-movement-map-input-v1"
-        || source.repository != "15a04113d80468046849b65703c3ccde8f0cb6f6"
-        || source.row != "chain-any-0003-DFD7"
-        || source.initial_cut != 78
-        || source.terrain_source_cut != 78
+        || Some(source.repository.as_str()) != repository
+        || source.row != window.row
+        || source.initial_cut != window.origin
+        || source.terrain_source_cut != window.origin
         || source.initial_wram_sha256 != Sha256::of(seed).to_string()
     {
         return Err(data_failure(
-            Some(78),
+            Some(window.origin),
             "early Map source and seed alignment",
         ));
     }
     let [first, second] = source.opportunity;
     Ok([
-        first.inputs(FIRST_MAP, seed, content, [prior, first_pad])?,
-        second.inputs(SECOND_MAP, seed, content, [first_pad, second_pad])?,
+        first.inputs(*window.cuts.start(), seed, content, [prior, first_pad])?,
+        second.inputs(*window.cuts.end(), seed, content, [first_pad, second_pad])?,
     ])
 }
 
@@ -202,6 +199,7 @@ impl Opportunity {
             activity: Activity::Inactive,
         };
         Ok(Current {
+            cut,
             movement,
             map: self.map,
         })
@@ -209,6 +207,7 @@ impl Opportunity {
 }
 
 struct Current {
+    cut: u64,
     movement: Inputs,
     map: SourceMap,
 }
@@ -278,10 +277,6 @@ pub(super) struct Expectations {
     carry: Vec<Observation>,
 }
 
-const ROW: &str = "chain-any-0003-DFD7";
-const ORIGIN: u64 = 78;
-const FIRST_MAP: u64 = ORIGIN + 1;
-const SECOND_MAP: u64 = FIRST_MAP + 1;
 const EARLY_FIELDS: usize = 4;
 
 // Only the first map frame's owners are compared beside the map.
@@ -294,24 +289,16 @@ pub(super) const fn field_count(case: &super::index::Case, cuts: usize) -> Optio
     }
 }
 
-fn index(cut: u64) -> Result<usize, Outcome> {
-    match cut {
-        FIRST_MAP => Ok(0),
-        SECOND_MAP => Ok(1),
-        _ => Err(data_failure(Some(cut), "early Map cut")),
-    }
-}
-
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "early Map record lock"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "early Map lock schema"))?;
+    let window = case.cache_window()?;
+    let (first, second) = (*window.cuts.start(), *window.cuts.end());
+    let lock = super::read_lock(sources)?;
     let row = lock
-        .row(&RowId(ROW.to_owned()))
+        .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "early Map locked row"))?;
     let cache = Cache::open(&sources.cache, row)
         .map_err(|_| data_failure(None, "early Map record cache"))?;
-    let origin = record(&cache, ORIGIN)?;
+    let origin = record(&cache, window.origin)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
@@ -319,9 +306,17 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     // The record's pad field is the authenticated physical input at the same lock index.
     // No selected owner state from the later record enters the input tape.
     let pads = [
-        record(&cache, ORIGIN - 1)?.pad.0,
+        record(
+            &cache,
+            window
+                .origin
+                .checked_sub(1)
+                .ok_or_else(|| data_failure(Some(window.origin), "early Map preceding input"))?,
+        )?
+        .pad
+        .0,
         origin.pad.0,
-        record(&cache, FIRST_MAP)?.pad.0,
+        record(&cache, first)?.pad.0,
     ];
     let read_word = |offset: usize| {
         origin
@@ -332,19 +327,26 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     };
     if read_word(0x09b8) != Some(0x4000) || read_word(0x09ba) != Some(0x2000) {
         return Err(data_failure(
-            Some(ORIGIN),
+            Some(window.origin),
             "early Map locked HUD control bindings",
         ));
     }
     let files = case.fixture_pair()?;
-    let current = inputs(&sources.native, &files.inputs, &origin.wram, &content, pads)?;
+    let current = inputs(
+        files.inputs.read(&sources.native)?,
+        &window,
+        files.repository(),
+        &origin.wram,
+        &content,
+        pads,
+    )?;
     let neighbours = [
-        HudNeighbours::read(&cache, FIRST_MAP)?,
-        HudNeighbours::read(&cache, SECOND_MAP)?,
+        HudNeighbours::read(&cache, first)?,
+        HudNeighbours::read(&cache, second)?,
     ];
     let hud = hud::Content::load(&sources.rom)?;
     let seed_hud = hud::decode_state(&origin.wram)?;
-    let expected = Expectations::load(&sources.native, &files.expected, &cache, &content)?;
+    let expected = Expectations::load(&window, &sources.native, &files.expected, &cache, &content)?;
     let (appearance, playing) = appearance::running_owner(&origin.wram, &content.appearance)?;
     let seed = production::State::new(
         movement::seed(&origin.wram)?,
@@ -353,7 +355,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         camera::seed(&origin.wram, &camera::Content)?,
     )
     .and_then(|state| state.with_early_map(seed_hud))
-    .map_err(|_| data_failure(Some(ORIGIN), "early Map admitted owner state"))?;
+    .map_err(|_| data_failure(Some(window.origin), "early Map admitted owner state"))?;
     let content = ProductionContent::Connected(Box::new(production::Content {
         movement: content.movement.movement,
         appearance: content.appearance.appearance,
@@ -368,7 +370,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         content.clone(),
         rules.clone(),
     )
-    .map_err(|_| data_failure(Some(ORIGIN), "early Map production admission"))?;
+    .map_err(|_| data_failure(Some(window.origin), "early Map production admission"))?;
     Ok(AdmittedCase {
         production,
         content,
@@ -380,22 +382,19 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             rules: interface_hud::Rules::default(),
         })),
         expected: ExpectedReader::EarlyMap(Box::new(expected)),
-        actual: ActualReader::EarlyMap,
-        schedule: vec![FIRST_MAP, SECOND_MAP],
+        actual: ActualReader::EarlyMap { carry_cut: first },
+        schedule: vec![first, second],
     })
 }
 
 impl InputTape {
     fn input(&self, cut: u64) -> Result<AdvanceInput<'_>, Outcome> {
-        let index = index(cut)?;
-        let current = self
+        let (current, neighbours) = self
             .current
-            .get(index)
+            .iter()
+            .zip(&self.neighbours)
+            .find(|(current, _)| current.cut == cut)
             .ok_or_else(|| data_failure(Some(cut), "early Map input opportunity"))?;
-        let neighbours = self
-            .neighbours
-            .get(index)
-            .ok_or_else(|| data_failure(Some(cut), "early Map HUD neighbours"))?;
         let map = &current.map;
         Ok(AdvanceInput::ConnectedMap {
             inputs: &current.movement,
@@ -433,34 +432,36 @@ impl InputTape {
 
 impl Expectations {
     fn load(
+        window: &Window<'_>,
         native: &Path,
         file: &FixtureFile,
         cache: &Cache,
         content: &connected::Content,
     ) -> Result<Self, Outcome> {
         let captured: Expected = file.read(native)?;
+        let (carry_cut, map_cut) = (*window.cuts.start(), *window.cuts.end());
         let [first, second] = &captured.opportunity;
         let Some(carried) = &first.carried else {
             return Err(data_failure(
-                Some(FIRST_MAP),
+                Some(carry_cut),
                 "early Map carry record locator",
             ));
         };
         if captured.format != "scoped-movement-map-expected-v1"
-            || captured.row != ROW
-            || captured.required_carried_owner_cut != FIRST_MAP
-            || captured.second_consumer_cut != SECOND_MAP
-            || first.end_cut != FIRST_MAP
-            || second.end_cut != SECOND_MAP
+            || captured.row != window.row
+            || captured.required_carried_owner_cut != carry_cut
+            || captured.second_consumer_cut != map_cut
+            || first.end_cut != carry_cut
+            || second.end_cut != map_cut
             || second.carried.is_some()
-            || carried.complete_movement_appearance_camera_expected_source_cut != FIRST_MAP
+            || carried.complete_movement_appearance_camera_expected_source_cut != carry_cut
         {
             return Err(data_failure(
                 None,
                 "early Map expected opportunity alignment",
             ));
         }
-        let record = record(cache, FIRST_MAP)?;
+        let record = record(cache, carry_cut)?;
         let movement = movement::seed(&record.wram)?;
         let position = movement.position;
         if [position.x.words(), position.y.words()] != {
@@ -469,7 +470,7 @@ impl Expectations {
             [(x, sub_x), (y, sub_y)]
         } {
             return Err(data_failure(
-                Some(FIRST_MAP),
+                Some(carry_cut),
                 "early Map independent carry alignment",
             ));
         }
@@ -488,7 +489,8 @@ impl Expectations {
         let each = self
             .captured
             .opportunity
-            .get(index(cut)?)
+            .iter()
+            .find(|each| each.end_cut == cut)
             .ok_or_else(|| data_failure(Some(cut), "early Map comparison opportunity"))?;
         let [x, y] = each.early_whole;
         let [sub_x, sub_y] = each.early_fraction;
@@ -518,7 +520,7 @@ impl Expectations {
                 .flat_map(|x| x.to_le_bytes())
                 .collect(),
         ));
-        if cut == FIRST_MAP {
+        if cut == self.captured.required_carried_owner_cut {
             fields.extend(self.carry.iter().cloned());
         }
         Ok(ExpectedCut {
@@ -599,6 +601,7 @@ fn carry(
 pub(super) fn actual(
     production: &Production,
     cut: Option<u64>,
+    compare_carry: bool,
 ) -> Result<Vec<Observation>, Outcome> {
     let OwnedState::Connected(state) = production.state() else {
         return Err(data_failure(None, "early Map production scope"));
@@ -625,7 +628,7 @@ pub(super) fn actual(
         window,
     ));
     // The second map frame's owners have no independent capture, so only its map is compared.
-    if cut != Some(SECOND_MAP) {
+    if compare_carry {
         fields.extend(carry(CompletedOwners {
             movement: &state.movement.0,
             appearance: state.appearance.0.animation,
@@ -664,6 +667,8 @@ mod tests {
             .iter()
             .find(|case| case.inputs == super::super::index::InputProvider::EarlyMapInputs)
             .unwrap();
+        let window = case.cache_window().unwrap();
+        let first = *window.cuts.start();
         let AdmittedCase {
             production,
             content,
@@ -685,7 +690,7 @@ mod tests {
         let mut restored = restore(&production);
         let AdvanceInput::ConnectedMap {
             inputs: current, ..
-        } = inputs.input(FIRST_MAP).unwrap()
+        } = inputs.input(first).unwrap()
         else {
             panic!("early Map advance")
         };
@@ -698,13 +703,13 @@ mod tests {
         ));
         assert!(PartialEq::eq(&restored, &before));
 
-        for cut in [FIRST_MAP, SECOND_MAP] {
+        for cut in window.cuts {
             inputs.advance(&mut direct, cut).unwrap();
             inputs.advance(&mut restored, cut).unwrap();
             restored = restore(&restored);
             let check = expected.read(cut).unwrap();
-            let direct_fields = actual(&direct, Some(cut)).unwrap();
-            let restored_fields = actual(&restored, Some(cut)).unwrap();
+            let direct_fields = actual(&direct, Some(cut), cut == first).unwrap();
+            let restored_fields = actual(&restored, Some(cut), cut == first).unwrap();
             assert!(super::super::compare::compare(&check.fields, &direct_fields).is_ok());
             assert!(super::super::compare::compare(&check.fields, &restored_fields).is_ok());
             assert!(PartialEq::eq(&direct, &restored));

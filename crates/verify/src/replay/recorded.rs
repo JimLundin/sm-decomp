@@ -3,7 +3,7 @@
 use super::compare::Observation;
 use super::index::{Case, InputProvider, Responsibility, Start};
 use super::readers::{
-    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
+    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
 use super::result::Outcome;
 use super::{
@@ -23,11 +23,11 @@ enum Context {
     Weapons(Arc<weapons::Content>),
     ShotInputs(
         Arc<weapons::Content>,
-        Arc<Vec<super::shot_drawing::InputCut>>,
+        Arc<Tape<super::shot_drawing::InputCut>>,
     ),
     ShotExpected(
         Arc<weapons::Content>,
-        Arc<Vec<super::shot_drawing::ExpectedCut>>,
+        Arc<Tape<super::shot_drawing::ExpectedCut>>,
     ),
     Camera,
     Hud(Arc<hud::Content>),
@@ -149,6 +149,7 @@ fn weapons_recipe(wram: &[u8], sources: &Sources, case: &Case) -> Result<Recipe,
             Context::ShotInputs(
                 content,
                 Arc::new(super::shot_drawing::InputCut::load(
+                    case,
                     &sources.native,
                     &case.fixture_pair()?.inputs,
                 )?),
@@ -303,6 +304,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
                 Context::ShotInputs(content, _) => Context::ShotExpected(
                     content,
                     Arc::new(super::shot_drawing::ExpectedCut::load(
+                        case,
                         &sources.native,
                         &case.fixture_pair()?.expected,
                     )?),

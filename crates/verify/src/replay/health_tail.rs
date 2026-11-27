@@ -1,6 +1,6 @@
 //! One authenticated Health origin and its independently observed frames, compared at frame cuts.
 
-use std::{ops::RangeInclusive, path::Path};
+use std::path::Path;
 
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     Sources, data_failure, hud,
-    index::{Case, FixtureFile, Start},
+    index::{Case, FixtureFile, Start, Window},
     production_failure,
     readers::{ActualReader, AdmittedCase, ExpectedReader, InputReader},
     result::Outcome,
@@ -55,12 +55,6 @@ impl HealthPacket {
                     .all(|other| other.path != file.path && other.sha256 != file.sha256)
         })
     }
-}
-
-struct Window<'a> {
-    row: &'a str,
-    origin: u64,
-    cuts: RangeInclusive<u64>,
 }
 
 #[derive(Deserialize)]
@@ -282,15 +276,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     else {
         return Err(data_failure(None, "Health tail origin coordinate"));
     };
-    let first = frame
-        .checked_add(1)
-        .filter(|cut| *cut <= case.end.cut_inclusive)
-        .ok_or_else(|| data_failure(None, "Health tail cut interval"))?;
-    let window = Window {
-        row: &case.row,
-        origin: *frame,
-        cuts: first..=case.end.cut_inclusive,
-    };
+    let window = Window::after(case, *frame)?;
     let packet = case.health_packet()?;
     let bytes = std::fs::read(sources.native.join(path))
         .map_err(|_| data_failure(Some(*frame), "Health tail origin record"))?;

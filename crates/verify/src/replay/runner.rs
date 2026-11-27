@@ -313,7 +313,7 @@ fn origin_checkpoint(
     production: &Production,
     actual: &ActualReader,
 ) -> Result<Option<CutCheckpoint>, Outcome> {
-    use super::index::Start;
+    use super::index::{InputProvider, ObservationId, Start};
     if !case.checkpoints {
         return Ok(None);
     }
@@ -333,7 +333,12 @@ fn origin_checkpoint(
                 | InputReader::Zebes(_)
                 | InputReader::Explosion(_)
         )
-        || case.id.0 == super::jump_history::LEAP_CASE
+        || (case.inputs == InputProvider::PrecedingCutMovementInputs
+            && frame.checked_add(1) == Some(case.end.cut_inclusive)
+            && case
+                .expectations
+                .outputs
+                .contains(&ObservationId::LandingFloor))
     {
         capture_checkpoint(production, actual, *frame).map(Some)
     } else {
@@ -360,8 +365,7 @@ mod tests {
     fn the_null_holds_the_last_draw_through_new_and_missing_samples() {
         use crate::replay::{
             compare::Observation,
-            jump_history,
-            readers::{ActualReader, AdmittedCase, ExpectedCut, InputReader},
+            readers::{ActualReader, AdmittedCase, ExpectedCut, InputReader, Tape},
             result::{CaseResult, Counts},
         };
         use JumpButton::{Held, Up};
@@ -391,7 +395,9 @@ mod tests {
                 replies: 0,
             }
         });
-        let start = jump_history::START;
+        let window = case.cache_window().unwrap();
+        let start = window.origin;
+        let first = *window.cuts.start();
         case.end.cut_inclusive = start + 5;
         case.checkpoints = false;
         let content = ProductionContent::JumpHistory;
@@ -409,8 +415,8 @@ mod tests {
             production,
             rules,
             content,
-            inputs: InputReader::JumpHistory(draws.to_vec()),
-            expected: ExpectedReader::JumpHistory(expected.to_vec()),
+            inputs: InputReader::JumpHistory(Tape::new(first, draws.to_vec())),
+            expected: ExpectedReader::JumpHistory(Tape::new(first, expected.to_vec())),
             actual: ActualReader::JumpHistory,
             schedule: ((start + 1)..=case.end.cut_inclusive).collect(),
         };
@@ -428,6 +434,40 @@ mod tests {
         super::run(&case, admitted, &mut result).unwrap();
         assert_eq!((result.counts.cuts, result.counts.fields), (5, 10));
         assert_eq!((result.counts.null_cuts, result.counts.null_fields), (2, 6));
+    }
+
+    #[test]
+    #[ignore = "uses the pinned landing row and ROM"]
+    fn a_single_floor_opportunity_restores_from_its_predecessor() {
+        use crate::replay::index::ObservationId;
+
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let mut case = index
+            .cases
+            .into_iter()
+            .find(|case| case.expectations.outputs == [ObservationId::LandingFloor])
+            .unwrap();
+        case.id.0 = "reissued-floor".into();
+        let sources = Sources {
+            rom: std::env::var_os("SM_ROM").unwrap().into(),
+            cache: std::env::var_os("SM_CACHE").unwrap().into(),
+            lock: std::env::var_os("SM_LOCK").unwrap().into(),
+            ..Sources::default()
+        };
+        let admitted = admission::admit(&case, &sources).unwrap();
+        let checkpoint = |case: &super::Case| {
+            super::origin_checkpoint(
+                case,
+                &admitted.inputs,
+                &admitted.production,
+                &admitted.actual,
+            )
+            .unwrap()
+            .map(|(cut, _, _)| cut)
+        };
+        assert_eq!(checkpoint(&case), Some(case.cache_window().unwrap().origin));
+        case.expectations.outputs.clear();
+        assert_eq!(checkpoint(&case), None);
     }
 
     #[test]

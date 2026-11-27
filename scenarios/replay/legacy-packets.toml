@@ -44,6 +44,7 @@ projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa1
 
 [[fixture]]
 provider = "early-map-inputs"
+repository = "15a04113d80468046849b65703c3ccde8f0cb6f6"
 inputs = { path = "movement-early-map-v1/borrowed.toml", sha256 = "c86d71530c91d248cc3815a9f32489ee29e3b0b75d6906fa60aa44b912f8be76" }
 expected = { path = "movement-early-map-v1/expected.toml", sha256 = "d1d661d7948bd20c66beb1a1d7fc6cab4cb1741824387b2d55f8fb9b9db478f2" }
 

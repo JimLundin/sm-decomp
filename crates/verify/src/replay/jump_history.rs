@@ -4,11 +4,7 @@ use super::{
     Sources, compare::Observation, data_failure, index::Case, movement, played, readers,
     result::Outcome,
 };
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-    source,
-};
+use crate::{cache::Cache, lock::RowId, source};
 use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -19,10 +15,6 @@ use game::{
 use oracle_record::FrameRecord;
 use samus_movement::{DrawnJumpHistory, FrameBefore, JumpButton, JumpHeld};
 
-pub(super) const ROW: &str = "chain-any-0009-DFD7";
-pub(super) const START: u64 = 170;
-pub(super) const END: u64 = 330;
-pub(super) const LEAP_CASE: &str = "movement/escape-leap-landing";
 const PHASE: source::WramWord = source::WramWord {
     name: "passage phase",
     offset: 0x099c,
@@ -33,15 +25,20 @@ const JUMP_BINDING: source::WramWord = source::WramWord {
 };
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "jump history record lock"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "jump history lock schema"))?;
+    let window = case.cache_window()?;
+    let lock = super::read_lock(sources)?;
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "jump history lock row"))?;
+    if case.end.cut_inclusive >= row.frames.0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "jump history row extent",
+        ));
+    }
     let cache = Cache::open(&sources.cache, row)
         .map_err(|_| data_failure(None, "jump history record pins"))?;
-    let mut previous = readers::record(&cache, START)?;
+    let mut previous = readers::record(&cache, window.origin)?;
     let seed = observed(&previous.wram)?;
     let content = ProductionContent::JumpHistory;
     let rules = ProductionRules::JumpHistory;
@@ -50,11 +47,11 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         content.clone(),
         rules.clone(),
     )
-    .map_err(|_| data_failure(Some(START), "jump history production admission"))?;
-    let schedule: Vec<_> = (START.saturating_add(1)..=END).collect();
+    .map_err(|_| data_failure(Some(window.origin), "jump history production admission"))?;
+    let first = *window.cuts.start();
     let mut samples = Vec::new();
     let mut expected = Vec::new();
-    for &cut in &schedule {
+    for cut in window.cuts.clone() {
         let current = readers::record(&cache, cut)?;
         samples.push(sample(&previous, &current)?);
         let fields = parts(observed(&current.wram)?);
@@ -67,14 +64,20 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         });
         previous = current;
     }
+    if samples.iter().all(Option::is_none) {
+        return Err(data_failure(
+            None,
+            "passage window has no history-writing draw",
+        ));
+    }
     Ok(readers::AdmittedCase {
         production,
         content,
         rules,
-        schedule,
-        inputs: readers::InputReader::JumpHistory(samples),
+        schedule: window.cuts.collect(),
+        inputs: readers::InputReader::JumpHistory(readers::Tape::new(first, samples)),
         actual: readers::ActualReader::JumpHistory,
-        expected: readers::ExpectedReader::JumpHistory(expected),
+        expected: readers::ExpectedReader::JumpHistory(readers::Tape::new(first, expected)),
     })
 }
 
@@ -110,20 +113,13 @@ fn sample(previous: &FrameRecord, current: &FrameRecord) -> Result<Option<JumpBu
     }))
 }
 
-pub(super) fn at<T>(tape: &[T], cut: u64) -> Result<&T, Outcome> {
-    cut.checked_sub(START.saturating_add(1))
-        .and_then(|cut| usize::try_from(cut).ok())
-        .and_then(|index| tape.get(index))
-        .ok_or_else(|| data_failure(Some(cut), "jump history cut"))
-}
-
 pub(super) fn advance(
-    tape: &[Option<JumpButton>],
+    tape: &readers::Tape<Option<JumpButton>>,
     production: &mut Production,
     cut: u64,
 ) -> Result<ProductionOutputs, Outcome> {
     production
-        .advance(AdvanceInput::JumpHistory(*at(tape, cut)?))
+        .advance(AdvanceInput::JumpHistory(*tape.at(cut)?))
         .map_err(|fault| super::production_failure(cut, fault))
 }
 
