@@ -230,6 +230,18 @@ bridges, replay providers and engine services, the indexed replay evidence, the 
 each model's structure. Its replay results separate scoped, integrated and whole-movie witnesses
 and distinguish supported behaviour from expected unsupported boundaries.
 
+The planted fault table lists every catalogue rule and its assigned faults. To include
+detections, read the saved logs from reviewed runs of the fault definitions in your checkout.
+
+```sh
+python3 tools/check_mutants.py rule-coverage --write /tmp/fault-evidence.toml worker-*.log
+cargo run -p tools --bin tools -- report --fault-evidence /tmp/fault-evidence.toml
+```
+
+The receipt records the names with a verified kill and restoration. Its SHA-256 identifies
+the manifest used to interpret the logs. Check the logs’ source revision when reusing them.
+Omitting the receipt leaves all detections unknown.
+
 ## Credits and licence
 
 [LakeSnes](https://github.com/angelo-wf/LakeSnes) (MIT) is linked into the oracle: the build

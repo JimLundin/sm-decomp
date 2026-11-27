@@ -5,6 +5,7 @@ ROM/cache/native inputs. Restore exact source bytes after every mutation, then
 require a fresh Pass from an immutable vanilla executable. Print safe identities.
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -261,11 +262,12 @@ def catalogue_rules(root: Path) -> list[str]:
     return sorted(rules)
 
 def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
-                         logs: Sequence[str]) -> None:
+                         logs: Sequence[str]) -> list[str]:
     """Credit complete kill and restoration blocks from the selected run logs."""
     seconds = r" seconds=\d+\.\d{6}\n"
     input_check = rf"(?:TIMING input-check{seconds})?"
     compilation = rf"(?:TIMING compilation{seconds})?"
+    detections: list[str] = []
     for rule in rules:
         confirmed = []
         for fault in faults:
@@ -281,10 +283,12 @@ def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
             )
             if any(block.search(log) for log in logs):
                 confirmed.append(fault.name)
+        detections.extend(confirmed)
         status = f"killed through {', '.join(confirmed)}" if confirmed else "unknown"
         print(f"{rule}: {status}")
     unassigned = sum(fault.rule is None for fault in faults)
     print(f"Unassigned faults: {unassigned}")
+    return detections
 
 def rebuild_cost(fault: Fault) -> int:
     """A fault's time is its rebuild: one in crates/verify rebuilds the verify crate, about
@@ -319,6 +323,7 @@ def main(argv: list[str] | None = None) -> int:
     worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
     coverage = commands.add_parser(
         "rule-coverage", help="report every catalogue rule using logs from reviewed runs of this roster")
+    coverage.add_argument("--write", type=Path, metavar="RECEIPT", help="save detections for tools report")
     coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
@@ -331,7 +336,12 @@ def main(argv: list[str] | None = None) -> int:
     rules = validate_coverage(root, roster)
     validate_anchors(root, roster)
     if args.command == "rule-coverage":
-        report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
+        detected = report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
+        if args.write is not None:
+            names = json.dumps(detected, ensure_ascii=False).replace("\x7f", "\\u007f")
+            args.write.write_text(
+                f'format = 1\nmanifest_sha256 = "{hashlib.sha256(raw_manifest).hexdigest()}"\n'
+                f'detected = {names}\n', encoding="utf-8", newline="\n")
         return 0
     if args.command:
         partitions = partition_faults(roster)

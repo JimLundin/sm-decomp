@@ -1,5 +1,6 @@
 //! Generated progress from the indexed replay baseline, with clean model structure and size.
 
+mod faults;
 pub mod lines;
 mod plan;
 mod readme;
@@ -18,7 +19,7 @@ use crate::size::{self, Size};
 use crate::spec_units::{Count, Vectors, budget_section};
 
 /// The command line `run` takes.
-pub const USAGE: &str = "tools report [--write | --check]";
+pub const USAGE: &str = "tools report [--fault-evidence RECEIPT | --write | --check]";
 /// The one command that prints the report, from the repository root.
 pub const PRINT: &str = "cargo run -p tools --bin tools -- report";
 /// The one command that regenerates the committed README, from the repository root.
@@ -1230,24 +1231,26 @@ impl Tree {
 /// The path and the error when a file can't be read, or a registry entry that names an area the
 /// decode notes' Budget section doesn't state or a file the model doesn't hold.
 pub fn generate(root: &Path) -> Result<String, String> {
-    Ok(report(&Tree::measure(root)?))
+    generate_with_evidence(root, None)
 }
 
-fn report(tree: &Tree) -> String {
+fn generate_with_evidence(root: &Path, evidence: Option<&Path>) -> Result<String, String> {
+    let tree = Tree::measure(root)?;
     let domains = &tree.domains;
     let shared = total(&tree.shared_files);
     let mut out = String::new();
     header(&mut out);
     tree.replay.section(&mut out);
+    faults::section(&mut out, root, domains, evidence)?;
     summary(&mut out, domains);
     models(&mut out, domains, shared);
     lines_section(&mut out, domains, &tree.shared_files);
     areas(&mut out, domains);
     adapters_and_providers(&mut out, domains);
-    engine_section(&mut out, tree);
+    engine_section(&mut out, &tree);
     plan::graph_section(&mut out, &tree.plan);
-    structure::section(&mut out, tree);
-    out
+    structure::section(&mut out, &tree);
+    Ok(out)
 }
 
 fn header(out: &mut String) {
@@ -1614,6 +1617,9 @@ pub fn run(args: &[String]) -> Result<String, String> {
     let root = Path::new(".");
     match args {
         [] => generate(root),
+        [flag, path] if flag == "--fault-evidence" => {
+            generate_with_evidence(root, Some(Path::new(path)))
+        }
         [flag] if flag == "--write" => {
             let page = readme_page(root)?;
             fs::write(root.join(readme::PATH), page)
