@@ -60,8 +60,7 @@ fields = ["seed.queue", "offer.group", "offer.cue", "offer.allowance", "offer.pe
 phase = "immediately before selected offer"
 
 [played-boundaries]
-readers = ["played-ceres-inputs", "played-samus-picture"]
-selection = "ordinary-room"
+readers = ["played-ceres-inputs"]
 dependency = "played.platform"
 provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness"]
@@ -86,14 +85,6 @@ readers = ["scoped-ceres-warning"]
 dependency = "played.platform"
 provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness", "initial room memory"]
-phase = "frame boundary"
-
-[ribs-boundaries]
-readers = ["played-ceres-inputs"]
-selection = "ribs"
-dependency = "played.platform"
-provider = "preceding pinned record and locked NMI boundaries"
-fields = ["frame of work finished", "display upload", "audio readiness"]
 phase = "frame boundary"
 
 # Recorded ordinary inputs and scoped native opportunities.
@@ -361,13 +352,6 @@ dependency = "platform.work"
 provider = "recorded NMI kind and interrupted work site"
 fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
 phase = "suspended work and NMI return"
-
-[return-room-and-shaft-scheduling]
-readers = ["ceres-shaft-actors"]
-dependency = "played.platform"
-provider = "pinned room origin and locked movie and NMI records"
-fields = ["movie pad", "frame work and publication boundaries", "interrupted actor loading permission", "audio readiness", "passage RNG before shaft placement"]
-phase = "origin and each qualified scheduling opportunity"
 
 [shaft-cpu-acknowledgements]
 readers = ["played-shaft-sound"]

@@ -404,7 +404,6 @@ pub(super) fn play(
     let (held, stop) = run.through(
         rows,
         rom,
-        row,
         seed,
         start.saturating_add(1)..=end,
         (part, controller),
@@ -417,7 +416,6 @@ impl Run {
         mut self,
         rows: &mut Rows<'_>,
         rom: &Path,
-        row: &str,
         seed: FrameRecord,
         cuts: core::ops::RangeInclusive<u64>,
         (part, mut controller): (Part, Controller),
@@ -477,7 +475,7 @@ impl Run {
                     };
                     let next = checkpoint.continue_flight(journey, cut)?;
                     let (more, stop) =
-                        next.through(rows, rom, row, current, cut.saturating_add(1)..=end, None)?;
+                        next.through(rows, rom, current, cut.saturating_add(1)..=end, None)?;
                     return Ok((held.saturating_add(1).saturating_add(more), stop));
                 }
             }

@@ -1,15 +1,7 @@
 //! Native receipts for the ordinary fight's object-strip transfers.
 
-use super::{Controller, Frame, Run, hud, movement, parity};
+use super::Frame;
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
-use crate::replay::{
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
-        PlayedWindow, Responsibility, Start,
-    },
-    readers::ExpectedCut,
-    runner,
-};
 use crate::source::{VRAM_WRITE_QUEUE, WramWord};
 use boss_ceres_ridley::{FightRibs, RibBeat as Beat, RibWait};
 use data::assets::ridley_ribs::STRIP_WORDS;
@@ -211,234 +203,11 @@ fn production_receipts(writes: &[VramTransfer]) -> Vec<Receipt> {
         .collect()
 }
 
-const FIELDS: &[ObservationId] = &[ObservationId::CeresRibsBeat, ObservationId::CeresRibsWait];
-const OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresRibsUploads,
-    ObservationId::CeresRibsUpper,
-    ObservationId::CeresRibsLower,
-];
-
-pub(in crate::replay) fn is_case(case: &Case) -> bool {
-    case.expectations.fields == FIELDS
-}
-
-pub(super) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Integrated
-        && matches!(case.start, Start::CacheCut { frame } if super::witnesses::selected(case).is_ok_and(|data|
-            data.ribs.iter().any(|window| window.covers(&case.row, frame, case.end.cut_inclusive))))
-        && case.responsibilities == [Responsibility::Ceres]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::PlayedCeresInputs
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.outputs == OUTPUTS
-        && case.expectations.output_cut.is_none()
-        && match (&case.expectations.played, &case.start) {
-            (Some(PlayedWindow::RibsReveal { cut }), Start::CacheCut { frame }) => {
-                case.checkpoints && frame < cut && *cut < case.end.cut_inclusive
-            }
-            (None, _) => !case.checkpoints,
-            _ => false,
-        }
-}
-
-pub(super) fn run(
-    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
-    case: &Case,
-    result: &mut runner::Receipt,
-) -> Result<(), Outcome> {
-    room.replay(case, |run, turn, rows| {
-        let cut = turn.cut;
-        let (row, local) = turn.place;
-        let previous = turn.previous;
-        let current = turn.current;
-        let controller = turn.controller;
-        let held = matches!(case.expectations.played,
-                Some(PlayedWindow::RibsReveal { cut: reveal }) if reveal == cut)
-        .then(|| run.clone());
-        let null = observations(
-            clock(carried(run, previous.index)?),
-            &[],
-            &run.state.room_video.video.memory.vram,
-        )?;
-
-        if row != case.row || local != cut {
-            return Err(data_failure(Some(cut), "ribs trace row"));
-        }
-        let fields = turn.fields(run)?;
-        record_fields(fields, cut, result, &null)?;
-        if let Some(origin) = held {
-            pending_control(
-                origin,
-                controller,
-                previous,
-                current,
-                &rows.record(
-                    cut.checked_add(1)
-                        .ok_or_else(|| data_failure(Some(cut), "ribs release cut"))?,
-                )?,
-            )?;
-            result.restored(1)?;
-            result.pending()?;
-            result.resumed()?;
-        }
-        Ok(())
-    })?;
-    if result.counts.publications == 0 {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "ribs publication opportunity",
-        ));
-    }
-    Ok(())
-}
-
-fn record_fields(
-    mut fields: Vec<Observation>,
-    cut: u64,
-    result: &mut runner::Receipt,
-    null: &[Observation],
-) -> Result<(), Outcome> {
-    fields.retain(|field| field.field.starts_with("ridley.ribs."));
-    let [beat, wait, uploads, _, _] = fields.as_slice() else {
-        return Err(data_failure(Some(cut), "ribs replay observations"));
-    };
-    if !uploads.bytes.is_empty() {
-        result.published()?;
-    }
-    let observed = ExpectedCut {
-        semantic_count: 2,
-        output_count: 3,
-        semantics: vec![beat.clone(), wait.clone()],
-        fields,
-        replies: 0,
-    };
-    result.record(&observed, null, cut)
-}
-
-fn carried(run: &Run<'_>, cut: u64) -> Result<FightRibs, Outcome> {
-    run.state
-        .station
-        .ridley
-        .map(|ridley| ridley.ribs)
-        .ok_or_else(|| data_failure(Some(cut), BEAT_FIELD))
-}
-
-fn work(
-    run: &mut Run<'_>,
-    controller: Controller,
-    previous: &FrameRecord,
-    current: &FrameRecord,
-    hold_publication: bool,
-) -> Result<played::Outputs, Outcome> {
-    let mut inputs = run.room.inputs.clone();
-    inputs.held = movement::pad(controller.held);
-    inputs.pressed = movement::pad(controller.pressed);
-    inputs.parity = parity(run.state.frame.finished_frames);
-    let mut passing = run.room_work(previous, current, (run.row, current.index), false)?;
-    if !passing.publishes {
-        return Err(data_failure(
-            Some(current.index),
-            "ribs control needs a requested publication",
-        ));
-    }
-    passing.publishes = !hold_publication;
-    run.state
-        .step(
-            &inputs,
-            &passing,
-            &hud::frame(&run.room.hud, controller, None),
-            &run.played,
-            &run.rules,
-        )
-        .map_err(|fault| Outcome::Unsupported {
-            cut: Some(current.index),
-            dependency: format!("played frame {fault:?}"),
-        })
-}
-
-fn pending_control(
-    mut direct: Run<'_>,
-    controller: Controller,
-    previous: &FrameRecord,
-    first: &FrameRecord,
-    after: &FrameRecord,
-) -> Result<(), Outcome> {
-    use canonical::model::{Model, pin_holds};
-    use game::state::owned::FightRibsPin;
-
-    let held = work(&mut direct, controller, previous, first, true)?;
-    let native = receipts(first)?;
-    let video = &direct.state.room_video.video;
-    let pending = video
-        .batch
-        .vram
-        .get(..native.len())
-        .map(production_receipts);
-    let differs = |field: &str| Outcome::Difference {
-        cut: first.index,
-        field: field.into(),
-    };
-    if !held.serviced_vram.is_empty() || native.len() != 2 || pending.as_ref() != Some(&native) {
-        return Err(differs("ridley.ribs.pending-uploads"));
-    }
-    let held_clock = carried(&direct, first.index)?;
-    if held_clock != decode_clock(&first.wram)? {
-        return Err(differs(BEAT_FIELD));
-    }
-    for start in STRIP_STARTS {
-        let words = video
-            .memory
-            .vram
-            .get(span(start))
-            .ok_or_else(|| differs("ridley.ribs.held-vram"))?;
-        if Some(words) != previous.vram.get(span(start))
-            || Some(words) != first.vram.get(span(start))
-        {
-            return Err(differs("ridley.ribs.held-vram"));
-        }
-    }
-
-    let failed = || Outcome::CheckpointFailure { cut: after.index };
-    pin_holds::<FightRibsPin>().map_err(|_| failed())?;
-    let saved_clock = canonical::to_bytes(&Model::<FightRibsPin>(held_clock));
-    let saved_picture = direct.state.room_video.picture_checkpoint();
-    let mut restored = direct.clone();
-    restored
-        .state
-        .station
-        .ridley
-        .as_mut()
-        .ok_or_else(failed)?
-        .ribs = canonical::from_bytes::<Model<FightRibsPin>>(&saved_clock)
-        .map_err(|_| failed())?
-        .0;
-    *restored.state.room_video.video = Video::default();
-    restored
-        .state
-        .room_video
-        .restore_picture(&saved_picture)
-        .map_err(|_| failed())?;
-
-    let ready = controller.read(first.pad.0, super::polled(first));
-    let direct_output = work(&mut direct, ready, first, after, false)?;
-    let restored_output = work(&mut restored, ready, first, after, false)?;
-    if direct_output != restored_output
-        || direct.state != restored.state
-        || production_receipts(&restored_output.serviced_vram) != native
-        || !restored.state.room_video.video.batch.vram.is_empty()
-        || carried(&restored, after.index)? != decode_clock(&after.wram)?
-    {
-        return Err(failed());
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     const LAST_FIGHT_CUT: u64 = 1614;
     const FIGHT: &str = "chain-any-0006-E0B5";
     const FIRST_REVEAL: u64 = 577;
-    const RELEASE_CUT: u64 = 578;
     use super::super::{open_rows, read_lock, tests};
     use super::*;
     use crate::source::VRAM_WRITE_QUEUE_TAIL;
@@ -446,7 +215,7 @@ mod tests {
     use data::{pose::tiles::Graphics, rom::Rom};
     use game::exact::ridley_ribs::queue;
 
-    use super::super::{Stop, appearance, connected, seed_controller};
+    use super::super::{Run, Stop, appearance, connected, movement, seed_controller};
 
     fn content(sources: &crate::replay::Sources) -> connected::Content {
         connected::Content {
@@ -464,7 +233,7 @@ mod tests {
         let seed = rows.record(0).unwrap();
         let controller = seed_controller(&seed).unwrap();
         let content = content(&sources);
-        let mut run = Run::admit(&seed, &content, &sources.rom, FIGHT).unwrap();
+        let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
         let mut reveals = 0_usize;
         let (held, stop) = run
             .witness_through(
@@ -487,30 +256,6 @@ mod tests {
         assert_eq!(reveals, 30);
         tests::diagnostic(format_args!(
             "{held} fight cuts with {reveals} production ribs reveals"
-        ));
-    }
-
-    #[test]
-    #[ignore = "pinned record cache and player ROM"]
-    fn production_ribs_restore_the_held_first_release() {
-        let sources = tests::sources();
-        let lock = read_lock(&sources).unwrap();
-        let mut rows = open_rows(&sources, &lock, FIGHT).unwrap();
-        let before = rows.record(576).unwrap();
-        let first = rows.record(FIRST_REVEAL).unwrap();
-        let after = rows.record(RELEASE_CUT).unwrap();
-        let content = content(&sources);
-        let run = Run::admit(&before, &content, &sources.rom, FIGHT).unwrap();
-        pending_control(
-            run,
-            seed_controller(&before).unwrap(),
-            &before,
-            &first,
-            &after,
-        )
-        .unwrap();
-        tests::diagnostic(format_args!(
-            "c577 held both transfers over the same picture and restored their c578 publication"
         ));
     }
 

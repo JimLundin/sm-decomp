@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "51f82c9fcfd67840fb614d487b29a735b50ce26f5861919734a149bc660bad16"
+index_sha256 = "587caa6f4dfceda048a4805a6fd34b3ff0454354949fc47792675517605da5b6"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1078,24 +1078,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "ridley/flight-tail"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "8d3c07763cd90240db0f318cfcd6e948c433c6d28346d90062f0c840f429f63c"
-
-[case.counts]
-cuts = 127
-fields = 9525
-outputs = 1143
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 7134
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "ridley/ordinary-picture"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1166,24 +1148,6 @@ null_fields = 67218
 restorations = 0
 pending_boundaries = 1
 pending_restorations = 1
-
-[[case]]
-id = "ridley/offscreen-retreat"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "402a5b43f7774612c0b0361443e04f60b2d4a489c97cb6066b970ee1e1585950"
-
-[case.counts]
-cuts = 164
-fields = 16072
-outputs = 2952
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 12284
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
 
 [[case]]
 id = "ridley/alternate-offscreen-retreat"
@@ -1258,24 +1222,6 @@ pending_boundaries = 1
 pending_restorations = 1
 
 [[case]]
-id = "ridley/flyby"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "53097bd7fbc8b27c9ad54e97ed3fbf06ba76464e2634bcb9b90e5c28e2461953"
-
-[case.counts]
-cuts = 113
-fields = 678
-outputs = 4987
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 295
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "ridley/alternate-flyby"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1328,9 +1274,6 @@ null_fields = 14439
 restorations = 1119
 pending_boundaries = 0
 pending_restorations = 0
-
-
-
 
 [[case]]
 id = "zebes/station-blackout-to-landing-load"
@@ -1422,7 +1365,6 @@ restorations = 35
 pending_boundaries = 0
 pending_restorations = 0
 
-
 [[case]]
 id = "departure/music-transfer"
 claim = "behaviour"
@@ -1441,7 +1383,6 @@ restorations = 30
 pending_boundaries = 0
 pending_restorations = 0
 
-
 [[case]]
 id = "departure/station-dispatches-flight"
 claim = "behaviour"
@@ -1459,7 +1400,6 @@ null_fields = 54
 restorations = 12
 pending_boundaries = 0
 pending_restorations = 0
-
 
 [[case]]
 id = "departure/flight-dispatches-loader"
@@ -1494,24 +1434,6 @@ replies = 0
 null_cuts = 0
 null_fields = 3
 restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "ridley/warning-through-passage"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "9eef6b45f2b4f899ca5e9057b9a14f886ced5f670124bc86a2af88c7becc9234"
-
-[case.counts]
-cuts = 342
-fields = 1026
-outputs = 13877
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 627
-restorations = 342
 pending_boundaries = 0
 pending_restorations = 0
 
@@ -1606,24 +1528,6 @@ pending_boundaries = 1
 pending_restorations = 1
 
 [[case]]
-id = "ridley/shaft-actors"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "0461b4922b7b958a3bb8194f78d938457681c679d1c2bea519f973123f852605"
-
-[case.counts]
-cuts = 220
-fields = 1100
-outputs = 1308
-publications = 0
-replies = 0
-null_cuts = 34
-null_fields = 709
-restorations = 220
-pending_boundaries = 1
-pending_restorations = 1
-
-[[case]]
 id = "audio-sender/shaft-bursts"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1640,60 +1544,6 @@ null_fields = 212
 restorations = 84
 pending_boundaries = 1
 pending_restorations = 1
-
-[[case]]
-id = "samus-appearance/fight-initial-body"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "2c54abe8a2dcc728969db6e4340d76c13f63edbab14b670d1a115f311ed83c83"
-
-[case.counts]
-cuts = 6
-fields = 0
-outputs = 24
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 6
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "samus-appearance/fight-first-protection"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "b8f2d08ea19b2bf6b51059a5c7a2573f9a8325824833546ebda02da514fb44c9"
-
-[case.counts]
-cuts = 7
-fields = 0
-outputs = 28
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 7
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "samus-appearance/fight-protection-hold"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "a843f52bf2dac4cbaa6bec65ac3a996d5a87a78e43a20d20f701bca2af188eef"
-
-[case.counts]
-cuts = 23
-fields = 0
-outputs = 92
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 23
-pending_boundaries = 0
-pending_restorations = 0
 
 [[case]]
 id = "enemy-interactions/shaft-actor-picture"
@@ -1728,95 +1578,5 @@ replies = 0
 null_cuts = 172
 null_fields = 172
 restorations = 6
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "ridley/ordinary-ribs"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "1685e2cda212a71fdb6497263fcae79a89a14c55b5c57615897b98bb3a4bb4b5"
-
-[case.counts]
-cuts = 1614
-fields = 3228
-outputs = 4842
-publications = 30
-replies = 0
-null_cuts = 1033
-null_fields = 2617
-restorations = 1
-pending_boundaries = 1
-pending_restorations = 1
-
-[[case]]
-id = "ridley/ribs-from-opening"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "321ae78ac618ba2ecc6cf65c806b4256142479fb6d372ecaf02da9bb70b7d396"
-
-[case.counts]
-cuts = 2
-fields = 4
-outputs = 6
-publications = 1
-replies = 0
-null_cuts = 0
-null_fields = 1
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "ridley/ribs-from-wide"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "0f4888584843300a426725d147a71e130486c8714fdceadaa90ef15b1fc0f611"
-
-[case.counts]
-cuts = 2
-fields = 4
-outputs = 6
-publications = 1
-replies = 0
-null_cuts = 0
-null_fields = 1
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "ridley/ribs-from-closing"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "56aee647c074776fc26eb1ce9339a89e73150aff65969ef6fd7ccbb2d041210a"
-
-[case.counts]
-cuts = 2
-fields = 4
-outputs = 6
-publications = 1
-replies = 0
-null_cuts = 0
-null_fields = 1
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "ridley/ribs-from-closed"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "285da94aacc9ce9ac3f7d956b5517edd3c48fa385458adc6e484969d6e19824c"
-
-[case.counts]
-cuts = 2
-fields = 4
-outputs = 6
-publications = 1
-replies = 0
-null_cuts = 0
-null_fields = 1
-restorations = 0
 pending_boundaries = 0
 pending_restorations = 0

@@ -290,19 +290,18 @@ energy per hit. The health comparison sees 95 protection frames left and the
 movement comparison sees four push frames left at each hit cut. The hit's side
 and starting push time compare separately as `ridley.tail.hit`.
 
-The indexed cases `ridley/flight-tail`, `ridley/alternate-rise-hit` and
-`ridley/alternate-hover-hit` exercise the same played room. The first compares
-all 127 cuts from take-off through the last hover, 9,525 state fields and 1,143
-outputs. Holding the preceding State matches 7,134 state fields and zero complete cuts.
-The other two play the alternative row `samus-ceres-push` from 866 through 905 and from 926 through 993. Its
+The played runs of `chain-any-0006-E0B5` compare every tail field from take-off
+through the last hover. The indexed cases `ridley/alternate-rise-hit` and
+`ridley/alternate-hover-hit` exercise the same played room on the alternative row
+`samus-ceres-push` from 866 through 905 and from 926 through 993. Its
 continuous run first differs at 906 in [falling aim](LEGACY.md#samuss-aim-after-an-isolated-down-press-in-a-fall).
 Each row also continues from observed checkpoints at 930, 940 and 992 through
 993, admitting all tail fields at each origin. Serialised room snapshots still
 require a production codec.
 
 The ordinary fight carries its body and tail into the offscreen retreat on cut 994.
-The indexed cases `ridley/offscreen-retreat` and `ridley/alternate-offscreen-retreat`
-compare both routes through cut 1,157. Ridley starts coasting at 1,093, hits the
+The played runs of `chain-any-0006-E0B5` and the indexed case
+`ridley/alternate-offscreen-retreat` compare both routes through cut 1,157. Ridley starts coasting at 1,093, hits the
 ceiling at 1,115 and places the two walls at 1,157. The station is still calm.
 The terminal comparison checks each of the three live palette spans against
 both the native current mirror and CGRAM. Neither route takes another hit during
@@ -317,11 +316,12 @@ The ordinary body, tail and baby State stay fixed. Both routes hold through cut
 1,270 and reach the evacuation warning at cut 1,271. Power-on reaches
 the same boundary at cut 11,433.
 
-The scoped cases `ridley/flyby` and `ridley/alternate-flyby` admit cut 1,156
-and play the last retreat turn before comparing the flyby through room return
-at 1,270. Each compares 113 cuts, 678 State fields and 4,987 outputs. The scopes
-hold Samus's position from the backdrop, compare the unserved shove request at
-1,262, and carry the quake and drawing through the return. On return the room
+The scoped case `ridley/alternate-flyby` admits cut 1,156 and plays the last
+retreat turn before comparing the flyby through room return at 1,270. It compares
+113 cuts, 678 State fields and 4,987 outputs, the fields the played runs of
+`chain-any-0006-E0B5` compare on the main route. The scope holds Samus's
+position from the backdrop, compares the unserved shove request at 1,262, which
+the played runs do not read, and carries the quake and drawing through the return. On return the room
 view clears scroll and overflow while the physical matrix and pivot stay held.
 
 Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly

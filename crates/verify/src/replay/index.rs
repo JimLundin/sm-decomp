@@ -193,8 +193,6 @@ pub enum InputProvider {
     StationExplosion,
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
-    /// Ordinary fight draws at finished movie cuts through the played room.
-    PlayedSamusPicture,
     /// Movie pad and platform opportunities for the return shaft's wall-jump dust.
     PlayedShaftDust,
     /// One elevator arrival and T1 scheduling.
@@ -203,8 +201,6 @@ pub enum InputProvider {
     ScopedCeresFlyby,
     /// One admitted warning-ready room and the usual played room/passage inputs.
     ScopedCeresWarning,
-    /// The carried Ceres return through placement and elevator reach.
-    CeresShaftActors,
     /// Played shaft actors with native CPU-side Ambient reply reads.
     PlayedShaftSound,
     /// One admitted ordinary fight and the played platform publication boundaries.
@@ -397,30 +393,6 @@ pub enum ObservationId {
     /// Defeat, doors, quake results and the clock picture through the first passage turns.
     #[serde(rename = "ridley.warning.handoff")]
     CeresWarningHandoff,
-    /// Overlay phase, ordered mounted offsets, shaft rotation, shared RNG and lock.
-    #[serde(rename = "shaft-actors.state")]
-    CeresShaftState,
-    /// Placement, burst, sound limit, lighting and elevator reach requests.
-    #[serde(rename = "shaft-actors.events")]
-    CeresShaftEvents,
-    /// Overlay VRAM, first prepared and published OAM, and platform low bytes.
-    #[serde(rename = "shaft-actors.picture")]
-    CeresShaftPicture,
-    /// The next ordinary ribs beat.
-    #[serde(rename = "ridley.ribs.beat")]
-    CeresRibsBeat,
-    /// The eligible work runs left before the next reveal.
-    #[serde(rename = "ridley.ribs.wait")]
-    CeresRibsWait,
-    /// The ordered pair of regular VRAM transfers serviced for a reveal.
-    #[serde(rename = "ridley.ribs.uploads")]
-    CeresRibsUploads,
-    /// Every physical word of the upper ribs strip.
-    #[serde(rename = "ridley.ribs.vram.upper")]
-    CeresRibsUpper,
-    /// Every physical word of the lower ribs strip.
-    #[serde(rename = "ridley.ribs.vram.lower")]
-    CeresRibsLower,
     /// The actual slot at which the attached door is appended.
     #[serde(rename = "ridley.ordinary.door-cursor")]
     CeresFightDoorCursor,
@@ -877,18 +849,6 @@ pub enum ObservationId {
     /// Complete currently playing Figure.
     #[serde(rename = "appearance.playing")]
     AppearancePlaying,
-    /// Whether the ordinary draw submitted body placements.
-    #[serde(rename = "samus-oam.visible")]
-    OrdinaryBodyVisible,
-    /// Number of placements contributed by the ordinary body.
-    #[serde(rename = "samus-oam.piece-count")]
-    OrdinaryBodyCount,
-    /// The body's entries in the prepared OAM batch.
-    #[serde(rename = "samus-oam.prepared")]
-    OrdinaryBodyPrepared,
-    /// The body's entries in physical OAM after NMI.
-    #[serde(rename = "samus-oam.physical")]
-    OrdinaryBodyPhysical,
     /// Complete ordered reaction-facing reaches.
     #[serde(rename = "movement.reached.complete")]
     CompleteReached,
@@ -1139,8 +1099,6 @@ pub struct Expectations {
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 pub(super) enum PlayedWindow {
     FightPicture { appends: [DoorAppend; 2] },
-    RibsReveal { cut: u64 },
-    ShaftActors { first: u64, picture_fields: usize },
     Flyby { first: u64, output_fields: usize },
 }
 
@@ -1286,12 +1244,10 @@ impl InputProvider {
         matches!(
             self,
             Self::ShaftSetupTurns
-                | Self::PlayedSamusPicture
                 | Self::PlayedCeresInputs
                 | Self::ScopedCeresFlyby
                 | Self::ScopedCeresFightPicture
                 | Self::ScopedCeresWarning
-                | Self::CeresShaftActors
                 | Self::PlayedShaftSound
                 | Self::ShaftPictures
                 | Self::PlayedShaftDust
@@ -1734,15 +1690,7 @@ macro_rules! ceres_observations {
             | ObservationId::CeresWarningPicture
             | ObservationId::CeresWarningAudio
             | ObservationId::CeresWarningHandoff
-            | ObservationId::CeresShaftState
-            | ObservationId::CeresShaftEvents
-            | ObservationId::CeresShaftPicture
             | ObservationId::ShaftSoundOffer
-            | ObservationId::CeresRibsBeat
-            | ObservationId::CeresRibsWait
-            | ObservationId::CeresRibsUploads
-            | ObservationId::CeresRibsUpper
-            | ObservationId::CeresRibsLower
             | ObservationId::CeresFightDoorCursor
             | ObservationId::CeresFightPreparedOam
             | ObservationId::CeresFightPhysicalOam
@@ -1807,10 +1755,6 @@ macro_rules! appearance_observations {
             | O::StandingLowerSecond
             | O::DrawingEnergy
             | O::TouchdownGraphics
-            | O::OrdinaryBodyVisible
-            | O::OrdinaryBodyCount
-            | O::OrdinaryBodyPrepared
-            | O::OrdinaryBodyPhysical
             | O::AppearancePlaying
             | O::AppearanceStep
             | O::AppearanceTimeLeft
@@ -2119,7 +2063,6 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
         "interface-hud/Exploring" => &[O::HudExplored],
         super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
-        "samus-appearance/ProtectionFlicker" => super::played::samus_picture::OUTPUTS,
         "samus-appearance/WallJumpDust" => &[O::ShaftDustState],
         "samus-appearance/WallJumpDustPicture" => &[O::ShaftDustPrepared, O::ShaftDustPublished],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
@@ -2152,30 +2095,12 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::CeresWarningPicture,
             O::CeresWarningAudio,
         ],
-        "boss-ceres-ridley/RibsBeat" => &[
-            O::CeresRibsBeat,
-            O::CeresRibsWait,
-            O::CeresRibsUploads,
-            O::CeresRibsUpper,
-            O::CeresRibsLower,
-        ],
         "boss-ceres-ridley/FightParts" | "boss-ceres-ridley/FightPictureOrder" => &[
             O::CeresFightDoorCursor,
             O::CeresFightPreparedOam,
             O::CeresFightPhysicalOam,
         ],
         "boss-ceres-ridley/WarningEnds" => &[O::CeresWarningState, O::CeresWarningHandoff],
-        "boss-ceres-ridley/OverlayAppears" => &[
-            O::CeresShaftState,
-            O::CeresShaftEvents,
-            O::CeresShaftPicture,
-        ],
-        "boss-ceres-ridley/OverlayRumbles" | "boss-ceres-ridley/ElevatorReached" => {
-            &[O::CeresShaftState, O::CeresShaftEvents]
-        }
-        "boss-ceres-ridley/ShaftTilts" | "boss-ceres-ridley/VentDrawFollowsShaft" => {
-            &[O::CeresShaftState]
-        }
         "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
         "boss-ceres-ridley/GetawayBackdrop" => &[
             O::CeresRetreatBody,
@@ -2789,13 +2714,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         InputProvider::PlayedCeresInputs
             | InputProvider::ScopedCeresFlyby
             | InputProvider::ScopedCeresWarning
-            | InputProvider::CeresShaftActors
             | InputProvider::ScopedCeresFightPicture
     ) {
         return super::played::indexed::valid(case);
-    }
-    if case.inputs == InputProvider::PlayedSamusPicture {
-        return super::played::samus_picture::valid(case);
     }
     if case.inputs == InputProvider::PlayedShaftDust {
         return super::played::shaft_dust::valid(case);
@@ -3134,13 +3055,6 @@ impl Case {
                     PlayedWindow::FightPicture { .. } => {
                         case.inputs == InputProvider::ScopedCeresFightPicture
                     }
-                    PlayedWindow::RibsReveal { .. } => {
-                        case.inputs == InputProvider::PlayedCeresInputs
-                            && super::played::ridley_ribs::is_case(case)
-                    }
-                    PlayedWindow::ShaftActors { .. } => {
-                        case.inputs == InputProvider::CeresShaftActors
-                    }
                     PlayedWindow::Flyby { .. } => case.inputs == InputProvider::ScopedCeresFlyby,
                 })
             || (case.connected_packet.is_some()
@@ -3179,12 +3093,6 @@ impl Case {
         {
             // The selected setup cut is itself a comparison.
             return Some(frame);
-        }
-        if matches!(self.inputs, InputProvider::CeresShaftActors) {
-            return match self.expectations.played {
-                Some(PlayedWindow::ShaftActors { first, .. }) => Some(first),
-                _ => None,
-            };
         }
         match self.start {
             Start::CacheCut { .. } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {

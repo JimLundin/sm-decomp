@@ -3702,3 +3702,94 @@ source_sha256 = "45be2e3b3be5ab4ad78b7ea9797e96207f912cbcbb7c5029f677beb21adcb4b
 identity = "movie/missing-power-on"
 before_values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 meaning = "reviewed boundary case holding Unsupported for the complete production power-on and movie input pipeline; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/flight-tail"
+before_values = [127, 9525, 1143, 0, 0, 0, 7134, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 8d3c07763cd90240db0f318cfcd6e948c433c6d28346d90062f0c840f429f63c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/offscreen-retreat"
+before_values = [164, 16072, 2952, 0, 0, 0, 12284, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 402a5b43f7774612c0b0361443e04f60b2d4a489c97cb6066b970ee1e1585950; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/flyby"
+before_values = [113, 678, 4987, 0, 0, 0, 295, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 53097bd7fbc8b27c9ad54e97ed3fbf06ba76464e2634bcb9b90e5c28e2461953; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/warning-through-passage"
+before_values = [342, 1026, 13877, 0, 0, 0, 627, 342, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 9eef6b45f2b4f899ca5e9057b9a14f886ced5f670124bc86a2af88c7becc9234; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/shaft-actors"
+before_values = [220, 1100, 1308, 0, 0, 34, 709, 220, 1, 1]
+meaning = "reviewed behaviour case holding Pass with observation digest 0461b4922b7b958a3bb8194f78d938457681c679d1c2bea519f973123f852605; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ordinary-ribs"
+before_values = [1614, 3228, 4842, 30, 0, 1033, 2617, 1, 1, 1]
+meaning = "reviewed behaviour case holding Pass with observation digest 1685e2cda212a71fdb6497263fcae79a89a14c55b5c57615897b98bb3a4bb4b5; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-opening"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 321ae78ac618ba2ecc6cf65c806b4256142479fb6d372ecaf02da9bb70b7d396; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-wide"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 0f4888584843300a426725d147a71e130486c8714fdceadaa90ef15b1fc0f611; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-closing"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 56aee647c074776fc26eb1ce9339a89e73150aff65969ef6fd7ccbb2d041210a; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-closed"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 285da94aacc9ce9ac3f7d956b5517edd3c48fa385458adc6e484969d6e19824c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-initial-body"
+before_values = [6, 0, 24, 0, 0, 0, 0, 6, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 2c54abe8a2dcc728969db6e4340d76c13f63edbab14b670d1a115f311ed83c83; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-first-protection"
+before_values = [7, 0, 28, 0, 0, 0, 0, 7, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest b8f2d08ea19b2bf6b51059a5c7a2573f9a8325824833546ebda02da514fb44c9; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-protection-hold"
+before_values = [23, 0, 92, 0, 0, 0, 0, 23, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest a843f52bf2dac4cbaa6bec65ac3a996d5a87a78e43a20d20f701bca2af188eef; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

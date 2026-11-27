@@ -1,7 +1,5 @@
 //! Indexed Ceres windows through the ordinary played room runner.
 
-pub(in crate::replay) mod shaft;
-
 use super::{Run, Stop, contact, fight_picture, open_rows, read_lock, ridley, seed_controller};
 use crate::replay::{
     Sources, appearance,
@@ -67,9 +65,6 @@ const FIGHT_PICTURE_OUTPUTS: &[ObservationId] = &[
 ];
 
 pub(in crate::replay) fn valid(case: &Case) -> bool {
-    if case.inputs == InputProvider::CeresShaftActors {
-        return shaft::valid(case);
-    }
     if case.inputs == InputProvider::ScopedCeresFightPicture {
         return case.kind == CaseKind::Scoped
             && fight_picture::valid_window(case)
@@ -80,9 +75,6 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
             && case.expectations.outputs == FIGHT_PICTURE_OUTPUTS
             && case.expectations.output_cut.is_none()
             && case.checkpoints;
-    }
-    if super::ridley_ribs::is_case(case) {
-        return super::ridley_ribs::valid(case);
     }
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
@@ -190,12 +182,10 @@ pub(in crate::replay) fn run_selected(
     result: &mut runner::Receipt,
 ) -> Option<Result<(), Outcome>> {
     const ADAPTERS: &[(InputProvider, RoomAdapter)] = &[
-        (InputProvider::CeresShaftActors, shaft::run),
         (InputProvider::ScopedCeresFightPicture, fight_picture::run),
         (InputProvider::ScopedCeresWarning, warning),
         (InputProvider::ScopedCeresFlyby, flyby),
         (InputProvider::PlayedCeresInputs, tail),
-        (InputProvider::PlayedSamusPicture, super::samus_picture::run),
         (InputProvider::PlayedShaftSound, super::shaft_sound::run),
         (
             InputProvider::ShaftPictures,
@@ -203,12 +193,9 @@ pub(in crate::replay) fn run_selected(
         ),
         (InputProvider::PlayedShaftDust, super::shaft_dust::run),
     ];
-    let &(_, mut adapter) = ADAPTERS
+    let &(_, adapter) = ADAPTERS
         .iter()
         .find(|(provider, _)| *provider == case.inputs)?;
-    if case.inputs == InputProvider::PlayedCeresInputs && super::ridley_ribs::is_case(case) {
-        adapter = super::ridley_ribs::run;
-    }
     Some(run(adapter, case, sources, result))
 }
 
@@ -423,26 +410,15 @@ mod tests {
         }
         assert!(picture.validate().is_err());
 
-        let mut flyby = case("ridley/flyby");
-        let mut shaft = case("ridley/shaft-actors");
-        std::mem::swap(
-            &mut flyby.expectations.played,
-            &mut shaft.expectations.played,
-        );
+        let mut flyby = case("ridley/alternate-flyby");
+        flyby.expectations.played = Some(PlayedWindow::FightPicture {
+            appends: [
+                DoorAppend { cut: 10, cursor: 3 },
+                DoorAppend { cut: 14, cursor: 4 },
+            ],
+        });
         assert!(flyby.validate().is_err());
-        assert!(shaft.validate().is_err());
-        shaft.expectations.played = Some(PlayedWindow::ShaftActors {
-            first: 100,
-            picture_fields: 1,
-        });
-        assert!(shaft.validate().is_err());
-
-        let mut ribs = case("ridley/ordinary-ribs");
-        ribs.expectations.played = Some(PlayedWindow::RibsReveal {
-            cut: ribs.end.cut_inclusive,
-        });
-        assert!(ribs.validate().is_err());
-        ribs.expectations.played = None;
-        assert!(ribs.validate().is_err());
+        flyby.expectations.played = None;
+        assert!(flyby.validate().is_err());
     }
 }

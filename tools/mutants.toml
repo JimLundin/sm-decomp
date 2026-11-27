@@ -1072,7 +1072,7 @@ case = "played chain-any-0010-DF8D 0 86"
 [[fault]]
 name = "airborne-tail-hit-withheld"
 rule = "boss-ceres-ridley/TailHits"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/ridley.rs"
 before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
 after = """
@@ -1081,19 +1081,19 @@ after = """
         run.hit = None;
     }
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
-case = "ridley/flight-tail"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "airborne-tail-swish-withheld"
 rule = "boss-ceres-ridley/TailSwishes"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/ridley.rs"
 before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
 after = """
     let mut run = run;
     run.swish = None;
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
-case = "ridley/flight-tail"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "intro-delivery-starts-one-pixel-left"
@@ -1214,7 +1214,7 @@ case = "played any-power-on 0 2309"
 [[fault]]
 name = "retreat-handoff-keeps-hovering"
 rule = "boss-ceres-ridley/FliesOutOfReach"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/ridley.rs"
 before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
 after = """
@@ -1223,18 +1223,18 @@ after = """
         run.ridley = ridley;
     }
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
-case = "ridley/offscreen-retreat"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "retreat-wall-placement-withheld"
 rule = "boss-ceres-ridley/GetawayBackdrop"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/station.rs"
 before = """
             self.doors
                 .extend([backdrop.left_wall.door, backdrop.right_wall.door]);"""
 after = "            let _ = backdrop;"
-case = "ridley/offscreen-retreat"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "played-intro-missile-release-skipped"
@@ -1544,16 +1544,16 @@ responsibility = "ceres"
 file = "crates/game/src/production/played/station.rs"
 before = "            picture,"
 after = "            picture: boss_ceres_ridley::GetawayEffects { push: None, ..picture },"
-case = "ridley/flyby"
+case = "ridley/alternate-flyby"
 
 [[fault]]
 name = "ridley-flyby-tile-low-bytes-withheld"
 rule = "boss-ceres-ridley/GetawayPicture"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/verify/src/replay/played/ridley/flyby.rs"
 before = "                        publish_tiles(&mut self.vram, uploads).ok_or_else(bad)?;"
 after = "                        publish_tiles(&mut self.vram, uploads.get(..0).unwrap_or_default()).ok_or_else(bad)?;"
-case = "ridley/flyby"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "station-explosion-ship-map"
@@ -1708,7 +1708,7 @@ case = "played chain-any-0011-DF45 239 2124"
 [[fault]]
 name = "ridley-warning-overlap-foreground-withheld"
 rule = "boss-ceres-ridley/WarningArt"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/warning.rs"
 before = '''    let both = [
         update(WarningSheet::Sprites, last),
@@ -1716,36 +1716,36 @@ before = '''    let both = [
     ];'''
 after = '''    let both = [update(WarningSheet::Sprites, last)];
     let _ = overlap;'''
-case = "ridley/warning-through-passage"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "ridley-warning-glow-withheld"
 rule = "boss-ceres-ridley/WarningGlow"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/warning.rs"
 before = "        *palette.screen.get_mut(position).ok_or_else(bad)? = write.colour;"
 after = '''        if effects.picture.colours.len() != 3 {
             *palette.screen.get_mut(position).ok_or_else(bad)? = write.colour;
         }'''
-case = "ridley/warning-through-passage"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "ridley-warning-withheld-activation"
 rule = "boss-ceres-ridley/WarningEnds"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/warning.rs"
 before = "        activation: effects.activation,"
 after = "        activation: None,"
-case = "ridley/warning-through-passage"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "ridley-warning-quieting-clock-publication-withheld"
 rule = "boss-ceres-ridley/WarningEnds"
-responsibility = "ceres"
+responsibility = "played"
 file = "crates/game/src/production/played/clock_picture.rs"
 before = "        if timing.publishes {"
 after = "        if timing.publishes && draws {"
-case = "ridley/warning-through-passage"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "shaft-closing-placement-stays-after-first-turn"
@@ -1888,7 +1888,7 @@ case = "audio-sender/shaft-bursts"
 
 [[fault]]
 name = "appearance-ordinary-body-loses-flicker-phase"
-responsibility = "appearance"
+responsibility = "played"
 rule = "samus-appearance/ProtectionFlicker"
 file = "crates/game/src/production/played/samus_picture.rs"
 before = """push_time_left: push != PushFrames::NONE,
@@ -1897,7 +1897,7 @@ before = """push_time_left: push != PushFrames::NONE,
 after = """push_time_left: push != PushFrames::NONE,
             timed_special_colour: false,
             finished_frame_parity: match parity { Parity::Even => Parity::Odd, Parity::Odd => Parity::Even },"""
-case = "samus-appearance/fight-first-protection"
+case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "shaft-overlay-turn-clock-stalls"

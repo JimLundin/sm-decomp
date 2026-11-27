@@ -15,7 +15,7 @@ fn arrival_writes_the_first_oam_word_and_publishes_the_room_palette() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let mut controller = seed_controller(&seed).unwrap();
     // This scope admits the completed flight's OAM, which the room receives.
     let carried = landing_site::oam(&seed).unwrap();

@@ -134,7 +134,6 @@ pub(super) fn play(
                 continuation,
                 rows,
                 rom,
-                row,
                 current,
                 cut.saturating_add(1)..=end,
             )?;
@@ -505,12 +504,11 @@ impl Run {
         continuation: super::flight::Continuation,
         rows: &mut Rows<'_>,
         rom: &Path,
-        row: &str,
         previous: FrameRecord,
         cuts: core::ops::RangeInclusive<u64>,
     ) -> Result<(u64, Stop), Outcome> {
         let live = LiveCartridge::new(self.cartridge, self.format)?;
-        continuation.through(rows, rom, row, previous, cuts, Some(live))
+        continuation.through(rows, rom, previous, cuts, Some(live))
     }
 
     /// The boot's fields at `cut`.
