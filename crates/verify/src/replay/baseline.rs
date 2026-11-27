@@ -5,7 +5,7 @@ use super::index::{
 };
 use super::result::{CaseResult, Counts, Outcome};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet, btree_map::Entry};
 use std::path::Path;
 
 /// The kind of claim held by a committed baseline row.
@@ -100,19 +100,29 @@ impl Baseline {
     /// # Errors
     /// Missing, extra, duplicate, malformed or incompatible floor rows are rejected.
     pub fn validate_index(&self, snapshot: &IndexSnapshot) -> Result<(), BaselineFault> {
+        self.validated(snapshot).map(|_| ())
+    }
+
+    /// Bind a reviewed baseline to the exact index it covers before checking results.
+    ///
+    /// # Errors
+    /// Missing, extra, duplicate, malformed or incompatible floor rows are rejected.
+    pub fn validated<'a>(
+        &'a self,
+        snapshot: &'a IndexSnapshot,
+    ) -> Result<ValidatedBaseline<'a>, BaselineFault> {
         if self.format != 1 || self.index_sha256 != snapshot.sha256() {
             return Err(BaselineFault::IndexPin);
         }
         let index = snapshot.index();
-        let mut ids = BTreeSet::new();
+        let cases: BTreeMap<_, _> = index.cases.iter().map(|case| (&case.id, case)).collect();
+        let mut floors = BTreeMap::new();
         for floor in &self.cases {
-            if !ids.insert(&floor.id) {
+            let Entry::Vacant(entry) = floors.entry(&floor.id) else {
                 return Err(BaselineFault::DuplicateCase(floor.id.clone()));
-            }
-            let case = index
-                .cases
-                .iter()
-                .find(|case| case.id == floor.id)
+            };
+            let case = cases
+                .get(&floor.id)
                 .ok_or_else(|| BaselineFault::MissingCase(floor.id.clone()))?;
             let valid = match (&floor.claim, &floor.expected) {
                 (Claim::Behaviour, Outcome::Pass) => {
@@ -130,16 +140,17 @@ impl Baseline {
             if !valid || !valid_counts(case, floor) {
                 return Err(BaselineFault::InvalidClaim(floor.id.clone()));
             }
+            entry.insert((*case, floor));
         }
         for case in &index.cases {
-            if !ids.contains(&case.id) {
+            if !floors.contains_key(&case.id) {
                 return Err(BaselineFault::MissingCase(case.id.clone()));
             }
         }
-        if ids.is_empty() {
+        if floors.is_empty() {
             return Err(BaselineFault::Empty);
         }
-        Ok(())
+        Ok(ValidatedBaseline { floors })
     }
 
     /// Hold exact outcomes, counts and observation digests for the complete index.
@@ -170,8 +181,26 @@ impl Baseline {
         selected: &[CaseId],
         results: &[CaseResult],
     ) -> Result<Summary, BaselineFault> {
-        self.validate_index(snapshot)?;
-        let index = snapshot.index();
+        self.validated(snapshot)?.check_selected(selected, results)
+    }
+}
+
+/// A reviewed floor for every case in one validated index. The borrowed declarations
+/// remain fixed between admission and checking the measured results.
+pub struct ValidatedBaseline<'a> {
+    floors: BTreeMap<&'a CaseId, (&'a Case, &'a Floor)>,
+}
+
+impl ValidatedBaseline<'_> {
+    /// Check a nonempty explicit selection against the reviewed floors.
+    ///
+    /// # Errors
+    /// Empty, duplicate, missing, extra or changed receipts are rejected.
+    pub fn check_selected(
+        &self,
+        selected: &[CaseId],
+        results: &[CaseResult],
+    ) -> Result<Summary, BaselineFault> {
         if selected.is_empty() {
             return Err(BaselineFault::Empty);
         }
@@ -190,15 +219,9 @@ impl Baseline {
             if !expected_ids.contains(&result.id) {
                 return Err(BaselineFault::MissingCase(result.id.clone()));
             }
-            let floor = self
-                .cases
-                .iter()
-                .find(|floor| floor.id == result.id)
-                .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
-            let case = index
-                .cases
-                .iter()
-                .find(|case| case.id == result.id)
+            let (case, floor) = self
+                .floors
+                .get(&result.id)
                 .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
             let start_cut = match case.start {
                 Start::CacheCut { frame }
@@ -631,6 +654,33 @@ limits = ["invented scope A"]
     }
 
     #[test]
+    fn a_validated_pair_requires_each_selected_case_exactly_once() {
+        let (snapshot, mut baseline, result) = fixture();
+        let selected = std::slice::from_ref(&result.id);
+        let validated = baseline.validated(&snapshot).unwrap();
+        assert_eq!(
+            validated.check_selected(selected, &[]),
+            Err(BaselineFault::MissingCase(result.id.clone()))
+        );
+        assert_eq!(
+            validated.check_selected(selected, &[result.clone(), result.clone()]),
+            Err(BaselineFault::DuplicateCase(result.id.clone()))
+        );
+
+        let floor = baseline.cases.first().unwrap().clone();
+        baseline.cases.push(floor);
+        assert!(matches!(
+            baseline.validated(&snapshot),
+            Err(BaselineFault::DuplicateCase(id)) if id == result.id
+        ));
+        baseline.cases.clear();
+        assert!(matches!(
+            baseline.validated(&snapshot),
+            Err(BaselineFault::MissingCase(id)) if id == result.id
+        ));
+    }
+
+    #[test]
     fn exact_receipt_metadata_and_observation_atoms_are_required() {
         let (snapshot, baseline, result) = fixture();
         assert_eq!(
@@ -652,12 +702,26 @@ limits = ["invented scope A"]
             baseline.check(&snapshot, &[forged]),
             Err(BaselineFault::Metadata(_))
         ));
-        let mut forged = result;
+        let validated = baseline.validated(&snapshot).unwrap();
+        let selected = std::slice::from_ref(&result.id);
+        let mut forged = result.clone();
         forged.counts.outputs = 3;
-        assert!(matches!(
-            baseline.check(&snapshot, &[forged]),
-            Err(BaselineFault::Counts(_))
-        ));
+        assert_eq!(
+            validated.check_selected(selected, &[forged]),
+            Err(BaselineFault::Counts(result.id.clone()))
+        );
+        let mut forged = result.clone();
+        forged.outcome = Outcome::CheckpointFailure { cut: 156 };
+        assert_eq!(
+            validated.check_selected(selected, &[forged]),
+            Err(BaselineFault::Result(result.id.clone()))
+        );
+        let mut forged = result.clone();
+        forged.observation_sha256 = "f".repeat(64);
+        assert_eq!(
+            validated.check_selected(selected, &[forged]),
+            Err(BaselineFault::Digest(result.id))
+        );
     }
 
     #[test]

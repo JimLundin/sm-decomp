@@ -160,11 +160,11 @@ pub fn run(args: &[String]) -> Result<String, String> {
     {
         return Err(USAGE.to_owned());
     }
-    if let Some(baseline) = &baseline {
-        baseline
-            .validate_index(&snapshot)
-            .map_err(|fault| format!("replay baseline: {fault:?}"))?;
-    }
+    let baseline = baseline
+        .as_ref()
+        .map(|baseline| baseline.validated(&snapshot))
+        .transpose()
+        .map_err(|fault| format!("replay baseline: {fault:?}"))?;
     let index = snapshot.index();
     options.sources.lock.clone_from(&index.lock);
     let selected = index
@@ -199,7 +199,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if let Some(baseline) = &baseline {
         let ids: Vec<_> = selected.iter().map(|case| case.id.clone()).collect();
         let summary = baseline
-            .check_selected(&snapshot, &ids, &results)
+            .check_selected(&ids, &results)
             .map_err(|fault| format!("{output}\nreplay baseline: {fault:?}"))?;
         output.push_str("\n[baseline]\n");
         output.push_str(

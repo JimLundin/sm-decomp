@@ -6,6 +6,9 @@
 set -uo pipefail
 receipt=${1:?usage: replay_parallel.sh RECEIPT}
 : "${SM_CACHE:?SM_CACHE is required}" "${SM_ROM:?SM_ROM is required}" "${SM_AUDIO_NATIVE:?SM_AUDIO_NATIVE is required}"
+source tools/ci/replay.sh || exit $?
+"${SM_PY:-python3}" tools/check_replay_transition.py || exit $?
+
 shards=3
 logs=$(mktemp -d)
 trap 'rm -rf "$logs"' EXIT
@@ -16,7 +19,7 @@ pids=($!)
 merge=()
 for ((shard = 0; shard < shards; shard++)); do
   labels+=("shard-$shard")
-  bash tools/ci/replay.sh --shard "$shard/$shards" --write "$logs/shard-$shard.toml" \
+  replay_check --shard "$shard/$shards" --write "$logs/shard-$shard.toml" \
     > "$logs/shard-$shard.log" 2>&1 &
   pids+=($!)
   merge+=(--receipt "$logs/shard-$shard.toml")
