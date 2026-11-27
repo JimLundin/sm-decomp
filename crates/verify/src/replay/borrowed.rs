@@ -1,5 +1,7 @@
 //! Borrowed source operations belong to the input adapters that consume them.
 
+pub(super) mod escape;
+
 use super::index::{Borrowed, Case, InputProvider, Responsibility, Start};
 use serde::{Deserialize, Deserializer};
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -22,6 +24,7 @@ enum Selection {
     #[default]
     All,
     Movement,
+    Escape(Vec<escape::Origin>),
     NativeOffer,
     ConstructedOffer,
     Ribs,
@@ -29,10 +32,11 @@ enum Selection {
 }
 
 impl Selection {
-    fn applies(&self, case: &Case) -> bool {
+    fn applies(&self, case: &Case, origin: Option<escape::Origin>) -> bool {
         match self {
             Self::All => true,
             Self::Movement => case.responsibilities == [Responsibility::Movement],
+            Self::Escape(origins) => origin.is_some_and(|actual| origins.contains(&actual)),
             Self::NativeOffer => matches!(case.start, Start::NativeSenderOffer { .. }),
             Self::ConstructedOffer => matches!(case.start, Start::ConstructedSenderOffer { .. }),
             Self::Ribs => super::played::ridley_ribs::is_case(case),
@@ -166,6 +170,15 @@ impl Operation {
 }
 
 pub(super) fn valid(case: &Case) -> bool {
+    let origins = escape::Origin::candidates(case);
+    if origins.is_empty() {
+        valid_for(case, None)
+    } else {
+        origins.iter().any(|&origin| valid_for(case, Some(origin)))
+    }
+}
+
+fn valid_for(case: &Case, origin: Option<escape::Origin>) -> bool {
     let Some(operations) = OPERATIONS.as_ref() else {
         return false;
     };
@@ -179,7 +192,9 @@ pub(super) fn valid(case: &Case) -> bool {
             .iter()
             .any(|input| operations.values().any(|op| op.describes(input)));
     }
-    let required: Vec<_> = supported.filter(|op| op.selection.applies(case)).collect();
+    let required: Vec<_> = supported
+        .filter(|op| op.selection.applies(case, origin))
+        .collect();
     case.borrowed.len() == required.len()
         && required
             .iter()

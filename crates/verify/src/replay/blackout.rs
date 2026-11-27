@@ -3,6 +3,7 @@ pub(super) mod hud;
 pub(super) mod observe;
 pub(super) mod seed;
 pub(super) mod standing;
+use super::borrowed::escape::Origin;
 use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility, Start,
 };
@@ -108,27 +109,33 @@ fn cache(case: &Case, sources: &Sources) -> Result<Cache, Outcome> {
     Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "blackout pinned cache"))
 }
 
-fn suspended_origin(
-    case: &Case,
-    record: &oracle_record::FrameRecord,
-    reach_at_intake: bool,
-) -> Result<bool, Outcome> {
-    let memory = case.expectations.outputs.contains(&O::BlackoutMemory);
-    let late = super::played::explosion::shaft_interrupted(record)?;
-    let supported = if reach_at_intake {
-        !standing_body(case)
-            && !shaft_hud(case)
-            && !memory
-            && word(&record.wram, 0x998)? == 8
-            && word(&record.wram, 0x93f)? & 0x8000 != 0
-            && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
-    } else {
-        super::played::explosion::shaft_starts(record)? && (standing_body(case) || memory == late)
-    };
-    if !elevator_room(record)? || !supported {
-        return Err(data_failure(Some(record.index), "blackout elevator origin"));
+fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Outcome> {
+    let bad = || data_failure(Some(record.index), "blackout elevator origin");
+    if !elevator_room(record)? {
+        return Err(bad());
     }
-    Ok(late)
+    let memory = case.expectations.outputs.contains(&O::BlackoutMemory);
+    if word(&record.wram, 0x998)? == 8
+        && word(&record.wram, 0x93f)? & 0x8000 != 0
+        && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
+        && !standing_body(case)
+        && !shaft_hud(case)
+        && !memory
+    {
+        return Ok(Origin::Reach);
+    }
+    let late = super::played::explosion::shaft_interrupted(record)?;
+    if !super::played::explosion::shaft_starts(record)? || (!standing_body(case) && memory != late)
+    {
+        return Err(bad());
+    }
+    Ok(match (standing_body(case), late) {
+        (true, true) => Origin::SuspendedStanding,
+        (true, false) => Origin::Standing,
+        (false, true) => Origin::Suspended,
+        (false, false) if shaft_hud(case) => Origin::Hud,
+        (false, false) => Origin::Locked,
+    })
 }
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
@@ -146,11 +153,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let mut previous = record(&cache, frame)?;
     let body = standing_body(case);
     let hud = shaft_hud(case);
-    let reach_at_intake = case
-        .borrowed
-        .iter()
-        .any(|input| input.dependency == "shaft.elevator");
-    let late = suspended_origin(case, &previous, reach_at_intake)?;
+    let origin = origin(case, &previous)?;
+    origin.check(case, frame)?;
+    let late = matches!(origin, Origin::Suspended | Origin::SuspendedStanding);
     let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
     let hud_assets = hud
         .then(|| hud::admit(&previous, rom.lorom(), &mut state))
@@ -185,7 +190,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         let mut input = work(
             &previous,
             &current,
-            reach_at_intake && cut == frame.saturating_add(1),
+            origin == Origin::Reach && cut == frame.saturating_add(1),
         )?;
         if matches!(input.work, blackout::Work::Fresh { .. })
             && let Some(look) = &locked_look

@@ -1825,17 +1825,11 @@ checkpoints = true
 limits = ["The first room turn receives B8's elevator arrival. The following locked room turns run the HUD timer, play time and RNG. B8 geometry and rotation, movement and appearance, actor drawing, other room uploads and audio service are outside this scope.", "The station receives its carried scene on the final opportunity. Comparison ends at that dispatch, before its own work."]
 
 [[case.borrowed]]
-dependency = "shaft.elevator"
-provider = "reach at the scoped intake"
-fields = ["after-motion elevator reached"]
-phase = "end of the ordinary room turn"
+operation = "elevator-reach"
 claim = "the blackout consumes the shaft report once"
 
 [[case.borrowed]]
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["end of vblank", "cartridge write completion", "requested commit"]
-phase = "suspended work and NMI return"
+operation = "suspended-room-work"
 claim = "timing chooses when production resumes the carried room batch and save"
 
 [[case]]
@@ -1854,10 +1848,7 @@ checkpoints = true
 limits = ["One seed inside the unfinished room pass admits its queued OAM, palette and platform transfer and the earlier live memories. Complete live memory is compared through the boundary where the station takes the scene.", "Per-line raster effects and the receiving station's own work are outside this scope."]
 
 [[case.borrowed]]
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["end of vblank", "cartridge write completion", "requested commit"]
-phase = "suspended work and NMI return"
+operation = "suspended-room-work"
 claim = "the cartridge and queued graphics finish from the one suspended seed"
 
 [[case]]
@@ -1914,24 +1905,15 @@ checkpoints = true
 limits = ["the elevator exit and completed save come from the origin", "setup transfer intermediates are masked before the settled drawing", "the flash is compared at its start request, and full scanline window composition is outside this case", "Ceres music requests and the post-service reply are compared at the queue boundary", "sprite comparisons retain every visible entry, its order and size", "the next owner receives the blackout but does not advance in this case"]
 
 [[case.borrowed]]
-dependency = "explosion.elevator"
-provider = "pinned-elevator-blackout"
-fields = ["station.begin", "health", "video.palette", "video.oam", "options.subtitles", "scheduler.finished", "landing.destination"]
-phase = "seed"
+operation = "station-blackout-seed"
 claim = "the elevator's completed blackout selects this scene and the Landing Site"
 
 [[case.borrowed]]
-dependency = "explosion.cadence"
-provider = "pinned-nmi-work-completion"
-fields = ["scheduler.finished"]
-phase = "per cut"
+operation = "station-work-cadence"
 claim = "the platform supplies the completion of each cinematic frame and transfer"
 
 [[case.borrowed]]
-dependency = "explosion.music"
-provider = "pinned-post-service-music"
-fields = ["music.busy"]
-phase = "after audio service"
+operation = "station-music-reply"
 claim = "the scene reads the independent queued music reply before advancing the reveal"
 
 [[case]]
@@ -1950,17 +1932,11 @@ checkpoints = true
 limits = ["the station blackout and its carried palette, energy and destination are admitted at cut 1004", "setup work in progress is masked until its first finished cut", "English caption observed", "full pixel composition and off-screen OAM retention outside the compared drawing outputs", "the receiving loader starts after the final compared cut"]
 
 [[case.borrowed]]
-dependency = "zebes.scheduler-cadence"
-provider = "pinned-record-nmi-work-completion"
-fields = ["scheduler.finished"]
-phase = "per cut"
+operation = "flight-work-cadence"
 claim = "T1 owns the work spanning setup's nine borrowed lag cuts"
 
 [[case.borrowed]]
-dependency = "zebes.entry-and-options"
-provider = "pinned-record-station-blackout"
-fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
-phase = "seed cut"
+operation = "station-flight-handoff"
 claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"
 
 
@@ -1981,17 +1957,11 @@ checkpoints = true
 limits = ["the station blackout and its carried palette, energy and destination are admitted at cut 1004", "setup work in progress is masked until its first finished cut", "English caption observed", "full pixel composition and off-screen OAM retention outside the compared drawing outputs", "the receiving loader starts after the final compared cut"]
 
 [[case.borrowed]]
-dependency = "zebes.scheduler-cadence"
-provider = "pinned-record-nmi-work-completion"
-fields = ["scheduler.finished"]
-phase = "per cut"
+operation = "flight-work-cadence"
 claim = "T1 owns the work spanning setup's nine borrowed lag cuts"
 
 [[case.borrowed]]
-dependency = "zebes.entry-and-options"
-provider = "pinned-record-station-blackout"
-fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
-phase = "seed cut"
+operation = "station-flight-handoff"
 claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"
 
 [[case]]
@@ -2016,17 +1986,11 @@ limits = [
 ]
 
 [[case.borrowed]]
-dependency = "platform.work-and-transfer"
-provider = "pinned NMI and direct DMA channel receipts"
-fields = ["work-open", "accepted-byte-count", "selected-read"]
-phase = "work opening through the selected read before NMI-off vblank"
+operation = "loader-transfer-progress"
 claim = "The record qualifies the work and bus progress. The movie alone does not determine those opportunities."
 
 [[case.borrowed]]
-dependency = "prior-room-and-video"
-provider = "pinned shaft map storage and pinned flight departure OAM, placement, live registers and shadow tilemaps"
-fields = ["stored Crateria map", "active map", "physical OAM", "room", "player placement", "live display", "tilemap tails"]
-phase = "before opening the receiving load"
+operation = "prior-flight-and-shaft-owners"
 claim = "VRAM, random state, palette, energy, destination and finished work are carried by the preceding flight. The scope admits the other owners from their prior records."
 
 [[case]]
@@ -2045,17 +2009,11 @@ checkpoints = true
 limits = ["The locked Ceres room door stops leftward travel. This window covers the first ordinary turn after release.", "Movement and Appearance carry their complete State from the preceding cut. The proof selects their turns within the flyby. Boss timing, the quake, the escape clock, camera ownership, drawing and weapon inheritance lie outside this scope."]
 
 [[case.borrowed]]
-dependency = "ridley.getaway-pass"
-provider = "preceding pinned boss mode and flyby picture cursor"
-fields = ["side-free pass request"]
-phase = "after ordinary movement and pose reaction"
+operation = "getaway-boss-pass"
 claim = "The cue comes from the observed active boss picture count at the authored pass opportunity."
 
 [[case.borrowed]]
-dependency = "room.samus-neighbours"
-provider = "preceding pinned record and imported pose and terrain content"
-fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
-phase = "before movement and appearance"
+operation = "getaway-room-neighbours"
 claim = "The collision queries use prior room blocks, the interactive roster and the Ceres door slots. The camera supplies its left edge. Expected Samus fields enter comparison only."
 
 [[case]]
@@ -2074,17 +2032,11 @@ checkpoints = true
 limits = ["The floor limits the descent through several rightward turns before the solid blocks stop the shove.", "Movement and Appearance carry their complete State from the preceding cut. The proof selects their turns within the flyby. Boss timing, the quake, the escape clock, camera ownership, drawing and weapon inheritance lie outside this scope."]
 
 [[case.borrowed]]
-dependency = "ridley.getaway-pass"
-provider = "preceding pinned boss mode and flyby picture cursor"
-fields = ["side-free pass request"]
-phase = "after ordinary movement and pose reaction"
+operation = "getaway-boss-pass"
 claim = "The cue comes from the observed active boss picture count at the authored pass opportunity."
 
 [[case.borrowed]]
-dependency = "room.samus-neighbours"
-provider = "preceding pinned record and imported pose and terrain content"
-fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
-phase = "before movement and appearance"
+operation = "getaway-room-neighbours"
 claim = "The collision queries use prior room blocks, the interactive roster and the Ceres door slots. The camera supplies its left edge. Expected Samus fields enter comparison only."
 
 [[case]]
@@ -2103,10 +2055,7 @@ checkpoints = true
 limits = ["sole seeded origin is the completed elevator exit at 241", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
 
 [[case.borrowed]]
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
+operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
 
@@ -2126,10 +2075,7 @@ checkpoints = true
 limits = ["sole seeded origin is the completed elevator exit at 241", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
 
 [[case.borrowed]]
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
+operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
 
@@ -2149,10 +2095,7 @@ checkpoints = true
 limits = ["sole seeded origin is the completed elevator exit at 241", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
 
 [[case.borrowed]]
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
+operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
 
@@ -2172,10 +2115,7 @@ checkpoints = true
 limits = ["sole seeded origin is the completed elevator exit at 241", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
 
 [[case.borrowed]]
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
+operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
 [[case]]
@@ -2194,10 +2134,7 @@ checkpoints = true
 limits = ["the sole seed admits the shaft and queued room publication at 239, before the save starts", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
 
 [[case.borrowed]]
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "shaft.vblank-ended", "shaft.save-completed", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
+operation = "shaft-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
 [[case]]
@@ -2254,10 +2191,7 @@ checkpoints = true
 limits = ["The installed mode split and affine registers are compared. The scanout scheduler, physical PPU background mode, actor population, subsequent haze intensity and shaft rotation are outside this static setup."]
 
 [[case.borrowed]]
-dependency = "passage.fetch-and-block-turn"
-provider = "pinned passage phase and NMI completion"
-fields = ["incoming doorway", "progress", "fetch opportunity", "slide wait completion"]
-phase = "early contents and first block-script turn"
+operation = "shaft-fetch-and-block-work"
 claim = "The scoped entry borrows passage timing and begins with its built grid. The played passage selects and builds its own destination."
 
 [[case]]
@@ -2276,17 +2210,11 @@ checkpoints = true
 limits = ["Samus's picture uses the existing blackout room turn and NMI. Compare her slots in both OAM lanes, the pending tile sources, and each entire physical body strip row.", "The HUD grid, shaft actors and their other graphics, affine publication and played-alone continuity remain outside scope."]
 
 [[case.borrowed]]
-dependency = "shaft.standing-drawing"
-provider = "locked room owners at the reach cut and early view from the preceding cut"
-fields = ["movement.pose", "appearance.clip-step", "movement.room-centre", "shaft.pivot", "shaft.carried-view", "camera.layer-origin"]
-phase = "pose, clip and room positions at reach, view before each late shaft turn"
+operation = "locked-standing-draw"
 claim = "the lock retains the pose, step, room centre, pivot and layer origin. Each fresh drawing reads the carried signed shaft view."
 
 [[case.borrowed]]
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["end of vblank", "cartridge write completion", "requested commit"]
-phase = "room preparation, suspended work and NMI return"
+operation = "standing-room-work"
 claim = "timing selects when the prepared body publishes; expected pictures and strip sources never advance production"
 
 [[case]]
@@ -2305,10 +2233,7 @@ checkpoints = true
 limits = ["Admit one prepared body and its earlier live picture at the already suspended room cut. Verify the pending sources hold through 240 and the next requested NMI services them on 241.", "The native body's final pending and live bytes coincide. The selected publication observes the strips that video services, independently of the byte equality."]
 
 [[case.borrowed]]
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["end of vblank", "cartridge write completion", "requested commit"]
-phase = "suspended work and NMI return"
+operation = "suspended-room-work"
 claim = "the same room and NMI path continues its single admitted pending picture"
 
 [[case]]
@@ -2327,17 +2252,11 @@ checkpoints = true
 limits = ["One seed admits the locked room's HUD, position, stock and video. Only the HUD grid, regular queue and its VRAM range are compared. Shaft geometry, actors, affine and platform publication require B8."]
 
 [[case.borrowed]]
-dependency = "shaft.lock"
-provider = "post-reach pinned record"
-fields = ["movement-handler", "room placement and map", "stock and reserve"]
-phase = "sole origin"
+operation = "locked-hud-origin"
 claim = "the locked room retains the post-motion position, stock and reserve"
 
 [[case.borrowed]]
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
-phase = "suspended work and NMI return"
+operation = "locked-hud-work"
 claim = "T1 supplies opportunities to prepare, hold and publish the carried regular queue"
 
 [[case]]
@@ -2356,10 +2275,7 @@ checkpoints = true
 limits = ["One occupied return-room origin carries ordinary production through joined rooms and interrupted placement. Comparison starts at hall cut 225 and ends on the first held turn after shaft cut 164 reach.", "The rotation comparison covers the carried view. Display comparison covers the placement strip, the first prepared and published overlay, and the platform map low bytes through shaft cut 163. Reach compares the initial hold and fade from the native scene transition.", "Burst particle, centre and sound limit are compared at the producer. Native shaft cut 31 derives the culled offer from the actor cursor and RNG. Effect lifetime, audio queue delivery, later full OAM and the elevator scene are outside this scope.", "Continuation encodes shaft fields, the room entry and timer picture and retains the live surrounding room, ordinary vent phases and pending video. The no-advance control holds the uninstalled shaft origin."]
 
 [[case.borrowed]]
-dependency = "played.platform"
-provider = "pinned room origin and locked movie and NMI records"
-fields = ["movie pad", "frame work and publication boundaries", "interrupted actor loading permission", "audio readiness", "passage RNG before shaft placement"]
-phase = "origin and each qualified scheduling opportunity"
+operation = "return-room-and-shaft-scheduling"
 claim = "The return play carries its room. T1 and audio replies admit opportunities. The shaft owns its actor draws, state and outputs once installed."
 
 [[case]]
@@ -2378,17 +2294,11 @@ checkpoints = true
 limits = ["The carried run reaches the hall and shaft from one return-room origin. It compares the seven shaft offers and three suppressed hall offers, the Ambient FIFO and CPU's delivery and release.", "The record captures CPU progress. Audio reply reads are borrowed; SPC publication, cadence, playback and other cues are outside this witness."]
 
 [[case.borrowed]]
-dependency = "shaft-sound.reply"
-provider = "pinned CPU cue and clear acknowledgement edges"
-fields = ["Ambient reply read", "finished work opportunity"]
-phase = "CPU sound service after actor turns"
+operation = "shaft-cpu-acknowledgements"
 claim = "Reply values are reconstructed from independent native acceptance edges. They supply no actor offer, FIFO mutation or request line."
 
 [[case.borrowed]]
-dependency = "played.platform"
-provider = "locked movie pad and played work boundaries"
-fields = ["controller", "actor fetch", "lag and publication", "sound queue and music readiness", "passage random draws outside owned turns"]
-phase = "played frame and suspended room work"
+operation = "shaft-sender-room-work"
 claim = "The carried passage drives sound permission and the shaft actor drives offers. The existing platform inputs supply readiness and work opportunities."
 
 [[case]]
@@ -2464,10 +2374,7 @@ checkpoints = true
 limits = ["Advance from the return-hall origin through shaft cut 239 without reseeding. Compare stable actor clocks and effect slots, the interrupted hall prefix and its publication, selected effect and overlay insertion spans, and the locked timer, Samus and mounted vent slots.", "Earlier retained OAM outside these spans, including ordinary shaft drawing, remains outside the comparison. Canonical checkpoints restore actor clocks, effect slots and the video publication, with other played owners carried by the runner.", "The frozen C1 origin has 18 empty effect slots and no live shaft actor clocks or C1 picture. Retained ordinary OAM from the hall seed is outside the null comparison."]
 
 [[case.borrowed]]
-dependency = "played.platform"
-provider = "preceding pinned controller pad and locked NMI boundaries"
-fields = ["movie pad", "work finished", "NMI publication", "platform and bus opportunities"]
-phase = "per cut"
+operation = "shaft-picture-scheduling"
 claim = "The sole hall origin admits the room and controller. Later records supply pad and platform timing. The played path owns actor participation, drawing and publication."
 
 [[case]]
@@ -2486,10 +2393,7 @@ checkpoints = true
 limits = ["The return hall supplies the sole seed. Dust comparison begins with the shaft row and includes its six native puffs.", "The OAM observations compare each visible dust entry and the last shifted vent entry on shaft cut 17 in both buffers. The indexed window ends with the last live room work before the save scheduler takes over.", "Constructed checks cover clipping because the native puff stays inside the view.", "Continuations canonically restore the complete Appearance owner and the pending and physical room picture within the carried room."]
 
 [[case.borrowed]]
-dependency = "shaft.platform"
-provider = "recorded-work-and-publication"
-fields = ["scheduler.finished", "scheduler.begun", "scheduler.published"]
-phase = "per cut"
+operation = "shaft-dust-scheduling"
 claim = "The ordinary played runner observes scheduler opportunities. Movement, view, actor sprites, the dust clock and the two OAM lanes advance through production."
 
 [[case]]

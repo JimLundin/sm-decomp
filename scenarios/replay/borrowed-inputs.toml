@@ -225,3 +225,174 @@ dependency = "hud.tail-neighbours"
 provider = "independent-native-hud-tail-opportunities"
 fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
 phase = "each frame, after Health"
+
+# Elevator, station and shaft readers. Native origins qualify the conditional operations.
+
+[elevator-reach]
+readers = ["blackout"]
+selection = { escape = ["reach"] }
+dependency = "shaft.elevator"
+provider = "reach at the scoped intake"
+fields = ["after-motion elevator reached"]
+phase = "end of the ordinary room turn"
+
+[suspended-room-work]
+readers = ["blackout"]
+selection = { escape = ["reach", "locked", "suspended", "suspended-standing"] }
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+
+[station-blackout-seed]
+readers = ["station-explosion"]
+dependency = "explosion.elevator"
+provider = "pinned-elevator-blackout"
+fields = ["station.begin", "health", "video.palette", "video.oam", "options.subtitles", "scheduler.finished", "landing.destination"]
+phase = "seed"
+
+[station-work-cadence]
+readers = ["station-explosion"]
+dependency = "explosion.cadence"
+provider = "pinned-nmi-work-completion"
+fields = ["scheduler.finished"]
+phase = "per cut"
+
+[station-music-reply]
+readers = ["station-explosion"]
+dependency = "explosion.music"
+provider = "pinned-post-service-music"
+fields = ["music.busy"]
+phase = "after audio service"
+
+[flight-work-cadence]
+readers = ["zebes-flight-inputs"]
+dependency = "zebes.scheduler-cadence"
+provider = "pinned-record-nmi-work-completion"
+fields = ["scheduler.finished"]
+phase = "per cut"
+
+[station-flight-handoff]
+readers = ["zebes-flight-inputs"]
+dependency = "zebes.entry-and-options"
+provider = "pinned-record-station-blackout"
+fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
+phase = "seed cut"
+
+[loader-transfer-progress]
+readers = ["landing-site-timing"]
+dependency = "platform.work-and-transfer"
+provider = "pinned NMI and direct DMA channel receipts"
+fields = ["work-open", "accepted-byte-count", "selected-read"]
+phase = "work opening through the selected read before NMI-off vblank"
+
+[prior-flight-and-shaft-owners]
+readers = ["landing-site-timing"]
+dependency = "prior-room-and-video"
+provider = "pinned shaft map storage and pinned flight departure OAM, placement, live registers and shadow tilemaps"
+fields = ["stored Crateria map", "active map", "physical OAM", "room", "player placement", "live display", "tilemap tails"]
+phase = "before opening the receiving load"
+
+[getaway-boss-pass]
+readers = ["scoped-getaway-inputs"]
+dependency = "ridley.getaway-pass"
+provider = "preceding pinned boss mode and flyby picture cursor"
+fields = ["side-free pass request"]
+phase = "after ordinary movement and pose reaction"
+
+[getaway-room-neighbours]
+readers = ["scoped-getaway-inputs"]
+dependency = "room.samus-neighbours"
+provider = "preceding pinned record and imported pose and terrain content"
+fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
+phase = "before movement and appearance"
+
+[station-departure-platform]
+readers = ["departure"]
+selection = { escape = ["station"] }
+dependency = "departure.platform"
+provider = "recorded-work-and-source-bus-progress"
+fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
+phase = "per cut"
+
+[shaft-departure-platform]
+readers = ["departure"]
+selection = { escape = ["shaft-save"] }
+dependency = "departure.platform"
+provider = "recorded-work-and-source-bus-progress"
+fields = ["scheduler.finished", "shaft.vblank-ended", "shaft.save-completed", "audio.queue-busy", "dma.accepted-and-selected"]
+phase = "per cut"
+
+[shaft-fetch-and-block-work]
+readers = ["shaft-setup-turns"]
+dependency = "passage.fetch-and-block-turn"
+provider = "pinned passage phase and NMI completion"
+fields = ["incoming doorway", "progress", "fetch opportunity", "slide wait completion"]
+phase = "early contents and first block-script turn"
+
+[locked-standing-draw]
+readers = ["blackout"]
+selection = { escape = ["standing"] }
+dependency = "shaft.standing-drawing"
+provider = "locked room owners at the reach cut and early view from the preceding cut"
+fields = ["movement.pose", "appearance.clip-step", "movement.room-centre", "shaft.pivot", "shaft.carried-view", "camera.layer-origin"]
+phase = "pose, clip and room positions at reach, view before each late shaft turn"
+
+[standing-room-work]
+readers = ["blackout"]
+selection = { escape = ["standing"] }
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "room preparation, suspended work and NMI return"
+
+[locked-hud-origin]
+readers = ["blackout"]
+selection = { escape = ["hud"] }
+dependency = "shaft.lock"
+provider = "post-reach pinned record"
+fields = ["movement-handler", "room placement and map", "stock and reserve"]
+phase = "sole origin"
+
+[locked-hud-work]
+readers = ["blackout"]
+selection = { escape = ["hud"] }
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+
+[return-room-and-shaft-scheduling]
+readers = ["ceres-shaft-actors"]
+dependency = "played.platform"
+provider = "pinned room origin and locked movie and NMI records"
+fields = ["movie pad", "frame work and publication boundaries", "interrupted actor loading permission", "audio readiness", "passage RNG before shaft placement"]
+phase = "origin and each qualified scheduling opportunity"
+
+[shaft-cpu-acknowledgements]
+readers = ["played-shaft-sound"]
+dependency = "shaft-sound.reply"
+provider = "pinned CPU cue and clear acknowledgement edges"
+fields = ["Ambient reply read", "finished work opportunity"]
+phase = "CPU sound service after actor turns"
+
+[shaft-sender-room-work]
+readers = ["played-shaft-sound"]
+dependency = "played.platform"
+provider = "locked movie pad and played work boundaries"
+fields = ["controller", "actor fetch", "lag and publication", "sound queue and music readiness", "passage random draws outside owned turns"]
+phase = "played frame and suspended room work"
+
+[shaft-picture-scheduling]
+readers = ["shaft-pictures"]
+dependency = "played.platform"
+provider = "preceding pinned controller pad and locked NMI boundaries"
+fields = ["movie pad", "work finished", "NMI publication", "platform and bus opportunities"]
+phase = "per cut"
+
+[shaft-dust-scheduling]
+readers = ["played-shaft-dust"]
+dependency = "shaft.platform"
+provider = "recorded-work-and-publication"
+fields = ["scheduler.finished", "scheduler.begun", "scheduler.published"]
+phase = "per cut"

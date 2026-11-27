@@ -2,6 +2,7 @@
 mod observations;
 pub(super) use observations::actual;
 
+use super::borrowed::escape::Origin;
 use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
 };
@@ -71,8 +72,10 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let mut previous = rows.record(seed)?;
     let (mut production, content, rules) = admit_origin(&mut rows, seed, &previous, &sources.rom)?;
     let assets = if let ProductionContent::Departure(assets) = &content {
+        Origin::Station.check(case, seed)?;
         assets.as_ref()
     } else if let ProductionContent::Escape(assets) = &content {
+        Origin::ShaftSave.check(case, seed)?;
         &assets.departure
     } else {
         return Err(data_failure(None, "departure assets"));
