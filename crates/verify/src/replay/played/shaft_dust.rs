@@ -249,7 +249,7 @@ pub(in crate::replay) fn run(
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::admit(&previous, &content, &sources.rom, &case.row)?;
+    let mut run = Run::for_case(&previous, &content, sources, case)?;
     let mut witness = Witness::default();
     for cut in seed.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;

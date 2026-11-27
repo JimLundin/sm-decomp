@@ -20,7 +20,6 @@ use game::state::video::{Video, VramSource, VramStep, VramTransfer};
 use oracle_record::FrameRecord;
 use std::ops::Range;
 
-const FIGHT: &str = "chain-any-0006-E0B5";
 const STRIP_STARTS: [u16; 2] = [0x7220, 0x7320];
 const STRIP_BYTES: u16 = 64;
 const NEXT_BEAT: WramWord = WramWord {
@@ -31,7 +30,6 @@ const BEAT_WAIT: WramWord = WramWord {
     name: "CERES_RIDLEY_RIBS_WAIT",
     offset: 0x780c,
 };
-const LAST_FIGHT_CUT: u64 = 1614;
 
 const BEAT_FIELD: &str = "ridley.ribs.beat";
 const WAIT_FIELD: &str = "ridley.ribs.wait";
@@ -163,7 +161,12 @@ pub(super) fn compare(
     serviced: &[VramTransfer],
     (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
 ) -> Result<(), Outcome> {
-    if !witness(frame.place) {
+    if !frame
+        .witnesses
+        .ribs
+        .iter()
+        .any(|window| window.contains(frame.place))
+    {
         return Ok(());
     }
     let record = frame.current;
@@ -184,16 +187,6 @@ pub(super) fn compare(
         &state.room_video.video.memory.vram,
     )?);
     Ok(())
-}
-
-fn witness(place: (&str, u64)) -> bool {
-    const MOVIE_FIGHT_START: u64 = 10_162;
-    const MOVIE_FIGHT_END: u64 = 11_776;
-    match place {
-        (FIGHT, cut) => cut <= LAST_FIGHT_CUT,
-        ("any-power-on", cut) => (MOVIE_FIGHT_START..=MOVIE_FIGHT_END).contains(&cut),
-        _ => false,
-    }
 }
 
 fn production_receipts(writes: &[VramTransfer]) -> Vec<Receipt> {
@@ -232,9 +225,8 @@ pub(in crate::replay) fn is_case(case: &Case) -> bool {
 
 pub(super) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
-        && case.row == FIGHT
-        && matches!(case.start, Start::CacheCut { .. })
-        && case.end.cut_inclusive <= LAST_FIGHT_CUT
+        && matches!(case.start, Start::CacheCut { frame } if super::witnesses::selected(case).is_ok_and(|data|
+            data.ribs.iter().any(|window| window.covers(&case.row, frame, case.end.cut_inclusive))))
         && case.responsibilities == [Responsibility::Ceres]
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::PlayedCeresInputs
@@ -273,7 +265,11 @@ pub(super) fn run(
                 &[],
                 &run.state.room_video.video.memory.vram,
             )?;
-            let fields = run.step(controller, &previous, &current, cut, (FIGHT, cut))?;
+            let (row, local) = rows.place(cut)?;
+            if row != case.row || local != cut {
+                return Err(data_failure(Some(cut), "ribs trace row"));
+            }
+            let fields = run.step(controller, &previous, &current, cut, (&row, local))?;
             record_fields(fields, cut, result, &mut digest, &null)?;
             if let Some(origin) = held {
                 pending_control(
@@ -292,6 +288,12 @@ pub(super) fn run(
             }
             controller = controller.read(current.pad.0, super::polled(&current));
             previous = current;
+        }
+        if result.counts.publications == 0 {
+            return Err(data_failure(
+                Some(case.end.cut_inclusive),
+                "ribs publication opportunity",
+            ));
         }
         Ok(())
     };
@@ -345,7 +347,7 @@ fn work(
     inputs.held = movement::pad(controller.held);
     inputs.pressed = movement::pad(controller.pressed);
     inputs.parity = parity(run.state.frame.finished_frames);
-    let mut passing = run.room_work(previous, current, (FIGHT, current.index), false)?;
+    let mut passing = run.room_work(previous, current, (run.row, current.index), false)?;
     if !passing.publishes {
         return Err(data_failure(
             Some(current.index),
@@ -446,6 +448,8 @@ fn pending_control(
 
 #[cfg(test)]
 mod tests {
+    const LAST_FIGHT_CUT: u64 = 1614;
+    const FIGHT: &str = "chain-any-0006-E0B5";
     const FIRST_REVEAL: u64 = 577;
     const RELEASE_CUT: u64 = 578;
     use super::super::{open_rows, read_lock, tests};

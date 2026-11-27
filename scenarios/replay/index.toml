@@ -3,6 +3,31 @@ engine_api = "production-v1"
 observation_schema = "semantic-v1"
 lock = "scenarios/locks/lsnes.toml"
 
+[played_witnesses]
+ribs = [
+    { row = "chain-any-0006-E0B5", first = 0, last = 1614 },
+    { row = "any-power-on", first = 10162, last = 11776 },
+]
+
+# Body drawer writes attributed by the native trace, including the seed cut.
+[[played_witnesses.samus_body]]
+row = "chain-any-0006-E0B5"
+first = 0
+slot = 13
+pieces = [8, 2, 2, 2, 2, 4, 4]
+
+[[played_witnesses.samus_body]]
+row = "chain-any-0006-E0B5"
+first = 608
+slot = 13
+pieces = [6, 7, 7, 7, 7, 7, 7, 0]
+
+[[played_witnesses.samus_body]]
+row = "chain-any-0006-E0B5"
+first = 681
+slot = 13
+pieces = [0, 12, 0, 10, 0, 8, 0, 10, 0, 11, 0, 9, 0, 9, 0, 7, 0, 9, 0, 11, 0, 11, 0, 6]
+
 [[fixture]]
 provider = "early-map-inputs"
 repository = "15a04113d80468046849b65703c3ccde8f0cb6f6"

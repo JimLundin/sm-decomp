@@ -70,6 +70,7 @@ mod start;
 mod station;
 mod steam;
 mod warning;
+pub(super) mod witnesses;
 mod zebes;
 
 use super::compare::{CompareFault, Observation, compare};
@@ -341,7 +342,8 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         borrowed: BORROWED,
         masked: &[],
     };
-    let mut run = match Run::admit(&seed, &content, &sources.rom, row) {
+    let witnesses = rows.witnesses()?;
+    let mut run = match Run::from_record(&seed, &content, &sources.rom, row, &witnesses) {
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
@@ -389,6 +391,7 @@ fn opening_witness((row, cut): (&str, u64)) -> bool {
 /// holds it and the cut there.
 #[derive(Clone, Copy)]
 struct Frame<'a> {
+    witnesses: &'a witnesses::Witnesses,
     previous: &'a FrameRecord,
     current: &'a FrameRecord,
     cut: u64,
@@ -411,6 +414,7 @@ struct Run<'a> {
     drawing: ridley::flyby::Drawing,
     warning_picture: warning::Picture,
     picture_scope: PictureScope,
+    witnesses: &'a witnesses::Witnesses,
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
     blackout: Option<game::production::blackout::LiveRoom>,
@@ -430,11 +434,37 @@ enum Start<'a> {
 }
 
 impl<'a> Run<'a> {
+    fn for_case(
+        seed: &FrameRecord,
+        content: &'a connected::Content,
+        sources: &'a Sources,
+        case: &'a super::index::Case,
+    ) -> Result<Self, Outcome> {
+        Self::from_record(
+            seed,
+            content,
+            &sources.rom,
+            &case.row,
+            witnesses::selected(case)?,
+        )
+    }
+
+    #[cfg(test)]
     fn admit(
         seed: &FrameRecord,
         content: &'a connected::Content,
         path: &'a Path,
         row: &'a str,
+    ) -> Result<Self, Outcome> {
+        Self::from_record(seed, content, path, row, witnesses::published()?)
+    }
+
+    fn from_record(
+        seed: &FrameRecord,
+        content: &'a connected::Content,
+        path: &'a Path,
+        row: &'a str,
+        witnesses: &'a witnesses::Witnesses,
     ) -> Result<Self, Outcome> {
         let arrival = arrival::seed(&seed.wram)?;
         let origin = if arrival.preparing() {
@@ -446,7 +476,7 @@ impl<'a> Run<'a> {
         } else {
             Start::Room(seed)
         };
-        Self::load(origin, content, path, row)
+        Self::load(origin, content, path, row, witnesses)
     }
 
     fn load(
@@ -454,6 +484,7 @@ impl<'a> Run<'a> {
         content: &'a connected::Content,
         path: &'a Path,
         row: &'a str,
+        witnesses: &'a witnesses::Witnesses,
     ) -> Result<Self, Outcome> {
         let image = &content.movement.rom;
         let start = import::start::import(image.lorom())
@@ -551,6 +582,7 @@ impl<'a> Run<'a> {
             drawing,
             warning_picture,
             picture_scope: PictureScope::Room,
+            witnesses,
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
             blackout: None,
@@ -933,6 +965,7 @@ impl<'a> Run<'a> {
             cut,
         )?;
         let frame = Frame {
+            witnesses: self.witnesses,
             previous,
             current,
             cut,

@@ -259,6 +259,16 @@ pub(super) fn restored<T: serde::Serialize + serde::de::DeserializeOwned + Parti
     Ok(restored)
 }
 
+fn restored_video(video: &Video, cut: u64) -> Result<Box<Video>, Outcome> {
+    let failed = || Outcome::CheckpointFailure { cut };
+    let restored: Box<Video> =
+        canonical::from_bytes(&canonical::to_bytes(video)).map_err(|_| failed())?;
+    if video != restored.as_ref() {
+        return Err(failed());
+    }
+    Ok(restored)
+}
+
 /// A live flight and the owners that continue with it through arrival and room play.
 pub(super) struct Continuation {
     pub(super) journey: flight::Journey,
@@ -361,13 +371,9 @@ impl Continuation {
                     "Ceres entry checkpoint",
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
-                let mut play = super::Run::load(start, &content, rom, row)?;
-                let restored = canonical::from_bytes(&canonical::to_bytes(&run.video))
-                    .map_err(|_| Outcome::CheckpointFailure { cut })?;
-                if run.video != restored {
-                    return Err(Outcome::CheckpointFailure { cut });
-                }
-                play.state.room_video.video = restored;
+                let witnesses = rows.witnesses()?;
+                let mut play = super::Run::load(start, &content, rom, row, &witnesses)?;
+                play.state.room_video.video = restored_video(&run.video, cut)?;
                 play.cartridge = cartridge;
                 let (more, stop) =
                     play.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;

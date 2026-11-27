@@ -1284,6 +1284,21 @@ impl FixturePair {
 }
 
 impl InputProvider {
+    const fn uses_played_witnesses(self) -> bool {
+        matches!(
+            self,
+            Self::PlayedSamusPicture
+                | Self::PlayedCeresInputs
+                | Self::ScopedCeresFlyby
+                | Self::ScopedCeresFightPicture
+                | Self::ScopedCeresWarning
+                | Self::CeresShaftActors
+                | Self::PlayedShaftSound
+                | Self::ShaftPictures
+                | Self::PlayedShaftDust
+        )
+    }
+
     const fn uses_fixture_pair(self) -> bool {
         matches!(
             self,
@@ -1331,6 +1346,9 @@ pub struct Case {
     /// Authenticated native capture consumed by this case.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub native_packet: Option<NativePacket>,
+    /// Native trace coordinates for played comparisons.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) played_witnesses: Option<super::played::witnesses::Witnesses>,
     /// Declared independent comparison observations.
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
@@ -1374,6 +1392,8 @@ struct IndexDocument {
     #[serde(default)]
     fixture: Vec<FixturePair>,
     #[serde(default)]
+    played_witnesses: Option<super::played::witnesses::Witnesses>,
+    #[serde(default)]
     native_packet: Option<Vec<NativePacket>>,
     #[serde(rename = "case")]
     cases: Vec<Case>,
@@ -1402,6 +1422,13 @@ impl TryFrom<IndexDocument> for Index {
                 return Err("invalid or duplicate native packet");
             }
         }
+        if doc
+            .played_witnesses
+            .as_ref()
+            .is_some_and(|data| !data.valid())
+        {
+            return Err("invalid played witnesses");
+        }
         for case in &mut doc.cases {
             if case.inputs == InputProvider::PublishedSaveFileBoundaries {
                 if case.save_steps.is_some() {
@@ -1411,6 +1438,9 @@ impl TryFrom<IndexDocument> for Index {
                 case.inputs = InputProvider::SaveFileBoundaries;
             }
             super::legacy_packets::read_intro_join(case)?;
+            if case.played_witnesses.is_none() && case.inputs.uses_played_witnesses() {
+                case.played_witnesses.clone_from(&doc.played_witnesses);
+            }
             if case.native_packet.is_none() {
                 let shared = declarations.iter().find(|packet| packet.applies_to(case));
                 let published = super::legacy_packets::native(case);
@@ -3094,6 +3124,13 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
+        if case
+            .played_witnesses
+            .as_ref()
+            .is_some_and(|data| !case.inputs.uses_played_witnesses() || !data.valid())
+        {
+            return Err(IndexFault::InvalidCase(case.id.clone()));
+        }
         if (case.fixture.is_some() || case.inputs.uses_fixture_pair())
             && case.fixture_pair().is_err()
         {

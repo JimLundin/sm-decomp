@@ -18,6 +18,7 @@ struct Search {
 struct Packets {
     save_schedule: BTreeMap<String, super::index::SaveSchedule>,
     intro_join: BTreeMap<String, PublishedJoin>,
+    played_witnesses: super::played::witnesses::Witnesses,
     played: BTreeMap<String, super::index::PlayedWindow>,
     native_cases: std::collections::BTreeSet<String>,
     sender_control: BTreeMap<String, SenderOfferControl>,
@@ -82,6 +83,10 @@ pub(super) fn read_intro_join(case: &mut super::index::Case) -> Result<(), &'sta
     }
     case.intro_join = Some(published.join.clone());
     Ok(())
+}
+
+pub(super) fn played_witnesses() -> Option<&'static super::played::witnesses::Witnesses> {
+    PACKETS.as_ref().map(|packets| &packets.played_witnesses)
 }
 
 pub(super) fn played(id: &str) -> Option<&'static super::index::PlayedWindow> {

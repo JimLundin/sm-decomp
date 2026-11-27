@@ -268,7 +268,7 @@ pub(in crate::replay) fn run(
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::admit(&previous, &content, &sources.rom, &case.row)?;
+    let mut run = Run::for_case(&previous, &content, sources, case)?;
     run.picture_scope = PictureScope::ShaftActors;
     let mut retained = LOCKED_PREFIX;
     let mut digest = Vec::new();

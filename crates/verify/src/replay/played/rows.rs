@@ -83,6 +83,10 @@ impl<'a> Rows<'a> {
         })
     }
 
+    pub(super) fn witnesses(&self) -> Result<super::witnesses::Witnesses, Outcome> {
+        super::witnesses::read(self.chain.root)
+    }
+
     /// The row that holds the run's `cut`, and its own cut there.
     pub(in crate::replay) fn place(&mut self, cut: u64) -> Result<(String, u64), Outcome> {
         let (place, own) = self.chain.place(cut)?;

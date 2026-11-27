@@ -166,7 +166,7 @@ pub(in crate::replay) fn run(
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, &case.row)?;
+    let mut run = Run::for_case(&seed, &content, sources, case)?;
     if case.inputs == InputProvider::CeresShaftActors {
         return shaft::run(&mut run, &mut rows, seed, controller, case, result);
     }

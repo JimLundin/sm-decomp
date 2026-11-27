@@ -2,9 +2,9 @@
 
 use core::ops::Range;
 
-use game::state::video::{Oam, Video};
+use game::state::video::{OAM_SPRITES, Oam, Video};
 
-use super::{Frame, Outcome, Run, open_rows, read_lock, seed_controller};
+use super::{Frame, Outcome, Run, open_rows, read_lock, seed_controller, witnesses};
 use crate::replay::{
     Sources, appearance,
     compare::Observation,
@@ -19,9 +19,6 @@ use crate::replay::{
 };
 use oracle_record::FrameRecord;
 
-const ROW: &str = "chain-any-0006-E0B5";
-const NATIVE_BODY_START: usize = 13;
-
 pub(super) fn compare(
     frame: &Frame<'_>,
     video: &Video,
@@ -29,34 +26,51 @@ pub(super) fn compare(
     expected: &mut Vec<Observation>,
 ) -> Result<(), Outcome> {
     let (row, local) = frame.place;
-    if row != ROW {
-        return Ok(());
-    }
-    let Some(count) = native_count(local) else {
+    let Some(native) = frame
+        .witnesses
+        .body(row, local, local)
+        .and_then(|trace| trace.slots(local))
+    else {
         return Ok(());
     };
     let differs = |field: &str| Outcome::Difference {
         cut: frame.cut,
         field: format!("samus-oam.{field}"),
     };
-    let Some(span) = span.filter(|span| span.len() == count) else {
+    let Some(span) = span.filter(|span| {
+        span.start <= span.end && span.end <= OAM_SPRITES && span.len() == native.len()
+    }) else {
         return Err(differs("piece-count"));
     };
     compare_picture(
         &video.batch.oam,
         frame.current.wram.get(0x370..0x590),
         span.clone(),
+        native.clone(),
     )
     .map_err(|slot| differs(&format!("prepared[{slot}]")))?;
-    compare_picture(&video.memory.oam, Some(&frame.current.oam), span)
-        .map_err(|slot| differs(&format!("physical[{slot}]")))?;
-    expected.extend(native_picture(frame.current, count)?);
+    compare_picture(
+        &video.memory.oam,
+        Some(&frame.current.oam),
+        span,
+        native.clone(),
+    )
+    .map_err(|slot| differs(&format!("physical[{slot}]")))?;
+    expected.extend(native_picture(frame.current, native)?);
     Ok(())
 }
 
-fn compare_picture(actual: &Oam, expected: Option<&[u8]>, span: Range<usize>) -> Result<(), usize> {
-    for (slot, native_slot) in span.zip(NATIVE_BODY_START..) {
-        if piece(actual, slot) != expected.and_then(|bytes| native_piece(bytes, native_slot)) {
+fn compare_picture(
+    actual: &Oam,
+    expected: Option<&[u8]>,
+    span: Range<usize>,
+    native: Range<usize>,
+) -> Result<(), usize> {
+    for (slot, native_slot) in span.zip(native) {
+        let observed = expected
+            .and_then(|bytes| native_piece(bytes, native_slot))
+            .ok_or(native_slot)?;
+        if piece(actual, slot) != Some(observed) {
             return Err(native_slot);
         }
     }
@@ -78,38 +92,23 @@ fn native_piece(bytes: &[u8], slot: usize) -> Option<([u8; 4], u8)> {
     Some((low, bits & 3))
 }
 
-// These counts come from writes attributed to the native body drawer, with
-// its prepared and physical OAM aligned to the pinned record at each cut.
-const fn native_count(cut: u64) -> Option<usize> {
-    Some(match cut {
-        0 | 686 => 8,
-        1..=4 => 2,
-        5 | 6 => 4,
-        608 | 704 => 6,
-        609..=614 | 696 => 7,
-        615 | 681 | 683 | 685 | 687 | 689 | 691 | 693 | 695 | 697 | 699 | 701 | 703 => 0,
-        682 => 12,
-        684 | 688 => 10,
-        690 | 700 | 702 => 11,
-        692 | 694 | 698 => 9,
-        _ => return None,
-    })
-}
-
-fn native_picture(record: &FrameRecord, count: usize) -> Result<[Observation; 4], Outcome> {
+fn native_picture(record: &FrameRecord, slots: Range<usize>) -> Result<[Observation; 4], Outcome> {
     let prepared = record
         .wram
         .get(0x370..0x590)
         .ok_or_else(|| data_failure(Some(record.index), "ordinary body prepared OAM rectangle"))?;
-    Ok(picture(
-        NATIVE_BODY_START..NATIVE_BODY_START.saturating_add(count),
-        |slot| {
-            (
-                native_piece(prepared, slot),
-                native_piece(&record.oam, slot),
-            )
-        },
-    ))
+    if record.oam.len() != prepared.len() {
+        return Err(data_failure(
+            Some(record.index),
+            "ordinary body physical OAM rectangle",
+        ));
+    }
+    Ok(picture(slots, |slot| {
+        (
+            native_piece(prepared, slot),
+            native_piece(&record.oam, slot),
+        )
+    }))
 }
 
 type Piece = ([u8; 4], u8);
@@ -156,13 +155,13 @@ pub(in crate::replay) const OUTPUTS: &[ObservationId] = &[
 ];
 
 pub(in crate::replay) fn valid(case: &Case) -> bool {
-    matches!(
-        (&case.start, case.end.cut_inclusive),
-        (Start::CacheCut { frame: 0 }, 6)
-            | (Start::CacheCut { frame: 608 }, 615)
-            | (Start::CacheCut { frame: 681 }, 704)
-    ) && case.row == ROW
-        && case.kind == CaseKind::Scoped
+    let Start::CacheCut { frame } = case.start else {
+        return false;
+    };
+    witnesses::selected(case).is_ok_and(|data| {
+        data.body(&case.row, frame, case.end.cut_inclusive)
+            .is_some_and(|trace| trace.has_draw(frame.saturating_add(1), case.end.cut_inclusive))
+    }) && case.kind == CaseKind::Scoped
         && case.responsibilities == [Responsibility::Appearance]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -181,22 +180,29 @@ pub(in crate::replay) fn run(
         return Err(data_failure(None, "ordinary body origin"));
     };
     let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, ROW)?;
+    let mut rows = open_rows(sources, &lock, &case.row)?;
     let mut previous = rows.record(start)?;
     let mut controller = seed_controller(&previous)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::admit(&previous, &content, &sources.rom, ROW)?;
-    let count = native_count(start)
+    let mut run = Run::for_case(&previous, &content, sources, case)?;
+    let (row, local) = rows.place(start)?;
+    let slots = run
+        .witnesses
+        .body(&row, local, local)
+        .and_then(|trace| trace.slots(local))
         .ok_or_else(|| data_failure(Some(start), "ordinary body origin count"))?;
-    let mut null = native_picture(&previous, count)?;
+    let mut null = native_picture(&previous, slots)?;
     let mut digest = Vec::new();
     let mut continuations = Vec::new();
     for cut in start.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
+        if row != case.row || local != cut {
+            return Err(data_failure(Some(cut), "ordinary body trace row"));
+        }
         let saved_cut = previous.index;
         continuations.push((
             saved_cut,

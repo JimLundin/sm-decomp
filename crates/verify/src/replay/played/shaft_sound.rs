@@ -252,7 +252,7 @@ pub(in crate::replay) fn run(
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut live = Run::admit(&previous, &content, &sources.rom, &case.row)?;
+    let mut live = Run::for_case(&previous, &content, sources, case)?;
     let mut pending = None;
     compared(
         SEED,

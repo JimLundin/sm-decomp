@@ -501,7 +501,7 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
         .outputs
         .contains(&ObservationId::CeresRibsUploads);
     let valid_publications = if has_ribs {
-        counts.publications <= counts.cuts
+        counts.publications > 0 && counts.publications <= counts.cuts
     } else {
         counts.publications == 0
     };
