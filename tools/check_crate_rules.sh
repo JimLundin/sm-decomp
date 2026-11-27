@@ -50,10 +50,8 @@ hits=$(
 )
 [ -n "$hits" ] && fail "$hits"
 
-# The clean-room crates: what clippy can't see before cargo runs them (tools/cleanroom/code_check.sh).
-if [ -d crates/clean ]; then
-  out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
-fi
+# The clean-room crates: what clippy can't see before cargo runs them (`cleanroom check`).
+out=$(bash tools/cleanroom/scan_tool.sh check 2>&1) || fail "$out"
 
 # Rule 6: the public surface of `data` describes data in domain terms. A doc-comment line
 # (`///` or `//!`) holding a bank:address pair, a bare four-digit `$XXXX` address or a

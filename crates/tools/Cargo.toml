@@ -8,7 +8,7 @@ description = "Commands for indexed production replay, record caches and project
 
 [features]
 default = ["engine-cli"]
-engine-cli = ["dep:runtime", "dep:verify", "dep:oracle", "dep:serde", "dep:toml", "dep:rustc-demangle"]
+engine-cli = ["dep:runtime", "dep:verify", "dep:oracle", "dep:rustc-demangle"]
 
 [[bin]]
 name = "tools"
@@ -19,8 +19,8 @@ required-features = ["engine-cli"]
 runtime = { path = "../runtime", optional = true }
 verify = { path = "../verify", optional = true }
 oracle = { path = "../oracle", optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
-toml = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"] }
+toml = { workspace = true }
 rustc-demangle = { workspace = true, optional = true }
 
 [lints]

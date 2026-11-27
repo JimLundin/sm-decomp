@@ -13,6 +13,7 @@
 
 mod lexicon;
 mod mirror;
+mod rules;
 mod scan;
 mod text;
 
@@ -25,7 +26,8 @@ use std::process::ExitCode;
 use lexicon::{Lexicon, Plain};
 use scan::{Allow, Class, Finding};
 
-const USAGE: &str = "usage: cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
+const USAGE: &str = "usage: cleanroom check [ROOT]\n       \
+                     cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
                      cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE";
 
@@ -249,9 +251,25 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
     Ok((plain.write(Path::new(out_dir), salt)?, false))
 }
 
+fn run_check(args: &[String]) -> Result<(String, bool), String> {
+    let root = match args {
+        [] => Path::new("."),
+        [root] => Path::new(root),
+        _ => return Err(USAGE.to_owned()),
+    };
+    let found = rules::check(root, &rules::Policy::load(Path::new("."))?)?;
+    let mut out = String::new();
+    for finding in &found {
+        let _ = writeln!(out, "{finding}");
+    }
+    let _ = writeln!(out, "rules: {} findings", found.len());
+    Ok((out, !found.is_empty()))
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.as_slice() {
+        [command, rest @ ..] if command == "check" => run_check(rest),
         [command, rest @ ..] if command == "scan" => run_scan(rest),
         [command, rest @ ..] if command == "mirror" => run_mirror(rest),
         [command, rest @ ..] if command == "lexicon" => run_lexicon(rest),
