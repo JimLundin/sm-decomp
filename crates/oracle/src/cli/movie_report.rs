@@ -63,7 +63,7 @@ pub(super) fn seed_comparison(
     let mut report = String::new();
     if show_ranges {
         writeln!(report, "  differing per frame, oldest first: {counts:?}").unwrap();
-        let ranges = crate::cross::ranges(wram, capture);
+        let ranges = ranges(wram, capture);
         for &(start, end, count) in ranges.iter().take(60) {
             writeln!(report, "  {start:05X}-{end:05X} {count} bytes").unwrap();
         }
@@ -78,4 +78,25 @@ pub(super) fn seed_comparison(
     )
     .unwrap();
     (matched, report)
+}
+
+/// The differing byte ranges of two images, as (first, last, differing
+/// bytes), with gaps under 16 bytes coalesced.
+fn ranges(left: &[u8], right: &[u8]) -> Vec<(usize, usize, usize)> {
+    let mut ranges: Vec<(usize, usize, usize)> = Vec::new();
+    for (address, _) in left
+        .iter()
+        .zip(right)
+        .enumerate()
+        .filter(|(_, (a, b))| a != b)
+    {
+        match ranges.last_mut() {
+            Some((_, end, count)) if address - *end < 16 => {
+                *end = address;
+                *count += 1;
+            }
+            _ => ranges.push((address, address, 1)),
+        }
+    }
+    ranges
 }

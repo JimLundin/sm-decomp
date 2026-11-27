@@ -86,7 +86,7 @@ under the commit rules above.
   foreground loop. A foreground command at the 10-minute cap is a sign the wait belongs in the
   background.
 - Other lanes fetch in the shared clone, so branches move while you work. Compare explicit hashes.
-- ORACLE §8 lists the oracle's pitfalls (lsnes, Mesen).
+- ORACLE §8 lists the oracle's pitfalls.
 
 ## Resources
 

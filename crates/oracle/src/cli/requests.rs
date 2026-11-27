@@ -13,30 +13,8 @@ impl std::fmt::Display for RequestError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Invalid(message) => f.write_str(message),
-            Self::Compatibility => f.write_str("incompatible backend or capture options"),
+            Self::Compatibility => f.write_str("incompatible options"),
             Self::Shard => f.write_str("--shard I/N requires N > 0 and I < N"),
-        }
-    }
-}
-
-pub(super) enum BackendName {
-    Lsnes,
-    LakeSnes(String),
-}
-impl From<String> for BackendName {
-    fn from(name: String) -> Self {
-        if name == "lsnes" {
-            Self::Lsnes
-        } else {
-            Self::LakeSnes(name)
-        }
-    }
-}
-impl BackendName {
-    pub(super) fn into_name(self) -> String {
-        match self {
-            Self::Lsnes => "lsnes".to_owned(),
-            Self::LakeSnes(name) => name,
         }
     }
 }
@@ -71,27 +49,17 @@ pub(super) enum MovieStart {
     PowerOn,
     Saved { state: PathBuf, frame: usize },
 }
-#[derive(Debug, PartialEq, Eq)]
-pub(super) enum CrossStart {
-    PowerOn,
-    Saved { state: PathBuf, step: u64 },
-}
-
 pub(super) struct MovieRequest {
     pub rom: PathBuf,
     pub inputs: PathBuf,
     pub frames: Option<usize>,
     pub seeds: Option<(PathBuf, PathBuf)>,
-    pub picture: bool,
     pub streams: Option<Tiers>,
     pub ranges: bool,
     pub lag_log: Option<PathBuf>,
     pub watch: Option<(usize, usize)>,
     pub trace: Option<(usize, usize, Vec<u32>)>,
-    pub spc: bool,
     pub positions_only: bool,
-    pub profile: Option<(usize, usize)>,
-    pub backend: BackendName,
     pub native: Vec<(PathBuf, PathBuf)>,
     pub memories: bool,
     pub start: MovieStart,
@@ -118,33 +86,20 @@ pub(super) enum CorpusOutput {
     RecordV2(PathBuf),
     Directory(PathBuf),
 }
-pub(super) struct CrossRequest {
-    pub rom: PathBuf,
-    pub inputs: PathBuf,
-    pub range: Option<std::ops::RangeInclusive<u64>>,
-    pub first_ranges: bool,
-    pub streams: bool,
-    pub ranges_at: Option<std::ops::RangeInclusive<u64>>,
-    pub right_start: CrossStart,
-}
 impl MovieRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
         let [rom, inputs, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--streams] [--ppu] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]".to_string()));
+            return Err(RequestError::Invalid("movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--positions-only] [--streams] [--ppu] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]".to_string()));
         };
         let mut frames = None;
         let mut seeds: Option<(PathBuf, PathBuf)> = None;
-        let mut picture = true;
         // The record streams asked of lsnes: none, or the tiers with the PPU registers.
         let mut streams: Option<Tiers> = None;
         let mut ranges = false;
         let mut lag_log: Option<PathBuf> = None;
         let mut watch: Option<(usize, usize)> = None;
         let mut trace: Option<(usize, usize, Vec<u32>)> = None;
-        let mut spc = false;
         let mut positions_only = false;
-        let mut profile: Option<(usize, usize)> = None;
-        let mut backend = "lakesnes".to_owned();
         let mut native: Vec<(PathBuf, PathBuf)> = Vec::new();
         let mut memories = true;
         let mut start = MovieStart::PowerOn;
@@ -166,12 +121,6 @@ impl MovieRequest {
                         return Err(RequestError::Invalid("--seeds CSV DIR".to_string()));
                     };
                     seeds = Some((PathBuf::from(csv), PathBuf::from(directory)));
-                }
-                "--oracle" => {
-                    backend = options
-                        .next()
-                        .cloned()
-                        .ok_or_else(|| RequestError::Invalid("--oracle NAME".to_string()))?;
                 }
                 "--native-seeds" => {
                     let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
@@ -211,41 +160,28 @@ impl MovieRequest {
                             RequestError::Invalid("--from-ladder DIR".to_string())
                         })?));
                 }
-                "--no-picture" => picture = false,
-                // lsnes only: the picture, the APU port log and the PPU registers
+                // The picture, the APU port log and the PPU registers
                 // with each record (docs/ORACLE.md, MEASUREMENTS (o)).
                 "--streams" => {
                     streams = Some(Tiers {
                         picture: true,
                         apu_log: true,
-                        ..Tiers::default()
                     });
                 }
-                // lsnes only: the PPU registers with each record, and no other
+                // The PPU registers with each record, and no other
                 // stream: a seed record the gate decodes needs them, and the rest
                 // of the record stays byte for byte as without.
                 "--ppu" => {
                     streams.get_or_insert(Tiers {
                         picture: false,
                         apu_log: false,
-                        ..Tiers::default()
                     });
                 }
-                // lsnes only: records without the memories, about twice as fast;
+                // Records without the memories, about twice as fast;
                 // for cutting native seeds, not for comparing.
                 "--no-memories" => memories = false,
                 "--ranges" => ranges = true,
-                "--spc" => spc = true,
                 "--positions-only" => positions_only = true,
-                "--profile" => {
-                    let mut number = || {
-                        options
-                            .next()
-                            .and_then(|value| value.parse().ok())
-                            .ok_or_else(|| RequestError::Invalid("--profile FROM TO".to_string()))
-                    };
-                    profile = Some((number()?, number()?));
-                }
                 "--watch" => {
                     let mut number = || {
                         options
@@ -285,9 +221,6 @@ impl MovieRequest {
                 other => return Err(RequestError::Invalid(format!("unknown option {other}"))),
             }
         }
-        if (cutting.is_some() || !native.is_empty() || streams.is_some()) && backend != "lsnes" {
-            return Err(RequestError::Compatibility);
-        }
         if from_ladder.is_some() && native.is_empty() {
             return Err(RequestError::Compatibility);
         }
@@ -296,16 +229,12 @@ impl MovieRequest {
             inputs: inputs.into(),
             frames,
             seeds,
-            picture,
             streams,
             ranges,
             lag_log,
             watch,
             trace,
-            spc,
             positions_only,
-            profile,
-            backend: BackendName::from(backend),
             native,
             memories,
             start,
@@ -317,7 +246,7 @@ impl MovieRequest {
 impl CorpusRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
         let [rom, lock, bundle, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lsnes] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
+            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
         };
         let mut only = Vec::new();
         let mut limit = usize::MAX;
@@ -383,11 +312,6 @@ impl CorpusRequest {
                             .parse()
                             .map_err(|_| RequestError::Invalid(usage.to_string()))?;
                         dump_frames.push((row.to_owned(), number));
-                    }
-                }
-                "--oracle" => {
-                    if options.next().map(String::as_str) != Some("lsnes") {
-                        return Err(RequestError::Compatibility);
                     }
                 }
                 "--watch-words" => {
@@ -475,59 +399,6 @@ impl CorpusRequest {
             lean,
             cache,
             cache_pictures,
-        })
-    }
-}
-impl CrossRequest {
-    pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
-        let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]";
-        let [rom, inputs, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid(usage.to_string()));
-        };
-        let steps = |text: Option<&String>| -> Result<std::ops::RangeInclusive<u64>, RequestError> {
-            let (from, to) = text
-                .and_then(|text| text.split_once(".."))
-                .ok_or_else(|| RequestError::Invalid(usage.to_string()))?;
-            let (Ok(from), Ok(to)) = (from.parse::<u64>(), to.parse::<u64>()) else {
-                return Err(RequestError::Invalid(usage.to_string()));
-            };
-            Ok(from..=to)
-        };
-        let mut range = None;
-        let mut first_ranges = false;
-        let mut streams = false;
-        let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
-        let mut right_start = CrossStart::PowerOn;
-        let mut options = rest.iter();
-        while let Some(option) = options.next() {
-            match option.as_str() {
-                "--frames" => range = Some(steps(options.next())?),
-                "--ranges" => first_ranges = true,
-                "--streams" => streams = true,
-                "--ranges-at" => ranges_at = Some(steps(options.next())?),
-                "--right-from" => {
-                    let (Some(state), Some(step)) = (options.next(), options.next()) else {
-                        return Err(RequestError::Invalid(usage.to_string()));
-                    };
-                    let step = step
-                        .parse()
-                        .map_err(|_| RequestError::Invalid(usage.to_string()))?;
-                    right_start = CrossStart::Saved {
-                        state: PathBuf::from(state),
-                        step,
-                    };
-                }
-                _ => return Err(RequestError::Invalid(usage.to_string())),
-            }
-        }
-        Ok(Self {
-            rom: rom.into(),
-            inputs: inputs.into(),
-            range,
-            first_ranges,
-            streams,
-            ranges_at,
-            right_start,
         })
     }
 }

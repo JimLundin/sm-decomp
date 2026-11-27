@@ -175,11 +175,6 @@ content requirements.
 
 ## The oracle
 
-- **`LEGACY(seed)`** in `crates/oracle/src/seed.rs`: lsnes room captures (`Start::Capture`) hold no
-  SPC700, DSP or timer state, so a migration seed resumes the SPC700 at the driver's idle loop (`$15BF`,
-  SP `$CF`), the CPU-to-APU ports from the driver's copy at SPC `$00-$03`, the timers from their RAM
-  shadows, and the DSP from reset with echo writes off. In some rows the resumed driver answers no sound
-  request, so uploads, door transitions and message boxes stall. Native seeds retire this entry.
 - **`LEGACY(seed-ppu)`** in `oracle_record::lsnes::read`: 531 of the relock bundle's 541 seed
   records lack the optional PPU tier. Reading one starts the committed PPU and DMA registers
   at their defaults, even where the native state retains other values. A first NMI overwrites
@@ -190,8 +185,8 @@ content requirements.
   stays compared.
 - **lsnes's cut at line 241** without a previewed pad: an NMI whose writes pass that line shows a step
   later (`Cut::NmiStillRunning`). The format-2 lock is recorded from frame pads with preview, so it has
-  no such cut ([ORACLE, MEASUREMENTS (g), (i)](ORACLE.md#appendix-a-measurements-measurements)).
+  no such cut ([ORACLE, MEASUREMENTS (i)](ORACLE.md#appendix-a-measurements-measurements)).
 - **The five `ppu` fields lsnes doesn't expose** (`nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`) are
   not compared (ORACLE Q4).
-- **A one-frame lag shift after an APU upload** between oracles is an oracle difference, not engine
-  behaviour; the lag pattern is pinned to lsnes ([ORACLE appendix B](ORACLE.md#appendix-b-emulator-accuracy-accuracy)).
+- **A one-frame lag shift after an APU upload** between lsnes and another emulator or a console is an
+  oracle difference, not engine behaviour; the lag pattern is pinned to lsnes ([ORACLE appendix B](ORACLE.md#appendix-b-emulator-accuracy-accuracy)).

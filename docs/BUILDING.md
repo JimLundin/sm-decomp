@@ -23,8 +23,9 @@ benchmarks': the same optimisation without link-time optimisation, incremental a
 change rebuilds quickly. CI and every verifier command in [STATUS](STATUS.md) and
 [ORACLE](ORACLE.md) build with `--profile verify`, whose output is in `target/verify/`.
 
-The oracle crate links a native LakeSnes archive: `bash tools/oracle/build_lakesnes.sh` builds it
-with Zig 0.15.2 and prints the directory to put on `LIBRARY_PATH`.
+The oracle drives lsnes rr2-beta23 as a separate process and links no emulator code. Set
+`SM_LSNES` to its executable or put it on `PATH` as `lsnes` to capture
+([ORACLE §2](ORACLE.md#2-toolchain-and-layout)); building and testing the oracle crate need neither.
 
 CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
 the README) and verification jobs for the ROM content tests and the complete indexed replay
@@ -268,12 +269,9 @@ Omitting the receipt leaves all detections unknown.
 
 ## Credits and licence
 
-[LakeSnes](https://github.com/angelo-wf/LakeSnes) (MIT) is linked into the oracle: the build
-fetches its pinned sources and their licence; the repository carries only the project's fixes to it
-(`crates/oracle/native/fixes/`).
-[lsnes](https://tasvideos.org/EmulatorResources/Lsnes) and
-[MesenCE](https://github.com/nesdev-org/MesenCE) run as separate processes; none of their code is
-linked or copied. Registry dependencies carry their own licences.
+[lsnes](https://tasvideos.org/EmulatorResources/Lsnes) runs as a separate process; none of its
+code is linked or copied. The line compositor follows the PPU rules of
+[LakeSnes](https://github.com/angelo-wf/LakeSnes) (MIT). Registry dependencies carry their own licences.
 Patrick Johnston's [bank logs](https://patrickjohnston.org/bank/) inform names
 and behaviour. Original contributions are MIT ([LICENSE](../LICENSE)). Super Metroid is a trademark
 of Nintendo; no ROM or game data is included.

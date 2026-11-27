@@ -79,7 +79,7 @@ surviving mutant is red.
 
 **P12. The reference shares no code with the engine, and every difference is named.** The unmodified
 ROM runs on emulators we don't share code with. No tolerances, no unnamed masks: a difference between
-engine and oracle, or oracle and hardware, is a LEGACY row. A second reference (Mesen, hardware
+engine and oracle, or oracle and hardware, is a LEGACY row. A second reference (hardware
 captures) is in the build order.
 
 **P13. Measure outcomes; structural counts are advisory.** Only measures that need the engine to run

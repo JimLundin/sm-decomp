@@ -1,5 +1,5 @@
-use super::requests::{CorpusRequest, CrossRequest, MovieRequest, RequestError};
-use super::{RoomSeed, corpus, cross, csv, movie, save_due};
+use super::requests::{CorpusRequest, MovieRequest, RequestError};
+use super::{RoomSeed, corpus, csv, movie, save_due};
 use std::path::PathBuf;
 
 fn args(values: &[&str]) -> Vec<String> {
@@ -16,8 +16,6 @@ fn movie_options_parse_without_opening_paths() {
         "--seeds",
         "missing.csv",
         "seeds",
-        "--oracle",
-        "lsnes",
         "--native-seeds",
         "missing-native.csv",
         "native",
@@ -38,13 +36,8 @@ fn movie_options_parse_without_opening_paths() {
         "20",
         "25",
         "808000,818001",
-        "--profile",
-        "1",
-        "2",
-        "--spc",
         "--positions-only",
         "--ranges",
-        "--no-picture",
         "--no-memories",
         "--ppu",
         "--streams",
@@ -59,12 +52,11 @@ fn movie_options_parse_without_opening_paths() {
         }
     );
     assert_eq!(request.watch, Some((10, 5)));
-    assert_eq!(request.profile, Some((1, 2)));
     assert_eq!(request.trace, Some((20, 25, vec![0x808000, 0x818001])));
     assert_eq!(request.cutting, Some((30, PathBuf::from("ladder"))));
     assert_eq!(request.native.len(), 1);
-    assert!(!request.picture && !request.memories);
-    assert!(request.spc && request.positions_only && request.ranges);
+    assert!(!request.memories);
+    assert!(request.positions_only && request.ranges);
     assert!(request.streams.unwrap().picture);
 }
 
@@ -89,10 +81,6 @@ fn movie_repeated_options_keep_last_values_and_accumulate_native_lists() {
         "--seeds",
         "two.csv",
         "two",
-        "--oracle",
-        "lakesnes",
-        "--oracle",
-        "lsnes",
         "--native-seeds",
         "one.csv",
         "one",
@@ -117,7 +105,6 @@ fn movie_repeated_options_keep_last_values_and_accumulate_native_lists() {
     );
     assert_eq!(request.native.len(), 2);
     assert!(request.streams.unwrap().picture);
-    assert_eq!(request.backend.into_name(), "lsnes");
 }
 
 #[test]
@@ -154,7 +141,6 @@ fn movie_missing_and_malformed_operands_return_errors() {
         vec!["--frames"],
         vec!["--frames", "no"],
         vec!["--seeds", "csv"],
-        vec!["--oracle"],
         vec!["--native-seeds", "csv"],
         vec!["--from", "state"],
         vec!["--from", "state", "no"],
@@ -162,7 +148,6 @@ fn movie_missing_and_malformed_operands_return_errors() {
         vec!["--ladder", "1"],
         vec!["--from-ladder"],
         vec!["--watch", "1"],
-        vec!["--profile", "1"],
         vec!["--trace", "1", "2"],
         vec!["--trace", "1", "2", "no"],
         vec!["--lag-log"],
@@ -178,23 +163,16 @@ fn movie_missing_and_malformed_operands_return_errors() {
 }
 
 #[test]
-fn movie_backend_requirements_are_validated_before_acquisition() {
-    for tail in [
-        vec!["--streams"],
-        vec!["--ppu"],
-        vec!["--ladder", "1", "dir"],
-        vec!["--native-seeds", "csv", "dir"],
-        vec!["--from-ladder", "dir"],
-    ] {
-        let mut values = vec!["missing.rom", "missing.inputs"];
-        values.extend(tail);
-        assert!(matches!(
-            movie(&args(&values)),
-            Err(RequestError::Compatibility)
-        ));
-    }
-    let request = MovieRequest::parse(&args(&["rom", "pads", "--oracle", "custom"])).unwrap();
-    assert_eq!(request.backend.into_name(), "custom");
+fn movie_from_ladder_without_native_seeds_is_rejected_before_acquisition() {
+    assert!(matches!(
+        movie(&args(&[
+            "missing.rom",
+            "missing.inputs",
+            "--from-ladder",
+            "dir"
+        ])),
+        Err(RequestError::Compatibility)
+    ));
 }
 
 #[test]
@@ -211,8 +189,6 @@ fn corpus_options_parse_without_acquiring_outputs() {
         "4",
         "--shard",
         "1/3",
-        "--oracle",
-        "lsnes",
         "--record-v2",
         "missing.v2",
         "--sidecar",
@@ -294,7 +270,6 @@ fn corpus_missing_operands_and_compatibility_are_rejected() {
         "--record-v2",
         "--sidecar",
         "--dump-frames",
-        "--oracle",
         "--native-seeds",
         "--watch-words",
         "--watch-pcs",
@@ -305,7 +280,7 @@ fn corpus_missing_operands_and_compatibility_are_rejected() {
         assert!(CorpusRequest::parse(&args(&["rom", "lock", "data", option])).is_err());
     }
     for tail in [
-        vec!["--record-v2", "file", "--oracle", "lakesnes"],
+        vec!["--record-v2", "file", "--no-memories"],
         vec!["--watch-words", "$1ffff"],
         vec!["--watch-pcs", "$1000000"],
         vec!["--sidecar", "dir"],
@@ -338,7 +313,7 @@ fn invalid_tail_preserves_existing_outputs_and_does_not_create_directories() {
         assert!(!new_directory.exists());
         // A fully parsed but incompatible request must also preserve the file.
         values.truncate(5);
-        values.extend(args(&["--oracle", "lakesnes", "--record-v2"]));
+        values.extend(args(&["--no-memories", "--record-v2"]));
         values.push(output.to_string_lossy().into_owned());
         assert!(corpus(&values).is_err());
         assert_eq!(std::fs::read(&output).unwrap(), b"synthetic sentinel");
@@ -384,56 +359,6 @@ fn successful_repeated_outputs_are_acquired_in_option_order() {
     std::fs::remove_file(last).unwrap();
     std::fs::remove_dir(sidecar).unwrap();
     std::fs::remove_dir(directory).unwrap();
-}
-
-#[test]
-fn cross_preserves_repeat_resume_and_unclamped_range_requests() {
-    let request = CrossRequest::parse(&args(&[
-        "missing.rom",
-        "missing.inputs",
-        "--frames",
-        "1..4",
-        "--frames",
-        "8..3",
-        "--ranges",
-        "--streams",
-        "--ranges-at",
-        "5..100",
-        "--right-from",
-        "missing.one",
-        "10",
-        "--right-from",
-        "missing.two",
-        "20",
-    ]))
-    .unwrap();
-    let range = request.range.unwrap();
-    assert_eq!((*range.start(), *range.end()), (8, 3));
-    assert_eq!(request.ranges_at, Some(5..=100));
-    assert_eq!(
-        request.right_start,
-        super::requests::CrossStart::Saved {
-            state: PathBuf::from("missing.two"),
-            step: 20
-        }
-    );
-    assert!(request.streams && request.first_ranges);
-}
-
-#[test]
-fn cross_malformed_tail_returns_before_loading_state() {
-    for tail in [
-        vec!["--frames"],
-        vec!["--frames", "1..no"],
-        vec!["--ranges-at", "no"],
-        vec!["--right-from", "state"],
-        vec!["--right-from", "state", "no"],
-        vec!["--unknown"],
-    ] {
-        let mut values = vec!["missing.rom", "missing.inputs"];
-        values.extend(tail);
-        assert!(cross(&args(&values)).is_err());
-    }
 }
 
 #[test]
@@ -520,152 +445,11 @@ fn native_save_uses_absolute_movie_step_when_resumed() {
 }
 
 #[test]
-fn cross_reports_registers_and_range_locations_without_observed_payloads() {
-    use crate::cross::{Report, tests::record};
-
-    let mut left = record(0);
-    let mut right = left.clone();
-    left.cpu.a = 0xa1b2;
-    right.cpu.a = 0xc3d4;
-    left.vram = vec![0; 32].into_boxed_slice();
-    right.vram.clone_from(&left.vram);
-    for index in [1, 20] {
-        left.vram[index] = 0xe5f6;
-        right.vram[index] = 0x789a;
-    }
-
-    let payloads = ["a1b2", "c3d4", "e5f6", "789a", "f6, e5", "9a, 78"];
-    for (options, ranges_at) in [
-        (&[][..], None),
-        (&["--ranges"][..], Some(7)),
-        (&["--ranges-at", "8..8"][..], Some(8)),
-    ] {
-        let mut command = args(&["rom", "inputs"]);
-        command.extend(args(options));
-        let request = CrossRequest::parse(&command).unwrap();
-        let mut report = Report::new(request.streams, request.first_ranges, request.ranges_at);
-        for step in [7, 8] {
-            let text = report.step(step, true, &left, &right).unwrap();
-            assert_eq!(
-                text.split_whitespace().next(),
-                Some(step.to_string().as_str())
-            );
-            assert!(text.contains("cpu 1 [a]"));
-            assert!(text.contains("vram 4"));
-            assert_eq!(
-                text.contains(&format!("vram at {step}: 2 ranges")),
-                ranges_at == Some(step)
-            );
-            assert_eq!(
-                text.contains("00002-00003 2 bytes"),
-                ranges_at == Some(step)
-            );
-            assert_eq!(
-                text.contains("00028-00029 2 bytes"),
-                ranges_at == Some(step)
-            );
-            assert_omits(&text, &payloads);
-        }
-        let summary = report.summary(2, std::time::Duration::ZERO);
-        for (part, fields) in [("cpu", "cpu 1 [a]"), ("vram", "vram 4")] {
-            assert_first_cross_difference(&summary, part, "7", "2", fields);
-        }
-        assert_omits(&summary, &payloads);
-    }
-}
-
-#[test]
-fn cross_streams_report_cut_picture_and_apu_differences_without_values() {
-    use crate::cross::{Report, describe_streams, tests::record};
-    use crate::{ApuAccess, ApuAccessKind, Cut, Nmi, NmiKind, Picture};
-
-    let request = CrossRequest::parse(&args(&["rom", "inputs", "--streams", "--ranges"])).unwrap();
-    assert!(request.streams);
-    let mut report = Report::new(request.streams, request.first_ranges, request.ranges_at);
-
-    let mut left = record(0);
-    let mut right = left.clone();
-    left.cut = Cut::NmiReturn(Nmi {
-        kind: NmiKind::Requested,
-        interrupted_pc: 0xabcdef,
-        polled: true,
-    });
-    right.cut = Cut::NmiReturn(Nmi {
-        kind: NmiKind::Overrun,
-        interrupted_pc: 0xfedcba,
-        polled: false,
-    });
-    let mut lake = Picture {
-        lines: 1,
-        ..Picture::default()
-    };
-    lake.dots[0] = 0x7bde;
-    lake.brightness[0] = 13;
-    let mut lsnes = lake.clone();
-    lsnes.dots[0] = 0x4fad;
-    lsnes.brightness[0] = 9;
-    left.picture = Some(lake);
-    right.picture = Some(lsnes);
-    let access = ApuAccess {
-        kind: ApuAccessKind::CpuWrite,
-        port: 1,
-        value: 0xea,
-        apu_cycle: 10,
-    };
-    left.apu_log.push(access);
-    right.apu_log.push(ApuAccess {
-        value: 0xdb,
-        ..access
-    });
-
-    let payloads = [
-        "abcdef", "fedcba", "7bde", "4fad", "13/9", "[ea]", "[db]", "[234]", "[219]",
-    ];
-    let stream_line = describe_streams(42, &left, &right, left.picture.as_ref()).unwrap();
-    assert!(stream_line.starts_with("42 "));
-    assert!(stream_line.contains("picture 255 of 256"));
-    assert!(stream_line.contains("apu log 1/1"));
-    assert_omits(&stream_line, &payloads);
-
-    let text = report.step(42, true, &left, &right).unwrap();
-    for field in [
-        "cut 1",
-        "kind",
-        "interrupted_pc",
-        "polled",
-        "picture 3",
-        "apu-log 1",
-    ] {
-        assert!(text.contains(field));
-    }
-    assert_omits(&text, &payloads);
-    let summary = report.summary(1, std::time::Duration::ZERO);
-    assert_first_cross_difference(&summary, "cut", "42", "1", "interrupted_pc");
-    assert_first_cross_difference(&summary, "picture", "42", "1", "picture 3");
-    assert_first_cross_difference(&summary, "apu-log", "42", "1", "apu-log 1");
-    assert_omits(&summary, &payloads);
-}
-
-fn assert_first_cross_difference(summary: &str, part: &str, step: &str, count: &str, field: &str) {
-    let line = summary
-        .lines()
-        .find(|line| line.split_whitespace().next() == Some(part))
-        .unwrap();
-    let (coordinates, detail) = line.split_once(':').unwrap();
-    let numbers: Vec<_> = coordinates
-        .split(|character: char| !character.is_ascii_digit())
-        .filter(|number| !number.is_empty())
-        .collect();
-    assert_eq!(numbers, [step, count]);
-    assert!(detail.contains(field));
-}
-
-#[test]
 fn movie_lag_log_and_positions_only_report_the_compared_fields() {
     use super::movie_report::lag_difference;
-    use crate::{Beam, cross::tests::record};
+    use crate::Beam;
 
-    let mut record = record(0);
+    let mut record = crate::record::lsnes::blank();
     record.wram = vec![0; 0x1000].into_boxed_slice();
     record.wram[0x05b6..0x05b8].copy_from_slice(&41267_u16.to_le_bytes());
     record.wram[0x0af6..0x0af8].copy_from_slice(&54128_u16.to_le_bytes());

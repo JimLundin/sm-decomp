@@ -14,7 +14,7 @@
 //! still running ([`Cut::NmiStillRunning`]), before the NMI's counter writes
 //! and joypad read.
 //!
-//! With the picture or APU log tiers on ([`Oracle::set_tiers`] before the
+//! With the picture or APU log tiers on ([`Lsnes::record_streams`] before the
 //! first step), each record also carries the picture (the screenshot of the
 //! video frame the step ends in, sent as lsnes's PNG and mapped back from its
 //! 8-bit palette to BGR555 at the one brightness that produces it), the CPU's
@@ -42,7 +42,7 @@
 use crate::lock::Sha256;
 use crate::record::lsnes::RawPicture;
 use crate::record::{Beam, Cut, FrameRecord, Hit, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
-use crate::{Oracle, OracleError, OracleId, Start, Tiers};
+use crate::{OracleError, OracleId, Start, Tiers};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -131,8 +131,6 @@ pub struct Lsnes {
     /// Its standard output, a line at a time, from a reader thread, so that a
     /// silent lsnes can be timed out. Disconnected once lsnes closes it.
     replies: Receiver<std::io::Result<String>>,
-    /// A failure met outside a step (by `reset`), returned by the next step.
-    failed: Option<Failure>,
     directory: PathBuf,
     record: FrameRecord,
     steps: u64,
@@ -473,14 +471,14 @@ fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
 }
 
 impl Lsnes {
-    /// [`Oracle::open`], recording a hit whenever the CPU reaches one of
+    /// [`Lsnes::open`], recording a hit whenever the CPU reaches one of
     /// `addresses` (24-bit; instruction starts only, since lsnes's exec
     /// callback fires on operand fetches too) in [`FrameRecord::hits`],
     /// without the peek.
     ///
     /// # Errors
     ///
-    /// As [`Oracle::open`], and [`OracleError::Rom`] for a ROM whose NMI
+    /// As [`Lsnes::open`], and [`OracleError::Rom`] for a ROM whose NMI
     /// handler has no single epilogue.
     pub fn open_watching(rom: &[u8], start: Start, addresses: &[u32]) -> Result<Self, OracleError> {
         Self::spawn(rom, start, addresses, None)
@@ -511,9 +509,7 @@ impl Lsnes {
         let mut command = Command::new(executable());
         let resumed = matches!(start, Start::State(_));
         match start {
-            Start::PowerOn { wram_fill: 0x55 } => {}
-            // bsnes v085 always fills work RAM with 0x55.
-            Start::PowerOn { .. } => return Err(OracleError::Rom),
+            Start::PowerOn => {}
             Start::State(state) => {
                 let path = directory.join("start.lss");
                 std::fs::write(&path, state).map_err(|_| OracleError::State)?;
@@ -521,11 +517,6 @@ impl Lsnes {
                 // mismatches the ROM's (SNES) and lsnes hangs; the server
                 // loads it before the first frame instead.
                 command.env("OH_START", &path);
-            }
-            Start::Capture(_) => {
-                return Err(OracleError::Seed(
-                    "lsnes resumes only its own states".into(),
-                ));
             }
         }
         let stderr = std::fs::File::create(directory.join(STDERR)).map_err(|_| OracleError::Rom)?;
@@ -590,7 +581,6 @@ impl Lsnes {
             child,
             requests,
             replies,
-            failed: None,
             directory,
             record: crate::record::lsnes::blank(),
             steps: 0,
@@ -622,7 +612,7 @@ impl Lsnes {
 
     /// Announce the pad of the step after the coming one, so that the coming
     /// step is cut at its NMI's RTI even when the NMI outlasts lsnes's frame.
-    /// The step after must then bring this pad, and no reset before it.
+    /// The step after must then bring this pad.
     pub fn preview(&mut self, next: Pad) {
         self.next_pad = Some(next);
     }
@@ -640,8 +630,7 @@ impl Lsnes {
     }
 
     /// Ask for the state at the frame boundary that ends the coming step,
-    /// written to the returned file once the step after it has run;
-    /// [`Oracle::save_state`] then reads it.
+    /// written to the returned file once the step after it has run.
     pub fn request_save(&mut self) -> Result<PathBuf, OracleError> {
         self.saves += 1;
         let path = self.directory.join(format!("state-{}.lss", self.saves));
@@ -716,21 +705,23 @@ impl Lsnes {
         };
         Ok(())
     }
-}
 
-impl Oracle for Lsnes {
-    fn identity(&self) -> OracleId {
-        IDENTITY
-    }
-
-    fn open(rom: &[u8], start: Start) -> Result<Self, OracleError> {
+    /// Power on with `rom`, or resume `start`.
+    ///
+    /// # Errors
+    ///
+    /// [`OracleError::Rom`] or [`OracleError::State`] when lsnes cannot start
+    /// the game.
+    pub fn open(rom: &[u8], start: Start) -> Result<Self, OracleError> {
         Self::spawn(rom, start, &[], None)
     }
 
-    fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
-        if let Some(failure) = self.failed.take() {
-            return Err(OracleError::Lsnes(failure));
-        }
+    /// Run one video frame with `pad` on controller 1, to the frame's cut.
+    ///
+    /// # Errors
+    ///
+    /// [`OracleError::Lsnes`] when lsnes stops serving.
+    pub fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
         let memories = u8::from(self.memories);
         let request = match self.next_pad.take() {
             Some(next) => format!("S {:04x} {memories} {:04x}", pad.0, next.0),
@@ -786,25 +777,6 @@ impl Oracle for Lsnes {
         self.steps += 1;
         Ok(&self.record)
     }
-
-    fn save_state(&self) -> Vec<u8> {
-        let path = self.directory.join(format!("state-{}.lss", self.saves));
-        std::fs::read(path).unwrap_or_default()
-    }
-
-    /// Records stay lean whatever the tiers: the streams cost speed, and
-    /// ladders compare raw records. [`Lsnes::record_streams`] asks for them.
-    fn set_tiers(&mut self, _tiers: Tiers) {}
-
-    fn reset(&mut self) {
-        if let Err(OracleError::Lsnes(failure)) = self.send("R") {
-            self.failed = Some(failure);
-        }
-    }
-
-    /// The server takes its watched addresses at start:
-    /// [`Lsnes::open_watching`] sets them.
-    fn set_watch(&mut self, _addresses: &[u32], _peek: u32) {}
 }
 
 impl Drop for Lsnes {

@@ -1,10 +1,10 @@
 //! Measurements for the architecture lane (docs/ORACLE.md, appendix A): busy
-//! spans, door transitions, decompression calls, line timing of the IRQ and
-//! HDMA-object handlers, and the sound driver's port latency. Each reads a
-//! run's frame records; the few game addresses come from the bank logs
+//! spans, door transitions, decompression calls, the HDMA-object handler's
+//! line timing and the CPU's APU port accesses. Each reads a run's frame
+//! records; the few game addresses come from the bank logs
 //! (https://patrickjohnston.org/bank/).
 
-use crate::record::{ApuAccessKind, FrameRecord, NmiKind, WriteSource};
+use crate::record::{ApuAccessKind, FrameRecord, NmiKind};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
@@ -54,16 +54,7 @@ struct Frame {
     door: u16,
     state: u16,
     hdma_end: Option<u16>,
-    irq_writes: Vec<(u16, u16, u8)>,
     apu_writes: usize,
-    dma_bytes_blank: usize,
-}
-
-/// Which measurement tiers the backend can provide.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Source {
-    Lsnes,
-    LakeSnes,
 }
 
 /// A run's measurements, accumulated one frame at a time.
@@ -72,17 +63,12 @@ pub struct Measurements {
     frames: Vec<Frame>,
     decompressions: Vec<Decompression>,
     open_decompression: Option<usize>,
-    /// CPU port writes awaiting the SPC700's echo: (port, value, apu cycle).
-    pending_echo: Vec<(u8, u8, u32)>,
-    /// Echo latencies in SPC700 cycles, per port.
-    echo_cycles: BTreeMap<u8, Vec<u32>>,
     cpu_port_writes: [usize; 4],
     cpu_port_reads: [usize; 4],
-    spc_port_writes: [usize; 4],
 }
 
 impl Measurements {
-    /// Fold in one frame's record (with the write log and watch tiers on).
+    /// Fold in one frame's record (with the APU log and the watches on).
     pub fn frame(&mut self, record: &FrameRecord) {
         let index = self.frames.len();
         for hit in &record.hits {
@@ -110,47 +96,14 @@ impl Measurements {
             .filter(|hit| HDMA_HANDLER_RETURNS.contains(&hit.pc))
             .map(|hit| hit.beam.v)
             .next_back();
-        let irq_writes = record
-            .writes
-            .iter()
-            .filter(|write| write.source == WriteSource::Irq)
-            .map(|write| (write.beam.v, write.beam.h, write.register))
-            .collect();
-        let blank = record.ppu.inidisp & 0x80 != 0;
-        let dma_bytes_blank = if blank {
-            record
-                .writes
-                .iter()
-                .filter(|write| write.source == WriteSource::Dma)
-                .count()
-        } else {
-            0
-        };
         for access in &record.apu_log {
             let port = usize::from(access.port & 3);
             match access.kind {
                 ApuAccessKind::CpuWrite | ApuAccessKind::DmaWrite => {
                     self.cpu_port_writes[port] += 1;
-                    self.pending_echo
-                        .retain(|&(pending, _, _)| pending != access.port);
-                    self.pending_echo
-                        .push((access.port, access.value, access.apu_cycle));
                 }
                 ApuAccessKind::CpuRead | ApuAccessKind::DmaRead => self.cpu_port_reads[port] += 1,
-                ApuAccessKind::SpcWrite => {
-                    self.spc_port_writes[port] += 1;
-                    if let Some(position) =
-                        self.pending_echo.iter().position(|&(pending, value, _)| {
-                            pending == access.port && value == access.value
-                        })
-                    {
-                        let (_, _, written) = self.pending_echo.remove(position);
-                        self.echo_cycles
-                            .entry(access.port)
-                            .or_default()
-                            .push(access.apu_cycle.wrapping_sub(written));
-                    }
-                }
+                ApuAccessKind::SpcWrite => {}
             }
         }
         let apu_writes = record
@@ -167,14 +120,12 @@ impl Measurements {
             door: word(&record.wram, 0x078d),
             state: word(&record.wram, 0x0998),
             hdma_end,
-            irq_writes,
             apu_writes,
-            dma_bytes_blank,
         });
     }
 
     /// The summary, as Markdown lines (ids, frames, counts and beam positions).
-    pub fn report(&self, rom: &[u8], source: Source) -> String {
+    pub fn report(&self, rom: &[u8]) -> String {
         let mut text = String::new();
         let frames = self.frames.len();
         let overrun = self
@@ -242,21 +193,13 @@ impl Measurements {
                 .iter()
                 .map(|frame| frame.apu_writes)
                 .sum();
-            let dma: usize = self.frames[first..=last]
-                .iter()
-                .map(|frame| frame.dma_bytes_blank)
-                .sum();
-            let _ = write!(
+            let _ = writeln!(
                 text,
                 "  - door transition frames {first}-{last} ({} frames, {busy} busy): room {:04X} -> {:04X}; APU port writes {uploads}",
                 last - first + 1,
                 self.frames[first.saturating_sub(1)].room,
                 self.frames[(last + 1).min(frames - 1)].room
             );
-            if source == Source::LakeSnes {
-                let _ = write!(text, "; DMA bytes under forced blank {dma}");
-            }
-            text.push('\n');
         }
         for call in &self.decompressions {
             let (output, commands) = decompressed_size(rom, call.source);
@@ -298,55 +241,11 @@ impl Measurements {
                 sorted[sorted.len() - 1]
             );
         }
-        let mut irq: BTreeMap<(u16, u8), (usize, u16, u16)> = BTreeMap::new();
-        for frame in &self.frames {
-            for &(v, h, register) in &frame.irq_writes {
-                let entry = irq.entry((v, register)).or_insert((0, u16::MAX, 0));
-                entry.0 += 1;
-                entry.1 = entry.1.min(h);
-                entry.2 = entry.2.max(h);
-            }
-        }
-        if !irq.is_empty() {
-            let _ = writeln!(
-                text,
-                "- IRQ handler register writes (line, register: writes, H range):"
-            );
-            for ((v, register), (count, low, high)) in &irq {
-                let _ = writeln!(
-                    text,
-                    "  - line {v}, $21{register:02X}: {count} writes, H {low}-{high}"
-                );
-            }
-        }
-        if source == Source::Lsnes {
-            let _ = writeln!(
-                text,
-                "- APU ports: CPU writes {:?}, CPU reads {:?} (ports 0-3)",
-                self.cpu_port_writes, self.cpu_port_reads
-            );
-            text.push_str(
-                "- IRQ/DMA write timing and SPC700 writes/echo latency are unavailable on lsnes.\n",
-            );
-            return text;
-        }
         let _ = writeln!(
             text,
-            "- APU ports: CPU writes {:?}, CPU reads {:?}, SPC700 writes {:?} (ports 0-3)",
-            self.cpu_port_writes, self.cpu_port_reads, self.spc_port_writes
+            "- APU ports: CPU writes {:?}, CPU reads {:?} (ports 0-3)",
+            self.cpu_port_writes, self.cpu_port_reads
         );
-        for (port, cycles) in &self.echo_cycles {
-            let mut sorted = cycles.clone();
-            sorted.sort_unstable();
-            let _ = writeln!(
-                text,
-                "  - port {port} echo latency over {} echoes: SPC700 cycles min {}, median {}, max {}",
-                sorted.len(),
-                sorted[0],
-                sorted[sorted.len() / 2],
-                sorted[sorted.len() - 1]
-            );
-        }
         text
     }
 }

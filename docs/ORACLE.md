@@ -1,7 +1,7 @@
 # The oracle
 
-The oracle runs the original, unmodified ROM on an emulator and records what the engine is
-compared against. It lives in `crates/oracle` (the emulator adapters, the recorder, the command
+The oracle runs the original, unmodified ROM on lsnes and records what the engine is
+compared against. It lives in `crates/oracle` (the lsnes adapter, the recorder, the command
 line) and `crates/oracle_record` (the record types, with no emulator, so `verify` can read
 records without linking one). Neither depends on the engine. The comparison contract it serves
 is [ARCHITECTURE §11](architecture/ARCHITECTURE.md#11-the-engine--oracle-comparison-contract).
@@ -11,30 +11,23 @@ comments cite.
 
 ## 1. Decision and contract
 
-### Real, beam-scheduled emulators, run unpatched
+### A real, beam-scheduled emulator, run unpatched
 
-Every backend is a complete SNES: the 65816 on the master-clock beam, DMA and HDMA, NMI and IRQ
-timing, auto-joypad, per-line PPU, and the SPC700 and DSP running the game's own sound driver.
-With a running beam no ROM patch is needed, so `OracleId::patches` is empty: the oracle runs
-the unpatched ROM and shares no code with the engine (PRINCIPLES P12).
-
-| Backend | What | How it is linked |
-| --- | --- | --- |
-| **lsnes** rr2-beta23 (bsnes v085 compatibility core) | the emulator the TAS movies were recorded on; any% in sync through every seed checked | a separate GPL process driven by `tools/oracle/lsnes_server.lua` (`src/lsnes.rs`); no emulator code linked or copied |
-| **LakeSnes** `9db90b8` (angelo-wf, MIT) | the fast oracle, with named fixes (below) | upstream sources compiled unedited with a C bridge (`native/bridge.c`) that renames `ppu_write`, `ppu_runLine`, `ppu_handleVblank` and the DMA B-bus calls to hooks; one Rust call per video frame |
-| **MesenCE** 2.2.1 (GPL-3) | a third vote on disputed frames | its released binary as a separate process, through `tools/oracle/mesen_lag_log.lua` |
+The oracle is **lsnes** rr2-beta23 with its bsnes v085 compatibility core, the emulator the TAS
+movies were recorded on; any% stays in sync through every seed checked. It is a complete SNES: the
+65816 on the master-clock beam, DMA and HDMA, NMI and IRQ timing, auto-joypad, per-line PPU, and
+the SPC700 and DSP running the game's own sound driver. With a running beam no ROM patch is
+needed, so `OracleId::patches` is empty: the oracle runs the unpatched ROM and shares no code
+with the engine (PRINCIPLES P12). lsnes is a separate GPL process driven by
+`tools/oracle/lsnes_server.lua` (`src/lsnes.rs`); no emulator code is linked or copied.
 
 ### Which oracle records which stream (D25)
 
 Acceptance replay never runs an oracle: it compares actual production with pinned independent
-observations. Accuracy decides which oracle records a stream; capture speed matters for
-re-locking and cross-oracle reports. Each stream's lock comes from the most accurate oracle that
-produces it. Today that is **lsnes for every recorded stream** (memories, `ppu`, `apu`, `video`,
-`timing`), since lsnes gives the picture, the CPU port log and the PPU registers too
-(MEASUREMENTS (o), (r)). The five PPU fields lsnes doesn't expose are not compared (Q4).
-LakeSnes stays the fast oracle for independent measurements and tier b (SPC state), and its records count only
-on frames where its memories equal lsnes's. The `ReferenceProfile` names the oracle per stream;
-changing one re-locks that stream oracle-side.
+observations. Each stream's lock comes from the most accurate oracle that produces it. lsnes
+records **every stream** (memories, `ppu`, `apu`, `video`, `timing`), since it gives the
+picture, the CPU port log and the PPU registers too (MEASUREMENTS (o), (r)). The five PPU fields
+lsnes doesn't expose are not compared (Q4), and no stream holds the SPC700 side (Q7).
 
 ### The frame record (contract v1)
 
@@ -53,28 +46,28 @@ One record per video frame, lag or not. Record k covers (cut k-1, cut k] and the
   channels' `$43x0-$43xA`), rebuilt from decoded emulator state so they survive a state load.
 - **The picture scanned out in the interval** (the one NMI k-1 committed): 224 or 239 lines of
   256 BGR555 dots after colour math, with each line's brightness and forced blank.
-- **APU port log:** CPU and DMA reads and writes of `$2140-$2143`, in order.
-- **Tier b:** SPC700 registers, the ports each way, SPC RAM and the 128 DSP registers.
-- **Tier a:** every PPU register write with its line, dot and source (main, NMI, IRQ, DMA, HDMA),
-  watched-PC hits (up to 32 addresses and 16384 hits a step; each `$420B` write is a pseudo hit
-  `0x01000000 | MDMAEN`), SPC-side port writes with cycle stamps. Not digested.
-- **Profile:** instructions per program bank.
+- **APU port log:** the CPU's reads and writes of `$2140-$2143`, in order.
+- **Watched-PC hits:** each with its beam position and four peeked WRAM bytes. Not digested.
+
+`FrameRecord` still carries `spc`, `bank_instructions`, `writes` and `legacy_ppu_digest`, which
+lsnes never fills. They are part of the record codec, so they stay until the cache format next
+changes.
 
 Given the ROM, the start and the pads, records are bit-identical on every host.
 
 ### The picture compared
 
 Two pictures are equal when every dot shows the same 8-bit colour (`Picture::shown`, the
-`picture` part of `oracle cross`, the `video` stream):
+`video` stream):
 
 - a dot's 5-bit components `c` at its line's master brightness `b` (0-15) show as
   `round((b + 1) * c * 255 / 496)` each (`record::shown_channel`, lsnes's palette for bsnes dots);
 - a dot on a forced-blank line shows black.
 
 At brightness 15 the map is one-to-one, so equality is BGR555 equality. Below 15 lsnes's
-screenshot can't tell some components apart, nor brightness 0 from 1. Each backend keeps its
-stored dots (LakeSnes exact per line; lsnes the brightest level that produces the screenshot,
-the smallest component per value), so the comparison is exact wherever any screenshot could tell.
+screenshot can't tell some components apart, nor brightness 0 from 1. The record keeps the
+brightest level that produces the screenshot and the smallest component per value, so the
+comparison is exact wherever any screenshot could tell.
 The compositor writes the same PPU-domain dots, so no emulator's colour conversion is the authority.
 
 ### lsnes streams
@@ -84,7 +77,7 @@ adds three streams; otherwise records are unchanged.
 
 - **Picture:** lsnes's screenshot of the video frame the step ends in, taken in `on_frame` after
   lsnes hands the frame to its screen buffer, sent as its own PNG (base64) and mapped back to BGR555.
-  Equal as shown to LakeSnes on 1001 of 1001 any% steps at 0-1000 and 20000-21000. Streams cost lsnes about 26%.
+  Streams cost lsnes about 26%.
 - **APU port log:** the CPU side only (`memory.registerwrite`/`registerread`), hooked in every bank
   that maps the I/O page, because the game reaches the ports through its data bank (`$82`, `$85`).
 - **PPU registers:** rebuilt from bsnes's decoded fields in `memory.getregisters()`, without
@@ -95,26 +88,19 @@ adds three streams; otherwise records are unchanged.
 callback per address logs `pc ADDRESS LINE DOT`, and each record sent logs `cut FRAME`. The client
 watches the NMI handler's RTI too and splits the log there: a hit after the RTI and before the
 record is sent ran in the next frame, so it goes to the next record; a resumed run drops what ran
-before its first RTI, as the server's counts do. lsnes hits carry no peek (`peek` is 0). Watch
+before its first RTI, as the server's counts do. A hit carries a peek only when the run asks for
+one (`OH_TRACE_PEEK`, `measure` and `movie --trace`); otherwise `peek` is 0. Watch
 instruction starts only: lsnes's exec callback fires on operand fetches too.
 
 The lsnes cut is the interrupted instruction reached again with the stack restored. The server
 finds the NMI handler's one `PLY PLX PLA PLD PLB RTI` from the ROM (`$80:9601`), takes the cut when
 S equals the NMI's S, and derives the registers after the RTI. A frame without an NMI is cut at
 lsnes's frame boundary (line 241). lsnes fixes a frame's input at its start, so an NMI that runs
-past line 241 is cut at its RTI only if the client previewed the next pad (`Backend::preview`;
+past line 241 is cut at its RTI only if the client previewed the next pad (`Lsnes::preview`;
 MEASUREMENTS (i)); without a preview it is cut at the boundary as `NmiStillRunning`. lsnes's
 saved state is taken at the boundary that ends the step it was requested before.
 
 ## 2. Toolchain and layout
-
-**LakeSnes.** `bash tools/oracle/build_lakesnes.sh`
-fetches the pinned upstream files (each checked against its SHA-256), applies
-`crates/oracle/native/fixes/*.patch` to a copy, compiles them and the bridge with **Zig 0.15.2**,
-writes `liboracle_lakesnes.a` and prints its directory; put that on `LIBRARY_PATH` for Cargo
-(`#[link(kind = "static", modifiers = "-bundle")]`). Set `ZIG` for an executable outside
-`PATH` and `SM_LAKESNES_CACHE` to override the source and archive cache (default
-`${XDG_CACHE_HOME:-$HOME/.cache}/sm-decomp-tools/lakesnes-oracle-9db90b8`).
 
 **lsnes.** Set `SM_LSNES` to the rr2-beta23 executable, or install it as `lsnes` on `PATH`.
 Requests go to stdin. Each response overwrites a file and announces its size as `R <bytes>` on stdout.
@@ -124,31 +110,13 @@ keeps the directory. A record not announced within 60 s (first step) or 30 s (la
 lsnes and fails the row as silent. The script loads a start itself (`OH_START`, `load-state`):
 lsnes rejects a state given on its command line with this ROM and hangs.
 
-**MesenCE.** 2.2.1, commit `20ba206cef5ba207c21203176d02cb9f43dda9fb`, from
-`https://github.com/nesdev-org/MesenCE/releases/download/2.2.1/Mesen_2.2.1_Windows.zip`
-(zip SHA-256 `c19e10b3b3865eb0e86e4d01bf09a5027a4452081c04b5bd5b6cbbf76e346fd6`, `Mesen.exe`
-`8ef403d6b9af32075416193914d7993ce8480b347fe1f20a0cfd9815374933e7`), unpacked in
-a private run directory beside an empty `settings.json` (`{}`). For a Linux build, use the same settings:
-
-```sh
-rm -rf mesence-2.2.1-run/Saves   # a kept save changes the boot from frame 268
-SM_MESEN_INPUTS=movies/any.inputs SM_MESEN_LOG=out.csv SM_MESEN_FRAMES=9001 \
-  mesence-2.2.1-run/Mesen --testRunner --timeout=150 --doNotSaveSettings \
-  --debug.scriptWindow.allowIoOsAccess=true --snes.port1.type=SnesController \
-  --snes.ramPowerOnState=AllZeros --snes.spcClockSpeedAdjustment=40 \
-  tools/oracle/mesen_lag_log.lua rom/sm.smc
-```
-
-It writes the column layout of `tools/lsnes_lag_log.lua` (about 120 frames/s).
-
-**Crate layout.** `crates/oracle/src`: `lib.rs` (the `Oracle` trait, `Start`, `Tiers`, `OracleId`),
-`lakesnes.rs`, `lsnes.rs`, `seed.rs` (lsnes room captures), `corpus.rs` (row inputs and playback),
-`relock.rs` and `relock_check.rs` (format-2 recordings), `ladder.rs`, `measure.rs`, `cross.rs`,
+**Crate layout.** `crates/oracle/src`: `lib.rs` (`Start`, `Tiers`, `OracleId`, `OracleError`),
+`lsnes.rs` (open a start, step one video frame with a pad, request a save, record streams),
+`seed.rs` (lsnes room captures' work RAM), `corpus.rs` (row inputs and playback),
+`relock.rs` and `relock_check.rs` (format-2 recordings), `ladder.rs`, `measure.rs`,
 `cli.rs` and `bin/oracle.rs`. The format-2 reader is `data::oracle_lock`, shared by capture and replay.
 `crates/oracle_record`: `FrameRecord`, its codec, the lsnes raw record decoder, `oracle_record::game::WAIT_SITES`
-and `inputs.rs`. No crates.io dependency. A backend implements `Oracle` (open a start, step one
-video frame with a pad, save its state, set tiers and watched PCs); a second backend is a second
-implementation, and `oracle cross` steps two with the same pads.
+and `inputs.rs`. No crates.io dependency, and no test needs lsnes.
 
 ## 3. Inputs, starts, ladders and movies
 
@@ -158,19 +126,17 @@ line per frame of the row plus one for the frame after, which the last frame's N
 it outlasts the frame: N + 1 lines.
 
 **Starts.**
-- `Start::PowerOn { wram_fill }`: the movies were recorded on bsnes v085, which fills 0x55.
+- `Start::PowerOn`: work RAM filled with 0x55, as bsnes v085, which recorded the movies, fills it.
 - `Start::State(blob)`: the emulator's own state. **Native seeds** are lsnes states cut from
   the movies, named `CAPTURE:INDEX` and stored as `DIR/CAPTURE/NNNN.lss` (the state before step
   N) and `NNNN.record` (the raw record of step N-1, always with the memories). A **derived seed**
   adds `NNNN.words`: word edits on a base state, no emulation (`oracle derive-seed`).
-- `Start::Capture`: an lsnes room capture (WRAM, VRAM, CGRAM, OAM, SRAM, SPC RAM and a register
-  CSV), for migration only (`LEGACY(seed)`, [LEGACY](LEGACY.md#the-oracle)). It resumes at
-  `seed_boundary_pc` (`$80:8348`), not `pc`, with the SPC700 at the driver's idle loop. Some rows
-  then stall on sound; native seeds don't.
+- An lsnes **room capture** (`target/seeds/<capture>/<NNNN>-<ROOM>-*`) is no start: it holds no
+  SPC700, DSP or timer state. `movie --seeds` compares a movie's work RAM with its `-wram.bin`.
 
 **Ladders.** Long emulator runs are the exception. Each movie keeps lsnes states every 10000
 frames (`crates/oracle/src/ladder.rs`), so a cut or a measurement resumes from the nearest rung.
-- `oracle movie ROM movies/NAME.inputs --oracle lsnes --ladder N DIR` writes `DIR/NAME/FFFFFF.lss`,
+- `oracle movie ROM movies/NAME.inputs --ladder N DIR` writes `DIR/NAME/FFFFFF.lss`,
   `FFFFFF.record` and `ladder.txt` (each rung's frame and its record's SHA-256).
 - `oracle ladder-check ROM INPUTS DIR [--rungs A..B]` resumes each rung, runs to the next and prints
   `equal` or the differing parts; exit 1 on any difference. Reproduces means the record before the
@@ -183,27 +149,7 @@ frames (`crates/oracle/src/ladder.rs`), so a cut or a measurement resumes from t
 **Movie sync.** `oracle movie ROM movies/any.inputs --lag-log CSV` compares each frame with the
 lsnes lag log (`any-boundary/lag.csv`): `$05B6`, `$05B8`, the lag flag, the game state, the room
 and Samus's position. lsnes is in sync by definition (all room seeds checked: same room, 0 WRAM
-bytes differing). LakeSnes:
-
-| LakeSnes | Exact through | State, room and position through | First difference |
-| --- | --- | --- | --- |
-| `9db90b8` | 352 | 352 | boot APU upload ends 12 lines early |
-| + 0001 (APU clock) | 395 | 8566 | Ceres desync from 8567 |
-| + 0002 (bsnes v085 SPC rate) | 395 | 17984 | one more lag frame on the door out of room 97B5 |
-| + 0004 (HDMA overhead) | 395 | **35199** | one frame late out of the door into room 9CB3 (35200); desync from 35202 |
-
-**The any% status: LakeSnes holds through step 35199.** The cause of 35200 is at 35175: LakeSnes
-enters its wait at 224/1260, lsnes at 224/1230, so the line-225 NMI lands before
-`STA $05B4` (`$80:8340`) and counts a lag frame. The 30 clocks come from HDMA-pause rounding on
-HUD lines 0-32 (MEASUREMENTS (m)). No variant tried zeroes them, so there is no fix 0005 ((n), (q)).
-
-The fixes are emulator fixes, not ROM patches, named in `OracleId::fixes`:
-- `0001-apu-clock-real-master-rate`: the SPC at 32040 Hz against the real 21 477 272 Hz master clock.
-- `0002-apu-clock-bsnes-v085-exact`: bsnes v085's 32040.5 Hz as an exact integer ratio ((h)).
-- `0004-hdma-overhead-only-while-a-channel-runs`: no HDMA alignment or overhead on a line where
-  every enabled channel has terminated, as anomie's timing doc and bsnes v085 have it ((k), (l)).
-- Tried, not applied: `0003-apu-ports-in-time-order` changes no lag-log word in any% 0-18999
-  ((j)); the patch is in git history at `8cbdfb119`, `crates/oracle/native/candidates/`.
+bytes differing).
 
 **Movies.** `movies/manifest.toml` lists the published TAS movies (any% 3653M, low% 3273M,
 100% 4010M and others), each with its download link, SHA-256, frame count, emulator (lsnes
@@ -370,25 +316,22 @@ the `seed_record` pins, so only the `bundles` line changes.
 - **Q3.** Typed streams are absent until the decoder covers a row, keyed by decoder version, and
   re-recorded when a cluster's decode rules land.
 - **Q4.** The five `ppu` fields lsnes lacks (`nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`) are
-  not compared, named in ARCHITECTURE §11.6. Taking them from LakeSnes would make one stream depend
-  on two oracles. `timing` covers NMI; the IRQ lines are measured (D11).
+  not compared, named in ARCHITECTURE §11.6. `timing` covers NMI; the IRQ lines are measured (D11).
 - **Q5.** `boss-golden-torizo`'s capture comes from a snes9x movie lsnes can't play. The 100%
   movie's visit to room B283 doesn't defeat Golden Torizo, so the row waits for a D26 trick movie.
 - **Q6.** Determinism: a second recording of every row in a different shard layout (§7).
 - **Q7.** lsnes gives no SPC700 state. The driver model starts from the decoded WRAM sound state;
-  a row that needs SPC RAM takes tier b from LakeSnes at a cut where the memories agree.
+  no oracle stream records SPC RAM.
 
 ## 6. Commands
 
-Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build --profile verify -p oracle`
-with `LIBRARY_PATH` set).
+Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build --profile verify -p oracle`).
 
 | Command | Does |
 | --- | --- |
-| `oracle movie ROM INPUTS [--oracle lsnes] [--frames N] [--from STATE FRAME] [--lag-log CSV] [--seeds CSV DIR] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--no-picture] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
+| `oracle movie ROM INPUTS [--frames N] [--from STATE FRAME] [--lag-log CSV [--positions-only]] [--seeds CSV DIR [--ranges]] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--watch FROM EVERY] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
 | `oracle corpus ROM LOCK BUNDLE [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...] [--watch-pcs ADDR,...]` | plays the selected format-2 rows, compares their cuts and machine streams, or writes recordings and caches |
-| `oracle cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]` | LakeSnes against lsnes, part by part per step |
-| `oracle measure ROM LOCK BUNDLE ID...`, `oracle measure-movie ROM INPUTS FRAMES`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
+| `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
 | `oracle relock-compare`, `relock-merge`, `relock-refold` | checking recordings (§5) |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
@@ -400,8 +343,8 @@ For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the u
 `relock-v2-lsnes/` directory. Capture checks each selected row's pad SHA-256 and length, then
 checks the native state and edit file hashes for a seeded start. Use `--no-memories` for cut
 counts without stream comparison. `oracle trace` shows CPU, room and APU port observations
-for a row's frame range. `oracle measure` reads instruction hits and decompression pointers
-from lsnes. Use `oracle measure-movie` for LakeSnes's IRQ/DMA write log and SPC700 echo timings.
+for a row's frame range. `oracle measure` reads instruction hits, decompression pointers and
+the CPU's APU port accesses; lsnes has no PPU write log and no SPC700 side to time.
 
 The **record cache**
 (`--cache OUT`) holds one directory per row in one of two tiers, with the lock pins and one
@@ -479,7 +422,6 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   34-35) differ from current ones; re-cut them before mixing.
 - **Each request gets exactly one record.** Reading requests in `on_input`, or emitting at every
   RTI, desyncs the protocol. A previewed pad must come with the next step, or the server quits.
-- **Mesen** keeps the cartridge SRAM in `Saves/`; clear it before every run.
 - **A Tick** is an NMI that interrupted a wait site, including the message-box input loop.
 - Orphaned lsnes processes from killed runs may survive; kill only your own PIDs.
 - Kept lsnes run directories (`%TEMP%/oracle-lsnes-*`, a ROM copy inside) are yours to delete.
@@ -488,57 +430,36 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 
 - `video` rarely differs between lsnes runs; the cause is open (§5 handles it by agreement).
 - Facts, typed streams, row rungs and packed shards in the recorder (§5, step c).
-- LakeSnes past any% 35175: fit the line-0 HDMA pause on both emulators, then fix 0005 ((q)).
-- DMA bytes under forced blank are counted only at the cut; a per-write INIDISP check is needed ((a)).
-- `oracle`'s tests don't run in CI yet (Quality runs `oracle_record`'s).
 - The 100% chain rows' pads, one frame early against the movie (§5, step b1): re-cut them from
   the movie at each seed record's frame counter and re-lock those rows.
 
 ## Appendix A: measurements (MEASUREMENTS)
 
-Measured on LakeSnes with the fixes of the time and on lsnes, any% unless said. Lines are the V
-counter (225 is the first vblank line), dots the master-clock H position (0-1363).
+Any% unless said. Lines are the V counter (225 is the first vblank line), dots the master-clock
+H position (0-1363). Findings (a) to (d) were measured in part on an emulator the oracle no
+longer runs, whose code git history keeps; the rest are lsnes's. Letters that left with that emulator are not reused.
 
 - **(a) Busy spans.** Movie frames 0-8499: 432 busy frames in 31 spans, at boot, the title, the intro
   and the Ceres load, NMIs landing in the APU upload loop (`$80:8092-$8103`) and decompression.
-  Seeded door lengths were invalid (stalled migration seeds). Forced-blank DMA bytes: open.
 - **(b) Busy frames per row.** 176 of 601 rows have busy frames, 2,231 in all; most on
   `options-menu-tour` (283), chain rows and `area-maridia`.
 - **(c) Line timing.** The HDMA object handler returns at line 241-249 on ordinary frames (median
   246-247). IRQ-handler register writes land in the last third of their line (H-blank from dot 1096),
   one write per register per IRQ. These set D7's beam-sync point and D11's dots.
 - **(d) Sound.** The driver answers a request in about half a frame (median about 8,500 SPC cycles),
-  at worst within one; upload bytes echo in about 21 cycles. Stalls on migration seeds are their
-  missing SPC state, not the driver.
+  at worst within one; upload bytes echo in about 21 cycles.
 - **(e) lsnes runs the any% movie** from power-on and from native seeds; the 27 rows that stalled
   on migration seeds all complete on native seeds. The old exit at 18068 was the callback crash (Pitfalls).
-- **(f) Cross-oracle, any% 0-4800.** No difference in the game's own state; every difference is
-  power-on SRAM, the cut's definition, sub-instruction NMI timing in the wait loop, or sound timing.
-- **(g) MesenCE as a third vote.** At 1342 Mesen agrees with LakeSnes: the "lag" was lsnes's cut at
-  line 241, removed by cutting at the RTI ((i)). The lasting lag at 8465 follows the SPC rate:
-  +40 (32040 Hz) lags, +41 stays in sync, and bsnes v085's 32040.5 lies between. Fix: 0002.
-- **(h) Fix 0002.** At bsnes v085's exact SPC rate LakeSnes follows any% to 17984, 2.1x as far.
 - **(i) lsnes cuts at the RTI** also when the NMI outlasts its frame, given the next pad in advance.
-  Records of such steps changed; older ladders and seeds were regenerated.
-- **(j) Ports in time order** (candidate 0003) don't change any% 0-18999. No fix.
-- **(k) The 17985 lag** is HDMA overhead LakeSnes charged on lines after the HUD channel terminated
-  (12-18 clocks a line), not the room load. Fix: 0004.
-- **(l) Fix 0004** moves LakeSnes's sync to 35199 without moving 0-395, 1342 or 8465.
-- **(m) 35175** is a 30-clock miss of the NMI request from HDMA-pause rounding on HUD lines 0-32; lines 33-224 match.
-- **(n) HDMA variants** (line overhead 18, request at dot 278, alignment rules, anomie's IRQ point):
-  none zeroes the HUD lines; the one that fixes 35175 moves the boot. No fix 0005.
+  Before, it cut such steps at line 241, which showed as a lag frame at 1342. Records of such
+  steps changed; older ladders and seeds were regenerated.
 - **(o) lsnes gives the picture, the CPU port log and the PPU registers** from Lua, without linking
   emulator code; it lacks the SPC side and the five PPU fields (Q4).
-- **(p) lsnes's HDMA pause** fits on 90 of 90 HUD lines as LakeSnes's lengths starting one CPU cycle
-  after the request. Not enough alone to zero 35175.
-- **(q) The 3 x 4 grid** of request point (1102, 1104, 1106) and alignment phase (0-6): no cell is 0;
-  the residual starts on line 0, the IRQ line. Next: fit the line-0 pause. No fix 0005.
 - **(r) lsnes's picture** is the right frame when taken in `on_frame`; PNG transport makes streams
-  cost 26%; equal as shown on every step checked.
+  cost 26%.
 - **(s) lsnes's APU log after a resume** was empty because the game uses the bank-`$82`/`$85` port
-  mirrors; hooking every bank fixed it. It differs from LakeSnes only in handshake poll counts.
-- **(t) lsnes's joypad reads** have no bank gap; the one any% difference (step 20213) is a LakeSnes
-  read outside the NMI. No change.
+  mirrors; hooking every bank fixed it.
+- **(t) lsnes's joypad reads** have no bank gap.
 
 ## Appendix B: emulator accuracy (ACCURACY)
 
@@ -552,14 +473,10 @@ counter (225 is the first vblank line), dots the master-clock H position (0-1363
   [forum measurements](https://forums.nesdev.org/viewtopic.php?t=24610)). Emulators pick about 32040;
   bsnes v085 32040.5. So there is no single correct lag after an upload on hardware: the movies
   define it as lsnes's.
-- **The emulators.** bsnes v085's compatibility core (lsnes) shares the accuracy core's CPU, SMP,
-  counters and DMA, and differs only in mid-line PPU writes and DSP sub-sample timing. LakeSnes runs
-  the SPC in whole opcodes, catching up at each port access, and starts NMI at dot 0 of line 225.
-  Mesen latches port writes per half SPC cycle. Sources:
-  [LakeSnes](https://github.com/angelo-wf/LakeSnes),
-  [Mesen2 `Spc.cpp`](https://github.com/SourMesen/Mesen2/blob/master/Core/SNES/Spc.cpp),
-  [bsnes v086 tree](https://github.com/Dgdiniz/bsnes_v086-source/blob/master/bsnes/snes/Makefile).
+- **The emulator.** bsnes v085's compatibility core (lsnes) shares the accuracy core's CPU, SMP,
+  counters and DMA, and differs only in mid-line PPU writes and DSP sub-sample timing
+  ([bsnes v086 tree](https://github.com/Dgdiniz/bsnes_v086-source/blob/master/bsnes/snes/Makefile)).
 - **No SM movie we use is console-verified** ([TASVideos verified list](https://tasvideos.org/Movies-Verified-SNES)).
-- **Trust per stream:** game content, either oracle up to a one-frame shift; the frame-exact lag
-  pattern and the CPU-SPC handshake, lsnes; picture within a line and sound sample timing, neither
-  yet. The engine models upload slowdown with the SPC clock as a parameter, 32040.5 Hz by default.
+- **Trust per stream:** game content and the frame-exact lag pattern and CPU-SPC handshake are
+  lsnes's; picture within a line and sound sample timing aren't trusted yet. The engine models
+  upload slowdown with the SPC clock as a parameter, 32040.5 Hz by default.

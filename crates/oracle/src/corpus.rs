@@ -3,7 +3,7 @@
 use crate::lock::{Row, Sha256, Start as LockStart};
 use crate::lsnes::{Lsnes, NativeSeed};
 use crate::record::{Cut, FrameRecord, NmiKind, Pad};
-use crate::{Oracle, OracleError, Start, Tiers};
+use crate::{OracleError, Start, Tiers};
 use std::path::Path;
 use std::time::Instant;
 
@@ -112,9 +112,7 @@ pub fn run_row_with(
     let start = sources
         .seed
         .as_ref()
-        .map_or(Start::PowerOn { wram_fill: 0x55 }, |seed| {
-            Start::State(seed.state.clone())
-        });
+        .map_or(Start::PowerOn, |seed| Start::State(seed.state.clone()));
     let mut oracle = match observing.peek {
         Some(peek) => Lsnes::open_measuring(rom, start, observing.watch, peek),
         None => Lsnes::open_watching(rom, start, observing.watch),

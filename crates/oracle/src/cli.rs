@@ -6,8 +6,6 @@
 //! `oracle corpus ROM LOCK BUNDLE [...]` runs the lock's rows from their pinned pads and native seeds.
 //! `oracle ladder-check ROM INPUTS DIR` checks that each rung of a movie's
 //!   ladder (`movie --ladder N DIR`), resumed, reproduces the next.
-//! `oracle cross ROM INPUTS [--frames A..B]` steps LakeSnes and lsnes with the
-//!   same pads from power-on and reports where their records differ.
 
 mod csv;
 mod movie_report;
@@ -15,8 +13,8 @@ mod requests;
 #[cfg(test)]
 mod tests;
 
-use crate::lakesnes::LakeSnes;
-use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
+use crate::lsnes::Lsnes;
+use crate::{FrameRecord, NmiKind, Start, Tiers};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -83,7 +81,7 @@ impl Cutting {
 /// frame; one saved state then serves them all. The save is requested before
 /// the step (`save_due`) and handled after it.
 fn save_after_step(
-    lsnes: &mut crate::lsnes::Lsnes,
+    lsnes: &mut Lsnes,
     lists: &[(Vec<RoomSeed>, PathBuf)],
     mut cutting: Option<&mut Cutting>,
     (step, frames): (u64, u64),
@@ -141,23 +139,18 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
         inputs,
         frames,
         seeds,
-        picture,
         streams,
         ranges,
         lag_log,
         watch,
         trace,
-        spc,
         positions_only,
-        profile,
-        backend,
         native,
         memories,
         start,
         cutting,
         from_ladder,
     } = requests::MovieRequest::parse(arguments)?;
-    let backend = backend.into_name();
     let rom =
         std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
     let pads = crate::inputs::read(&inputs).unwrap_or_else(|error| fail(error));
@@ -170,7 +163,7 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
     let lag_log = lag_log.map(|csv| read_lag_log(&csv));
     let mut lag_mismatches = 0;
     let (mut start, mut first) = match start {
-        requests::MovieStart::PowerOn => (Start::PowerOn { wram_fill: 0x55 }, 0),
+        requests::MovieStart::PowerOn => (Start::PowerOn, 0),
         requests::MovieStart::Saved { state, frame } => (
             Start::State(
                 std::fs::read(&state)
@@ -210,26 +203,17 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
             None => println!("no rung at or before step {target}: from power-on"),
         }
     }
-    let mut oracle =
-        crate::Backend::open(&backend, &rom, start).unwrap_or_else(|error| fail(error));
+    // A trace peeks the door transition's function pointer at each watched PC.
+    let mut oracle = match &trace {
+        Some((_, _, pcs)) => Lsnes::open_measuring(&rom, start, pcs, 0x099c),
+        None => Lsnes::open(&rom, start),
+    }
+    .unwrap_or_else(|error| fail(error));
     let mut pending_save: Option<PendingSave> = None;
-    oracle.set_tiers(Tiers {
-        picture,
-        apu_state: spc,
-        profile: profile.is_some(),
-        ..Tiers::default()
-    });
     if let Some(tiers) = streams {
-        let crate::Backend::Lsnes(lsnes) = &mut oracle else {
-            fail("--streams and --ppu need --oracle lsnes")
-        };
-        lsnes
+        oracle
             .record_streams(tiers)
             .unwrap_or_else(|error| fail(error));
-    }
-    if let Some((_, _, pcs)) = &trace {
-        // The door transition's function pointer and the step's beam marks.
-        oracle.set_watch(pcs, 0x099c);
     }
     let mut history: std::collections::VecDeque<Box<[u8]>> = std::collections::VecDeque::new();
     let mut next_seed = 0;
@@ -239,15 +223,13 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
     for (frame, &pad) in pads.iter().enumerate().take(frames).skip(first) {
         let step = u64::try_from(frame).unwrap_or(u64::MAX);
         let mut requested = None;
-        if let crate::Backend::Lsnes(lsnes) = &mut oracle {
-            // The record of a step a native seed or a rung follows always
-            // carries the memories: a rung's is checked against the run from
-            // the rung before, a seed's against its lsnes room capture.
-            let save = save_due(&native, cutting.as_ref(), (step, run));
-            lsnes.memories = memories || save;
-            if save {
-                requested = Some(lsnes.request_save().unwrap_or_else(|error| fail(error)));
-            }
+        // The record of a step a native seed or a rung follows always
+        // carries the memories: a rung's is checked against the run from
+        // the rung before, a seed's against its lsnes room capture.
+        let save = save_due(&native, cutting.as_ref(), (step, run));
+        oracle.memories = memories || save;
+        if save {
+            requested = Some(oracle.request_save().unwrap_or_else(|error| fail(error)));
         }
         if let Some(&next) = pads.get(frame + 1) {
             oracle.preview(next);
@@ -255,11 +237,9 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
         let record: &FrameRecord = oracle.step(pad).unwrap_or_else(|error| fail(error));
         let record = record.clone();
         let record = &record;
-        if let crate::Backend::Lsnes(lsnes) = &mut oracle
-            && (!native.is_empty() || cutting.is_some())
-        {
+        if !native.is_empty() || cutting.is_some() {
             save_after_step(
-                lsnes,
+                &mut oracle,
                 &native,
                 cutting.as_mut(),
                 (step, run),
@@ -281,31 +261,6 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
             if lag_mismatches <= 40 {
                 println!("{line}");
             }
-        }
-        if let Some((from, to)) = profile
-            && (from..=to).contains(&frame)
-            && let Some(banks) = &record.bank_instructions
-        {
-            let mut top: Vec<(u32, usize)> = banks
-                .iter()
-                .enumerate()
-                .map(|(bank, &count)| (count, bank))
-                .filter(|&(count, _)| count > 0)
-                .collect();
-            top.sort_unstable_by(|a, b| b.cmp(a));
-            let top: Vec<String> = top
-                .iter()
-                .take(5)
-                .map(|(count, bank)| format!("{bank:02x}:{count}"))
-                .collect();
-            println!(
-                "profile {frame}: {} cut {:?} wait {:?} joypad reads {} apu {}",
-                top.join(" "),
-                record.cut,
-                record.wait_entry,
-                record.joypad_reads,
-                record.apu_log.len()
-            );
         }
         if let Some((from, to, _)) = &trace
             && (*from..=*to).contains(&frame)
@@ -336,21 +291,6 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
             && frame.is_multiple_of(every)
         {
             let w = |address| word(&record.wram, address);
-            if let Some(spc) = &record.spc {
-                println!(
-                    "spc {frame}: pc {:04x} sp {:02x} a {:02x} x {:02x} y {:02x} psw {:02x} ports in {:02x?} out {:02x?} f1 {:02x} fa {:02x?}",
-                    spc.pc,
-                    spc.sp,
-                    spc.a,
-                    spc.x,
-                    spc.y,
-                    spc.psw,
-                    spc.cpu_to_apu,
-                    spc.apu_to_cpu,
-                    spc.ram[0xf1],
-                    &spc.ram[0xfa..0xfd]
-                );
-            }
             println!(
                 "watch {frame}: state {:04x} room {:04x} x {:04x} y {:04x} pose {:04x} hp {:04x} cut {:?} pad {:04x}",
                 w(0x0998),
@@ -377,12 +317,12 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
                 break;
             }
             next_seed += 1;
-            let Ok(capture) = crate::seed::Capture::read(directory, seed.index) else {
+            let Ok(capture) = crate::seed::capture_wram(directory, seed.index) else {
                 continue;
             };
             checked += 1;
             let (matched, report) =
-                movie_report::seed_comparison(seed, frame, &history, &capture.wram, ranges);
+                movie_report::seed_comparison(seed, frame, &history, &capture, ranges);
             synced += usize::from(matched);
             print!("{report}");
         }
@@ -410,7 +350,7 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
 /// differing from the plain run are reported. `tools/scenario_seeds.py
 /// native-args` gives a scenario's arguments.
 fn derive_seed(arguments: &[String]) {
-    use crate::lsnes::{Lsnes, NativeSeed};
+    use crate::lsnes::NativeSeed;
     let [rom, base, out, rest @ ..] = arguments else {
         fail("derive-seed ROM BASE.lss OUT.lss [--word OFFSET=VALUE]...")
     };
@@ -479,13 +419,9 @@ pub fn main(arguments: &[String]) -> i32 {
         }
         Some((command, rest)) if command == "trace" => trace(rest),
         Some((command, rest)) if command == "measure" => measure(rest),
-        Some((command, rest)) if command == "measure-movie" => measure_movie(rest),
         Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
         Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
         Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
-        Some((command, rest)) if command == "cross" => {
-            cross(rest).unwrap_or_else(|error| fail(error))
-        }
         Some((command, rest)) if command == "relock-compare" => {
             return crate::relock_check::compare_command(rest);
         }
@@ -585,8 +521,7 @@ fn check_rung(
         ));
     }
     let state = read(ladder.state_path(from))?;
-    let mut lsnes =
-        crate::lsnes::Lsnes::open(rom, Start::State(state)).map_err(|error| error.to_string())?;
+    let mut lsnes = Lsnes::open(rom, Start::State(state)).map_err(|error| error.to_string())?;
     let steps = usize::try_from(from)
         .ok()
         .zip(usize::try_from(to).ok())
@@ -750,7 +685,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
             || recording.is_some()
             || matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
         apu_log: compare || recording.is_some() || cache.is_some(),
-        ..Tiers::default()
     };
     let observing = crate::corpus::Observe {
         tiers,
@@ -920,7 +854,6 @@ fn trace(arguments: &[String]) {
     let tiers = Tiers {
         picture: false,
         apu_log: true,
-        ..Tiers::default()
     };
     let result = crate::corpus::run_row_with(
         &rom,
@@ -957,15 +890,6 @@ fn trace(arguments: &[String]) {
     }
 }
 
-/// The tiers and watched addresses the measurements need.
-fn measuring() -> Tiers {
-    Tiers {
-        picture: false,
-        write_log: true,
-        ..Tiers::default()
-    }
-}
-
 /// `measure ROM LOCK BUNDLE ID...`: the architecture lane's measurements over
 /// lock rows (from their lsnes seeds), as Markdown.
 fn measure(arguments: &[String]) {
@@ -986,8 +910,8 @@ fn measure(arguments: &[String]) {
             sources,
             &crate::corpus::Observe {
                 tiers: Tiers {
-                    write_log: false,
-                    ..measuring()
+                    picture: false,
+                    apu_log: true,
                 },
                 watch: &crate::measure::WATCHED,
                 peek: Some(crate::measure::PEEK),
@@ -999,127 +923,6 @@ fn measure(arguments: &[String]) {
         if let Err(error) = result {
             fail(format!("{id}: {error}"));
         }
-        print!(
-            "{}",
-            measurements.report(&rom, crate::measure::Source::Lsnes)
-        );
+        print!("{}", measurements.report(&rom));
     }
-}
-
-/// `measure-movie ROM INPUTS FRAMES`: the measurements over a movie's first
-/// FRAMES frames from power-on, as Markdown.
-fn measure_movie(arguments: &[String]) {
-    let [rom_path, inputs, frames] = arguments else {
-        fail("measure-movie ROM INPUTS FRAMES")
-    };
-    let rom = std::fs::read(rom_path).unwrap_or_else(|error| fail(format!("{rom_path}: {error}")));
-    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
-    let frames: usize = frames.parse().unwrap_or_else(|_| fail("FRAMES"));
-    let mut oracle = LakeSnes::open(&rom, Start::PowerOn { wram_fill: 0x55 })
-        .unwrap_or_else(|error| fail(error));
-    oracle.set_tiers(measuring());
-    oracle.set_watch(&crate::measure::WATCHED, crate::measure::PEEK);
-    let mut measurements = crate::measure::Measurements::default();
-    for &pad in pads.iter().take(frames) {
-        measurements.frame(oracle.step(pad).unwrap_or_else(|error| fail(error)));
-    }
-    println!("### {inputs}, frames 0-{} (from power-on)", frames - 1);
-    print!(
-        "{}",
-        measurements.report(&rom, crate::measure::Source::LakeSnes)
-    );
-}
-
-/// `cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]`: step
-/// LakeSnes (left) and lsnes (right) from power-on with the movie's pads
-/// through step B (0-based, inclusive), and print for each step from A whether
-/// their records are equal or which parts differ (`crate::cross`), then the
-/// first differing step of each part. `--ranges` lists the differing address
-/// ranges of each memory at its first differing step, `--ranges-at` at every
-/// differing step in its window. `--right-from STATE STEP` resumes lsnes from
-/// its saved state (a ladder rung) at STEP, while LakeSnes runs from power-on
-/// through the steps before it uncompared.
-fn cross(arguments: &[String]) -> Result<(), requests::RequestError> {
-    let requests::CrossRequest {
-        rom,
-        inputs,
-        range,
-        first_ranges,
-        streams,
-        ranges_at,
-        right_start,
-    } = requests::CrossRequest::parse(arguments)?;
-    let rom =
-        std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
-    let pads = crate::inputs::read(&inputs).unwrap_or_else(|error| fail(error));
-    let last = u64::try_from(pads.len().saturating_sub(1)).unwrap_or(u64::MAX);
-    let clamp = |range: std::ops::RangeInclusive<u64>| *range.start()..=(*range.end()).min(last);
-    let range = range.map_or(0..=last, clamp);
-    let ranges_at = ranges_at.map(clamp);
-    let (right_start, resume) = match right_start {
-        requests::CrossStart::PowerOn => (Start::PowerOn { wram_fill: 0x55 }, 0),
-        requests::CrossStart::Saved { state, step } => (
-            Start::State(
-                std::fs::read(&state)
-                    .unwrap_or_else(|error| fail(format!("{}: {error}", state.display()))),
-            ),
-            step,
-        ),
-    };
-    let start = Start::PowerOn { wram_fill: 0x55 };
-    let mut left =
-        crate::Backend::open("lakesnes", &rom, start.clone()).unwrap_or_else(|error| fail(error));
-    let tiers = Tiers {
-        picture: streams,
-        apu_log: streams,
-        ..Tiers::default()
-    };
-    left.set_tiers(tiers);
-    let mut right =
-        crate::Backend::open("lsnes", &rom, right_start).unwrap_or_else(|error| fail(error));
-    if streams && let crate::Backend::Lsnes(lsnes) = &mut right {
-        lsnes
-            .record_streams(tiers)
-            .unwrap_or_else(|error| fail(error));
-    }
-    println!(
-        "cross: left {} {}, right {} {}, steps {}..={}",
-        left.identity().emulator,
-        left.identity().version,
-        right.identity().emulator,
-        right.identity().version,
-        range.start(),
-        range.end()
-    );
-    let mut report = crate::cross::Report::new(streams, first_ranges, ranges_at);
-    let started = Instant::now();
-    let mut lake_before: Option<crate::record::Picture> = None;
-    for (step, &pad) in (0..=*range.end()).zip(&pads) {
-        if step < resume {
-            let a = left.step(pad).unwrap_or_else(|error| fail(error));
-            lake_before.clone_from(&a.picture);
-            continue;
-        }
-        if let Some(&next) = usize::try_from(step + 1)
-            .ok()
-            .and_then(|next| pads.get(next))
-        {
-            right.preview(next);
-        }
-        let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
-        let b = right.step(pad).unwrap_or_else(|error| fail(error));
-        if streams
-            && range.contains(&step)
-            && let Some(line) = crate::cross::describe_streams(step, &a, b, lake_before.as_ref())
-        {
-            println!("{line}");
-        }
-        lake_before.clone_from(&a.picture);
-        if let Some(line) = report.step(step, range.contains(&step), &a, b) {
-            print!("{line}");
-        }
-    }
-    let compared = range.end().saturating_sub(*range.start()) + 1;
-    print!("{}", report.summary(compared, started.elapsed()));
-    Ok(())
 }
