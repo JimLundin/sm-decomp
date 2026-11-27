@@ -130,10 +130,6 @@ pub enum OwnedState {
     Appearance(Model<AppearancePin>),
     /// Complete inventory, events and remembered locations/maps/stations.
     Progress(Box<run_progress::Progress>),
-    /// Complete HUD grid, shown values, selection and explored mini-map.
-    Hud(Box<interface_hud::HudState>),
-    /// A complete Ceres door phase, wait and immutable placement.
-    Ceres(boss_ceres_ridley::CeresDoor),
     /// Complete retained passage and scene.
     Doors(Box<crate::production::PassageState>),
 }

@@ -8,9 +8,7 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
 use super::result::Outcome;
-use super::{
-    Sources, appearance, camera, ceres, data_failure, hud, production_failure, progress, weapons,
-};
+use super::{Sources, appearance, camera, data_failure, production_failure, progress, weapons};
 use crate::cache::Cache;
 use crate::lock::RowId;
 use game::production::{
@@ -152,7 +150,6 @@ impl Witness {
 
 #[derive(Clone)]
 enum Context {
-    Ceres(ceres::Slot),
     Weapons(Arc<weapons::Content>),
     DoorInputs(Arc<weapons::Content>, Arc<Tape<weapons::Input>>),
     ShotInputs(
@@ -164,7 +161,6 @@ enum Context {
         Arc<Tape<super::shot_drawing::ExpectedCut>>,
     ),
     Camera,
-    Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
     Progress,
     Connected {
@@ -186,11 +182,9 @@ pub(super) struct Expected {
 
 #[derive(Clone)]
 pub(super) enum Actual {
-    Ceres,
     Weapons,
     ShotDrawing,
     Camera,
-    Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
     Progress,
     Connected {
@@ -201,14 +195,13 @@ pub(super) enum Actual {
 impl PartialEq for Actual {
     fn eq(&self, other: &Self) -> bool {
         match self {
-            Self::Hud(content) => matches!(other, Self::Hud(next) if Arc::ptr_eq(content, next)),
             Self::Appearance(content) => {
                 matches!(other, Self::Appearance(next) if Arc::ptr_eq(content, next))
             }
             Self::Connected { content } => {
                 matches!(other, Self::Connected { content: next } if Arc::ptr_eq(content, next))
             }
-            Self::Ceres | Self::Weapons | Self::ShotDrawing | Self::Camera | Self::Progress => {
+            Self::Weapons | Self::ShotDrawing | Self::Camera | Self::Progress => {
                 std::mem::discriminant(self) == std::mem::discriminant(other)
             }
         }
@@ -353,19 +346,6 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
     }
 
     let (source, actual, seed, content, rules) = match case.responsibilities.as_slice() {
-        [Responsibility::Ceres] => {
-            let slot = ceres::Slot::try_from(
-                case.actor_slot
-                    .ok_or_else(|| data_failure(None, "Ceres indexed actor slot"))?,
-            )?;
-            (
-                Context::Ceres(slot),
-                Actual::Ceres,
-                ProductionSeed::Ceres(ceres::seed(wram, slot)?),
-                ProductionContent::Ceres,
-                ProductionRules::Ceres(boss_ceres_ridley::Rules::default()),
-            )
-        }
         [Responsibility::Weapons, Responsibility::Contact] => {
             return weapons_recipe(wram, sources, case, cache);
         }
@@ -378,20 +358,6 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
                 world_camera::Rules::REFERENCE,
             )),
         ),
-        [Responsibility::Hud] => {
-            let content = Arc::new(hud::Content::load(&sources.rom)?);
-            let seed = ProductionSeed::Hud(Box::new(hud::seed(wram, &content)?));
-            let pictures = ProductionContent::Hud(Box::new(content.pictures));
-            (
-                Context::Hud(content.clone()),
-                Actual::Hud(content),
-                seed,
-                pictures,
-                ProductionRules::Hud(game::production::HudRules::new(
-                    interface_hud::Rules::default(),
-                )),
-            )
-        }
         [Responsibility::Appearance] => {
             let content = Arc::new(appearance::Content::load(&sources.rom)?);
             let seed = ProductionSeed::Appearance(appearance::seed(wram, &content)?);
@@ -492,10 +458,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
                     )?),
                 ),
                 recipe @ (Context::ShotExpected(..)
-                | Context::Ceres(_)
                 | Context::Weapons(_)
                 | Context::Camera
-                | Context::Hud(_)
                 | Context::Appearance(_)
                 | Context::Progress
                 | Context::ConnectedObservations(_)) => recipe,
@@ -555,11 +519,6 @@ impl Inputs {
                     inputs: inputs.current(cut)?,
                 })
             }
-            Context::Ceres(slot) => {
-                ceres::validate_step(&prior.wram, &record(&self.cache, cut)?.wram, *slot)?;
-                let input = ceres::input(&prior.wram, *slot)?;
-                production.advance(AdvanceInput::Ceres(&input))
-            }
             Context::ShotInputs(content, tape) => {
                 return super::shot_drawing::InputCut::advance(
                     tape,
@@ -573,13 +532,6 @@ impl Inputs {
                 camera::validate_step(&prior.wram, &record(&self.cache, cut)?.wram)?;
                 let input = camera::input(&prior.wram, &camera::Content)?;
                 production.advance(AdvanceInput::Camera(&input.frame()))
-            }
-            Context::Hud(content) => {
-                let current = record(&self.cache, cut)?;
-                hud::validate_step(&prior.wram, &current.wram)?;
-                hud::validate_events(&current)?;
-                let input = hud::input(&prior.wram, &current.wram, content)?;
-                production.advance(AdvanceInput::Hud(input.input()))
             }
             Context::Appearance(content) => {
                 appearance::validate_step(&prior.wram, &record(&self.cache, cut)?.wram)?;
@@ -608,13 +560,11 @@ impl Expected {
                     "input reader cannot read expectations",
                 ));
             }
-            Context::Ceres(slot) => ceres::expected(&current.wram, *slot)?,
             Context::ShotExpected(content, tape) => {
                 super::shot_drawing::ExpectedCut::read(tape, &current.wram, content, cut)?
             }
             Context::Weapons(content) => weapons::expected(&current.wram, content)?,
             Context::Camera => camera::expected(&current.wram)?,
-            Context::Hud(content) => hud::expected(&current.wram, content)?,
             Context::Appearance(content) => appearance::expected(&current.wram, content)?,
             Context::Progress => progress::expected(&current.wram)?,
         };
@@ -646,9 +596,6 @@ impl Actual {
                 &content.appearance,
                 Some(outputs),
             )),
-            (Self::Ceres, OwnedState::Ceres(state), ProductionOutputs::Ceres(outputs)) => {
-                Ok(ceres::actual(state, outputs))
-            }
             (
                 Self::Weapons,
                 OwnedState::WeaponsContact(state),
@@ -661,9 +608,6 @@ impl Actual {
             ) => super::shot_drawing::actual(&state.0, outputs, cut),
             (Self::Camera, OwnedState::Camera(state), ProductionOutputs::Camera(outputs)) => {
                 Ok(camera::actual(&state.0, outputs))
-            }
-            (Self::Hud(content), OwnedState::Hud(state), ProductionOutputs::Hud(_)) => {
-                hud::initial(state, content)
             }
             (
                 Self::Appearance(content),
@@ -682,86 +626,16 @@ impl Actual {
             (Self::Connected { content, .. }, OwnedState::Connected(state)) => {
                 Ok(super::connected::actual(state, &content.appearance, None))
             }
-            (Self::Ceres, OwnedState::Ceres(state)) => Ok(ceres::initial(state)),
             (Self::Weapons, OwnedState::WeaponsContact(state)) => Ok(weapons::initial(&state.0)),
             (Self::ShotDrawing, OwnedState::WeaponsContact(state)) => {
                 Ok(super::shot_drawing::held(&state.0))
             }
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
-            (Self::Hud(content), OwnedState::Hud(state)) => hud::initial(state, content),
             (Self::Appearance(content), OwnedState::Appearance(state)) => {
                 Ok(appearance::actual(&state.0, content))
             }
             (Self::Progress, OwnedState::Progress(state)) => Ok(progress::actual(state)),
             _ => Err(data_failure(None, "recorded initial scope")),
         }
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::{Context, admit};
-    use crate::replay::{
-        Sources,
-        index::Index,
-        readers::{InputReader, record},
-    };
-    use game::production::{AdvanceInput, HudInput};
-
-    #[test]
-    #[ignore = "private pinned HUD capture and player ROM"]
-    fn recorded_unselected_powered_map_has_equivalent_drop_and_turn_on_inputs() {
-        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        let case = index
-            .cases
-            .iter()
-            .find(|case| case.id.0 == "hud/stationary-map-blink")
-            .unwrap();
-        let path = |name| std::env::var_os(name).unwrap().into();
-        let sources = Sources {
-            cache: path("SM_CACHE"),
-            rom: path("SM_ROM"),
-            lock: index.lock.clone(),
-            ..Sources::default()
-        };
-        let admitted = admit(case, &sources).unwrap();
-        let InputReader::Recorded(reader) = &admitted.inputs else {
-            panic!()
-        };
-        let Context::Hud(content) = &reader.recipe else {
-            panic!()
-        };
-        let first = case.first_cut().unwrap();
-        let prior = record(&reader.cache, first.checked_sub(1).unwrap()).unwrap();
-        let current = record(&reader.cache, first).unwrap();
-        let input = super::hud::input(&prior.wram, &current.wram, content).unwrap();
-        let baseline = input.frame();
-        let mut reference = admitted.production.clone();
-        let expected_outputs = reference
-            .advance(AdvanceInput::Hud(HudInput::Play(&baseline)))
-            .unwrap();
-        let drops = [
-            interface_hud::Dropped::Nothing,
-            interface_hud::Dropped::Selection,
-            interface_hud::Dropped::OneShotItemAlone,
-        ];
-        let mut compared = 0_usize;
-        for before in drops {
-            for after in drops {
-                for turned_on in [false, true] {
-                    let mut alternative = baseline;
-                    alternative.dropped_before_status_bar = before;
-                    alternative.dropped_after_status_bar = after;
-                    alternative.mini_map.turned_on = turned_on;
-                    let mut production = admitted.production.clone();
-                    let outputs = production
-                        .advance(AdvanceInput::Hud(HudInput::Play(&alternative)))
-                        .unwrap();
-                    assert!(production.state().eq(reference.state()));
-                    assert!(outputs.eq(&expected_outputs));
-                    compared = compared.saturating_add(1);
-                }
-            }
-        }
-        assert_eq!(compared, 18);
     }
 }

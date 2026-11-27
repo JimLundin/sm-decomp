@@ -60,11 +60,11 @@ case = "camera/unchanged-centre-follow"
 [[fault]]
 name = "hud-clock-offset"
 rule = "interface-hud/HerBlink"
-responsibility = "hud"
-file = "crates/game/src/production/entries.rs"
-before = '''.frame_of_play(rules, pictures, inputs)'''
-after = '''.frame_of_play(rules, pictures, &interface_hud::FrameInputs { frame: interface_hud::FrameCount(inputs.frame.0.wrapping_add(8)), ..*inputs })'''
-case = "hud/stationary-map-blink"
+responsibility = "played"
+file = "crates/game/src/production/played/hud.rs"
+before = '''                &hud_inputs(hud, self, samus, after_moves, health, content),'''
+after = '''                &interface_hud::FrameInputs { frame: interface_hud::FrameCount(hud_inputs(hud, self, samus, after_moves, health, content).frame.0.wrapping_add(8)), ..hud_inputs(hud, self, samus, after_moves, health, content) },'''
+case = "played chain-any-0001-DF45 0 41"
 
 [[fault]]
 name = "appearance-double-update"
@@ -89,12 +89,12 @@ case = "progress/planet-awake-recorded"
 [[fault]]
 name = "ceres-double-run"
 rule = "boss-ceres-ridley/Waiting"
-responsibility = "ceres"
-file = "crates/game/src/production/entries.rs"
-before = '''let output = state.run(inputs, rules);'''
-after = '''let first = state.run(inputs, rules);
-            let output = first.door.run(inputs, rules);'''
-case = "ceres/door-closes-after-departure"
+responsibility = "played"
+file = "crates/game/src/production/played/ceres_doors.rs"
+before = '''        let run = door.run(&inputs, rules);'''
+after = '''        let first = door.run(&inputs, rules);
+        let run = first.door.run(&inputs, rules);'''
+case = "played chain-any-0003-DFD7 0 41"
 
 [[fault]]
 name = "audio-music-turns-dropped"

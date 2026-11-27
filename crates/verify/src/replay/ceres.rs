@@ -2,9 +2,7 @@
 
 use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField};
-use boss_ceres_ridley::{
-    CeresDoor, DoorKind, Figure, FigureLook, Inputs, Phase, Quarter, Run, Stage, Wait,
-};
+use boss_ceres_ridley::{CeresDoor, DoorKind, Figure, FigureLook, Phase, Quarter, Wait};
 use core::num::Wrapping;
 use types::{Pair, Side};
 
@@ -167,50 +165,6 @@ pub(super) fn seed(wram: &[u8], slot: Slot) -> Result<CeresDoor, Outcome> {
     })
 }
 
-/// The observed framework supplied exactly one run without replacing this actor.
-pub(super) fn validate_step(prior: &[u8], current: &[u8], slot: Slot) -> Result<(), Outcome> {
-    if identity(prior, slot)? != identity(current, slot)? {
-        return Err(unsupported("Ceres actor replacement"));
-    }
-    for field in [source::ENEMY_X_POS, source::ENEMY_Y_POS] {
-        if word(prior, slot, field)? != word(current, slot, field)? {
-            return Err(unsupported("Ceres actor relocation"));
-        }
-    }
-    if word(prior, slot, source::ENEMY_FRAME_COUNTER)?.wrapping_add(1)
-        != word(current, slot, source::ENEMY_FRAME_COUNTER)?
-    {
-        return Err(unsupported("Ceres one-run framework schedule"));
-    }
-    Ok(())
-}
-
-pub(super) fn input(wram: &[u8], slot: Slot) -> Result<Inputs, Outcome> {
-    identity(wram, slot)?;
-    let read = |field: source::WramWord| {
-        field
-            .read(wram)
-            .map_err(|_| data_failure(None, "Ceres preceding-cut input"))
-    };
-    let stage = match read(source::CERES_STATUS)? {
-        0 => Stage::Calm,
-        1 => Stage::Getaway,
-        _ => return Err(unsupported("Ceres escape random and shake producers")),
-    };
-    Ok(Inputs {
-        her: Pair {
-            x: Wrapping(read(source::SAMUS_X_POS)?),
-            y: Wrapping(read(source::SAMUS_Y_POS)?),
-        },
-        stage,
-        // Neither input is read outside Escape, which admission rejects.
-        random: 0,
-        shake_frames_left: 0,
-        // He is beaten from the escape's start on, which admission rejects.
-        ridley_beaten: false,
-    })
-}
-
 const fn quarter(value: Quarter) -> i64 {
     match value {
         Quarter::First => 1,
@@ -339,14 +293,10 @@ pub(super) fn initial(state: &CeresDoor) -> Vec<Observation> {
     )
 }
 
-pub(super) fn actual(state: &CeresDoor, _outputs: &Run) -> Vec<Observation> {
-    initial(state)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{Slot, expected, input, validate_step};
-    use crate::replay::{compare::Observation, result::Outcome};
+    use super::{Slot, expected};
+    use crate::replay::compare::Observation;
 
     fn write(wram: &mut [u8], at: usize, value: u16) {
         wram[at..at.saturating_add(2)].copy_from_slice(&value.to_le_bytes());
@@ -377,31 +327,5 @@ mod tests {
         assert!(observed.contains(&Observation::quantity("ceres.figure", 11)));
         assert!(observed.contains(&Observation::quantity("ceres.shown", 1)));
         assert!(observed.contains(&Observation::quantity("ceres.solid", 1)));
-    }
-
-    #[test]
-    fn missing_schedule_and_active_escape_producers_are_unsupported() {
-        let prior = captured_door();
-        let slot = Slot::try_from(0).unwrap();
-        assert!(matches!(
-            validate_step(&prior, &prior, slot),
-            Err(Outcome::Unsupported { .. })
-        ));
-        let mut current = prior.clone();
-        write(&mut current, 0x0FA4, 1);
-        assert!(validate_step(&prior, &current, slot).is_ok());
-        write(&mut current, 0x093F, 2);
-        assert!(matches!(
-            input(&current, slot),
-            Err(Outcome::Unsupported { .. })
-        ));
-        assert!(matches!(
-            Slot::try_from(32),
-            Err(Outcome::DataFailure { .. })
-        ));
-        assert!(matches!(
-            expected(&[], slot),
-            Err(Outcome::DataFailure { .. })
-        ));
     }
 }

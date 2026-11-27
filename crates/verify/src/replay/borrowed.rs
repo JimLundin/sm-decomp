@@ -205,12 +205,12 @@ mod tests {
     use super::super::index::{Index, InputProvider};
 
     #[test]
-    fn hud_qualifications_can_change_without_supplying_a_frame() {
+    fn qualifications_can_change_without_supplying_an_input() {
         let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
         let mut case = index
             .cases
             .into_iter()
-            .find(|case| case.inputs == InputProvider::PrecedingCutHudInputs)
+            .find(|case| case.inputs == InputProvider::NativeSearchInputs)
             .unwrap();
         case.qualifications.clear();
         case.borrowed[0].claim.clear();

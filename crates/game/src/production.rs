@@ -43,8 +43,8 @@ pub mod world;
 pub use animation::{AppearanceContent, ClipFault, FigureClip, pulse_colours};
 use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
-pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
-pub use immutable::{BlockRules, CameraRules, HudRules};
+pub use entries::{BlocksInput, BlocksOutputs, PassageState};
+pub use immutable::{BlockRules, CameraRules};
 pub use movement::MovementInputs;
 use played::{departure, landing_site};
 
@@ -95,10 +95,6 @@ pub enum Scope {
     Appearance,
     /// Run inventory, events and remembered places.
     Progress,
-    /// Status bar, selection and mini-map.
-    Hud,
-    /// A Ceres door's complete run.
-    Ceres,
     /// Door passage and its carried scene.
     Doors,
 }
@@ -150,10 +146,6 @@ pub enum ProductionSeed {
     Appearance(samus_appearance::AppearanceState),
     /// Full run progress.
     Progress(Box<run_progress::Progress>),
-    /// Full HUD memory.
-    Hud(Box<interface_hud::HudState>),
-    /// Full Ceres door.
-    Ceres(boss_ceres_ridley::CeresDoor),
     /// Full passage and scene.
     Doors(Box<PassageState>),
 }
@@ -237,10 +229,6 @@ pub enum AdvanceInput<'a> {
     Appearance(&'a samus_appearance::Frame),
     /// Actual ordered world/inventory reports.
     Progress(&'a [run_progress::Report]),
-    /// One selected play/out-of-play/boss HUD entry.
-    Hud(HudInput<'a>),
-    /// Actual preceding position, stage, random word and shake memory.
-    Ceres(&'a boss_ceres_ridley::Inputs),
     /// Actual passage work, sound, music and doorway inputs.
     Doors(&'a world_doors::Inputs),
     /// A required producer has no admitted value at this boundary.
@@ -294,10 +282,6 @@ pub enum ProductionOutputs {
     Appearance(samus_appearance::FrameOutputs),
     /// Progress changed only its held complete State and emits no requests.
     Progress,
-    /// A frame of play's outputs; a step outside play or a boss blanking the map has none.
-    Hud(Option<interface_hud::FrameOutputs>),
-    /// Complete resulting door, sound and shake.
-    Ceres(boss_ceres_ridley::Run),
     /// Complete resulting scene and every passage report.
     Doors(Box<world_doors::Exports>),
 }
@@ -362,8 +346,6 @@ pub enum Unsupported {
     WeaponImpactSound,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
     HealthTailFrame,
-    /// A frame of play the HUD leaves out.
-    Hud(interface_hud::UnsupportedFrame),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.
@@ -470,8 +452,6 @@ impl Production {
             ProductionSeed::Camera(_) => Scope::Camera,
             ProductionSeed::Appearance(_) => Scope::Appearance,
             ProductionSeed::Progress(_) => Scope::Progress,
-            ProductionSeed::Hud(_) => Scope::Hud,
-            ProductionSeed::Ceres(_) => Scope::Ceres,
             ProductionSeed::Doors(_) => Scope::Doors,
         })?;
         let state = match (seed, &content, &rules) {
@@ -623,8 +603,6 @@ impl Production {
             OwnedState::Camera(_) => Scope::Camera,
             OwnedState::Appearance(_) => Scope::Appearance,
             OwnedState::Progress(_) => Scope::Progress,
-            OwnedState::Hud(_) => Scope::Hud,
-            OwnedState::Ceres(_) => Scope::Ceres,
             OwnedState::Doors(_) => Scope::Doors,
         }
     }
@@ -774,8 +752,6 @@ impl Production {
             | OwnedState::Camera(_)
             | OwnedState::Appearance(_)
             | OwnedState::Progress(_)
-            | OwnedState::Hud(_)
-            | OwnedState::Ceres(_)
             | OwnedState::Doors(_) => None,
         }
     }
@@ -810,8 +786,6 @@ impl Production {
             OwnedState::Intro(_)
             | OwnedState::Blocks(_)
             | OwnedState::Progress(_)
-            | OwnedState::Hud(_)
-            | OwnedState::Ceres(_)
             | OwnedState::Doors(_) => {
                 return Err(SaveFault::Unsupported(self.scope()));
             }
@@ -960,8 +934,6 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         | Scope::LandingSite
         | Scope::Blocks
         | Scope::Progress
-        | Scope::Hud
-        | Scope::Ceres
         | Scope::Doors => Ok(()),
     }
     .map_err(AdmissionFault::StatePin)
