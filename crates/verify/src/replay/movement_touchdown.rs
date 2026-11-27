@@ -22,7 +22,7 @@ use types::{Action, Buttons, Facing, Hitbox, Pair, Sprite, button};
 
 use super::{
     Sources, data_failure,
-    index::{Case, Start},
+    index::{Case, FixtureFile, Start},
     movement, production_failure,
     readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record},
     result::Outcome,
@@ -30,7 +30,7 @@ use super::{
 };
 use crate::{
     cache::Cache,
-    lock::{Lock, RowId, Sha256},
+    lock::{Lock, RowId},
     source,
 };
 
@@ -38,10 +38,6 @@ mod observations;
 #[cfg(test)]
 mod tests;
 pub(super) use observations::{actual, initial};
-
-const INPUT_PIN: &str = "a617e94d7667b092ff9229f07095dc1806ca954479f6c88c29c4e9c91454d098";
-const EXPECTED_PIN: &str = "8b1dfa663038a341182f48a84f6f46ee5ec7f32664bdd92f93b71874b77d9fb1";
-const FIXTURE: &str = "movement-touchdown-v1";
 
 pub(super) const WINDOWS: [(u64, u64, usize); 2] = [(56, 57, 4), (123, 124, 9)];
 
@@ -53,19 +49,11 @@ struct Fixture<T> {
 }
 
 impl<T> Fixture<T> {
-    fn load(path: &Path, name: &str, pin: &str) -> Result<Self, Outcome>
+    fn load(path: &Path, file: &FixtureFile) -> Result<Self, Outcome>
     where
         T: serde::de::DeserializeOwned,
     {
-        let data = std::fs::read(path.join(FIXTURE).join(name))
-            .map_err(|_| data_failure(None, "touchdown fixture file"))?;
-        if Sha256::of(&data).to_string() != pin {
-            return Err(data_failure(None, "touchdown fixture pin"));
-        }
-        let text =
-            std::str::from_utf8(&data).map_err(|_| data_failure(None, "touchdown fixture text"))?;
-        let fixture: Self =
-            toml::from_str(text).map_err(|_| data_failure(None, "touchdown fixture schema"))?;
+        let fixture: Self = file.read(path)?;
         if fixture.schema != 1
             || fixture.row != sender_offer::SOURCE_ROW
             || fixture.window.len() != WINDOWS.len()
@@ -185,6 +173,7 @@ impl Inputs {
 
 pub(super) struct Expected {
     path: PathBuf,
+    observations: FixtureFile,
     cut: u64,
     source_id: usize,
 }
@@ -194,12 +183,11 @@ impl Expected {
         if cut != self.cut {
             return Err(data_failure(Some(cut), "touchdown comparison schedule"));
         }
-        let captured =
-            Fixture::<observations::Captured>::load(&self.path, "expected.toml", EXPECTED_PIN)?
-                .window
-                .into_iter()
-                .find(|capture| capture.cut == cut)
-                .ok_or_else(|| data_failure(Some(cut), "touchdown comparison window"))?;
+        let captured = Fixture::<observations::Captured>::load(&self.path, &self.observations)?
+            .window
+            .into_iter()
+            .find(|capture| capture.cut == cut)
+            .ok_or_else(|| data_failure(Some(cut), "touchdown comparison window"))?;
         let fifo = sender_offer::contact_fifo(&self.path, self.source_id, cut)?;
         captured.compare_with(&fifo)
     }
@@ -225,7 +213,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "touchdown cache pins"))?;
     let before = record(&cache, start)?;
     let wram = &before.wram;
-    let observed = Fixture::<Borrowed>::load(&sources.native, "borrowed.toml", INPUT_PIN)?
+    let files = case.fixture_pair()?;
+    let observed = Fixture::<Borrowed>::load(&sources.native, &files.inputs)?
         .window
         .into_iter()
         .find(|window| window.cut == cut)
@@ -298,6 +287,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         inputs: InputReader::MovementTouchdown(Box::new(inputs)),
         expected: ExpectedReader::MovementTouchdown(Expected {
             path: sources.native.clone(),
+            observations: files.expected.clone(),
             cut,
             source_id,
         }),

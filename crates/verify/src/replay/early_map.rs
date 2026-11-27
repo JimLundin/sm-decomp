@@ -15,16 +15,17 @@ use game::production::{
 };
 use game::state::owned::OwnedState;
 
-use super::{Sources, connected, data_failure, movement, result::Outcome};
+use super::{
+    Sources, connected, data_failure,
+    index::{Case, FixtureFile},
+    movement,
+    result::Outcome,
+};
 use crate::lock::Sha256;
 use game::production::connected::inputs::{Activity, CameraInputs, Inputs};
 use serde::Deserialize;
 use std::{num::Wrapping, path::Path};
 use types::{Buttons, Hitbox, Item, Pair, Parity, Parts};
-
-const FIXTURE: &str = "movement-early-map-v1";
-const BORROWED: &str = "c86d71530c91d248cc3815a9f32489ee29e3b0b75d6906fa60aa44b912f8be76";
-const EXPECTED: &str = "d1d661d7948bd20c66beb1a1d7fc6cab4cb1741824387b2d55f8fb9b9db478f2";
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -107,25 +108,14 @@ struct SourceMap {
     mother_brain_falls: bool,
 }
 
-fn read<T: serde::de::DeserializeOwned>(root: &Path, name: &str, hash: &str) -> Result<T, Outcome> {
-    let member = std::fs::read(root.join(FIXTURE).join(name))
-        .map_err(|_| data_failure(None, "early Map fixture member"))?;
-    if Sha256::of(&member).to_string() != hash {
-        return Err(data_failure(None, "early Map fixture member pin"));
-    }
-    toml::from_str(
-        std::str::from_utf8(&member).map_err(|_| data_failure(None, "early Map fixture text"))?,
-    )
-    .map_err(|_| data_failure(None, "early Map fixture schema"))
-}
-
 fn inputs(
-    sources: &Sources,
+    native: &Path,
+    file: &FixtureFile,
     seed: &[u8],
     content: &connected::Content,
     [prior, first_pad, second_pad]: [u16; 3],
 ) -> Result<[Current; 2], Outcome> {
-    let source: Borrowed = read(&sources.native, "borrowed.toml", BORROWED)?;
+    let source: Borrowed = file.read(native)?;
     if source.format != "scoped-movement-map-input-v1"
         || source.repository != "15a04113d80468046849b65703c3ccde8f0cb6f6"
         || source.row != "chain-any-0003-DFD7"
@@ -312,7 +302,7 @@ fn index(cut: u64) -> Result<usize, Outcome> {
     }
 }
 
-pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
+pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let lock = std::fs::read_to_string(&sources.lock)
         .map_err(|_| data_failure(None, "early Map record lock"))?;
     let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "early Map lock schema"))?;
@@ -346,14 +336,15 @@ pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
             "early Map locked HUD control bindings",
         ));
     }
-    let current = inputs(sources, &origin.wram, &content, pads)?;
+    let files = case.fixture_pair()?;
+    let current = inputs(&sources.native, &files.inputs, &origin.wram, &content, pads)?;
     let neighbours = [
         HudNeighbours::read(&cache, FIRST_MAP)?,
         HudNeighbours::read(&cache, SECOND_MAP)?,
     ];
     let hud = hud::Content::load(&sources.rom)?;
     let seed_hud = hud::decode_state(&origin.wram)?;
-    let expected = Expectations::load(sources, &cache, &content)?;
+    let expected = Expectations::load(&sources.native, &files.expected, &cache, &content)?;
     let (appearance, playing) = appearance::running_owner(&origin.wram, &content.appearance)?;
     let seed = production::State::new(
         movement::seed(&origin.wram)?,
@@ -442,11 +433,12 @@ impl InputTape {
 
 impl Expectations {
     fn load(
-        sources: &Sources,
+        native: &Path,
+        file: &FixtureFile,
         cache: &Cache,
         content: &connected::Content,
     ) -> Result<Self, Outcome> {
-        let captured: Expected = read(&sources.native, "expected.toml", EXPECTED)?;
+        let captured: Expected = file.read(native)?;
         let [first, second] = &captured.opportunity;
         let Some(carried) = &first.carried else {
             return Err(data_failure(
@@ -663,6 +655,15 @@ mod tests {
             lock: std::env::var_os("SM_LOCK").unwrap().into(),
             ..Default::default()
         };
+        let index = super::super::index::Index::parse(include_str!(
+            "../../../../scenarios/replay/index.toml"
+        ))
+        .unwrap();
+        let case = index
+            .cases
+            .iter()
+            .find(|case| case.inputs == super::super::index::InputProvider::EarlyMapInputs)
+            .unwrap();
         let AdmittedCase {
             production,
             content,
@@ -670,7 +671,7 @@ mod tests {
             inputs,
             expected,
             ..
-        } = admit(&sources).expect("admit reviewed early Map");
+        } = admit(case, &sources).expect("admit reviewed early Map");
         let InputReader::EarlyMap(inputs) = inputs else {
             panic!("early Map input tape")
         };

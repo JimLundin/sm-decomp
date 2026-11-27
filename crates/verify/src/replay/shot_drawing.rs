@@ -1,7 +1,7 @@
 //! The scoped ordinary power insertion observes ordered contact and exact sprite bytes.
 
+use super::index::FixtureFile;
 use super::{compare::Observation, data_failure, result::Outcome, weapons};
-use crate::lock::Sha256;
 use enemy_interactions::{
     Centre, ContactBox, ContactConditions, DoorContact, ProtectionFrames, Radii,
 };
@@ -31,22 +31,15 @@ struct Tape<T> {
 
 fn load<T: serde::de::DeserializeOwned>(
     root: &Path,
-    name: &str,
-    sha: &str,
+    file: &FixtureFile,
     number: impl Fn(&T) -> u64,
 ) -> Result<Vec<T>, Outcome> {
-    let fault = || data_failure(None, "scoped shot fixture");
-    let bytes = std::fs::read(root.join("shot-contact-v1").join(name)).map_err(|_| fault())?;
-    if Sha256::try_from(sha).ok() != Some(Sha256::of(&bytes)) {
-        return Err(fault());
-    }
-    let tape: Tape<T> =
-        toml::from_str(std::str::from_utf8(&bytes).map_err(|_| fault())?).map_err(|_| fault())?;
+    let tape: Tape<T> = file.read(root)?;
     if tape.row != ROW
         || tape.admission_cut != START
         || !tape.cut.iter().map(number).eq(FIRST..=END)
     {
-        return Err(fault());
+        return Err(data_failure(None, "scoped shot fixture"));
     }
     Ok(tape.cut)
 }
@@ -123,13 +116,8 @@ impl Actor {
 }
 
 impl InputCut {
-    pub(super) fn load(root: &Path) -> Result<Vec<Self>, Outcome> {
-        load(
-            root,
-            "inputs.toml",
-            "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178",
-            |input: &Self| input.cut,
-        )
+    pub(super) fn load(root: &Path, file: &FixtureFile) -> Result<Vec<Self>, Outcome> {
+        load(root, file, |input: &Self| input.cut)
     }
 
     pub(super) fn advance(
@@ -235,13 +223,8 @@ fn entry(index: u16, low: [u8; 4], high_pair: u8) -> Vec<u8> {
 }
 
 impl ExpectedCut {
-    pub(super) fn load(root: &Path) -> Result<Vec<Self>, Outcome> {
-        load(
-            root,
-            "expected.toml",
-            "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1",
-            |record: &Self| record.number,
-        )
+    pub(super) fn load(root: &Path, file: &FixtureFile) -> Result<Vec<Self>, Outcome> {
+        load(root, file, |record: &Self| record.number)
     }
 
     pub(super) fn read(

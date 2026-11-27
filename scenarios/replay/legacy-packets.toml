@@ -14,3 +14,18 @@ video_frame = 9233
 source_start_index = 424
 source_completion_index = 4052
 projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "intervention-expected.toml" }
+
+[[fixture]]
+provider = "early-map-inputs"
+inputs = { path = "movement-early-map-v1/borrowed.toml", sha256 = "c86d71530c91d248cc3815a9f32489ee29e3b0b75d6906fa60aa44b912f8be76" }
+expected = { path = "movement-early-map-v1/expected.toml", sha256 = "d1d661d7948bd20c66beb1a1d7fc6cab4cb1741824387b2d55f8fb9b9db478f2" }
+
+[[fixture]]
+provider = "native-touchdown-inputs"
+inputs = { path = "movement-touchdown-v1/borrowed.toml", sha256 = "a617e94d7667b092ff9229f07095dc1806ca954479f6c88c29c4e9c91454d098" }
+expected = { path = "movement-touchdown-v1/expected.toml", sha256 = "8b1dfa663038a341182f48a84f6f46ee5ec7f32664bdd92f93b71874b77d9fb1" }
+
+[[fixture]]
+provider = "scoped-shot-drawing-inputs"
+inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
+expected = { path = "shot-contact-v1/expected.toml", sha256 = "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1" }
