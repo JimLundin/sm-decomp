@@ -207,7 +207,6 @@ class MovieCli(unittest.TestCase):
 
     def test_admitted_operations(self):
         cases = [([], movie.MovieOperation.IMPORT),
-                 (['--route', next(iter(movie.ROUTES))], movie.MovieOperation.ROUTE),
                  (['--lag-log', 'capture', '--frames', '1'], movie.MovieOperation.ALIGN),
                  (['--event-map-only', '--lag-log', 'capture', '--native', 'native',
                    '--native-source', 'source'], movie.MovieOperation.EVENT_MAP),
@@ -222,11 +221,10 @@ class MovieCli(unittest.TestCase):
                 self.assertIs(self.resolve(*flags), operation)
 
     def test_conflicts_rejected_before_work(self):
-        cases = [['--native', 'native'], ['--frames', '1'], ['--seed', 'seed'],
+        cases = [['--native', 'native'], ['--frames', '1'], ['--lag-log', 'capture'], ['--seed', 'seed'],
                  ['--native-phase-inputs', 'inputs'], ['--eof-capture', 'capture'],
                  ['--event-map-only', '--lag-log', 'capture', '--native', 'native',
-                  '--native-source', 'source', '--frames', '1'],
-                 ['--lag-log', 'capture', '--frames', '1', '--route', next(iter(movie.ROUTES))]]
+                  '--native-source', 'source', '--frames', '1']]
         for flags in cases:
             with self.subTest(flags=flags), contextlib.redirect_stderr(io.StringIO()):
                 with patch.object(movie, 'run_movie_operation') as work:
