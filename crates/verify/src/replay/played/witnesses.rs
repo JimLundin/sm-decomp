@@ -13,6 +13,7 @@ pub(in crate::replay) struct Witnesses {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     shaft: Option<shaft::Shaft>,
+    front_end: Option<FrontEnd>,
     samus_body: Vec<BodyTrace>,
     pub(super) ribs: Vec<RowWindow>,
 }
@@ -40,6 +41,36 @@ impl RowWindow {
 
     pub(super) const fn valid(&self) -> bool {
         !self.row.is_empty() && self.first <= self.last
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct FrontEnd {
+    opening_hud: RowWindow,
+    extra_finished: std::collections::BTreeMap<String, Vec<u64>>,
+}
+
+impl FrontEnd {
+    fn valid(&self) -> bool {
+        self.opening_hud.valid()
+            && self.extra_finished.iter().all(|(row, cuts)| {
+                !row.is_empty()
+                    && cuts.first().is_some_and(|cut| *cut > 0)
+                    && cuts.is_sorted_by(|first, second| first < second)
+            })
+    }
+
+    pub(super) fn extra_finished(&self, row: &str) -> &[u64] {
+        self.extra_finished.get(row).map_or(&[], Vec::as_slice)
+    }
+
+    pub(super) fn hud_publication(&self, (row, cut): (&str, u64)) -> Option<bool> {
+        (row == self.opening_hud.row).then_some(cut == self.opening_hud.first)
+    }
+
+    pub(super) fn hud_visible(&self, place: (&str, u64)) -> bool {
+        self.opening_hud.contains(place)
     }
 }
 
@@ -81,6 +112,7 @@ impl Witnesses {
             .as_ref()
             .is_none_or(super::room_video::RoomVideoWitnesses::valid)
             && self.shaft.as_ref().is_none_or(shaft::Shaft::valid)
+            && self.front_end.as_ref().is_none_or(FrontEnd::valid)
             && self.ribs.iter().all(RowWindow::valid)
             && self.samus_body.iter().enumerate().all(|(index, trace)| {
                 !trace.row.is_empty()
@@ -117,6 +149,17 @@ impl Witnesses {
                     .as_ref()
             })
             .ok_or_else(|| data_failure(None, "historical shaft witnesses"))
+    }
+
+    pub(super) fn front_end(&self) -> Result<&FrontEnd, Outcome> {
+        self.front_end
+            .as_ref()
+            .or_else(|| {
+                crate::replay::legacy_packets::played_witnesses()?
+                    .front_end
+                    .as_ref()
+            })
+            .ok_or_else(|| data_failure(None, "front end witnesses"))
     }
 
     pub(super) fn body(&self, row: &str, first: u64, last: u64) -> Option<&BodyTrace> {

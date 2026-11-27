@@ -232,6 +232,10 @@ cue = []
 window = { row = "chain-any-0011-DF45", first = 0, last = 43 }
 cue = [[3, 6], [9, 12], [16, 19], [22, 25], [28, 31], [34, 37], [39, 42]]
 
+[played_witnesses.front_end]
+opening_hud = { row = "any-ceres-arrival", first = 184, last = 222 }
+extra_finished = { any-power-on = [308] }
+
 # Body drawer writes attributed by the native trace, including the seed cut.
 [[played_witnesses.samus_body]]
 row = "chain-any-0006-E0B5"

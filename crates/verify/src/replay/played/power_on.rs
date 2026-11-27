@@ -58,11 +58,11 @@ const RULES: Rules = Rules::REFERENCE;
 pub(super) const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished, a vblank without NMI as not finished",
     "the boot's driver upload ended in the frame (CPU and audio timing until T1), from the interval's APU port writes: looked for at every cut, and an end outside the sound's load is bad data",
-    "lag from the title on: how many frames of work finished in the interval, from the cut kind, and 2 where the game's own count steps by 2 at a requested NMI (an NMI inside the interval that the record's cut list doesn't show); any other disagreement is bad data",
+    "lag from the title on: how many frames of work finished in the interval, from the cut kind and the indexed extra requested NMI inside an interval; the total interrupt count must cover the work",
     "the random number as the game settles (game-random's seeding of the boot), read from the record as the title begins",
     "audio from the intro on: whether a track waits and the sound count read by Samus at the start of her playable turn",
     "T1 timing of an interrupted fight frame, from its CPU program counter and calling stack",
-    "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
+    "the initial platform battery; its startup scan finishes when the boot hands over to the title",
     "flight and Ceres: NMI work boundaries, audio queue replies, room setup readiness and passage fetch timing",
     "lag: completed shaft background work during the interrupted contents fetch",
     "room passages: the random number at frame start; escape countdown initiation until the boss owns the start",
@@ -105,7 +105,7 @@ pub(super) fn play(
         return Ok(report(0, Stop::At(later)));
     }
     let mut previous = rows.record(0)?;
-    let mut run = Run::begin(rom, &previous)?;
+    let mut run = Run::begin(rom, &previous, rows, row)?;
     run.compare_carried_hardware(&previous, 0)?;
     let mut held = 0;
     let mut began = previous.clone();
@@ -155,6 +155,7 @@ pub(super) fn play(
 struct Run {
     state: front_end::State,
     cartridge: Cartridge,
+    extra_finished: Vec<u64>,
     format: Format,
     content: Content,
     scenes: Scenes,
@@ -242,7 +243,7 @@ fn compare_battery(
     record: &FrameRecord,
     cut: u64,
 ) -> Result<(), Outcome> {
-    if cut >= 271 && cartridge.image(format).as_slice() != record.sram.as_ref() {
+    if cartridge.image(format).as_slice() != record.sram.as_ref() {
         return Err(Outcome::Difference {
             cut,
             field: "save-files.battery".into(),
@@ -252,7 +253,12 @@ fn compare_battery(
 }
 
 impl Run {
-    fn begin(rom: &Path, power_on: &FrameRecord) -> Result<Self, Outcome> {
+    fn begin(
+        rom: &Path,
+        power_on: &FrameRecord,
+        rows: &Rows<'_>,
+        row: &str,
+    ) -> Result<Self, Outcome> {
         let scenes = Scenes::import(rom, Part::Opening)?;
         let battery = BatteryImage::new(power_on.sram.to_vec())
             .ok_or_else(|| data_failure(Some(0), "power-on platform battery"))?;
@@ -266,6 +272,7 @@ impl Run {
         Ok(Self {
             state: front_end::State::AT_POWER_ON,
             cartridge,
+            extra_finished: rows.witnesses()?.front_end()?.extra_finished(row).to_vec(),
             format,
             content: Content {
                 intro: scenes.content.clone(),
@@ -335,8 +342,13 @@ impl Run {
         let pressed = screens::pressed(self.controller);
         let work = match before {
             front_end::State::PowerOn(_) => u16::from(finished),
-            front_end::State::Screens(_) => screens::finished_frames(previous, record, finished)
-                .map_err(|outcome| super::at(cut, outcome))?,
+            front_end::State::Screens(_) => screens::finished_frames(
+                previous,
+                record,
+                finished,
+                self.extra_finished.binary_search(&cut).is_ok(),
+            )
+            .map_err(|outcome| super::at(cut, outcome))?,
         };
         let frame = FrameEnd {
             work: match work {
@@ -354,21 +366,6 @@ impl Run {
         };
         let answers =
             Borrowed::read(began, previous, record).map_err(|outcome| super::at(cut, outcome))?;
-        if cut == 271 {
-            let report =
-                self.cartridge
-                    .boot(&self.format)
-                    .map_err(|fault| Outcome::Unsupported {
-                        cut: Some(cut),
-                        dependency: format!("cartridge startup {fault:?}"),
-                    })?;
-            if record.wram.get(0x1f59).copied() != Some(report.demos.sets()) {
-                return Err(Outcome::Difference {
-                    cut,
-                    field: "save-files.demos".to_owned(),
-                });
-            }
-        }
         let was_started = self.cartridge.started().is_some();
         let sounds = self
             .state
@@ -387,6 +384,23 @@ impl Run {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        if matches!(before, front_end::State::PowerOn(_))
+            && matches!(self.state, front_end::State::Screens(_))
+        {
+            let report =
+                self.cartridge
+                    .boot(&self.format)
+                    .map_err(|fault| Outcome::Unsupported {
+                        cut: Some(cut),
+                        dependency: format!("cartridge startup {fault:?}"),
+                    })?;
+            if record.wram.get(0x1f59).copied() != Some(report.demos.sets()) {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: "save-files.demos".to_owned(),
+                });
+            }
+        }
         self.compare_carried_hardware(record, cut)?;
         if !was_started
             && let Some(run) = self.cartridge.started()
@@ -421,7 +435,10 @@ impl Run {
 
     fn compare_carried_hardware(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
         compare_oam_dma(self.state.oam_dma(), record, cut)?;
-        compare_battery(&self.cartridge, &self.format, record, cut)
+        if matches!(self.state, front_end::State::Screens(_)) {
+            compare_battery(&self.cartridge, &self.format, record, cut)?;
+        }
+        Ok(())
     }
 
     fn flight(
@@ -871,7 +888,7 @@ mod tests {
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
         let mut previous = rows.record(0).unwrap();
         let began = previous.clone();
-        let mut run = super::Run::begin(&sources.rom, &previous).unwrap();
+        let mut run = super::Run::begin(&sources.rom, &previous, &rows, "any-power-on").unwrap();
         run.compare_carried_hardware(&previous, 0).unwrap();
         for cut in 1..=18 {
             let current = rows.record(cut).unwrap();
@@ -932,7 +949,8 @@ mod tests {
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
         let mut previous = rows.record(0).unwrap();
         let mut began = previous.clone();
-        let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
+        let mut uninterrupted =
+            super::Run::begin(&sources.rom, &previous, &rows, "any-power-on").unwrap();
         let mut resumed = Vec::<super::Run>::new();
         let checkpoints = [569, 2219, 2320, 2325, 2350, 3517, 4323];
         for cut in 1..=LAST_HELD_CUT {
@@ -977,7 +995,8 @@ mod tests {
         let mut power_row = super::super::open_rows(sources, lock, "any-power-on").unwrap();
         let mut previous = power_row.record(0).unwrap();
         let mut began = previous.clone();
-        let mut run = super::Run::begin(&sources.rom, &previous).unwrap();
+        let mut run =
+            super::Run::begin(&sources.rom, &previous, &power_row, "any-power-on").unwrap();
 
         // Take the chosen file and its loan from their ordinary entry. The local window then
         // admits the preceding scene, actor, latch and frame counts once at the page-two cut.

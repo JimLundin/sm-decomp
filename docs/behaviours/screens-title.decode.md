@@ -115,7 +115,7 @@ it.
 | tunes asked for | the music queue `$7E:0619..0628` (entries) | `TitleMusic` FF03h, `OpeningTheme` 05h, `TitleTheme` 06h; FF03h and 05h are in the queue at 308, 06h is added at 314 |
 | finished frames (the frame owner's) | `$7E:05B6` | 16 bits |
 | random number (the frame owner's) | `$7E:05E5` | at finished cuts only (see the harness) |
-| frames of work finished in the interval (borrowed) | per cut: the record's cut kind, and the step of `$05B6` only where the two disagree | 1 at a `Requested` NMI, 0 at `Overrun` and `VblankWithoutNmi`. They disagree at 308 alone: the step is 2, because an NMI inside the interval, which the record's cut list doesn't show, found the set-up's frame done. The runner takes the step where it is 2 at a `Requested` NMI, and fails the run on any other disagreement (a step of 0 at a `Requested` NMI, a step above 0 at a lag cut, a step above 2), so the borrowed step cannot hide a miscount |
+| frames of work finished in the interval (borrowed) | cut kind and `played_witnesses.front_end.extra_finished` in the replay index | The requested NMI finishes one turn. At 308 an additional requested NMI inside the interval finished the setup turn. The total-interrupt count `$05B8` advances twice there. `$05B6` supplies the independent comparison of the finished count. |
 | buttons just pressed as each frame began (input) | the movie's pad, latched at the last finished cut | `$7E:008F` at the previous finished cut (0080h, A, at 271 and at 361). The second frame finished by 308 reads 271's latch again: the record holds no latch for the NMI inside the interval, and the skip has begun by then, so no press acts there |
 
 ## Harness contract
@@ -155,7 +155,7 @@ Not compared, and why (the root's ruling: the picture is not compared, as for th
   can be seen at the lit cuts 308 to 313 and 354 to 391.
 - The other display registers (`bgmode` 07h from 272, `tm` 10h at 272 and 11h from 315); left to
   the pictures' owners.
-- `$05B8` (every NMI counted) and the lag counts: no rule here reads them.
+- The total-interrupt count qualifies borrowed timing. The lag counters are outside this comparison.
 - SRAM: unchanged from 271 to 392; it is P2's settle result, first visible at 271, and P2's to
   compare.
 - The APU ports: the music upload is the audio side's; its length shows only as lag.

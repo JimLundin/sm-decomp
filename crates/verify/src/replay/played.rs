@@ -382,12 +382,6 @@ fn seed_controller(seed: &FrameRecord) -> Result<Controller, Outcome> {
     Ok(controller)
 }
 
-// Comparison starts at the first published cut and includes the first ordinary updates.
-const HUD_SETUP_CUT: u64 = 184;
-fn opening_witness((row, cut): (&str, u64)) -> bool {
-    row == "any-ceres-arrival" && (HUD_SETUP_CUT..=222).contains(&cut)
-}
-
 /// The interval a cut ends: the records at its ends, and where its cut lies, as the row that
 /// holds it and the cut there.
 #[derive(Clone, Copy)]
@@ -1006,12 +1000,13 @@ impl<'a> Run<'a> {
             cut,
             ..
         } = *frame;
-        if place.0 == "any-ceres-arrival" {
+        let front_end = self.witnesses.front_end()?;
+        if let Some(published) = front_end.hud_publication(place) {
             let publication = |value| Observation::quantity("hud.setup-publish", i64::from(value));
-            expected.insert(0, publication(place.1 == HUD_SETUP_CUT));
+            expected.insert(0, publication(published));
             actual.push(publication(outputs.opening_hud.is_some()));
         }
-        if opening_witness(place) {
+        if front_end.hud_visible(place) {
             expected.extend(hud::video_observations(&current.vram)?);
             actual.extend(hud::video_observations(
                 &self.state.room_video.video.memory.vram,
@@ -1117,7 +1112,7 @@ impl<'a> Run<'a> {
         actual.push(frame::random_observation(self.state.frame.random));
         expected.extend(frame::expected(&current.wram)?);
         actual.extend(frame::actual(self.state.frame));
-        if opening_witness(place) {
+        if self.witnesses.front_end()?.hud_visible(place) {
             expected.extend(hud::parts(super::hud::expected(&current.wram, &self.hud)?));
             expected.extend(hud::countdown(super::hud::countdown_origin(&current.wram)?));
             actual.extend(hud::parts(super::hud::initial(

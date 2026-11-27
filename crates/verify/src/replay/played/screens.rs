@@ -125,17 +125,20 @@ pub(super) fn pressed(controller: Controller) -> Pressed {
 }
 
 /// The frames of work finished in the interval ending at `current`: one at a requested NMI,
-/// none at a lag cut, and two where the game's own count steps by 2 at a requested NMI.
+/// none at a lag cut, and two when the trace records an extra requested NMI in the interval.
 pub(super) fn finished_frames(
     previous: &FrameRecord,
     current: &FrameRecord,
     finished: bool,
+    extra_finished: bool,
 ) -> Result<u16, Outcome> {
-    let step = word(&current.wram, source::NMI_FRAME_COUNTER_WORD)?
-        .wrapping_sub(word(&previous.wram, source::NMI_FRAME_COUNTER_WORD)?);
-    match (finished, step) {
-        (false, 0) => Ok(0),
-        (true, 1 | 2) => Ok(step),
+    let interrupts = word(&current.wram, source::NMI_FRAME_COUNTER_INCLUDING_LAG)?.wrapping_sub(
+        word(&previous.wram, source::NMI_FRAME_COUNTER_INCLUDING_LAG)?,
+    );
+    match (finished, interrupts, extra_finished) {
+        (false, 0..=2, false) => Ok(0),
+        (true, 1 | 2, false) => Ok(1),
+        (true, 2, true) => Ok(2),
         _ => Err(data_failure(None, "played frames finished in the interval")),
     }
 }

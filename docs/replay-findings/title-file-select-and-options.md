@@ -78,9 +78,10 @@ From cut 271 it compares the screen, the game state and the count of finished fr
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
 finished cut, because a sound can appear at a lag cut), the title's countdown, file select's
 and the options' cursors, and the options' block size and settings (Japanese text,
-weapon-reset, moonwalk). Borrowed, as the run's receipt lists: the frames of work finished in
-each interval (from the cut kind, and 2 wherever the game's count steps by 2 at a `Requested`
-cut), the random number as the game settles, and P2's save-memory answers.
+weapon-reset, moonwalk). The cut kind supplies the ordinary frame completion. The index records the additional
+completed turn inside interval 308, where the total interrupt count advances twice.
+The finished-frame counter supplies the expected observation. The run also borrows the
+settled random number and the save-memory answers.
 
 Planted faults: a title fast step of 3 differs at cut 308 in `front-end.screen`; a file
 select menu pace of 3 at cut 403 in `front-end.screen`; file select drawing a random number on a
