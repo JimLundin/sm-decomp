@@ -8,7 +8,7 @@ description = "Commands for indexed production replay, record caches and project
 
 [features]
 default = ["engine-cli"]
-engine-cli = ["dep:runtime", "dep:verify", "dep:serde", "dep:toml"]
+engine-cli = ["dep:runtime", "dep:verify", "dep:oracle_record", "dep:serde", "dep:toml"]
 
 [[bin]]
 name = "tools"
@@ -18,6 +18,7 @@ required-features = ["engine-cli"]
 [dependencies]
 runtime = { path = "../runtime", optional = true }
 verify = { path = "../verify", optional = true }
+oracle_record = { path = "../oracle_record", optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 toml = { workspace = true, optional = true }
 

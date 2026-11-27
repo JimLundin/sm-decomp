@@ -1,6 +1,9 @@
-//! Verify that a lean capture can be reused with its pinned inputs and requested watches.
+//! Verify that a cached row can be reused: its pinned inputs, its requested watches, and that
+//! it was recorded by the lsnes executable the oracle would run and by the lock's server.
 
 use std::path::Path;
+
+use oracle_record::lsnes::executable;
 
 use verify::cache::Cache;
 use verify::lock::{Lock, RowId, Sha256, Start};
@@ -62,6 +65,16 @@ pub fn run(args: &[String]) -> Result<String, String> {
     }
     let invalid = |error| format!("{id}: {error}");
     let cache = Cache::open(root, row).map_err(invalid)?;
+    let lsnes = executable();
+    let lsnes = std::fs::read(&lsnes)
+        .map(|bytes| Sha256::of(&bytes))
+        .map_err(|error| format!("{}: {error}", lsnes.display()))?;
+    if cache.recorder().lsnes != lsnes {
+        return Err(format!("{id}: recorded by another lsnes"));
+    }
+    if cache.recorder().server != lock.header.oracle.server {
+        return Err(format!("{id}: recorded by another server"));
+    }
     let mut captured = cache.watched().to_vec();
     if !requested.is_empty() {
         for address in requested.split(',') {

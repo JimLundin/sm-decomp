@@ -746,12 +746,7 @@ fn differs(expected: &[Observation], actual: &[Observation], cut: u64) -> Result
 fn upload_ended(log: &[ApuAccess]) -> bool {
     let writes: Vec<&ApuAccess> = log
         .iter()
-        .filter(|access| {
-            matches!(
-                access.kind,
-                ApuAccessKind::CpuWrite | ApuAccessKind::DmaWrite
-            )
-        })
+        .filter(|access| access.kind == ApuAccessKind::CpuWrite)
         .collect();
     writes.windows(2).any(|pair| {
         matches!(pair, [entry, size] if ENTRY_PORTS.contains(&entry.port)
@@ -1194,7 +1189,6 @@ mod tests {
             kind: ApuAccessKind::CpuWrite,
             port,
             value,
-            apu_cycle: 0,
         }
     }
 

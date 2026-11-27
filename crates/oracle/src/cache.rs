@@ -1,11 +1,12 @@
 //! The lockstep cache's writing side (docs/ORACLE.md, the record cache).
 //!
 //! `corpus --cache DIR` plays each row from its frame pads and writes every frame's record
-//! to `DIR/<row>/`: `lean.bin`, the records as a chain of memory changes
-//! (`oracle_record::lean`), and `lean.txt` under [`LEAN_HEAD`], the row's lock pins and one
-//! line per frame (`frame offset length cut`). The index is removed first and written last,
-//! so a row that failed part way has no index and a reader refuses it. ROM-derived: the
-//! cache stays in `$TEMP`.
+//! to `DIR/<row>/`. `lean.bin` holds the records as a chain of memory changes
+//! (`oracle_record::lean`). `lean.txt` starts with [`LEAN_HEAD`] and holds the row's lock
+//! pins, the SHA-256 of the lsnes executable and of the server script that ran it, and one
+//! `frame offset length cut` line per frame. The index is removed first and written last,
+//! so a row that failed part way has no index and a reader refuses it. The cache is
+//! ROM-derived and stays in `$TEMP`.
 //!
 //! A run that watched instruction addresses also writes `hits.txt`: a `# watched` line
 //! naming them, then one `frame pc line dot peek` line per hit (hex pc and peek). The hits
@@ -14,32 +15,39 @@
 //!
 //! `verify::cache` reads it.
 
-use crate::record::lean;
+use crate::lock::Sha256;
+use crate::record::lean::{self, LEAN_HEAD};
 use crate::record::{Cut, FrameRecord, NmiKind};
 use std::fmt::Write as _;
 use std::io::{BufWriter, Write as _};
 use std::path::{Path, PathBuf};
 
-/// The index's first line: the layout's name and version.
-pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 1";
-
-/// The lock pins a row's cache is valid for, as the lock writes them.
-#[derive(Clone, Debug, Default)]
+/// What a row's cache was recorded from: the lock row's pins and the oracle that ran it.
+#[derive(Clone, Debug)]
 pub struct Pins {
     /// SHA-256 of the native seed's state file.
-    pub seed_record: Option<String>,
+    pub seed_record: Option<Sha256>,
     /// SHA-256 of the native seed's WRAM edits.
-    pub seed_words: Option<String>,
+    pub seed_words: Option<Sha256>,
     /// SHA-256 of the row's frame pad file.
-    pub pads: String,
+    pub pads: Sha256,
+    /// SHA-256 of the lsnes executable that ran the row.
+    pub lsnes: Sha256,
+    /// SHA-256 of the server script it ran.
+    pub server: Sha256,
 }
 
-impl From<&crate::lock::Row> for Pins {
-    fn from(row: &crate::lock::Row) -> Self {
+impl Pins {
+    /// `row`'s pins, run by the lsnes executable whose SHA-256 is `lsnes` and this build's
+    /// server.
+    #[must_use]
+    pub fn of(row: &crate::lock::Row, lsnes: Sha256) -> Self {
         Self {
-            seed_record: row.seed_record.map(|sha| sha.to_string()),
-            seed_words: row.seed_words.map(|sha| sha.to_string()),
-            pads: row.pads.to_string(),
+            seed_record: row.seed_record,
+            seed_words: row.seed_words,
+            pads: row.pads,
+            lsnes,
+            server: crate::lsnes::server_sha256(),
         }
     }
 }
@@ -150,13 +158,15 @@ impl Writer {
     /// The file system's error.
     pub fn finish(mut self, id: &str, pins: &Pins) -> std::io::Result<u64> {
         self.records.flush()?;
-        let none = || "-".to_owned();
+        let shown = |pin: Option<Sha256>| pin.map_or_else(|| "-".to_owned(), |pin| pin.to_string());
         let text = format!(
-            "{LEAN_HEAD}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures no\n# frame offset length cut\n{}",
-            pins.seed_record.clone().unwrap_or_else(none),
-            pins.seed_words.clone().unwrap_or_else(none),
+            "{LEAN_HEAD}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\nlsnes {}\nserver {}\n# frame offset length cut\n{}",
+            shown(pins.seed_record),
+            shown(pins.seed_words),
             pins.pads,
             self.frames,
+            pins.lsnes,
+            pins.server,
             self.index,
         );
         let hits_path = self.directory.join("hits.txt");

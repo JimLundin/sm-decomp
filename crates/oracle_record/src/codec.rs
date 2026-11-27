@@ -5,15 +5,15 @@
 //! sequence is a length-prefixed list of its items; an option is a tag byte, 0 for `None`.
 
 use crate::{
-    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, MAX_LINES, Nmi, NmiKind,
-    Pad, Picture, PpuRegisters, RegisterWrite, SpcState, WriteSource,
+    ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, Nmi, NmiKind, Pad,
+    PpuRegisters,
 };
 use core::fmt;
 
 /// The bytes every encoded record starts with.
 pub const MAGIC: [u8; 4] = *b"SMFR";
 /// The encoding's version, after the magic.
-pub const VERSION: u8 = 1;
+pub const VERSION: u8 = 2;
 
 /// Why bytes are not an encoded record.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -95,32 +95,9 @@ pub fn encode(record: &FrameRecord, out: &mut Vec<u8>) {
         w.u8(match access.kind {
             ApuAccessKind::CpuWrite => 0,
             ApuAccessKind::CpuRead => 1,
-            ApuAccessKind::DmaWrite => 2,
-            ApuAccessKind::DmaRead => 3,
-            ApuAccessKind::SpcWrite => 4,
         });
         w.u8(access.port);
         w.u8(access.value);
-        w.u32(access.apu_cycle);
-    }
-    w.option(record.picture.as_ref(), Writer::picture);
-    w.option(record.spc.as_ref(), Writer::spc);
-    w.option(record.bank_instructions.as_deref(), |w, counts| {
-        w.len(counts.len());
-        counts.iter().for_each(|&count| w.u32(count));
-    });
-    w.len(record.writes.len());
-    for write in &record.writes {
-        w.beam(&write.beam);
-        w.u8(write.register);
-        w.u8(write.value);
-        w.u8(match write.source {
-            WriteSource::Main => 0,
-            WriteSource::Nmi => 1,
-            WriteSource::Irq => 2,
-            WriteSource::Dma => 3,
-            WriteSource::Hdma => 4,
-        });
     }
     w.len(record.hits.len());
     for hit in &record.hits {
@@ -128,7 +105,6 @@ pub fn encode(record: &FrameRecord, out: &mut Vec<u8>) {
         w.beam(&hit.beam);
         w.bytes(&hit.peek);
     }
-    w.u64(record.legacy_ppu_digest);
 }
 
 /// The record `bytes` encode, all of them.
@@ -186,9 +162,6 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
         let kind = match r.u8("apu kind")? {
             0 => ApuAccessKind::CpuWrite,
             1 => ApuAccessKind::CpuRead,
-            2 => ApuAccessKind::DmaWrite,
-            3 => ApuAccessKind::DmaRead,
-            4 => ApuAccessKind::SpcWrite,
             tag => {
                 return Err(CodecError::BadTag {
                     field: "apu kind",
@@ -200,37 +173,6 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
             kind,
             port: r.u8("apu port")?,
             value: r.u8("apu value")?,
-            apu_cycle: r.u32("apu cycle")?,
-        })
-    })?;
-    let picture = r.option("picture", Reader::picture)?;
-    let spc = r.option("spc", Reader::spc)?;
-    let bank_instructions = r.option("bank_instructions", |r| {
-        r.list("bank_instructions", |r| r.u32("bank_instructions"))
-            .map(Vec::into_boxed_slice)
-    })?;
-    let writes = r.list("writes", |r| {
-        let beam = r.beam()?;
-        let register = r.u8("write register")?;
-        let value = r.u8("write value")?;
-        let source = match r.u8("write source")? {
-            0 => WriteSource::Main,
-            1 => WriteSource::Nmi,
-            2 => WriteSource::Irq,
-            3 => WriteSource::Dma,
-            4 => WriteSource::Hdma,
-            tag => {
-                return Err(CodecError::BadTag {
-                    field: "write source",
-                    tag,
-                });
-            }
-        };
-        Ok(RegisterWrite {
-            beam,
-            register,
-            value,
-            source,
         })
     })?;
     let hits = r.list("hits", |r| {
@@ -240,7 +182,6 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
             peek: r.array("hit peek")?,
         })
     })?;
-    let legacy_ppu_digest = r.u64("legacy_ppu_digest")?;
     if !r.rest.is_empty() {
         return Err(CodecError::Trailing(r.rest.len()));
     }
@@ -260,12 +201,7 @@ pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
         sram,
         ppu,
         apu_log,
-        picture,
-        spc,
-        bank_instructions,
-        writes,
         hits,
-        legacy_ppu_digest,
     })
 }
 
@@ -395,27 +331,6 @@ impl Writer<'_> {
         self.u16(vtime);
         self.bytes(&[hdmaen, memsel]);
         self.bytes(dma.as_flattened());
-    }
-
-    fn picture(&mut self, picture: &Picture) {
-        self.len(picture.lines);
-        self.seq16(&picture.dots);
-        self.bytes(&picture.brightness);
-        picture
-            .forced_blank
-            .iter()
-            .for_each(|&blank| self.bool(blank));
-    }
-
-    fn spc(&mut self, spc: &SpcState) {
-        self.bytes(&[spc.a, spc.x, spc.y, spc.sp]);
-        self.u16(spc.pc);
-        self.u8(spc.psw);
-        self.bool(spc.stopped);
-        self.bytes(&spc.cpu_to_apu);
-        self.bytes(&spc.apu_to_cpu);
-        self.seq8(&spc.ram);
-        self.bytes(&spc.dsp);
     }
 }
 
@@ -595,39 +510,6 @@ impl Reader<'_> {
             dma,
         })
     }
-
-    fn picture(&mut self) -> Result<Picture, CodecError> {
-        let lines = self.len("picture lines")?;
-        let dots = self.seq16("picture dots")?;
-        let brightness = self.array::<MAX_LINES>("picture brightness")?;
-        let mut forced_blank = [false; MAX_LINES];
-        for blank in &mut forced_blank {
-            *blank = self.bool("picture forced blank")?;
-        }
-        Ok(Picture {
-            lines,
-            dots,
-            brightness,
-            forced_blank,
-        })
-    }
-
-    fn spc(&mut self) -> Result<SpcState, CodecError> {
-        let [a, x, y, sp] = self.array("spc")?;
-        Ok(SpcState {
-            a,
-            x,
-            y,
-            sp,
-            pc: self.u16("spc pc")?,
-            psw: self.u8("spc psw")?,
-            stopped: self.bool("spc stopped")?,
-            cpu_to_apu: self.array("spc ports")?,
-            apu_to_cpu: self.array("spc ports")?,
-            ram: self.seq8("spc ram")?,
-            dsp: self.array("spc dsp")?,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -671,23 +553,12 @@ mod tests {
                 kind: ApuAccessKind::CpuWrite,
                 port: 1,
                 value: 0x2A,
-                apu_cycle: 8500,
-            }],
-            picture: Some(Picture::default()),
-            spc: None,
-            bank_instructions: Some(vec![4; 256].into_boxed_slice()),
-            writes: vec![RegisterWrite {
-                beam: Beam { v: 31, h: 900 },
-                register: 0x09,
-                value: 0x13,
-                source: WriteSource::Irq,
             }],
             hits: vec![Hit {
                 pc: 0x84_88F3,
                 beam: Beam { v: 1, h: 2 },
                 peek: [1, 2, 3, 4],
             }],
-            legacy_ppu_digest: 0xDEAD_BEEF,
         }
     }
 
@@ -710,10 +581,7 @@ mod tests {
             a.overscan, a.cpu, &a.wram, &a.vram, &a.cgram, &a.oam, &a.sram,
         ) == (
             b.overscan, b.cpu, &b.wram, &b.vram, &b.cgram, &b.oam, &b.sram,
-        ) && (a.ppu, &a.apu_log, &a.picture, &a.spc, &a.bank_instructions)
-            == (b.ppu, &b.apu_log, &b.picture, &b.spc, &b.bank_instructions)
-            && (&a.writes, &a.hits, a.legacy_ppu_digest)
-                == (&b.writes, &b.hits, b.legacy_ppu_digest)
+        ) && (a.ppu, &a.apu_log, &a.hits) == (b.ppu, &b.apu_log, &b.hits)
     }
 
     #[test]
