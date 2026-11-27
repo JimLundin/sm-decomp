@@ -65,6 +65,25 @@ pub(super) enum Actual {
     },
 }
 
+impl PartialEq for Actual {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            Self::Hud(content) => matches!(other, Self::Hud(next) if Arc::ptr_eq(content, next)),
+            Self::Appearance(content) => {
+                matches!(other, Self::Appearance(next) if Arc::ptr_eq(content, next))
+            }
+            Self::Connected { content } => {
+                matches!(other, Self::Connected { content: next } if Arc::ptr_eq(content, next))
+            }
+            Self::Ceres | Self::Weapons | Self::ShotDrawing | Self::Camera | Self::Progress => {
+                std::mem::discriminant(self) == std::mem::discriminant(other)
+            }
+        }
+    }
+}
+
+impl Eq for Actual {}
+
 struct Recipe {
     source: Context,
     actual: Actual,
