@@ -55,8 +55,7 @@ class RetentionTests(unittest.TestCase):
                    cache(6, prefix=PREFIXES[0] + "extra-"), cache(7, revision="invalid")]
         self.assertEqual([entry.id for entry in candidates(entries, PREFIXES[:1], CURRENT)], [1])
 
-    def test_a_job_that_reused_its_verdict_keeps_its_family(self):
-        # A job that reused a verdict built nothing, so its family has no current entry.
+    def test_a_job_that_did_not_run_keeps_its_family(self):
         entries = [cache(1, revision="b" * 40), cache(2, revision="c" * 40), cache(3),
                    cache(4, PREFIXES[1], "b" * 40), cache(5, PREFIXES[1], "c" * 40),
                    cache(6, PREFIXES[1], "d" * 40)]

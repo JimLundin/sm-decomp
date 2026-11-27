@@ -29,28 +29,15 @@ jobs:
   content:
     if: inputs.target == ''
     runs-on: ubuntu-24.04
-    permissions: &verdict_permissions
-      contents: read
-      actions: read
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - &verdict
-        name: Reuse a passing verdict for this job's inputs
-        id: verdict
-        env:
-          GH_TOKEN: ${{ github.token }}
-          JOB: ${{ github.job }}
-          TARGET: ${{ inputs.target }}
-          # Scheduled and dispatched runs always do the work, so their diagnostics print.
-          COLD: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-        run: bash tools/ci/verdict.sh step
-      # Main pushes restore recent compatible builds and publish this clean revision.
-      # Scheduled and manual-main producers stay cold. Other refs only restore.
+      # Main runs, scheduled or dispatched, build cold and publish this clean revision; a dispatched
+      # single target restores. Other refs only restore.
       # Cached paths exclude the ROM and records, which are read only at runtime.
       - &cache
         name: Restore the cargo registry and the build
-        if: steps.verdict.outputs.reused == '' && (inputs.target != '' || (github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')))
+        if: inputs.target != '' || github.ref != 'refs/heads/main'
         id: cargo_cache
         uses: actions/cache/restore@v4
         with:
@@ -69,7 +56,6 @@ jobs:
         run: git ls-files -z | xargs -0r touch -ch --
       - &rom
         name: Fetch the encrypted ROM
-        if: steps.verdict.outputs.reused == ''
         uses: actions/checkout@v4
         with:
           repository: JimLundin/ci-data
@@ -79,7 +65,6 @@ jobs:
       # Decrypt the ROM, check its SHA-1, then remove the ci-data checkout.
       - &decrypt
         name: Decrypt the ROM
-        if: steps.verdict.outputs.reused == ''
         env:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
         run: |
@@ -92,11 +77,10 @@ jobs:
           fi
           rm -rf .ci-data
       - name: Test the rebuild's content decoders and importers against the ROM
-        if: steps.verdict.outputs.reused == ''
         run: cargo test --locked -p data -p import --no-fail-fast
       - &cache_save
         name: Save the cargo registry and the build
-        if: steps.verdict.outputs.reused == '' && inputs.target == '' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: inputs.target == '' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -104,28 +88,17 @@ jobs:
             ~/.cargo/git
             target
           key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
-      # Last: it runs, and the run proves this job's verdict, only when every step above did the work and passed.
-      - &record
-        name: Record the ${{ steps.verdict.outputs.job }} verdict ${{ steps.verdict.outputs.fingerprint }}
-        if: steps.verdict.outputs.reused == '' && steps.verdict.outputs.fingerprint != ''
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ runner.temp }}/verdict
-          key: verdict-${{ steps.verdict.outputs.job }}-${{ steps.verdict.outputs.fingerprint }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   # One complete index and baseline hold all currently admitted replay claims.
   replay:
     runs-on: ubuntu-24.04
-    permissions: *verdict_permissions
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - *verdict
       - *cache
       - *refresh_sources
       - &fetch_cache
         name: Fetch the record cache and check its pin
-        if: steps.verdict.outputs.reused == ''
         run: |
           if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then
             echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
@@ -144,7 +117,6 @@ jobs:
       - *decrypt
       - &unpack_cache
         name: Decrypt and unpack the record cache
-        if: steps.verdict.outputs.reused == ''
         run: |
           # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
           SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
@@ -156,10 +128,9 @@ jobs:
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
       - &native_fixtures
         name: Fetch and validate the replay fixtures
-        if: steps.verdict.outputs.reused == ''
         run: bash tools/ci/fetch_replay_fixtures.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run one verification library test
-        if: steps.verdict.outputs.reused == '' && contains(inputs.target, '::')
+        if: contains(inputs.target, '::')
         env: &witness_env
           VERIFY_TEST: ${{ inputs.target }}
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
@@ -174,11 +145,11 @@ jobs:
           SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
         run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
       - name: Build the shared replay command
-        if: steps.verdict.outputs.reused == '' && inputs.target == ''
+        if: inputs.target == ''
         run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
       - name: Play the M0 room alone from its seed
         # Diagnostic: prints the cuts held and where the run stopped, by cut and field name only.
-        if: steps.verdict.outputs.reused == '' && inputs.target == 'played'
+        if: inputs.target == 'played'
         run: |
           for start in 0 6; do
             cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
@@ -186,11 +157,11 @@ jobs:
               --lock scenarios/locks/lsnes.toml
           done
       - name: Check the required witnesses and indexed replay against the reviewed baseline
-        if: steps.verdict.outputs.reused == '' && inputs.target == ''
+        if: inputs.target == ''
         env: *witness_env
         run: bash tools/ci/replay_parallel.sh "$RUNNER_TEMP/replay-receipt.toml"
       - name: Check one indexed replay case against the reviewed baseline
-        if: steps.verdict.outputs.reused == '' && inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
+        if: inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
         env:
           CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}
@@ -202,32 +173,26 @@ jobs:
         if: failure()
         run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
       - *cache_save
-      - *record
 
   faults:
     if: inputs.target == ''
     runs-on: ubuntu-24.04
-    permissions: *verdict_permissions
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - *verdict
       - *fetch_cache
       - *rom
       - *decrypt
       - *unpack_cache
       - *native_fixtures
       - name: Install the Rust parser for selectable replay faults
-        if: steps.verdict.outputs.reused == ''
         run: |
           python3 -m venv "$RUNNER_TEMP/fault-tools"
           "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: -r tools/fault-requirements.txt
       - name: Build one selectable replay binary and check every fault
-        if: steps.verdict.outputs.reused == ''
         env:
           CARGO_INCREMENTAL: "1"
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
             "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
-      - *record

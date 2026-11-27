@@ -81,8 +81,6 @@ jobs:
         run: cargo run --locked -q -p tools --bin tools -- report --check
       - name: Test the shared and parallel replay entrypoints
         run: bash tools/ci/replay_test.sh && bash tools/ci/replay_parallel_test.sh
-      - name: Test the verification jobs' input lists and fingerprints
-        run: bash tools/ci/verdict_test.sh
       - name: Test exact historical replay claim accounting
         run: python3 tools/check_replay_transition_test.py
       - name: Test the planted-fault runner

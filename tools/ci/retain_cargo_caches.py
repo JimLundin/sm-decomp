@@ -20,10 +20,7 @@ class Cache:
 
 
 def candidates(caches: list[Cache], prefixes: list[str], revision: str) -> list[Cache]:
-    """Plan all deletions before performing any; a family without this revision's entry keeps all.
-
-    A job that reused a passing verdict (tools/ci/verdict.sh) built and published nothing.
-    """
+    """Plan all deletions before performing any; a family without this revision's entry keeps all."""
     # Inventory pages can overlap as other runs access caches during pagination.
     unique: dict[int, Cache] = {}
     for cache in caches:

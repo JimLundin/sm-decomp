@@ -5,9 +5,9 @@ name: CI
 #   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
 # Full runs start Quality and verification independently. Manual runs can select one check.
-# Main pushes run both to refresh clean build caches; verify/** runs verification only.
-# Each verification job reruns only when a file it reads changed: it reuses the passing verdict of a
-# run that did its work on the same inputs (tools/ci/verdict.sh). Quality always runs.
+# Main pushes run Quality only, to refresh its clean build cache: tools/lane/land.py fast-forwards
+# main to a pull request head whose verification passed. verify/** runs verification only.
+# The nightly run does every job cold.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
   pull_request:
@@ -38,10 +38,9 @@ jobs:
     uses: ./.github/workflows/quality.yml
 
   verify:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/')
     permissions:
       contents: read
-      actions: read
     uses: ./.github/workflows/verify.yml
     with:
       target: ${{ inputs.target || '' }}
@@ -50,8 +49,8 @@ jobs:
       SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
 
   retain-caches:
-    # Only trusted main producers receive cache deletion permission, after all proof passes.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # Only main runs receive cache deletion permission, after all proof passes.
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.verify.result) }}
     needs: [quality, verify]
     runs-on: ubuntu-24.04
     permissions:
