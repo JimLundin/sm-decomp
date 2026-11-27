@@ -43,7 +43,7 @@ suite "$clean/adjusted_vectors_test.sh" "$clean"/{adjusted_vectors.sh,adjusted_v
 # The fixture changes shared types and requires the importer to name world_blocks when it breaks.
 suite "$clean/import_check_test.sh" "${scanner[@]}" "${source_checks[@]}" \
   "$clean"/{import.sh,export.sh,export_workspace.py,lib.sh,allowlist.txt} crates/clean/.clippy.toml clippy.toml \
-  crates/clean/{types,world_blocks,import_test} .gitattributes docs/cleanroom/DESIGN.md .agents/skills/implementer/SKILL.md \
+  crates/clean/{types,world_blocks,import_test} docs/cleanroom/DESIGN.md .agents/skills/implementer/SKILL.md \
   docs/behaviours/import-test.md docs/behaviours/import-test.decode.md scenarios/vectors/import-test.toml
 suite "$lane/self_tests_test.sh"
 
