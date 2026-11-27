@@ -431,7 +431,8 @@ shares one object store and every ref, so a sparse checkout is not enough. So:
   proves the box reads its export and nothing beside it.
 - **Scans run on everything that enters the export or the clean crates**, briefs included
   (`cleanroom scan`; `cleanroom export` and `run` scan the brief, and `cleanroom test` and the
-  import scan what the implementer changed):
+  import scan what the implementer changed, `cleanroom test` through the relay, since the
+  lexicon stays outside the box):
   - addresses in every form: `$XX:XXXX`, split bank/offset pairs, `RomAddress`/`Source::bank`, and
     a hashed set of the original's known WRAM and ROM addresses;
   - names, against a lexicon drawn from the bank logs, with a reviewed allowlist of player vocabulary;

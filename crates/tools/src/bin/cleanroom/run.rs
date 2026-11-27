@@ -1,10 +1,16 @@
 use std::fmt::Write as _;
 use std::fs::{self, File};
+use std::io::{Read as _, Write as _};
+use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
+use serde::{Deserialize, Serialize};
+
+use crate::lexicon::Lexicon;
 use crate::process::{Lane, output, repo};
+use crate::scan::Allow;
 use crate::{rules, scan, vocabulary};
 
 pub const IMAGE: &str = "sm-cleanroom-root:1";
@@ -22,12 +28,10 @@ const PROXIES: &[&str] = &[
     "rustfmt",
     "rustup",
 ];
-const TRUSTED: &[&str] = &[
-    "Cargo.toml",
-    "tools/cleanroom/allowed_deps.txt",
-    "tools/cleanroom/scan_allow.txt",
-    "tools/cleanroom/scan_lexicon",
-];
+const TRUSTED: &[&str] = &["Cargo.toml", "tools/cleanroom/allowed_deps.txt"];
+/// The relay's socket in the box. The name scan is served there, from outside, so the
+/// lexicon never enters the box.
+const SOCKET: &str = "/opt/cleanroom/api.sock";
 
 pub struct Sandbox {
     args: Vec<String>,
@@ -183,6 +187,7 @@ impl Drop for Relay {
 }
 
 fn relay(repo: &Path, lane: &Path) -> Result<(Relay, Vec<String>), String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let script = repo.join("tools/cleanroom/box_relay.py");
     let auth = std::env::var_os("CLEANROOM_AUTH").map_or_else(
         || {
@@ -210,6 +215,9 @@ fn relay(repo: &Path, lane: &Path) -> Result<(Relay, Vec<String>), String> {
         .arg(&socket)
         .arg(&auth)
         .arg(std::process::id().to_string())
+        .arg("--scan")
+        .arg(&exe)
+        .arg(repo)
         .stdin(Stdio::null())
         .stderr(log)
         .spawn()
@@ -263,8 +271,7 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
         &Path::new(TOOLS).join("box_relay.py"),
         false,
     )?;
-    let socket = format!("{TOOLS}/api.sock");
-    cell.mount(&lane.dir.join("api.sock"), Path::new(&socket), true)?;
+    cell.mount(&lane.dir.join("api.sock"), Path::new(SOCKET), true)?;
     let model = std::env::var("CLEANROOM_MODEL").unwrap_or_else(|_| "opus".to_owned());
     let transcript = lane.dir.join("transcript.jsonl");
     let container = format!("cleanroom-{name}-{}", std::process::id());
@@ -277,7 +284,7 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
                 &format!("{TOOLS}/box_relay.py"),
                 "box",
                 PORT,
-                &socket,
+                SOCKET,
                 SESSION_SECONDS,
                 "--",
                 &format!("{TOOLS}/claude"),
@@ -327,7 +334,7 @@ pub fn test() -> Result<(String, bool), String> {
     if !found.is_empty() {
         failed.push(format!("code rules ({})", found.len()));
     }
-    let added = new_names(trusted, &mut out)?;
+    let added = new_names(Path::new(SOCKET), &mut out)?;
     if added > 0 {
         failed.push(format!("names ({added})"));
     }
@@ -368,8 +375,67 @@ fn print_now(text: &str) {
     let _ = std::io::stdout().write_all(text.as_bytes());
 }
 
-fn new_names(trusted: &Path, out: &mut String) -> Result<usize, String> {
+#[derive(Serialize, Deserialize)]
+struct ScanFile {
+    path: String,
+    start: Option<String>,
+    head: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ScanRequest {
+    file: Vec<ScanFile>,
+}
+
+/// The host side of the box's name scan: per file of a request, its new hits' count and lines,
+/// a tab between each, and never the words that hit.
+pub fn names(request: &str, trusted: &Path) -> Result<(String, bool), String> {
     let (lex, allow) = vocabulary(trusted)?;
+    names_in(&lex, &allow, request)
+}
+
+fn names_in(lex: &Lexicon, allow: &Allow, request: &str) -> Result<(String, bool), String> {
+    let request: ScanRequest = toml::from_str(request).map_err(|e| e.to_string())?;
+    let mut out = String::new();
+    let mut total = 0usize;
+    for file in &request.file {
+        let found = scan::added(lex, allow, &file.path, file.start.as_deref(), &file.head);
+        let mut lines: Vec<usize> = found.iter().map(|f| f.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+        let lines: Vec<String> = lines.iter().map(usize::to_string).collect();
+        let _ = writeln!(out, "{}\t{}\t{}", file.path, found.len(), lines.join(","));
+        total = total.saturating_add(found.len());
+    }
+    Ok((out, total > 0))
+}
+
+/// Sends the files to the relay's scan and returns its answer.
+fn scan_remote(socket: &Path, files: Vec<ScanFile>) -> Result<String, String> {
+    let body = toml::to_string(&ScanRequest { file: files }).map_err(|e| e.to_string())?;
+    let mut stream = UnixStream::connect(socket)
+        .map_err(|e| format!("the name scan's socket {}: {e}", socket.display()))?;
+    write!(
+        stream,
+        "POST /cleanroom/scan HTTP/1.1\r\nHost: relay\r\nContent-Type: application/toml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    )
+    .map_err(|e| e.to_string())?;
+    let mut reply = String::new();
+    stream
+        .read_to_string(&mut reply)
+        .map_err(|e| e.to_string())?;
+    let (head, text) = reply.split_once("\r\n\r\n").unwrap_or((&reply, ""));
+    if !head.starts_with("HTTP/1.1 200") && !head.starts_with("HTTP/1.0 200") {
+        return Err(format!(
+            "the name scan refused: {}",
+            head.lines().next().unwrap_or_default()
+        ));
+    }
+    Ok(text.to_owned())
+}
+
+fn new_names(socket: &Path, out: &mut String) -> Result<usize, String> {
     let git = |args: &[&str]| output(Command::new("git").args(args));
     let root = git(&["rev-list", "--max-parents=0", "HEAD"])?;
     let root = root.lines().next().unwrap_or_default().to_owned();
@@ -396,13 +462,31 @@ fn new_names(trusted: &Path, out: &mut String) -> Result<usize, String> {
         .lines()
         .map(str::to_owned),
     );
-    let mut added = 0usize;
-    for path in &changed {
-        let head = fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+    if changed.is_empty() {
+        return Ok(0);
+    }
+    let mut files = Vec::new();
+    for path in changed {
+        let head = fs::read_to_string(&path).map_err(|e| format!("{path}: {e}"))?;
         let start = git(&["show", &format!("{root}:{path}")]).ok();
-        for f in scan::added(&lex, &allow, path, start.as_deref(), &head) {
-            let _ = writeln!(out, "{}:{}: {}: {}", f.path, f.line, f.class, f.detail);
-            added = added.saturating_add(1);
+        files.push(ScanFile { path, start, head });
+    }
+    let mut added = 0usize;
+    for line in scan_remote(socket, files)?.lines() {
+        let mut fields = line.split('\t');
+        let (Some(path), Some(hits), Some(lines)) = (fields.next(), fields.next(), fields.next())
+        else {
+            return Err(format!("the name scan answered {line}"));
+        };
+        let hits: usize = hits
+            .parse()
+            .map_err(|_| format!("the name scan answered {line}"))?;
+        if hits > 0 {
+            let _ = writeln!(
+                out,
+                "{path}: {hits} words the original's code uses, on lines {lines}"
+            );
+            added = added.saturating_add(hits);
         }
     }
     Ok(added)
@@ -411,9 +495,60 @@ fn new_names(trusted: &Path, out: &mut String) -> Result<usize, String> {
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::io::{Read as _, Write as _};
+    use std::os::unix::net::UnixListener;
     use std::path::Path;
 
-    use super::{Sandbox, image};
+    use super::{Sandbox, ScanFile, image, names_in, scan_remote};
+    use crate::lexicon::Lexicon;
+    use crate::scan::Allow;
+
+    #[test]
+    fn the_name_scan_answers_counts_and_lines_and_never_the_words() {
+        let mut lex = Lexicon::default();
+        lex.names.insert(crate::text::hash(&lex.salt, "u:quux"));
+        let request = "[[file]]\npath = \"a.rs\"\nhead = \"fn f() {}\\nlet quux = 1;\\n\"\n\n\
+                       [[file]]\npath = \"b.rs\"\nstart = \"quux\"\nhead = \"quux\"\n";
+        let (out, failed) = names_in(&lex, &Allow::parse(""), request).unwrap();
+        assert_eq!(out, "a.rs\t1\t2\nb.rs\t0\t\n");
+        assert!(failed);
+    }
+
+    #[test]
+    fn the_box_asks_the_relay_for_the_name_scan() {
+        let dir = std::env::temp_dir().join(format!("cleanroom-scan-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let socket = dir.join("api.sock");
+        let listener = UnixListener::bind(&socket).unwrap();
+        let relay = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = vec![0; 4096];
+            let n = stream.read(&mut request).unwrap();
+            stream
+                .write_all(b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\na.rs\t2\t3,7\n")
+                .unwrap();
+            String::from_utf8_lossy(&request[..n]).into_owned()
+        });
+        let answer = scan_remote(
+            &socket,
+            vec![ScanFile {
+                path: "a.rs".to_owned(),
+                start: None,
+                head: "x".to_owned(),
+            }],
+        );
+        let request = relay.join().unwrap();
+        fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(answer.unwrap(), "a.rs\t2\t3,7\n");
+        assert!(
+            request.starts_with("POST /cleanroom/scan HTTP/1.1\r\n"),
+            "{request}"
+        );
+        assert!(
+            request.ends_with("[[file]]\npath = \"a.rs\"\nhead = \"x\"\n"),
+            "{request}"
+        );
+    }
 
     #[test]
     fn the_box_reads_its_export_and_nothing_outside_it() {
@@ -445,6 +580,9 @@ mod tests {
             repo.join("README.md"),
             repo.join("docs/behaviours/samus-movement.decode.md"),
             Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml"),
+            Path::new("/opt/cleanroom/tools/cleanroom/scan_lexicon/salt").to_owned(),
+            Path::new("/opt/cleanroom/tools/cleanroom/scan_lexicon/names").to_owned(),
+            repo.join("tools/cleanroom/scan_lexicon/names"),
         ]
         .iter()
         .filter_map(|p| read(p).map(|_| p.display().to_string()))

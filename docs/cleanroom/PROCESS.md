@@ -116,7 +116,12 @@ Each step names its owner, what it waits for, and its done-condition.
    crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and `cleanroom test` passes: the code rules, the name scan on the changed files, fmt, clippy
-   and the tests.
+   and the tests. The lexicon stays outside the box: `cleanroom test` sends the changed files to
+   the relay, which runs the name scan on the host and answers each file's hit count and line
+   numbers, never the words. The relay answers 100 scans a session and logs each, with the lines
+   that hit, in the lane folder's `scan.log`. A session can still test words of its choosing
+   against the lexicon within those 100 calls, so the root reads `scan.log` after the session
+   for lines that try words rather than model code.
 7. **Import** (root): `cargo cleanroom import DOMAIN` on the lane branch. It refuses a history
    that doesn't start at the export's commit, and a commit that touches anything but the
    manifest and the Rust files under `src/` and `tests/` of the shared types and the model (an

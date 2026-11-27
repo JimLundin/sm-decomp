@@ -17,10 +17,15 @@ its own Host header and only the headers a client of the API sends (content type
 user agent, anthropic-*, x-stainless-*, x-claude-*, x-app), and anthropic-beta keeps only the
 values in BETAS.
 
-  serve SOCKET AUTH [PARENT]  outside: AUTH (a file, or - for stdin, so it touches no disk) is an
+  serve SOCKET AUTH [PARENT] [--scan SCANNER REPO]
+                              outside: AUTH (a file, or - for stdin, so it touches no disk) is an
                               object of Claude Code's top-level settings members (apiKeyHelper,
                               env); this process's ANTHROPIC_API_KEY counts too.
-                              It exits when PARENT (a PID) does.
+                              It exits when PARENT (a PID) does. With --scan it answers a POST of
+                              /cleanroom/scan itself, never forwarding it: `SCANNER names` runs in
+                              REPO on the request, and the box gets each file's hit count and line
+                              numbers alone, never the lexicon's words. It answers SCAN_CALLS
+                              requests a session and logs each in scan.log beside SOCKET.
   env AUTH PORT               prints the environment the session gets instead, a KEY=VALUE a
                               line: the box's base URL, a placeholder credential and the model
                               and CLAUDE_CODE_DISABLE_* lines; the other ANTHROPIC_* lines
@@ -48,6 +53,7 @@ import sys
 import tarfile
 import threading
 import time
+import tomllib
 import urllib.parse
 from http.server import BaseHTTPRequestHandler
 
@@ -78,6 +84,71 @@ BLOCKS = frozenset({"text", "image", "tool_use", "tool_result", "thinking", "red
 RESULT_BLOCKS = frozenset({"text", "image"})
 HELPER_SECONDS = 300
 MAX_BODY = 64 << 20
+SCAN_TARGET = "/cleanroom/scan"
+# Enough for an implementer's `cleanroom test` runs in one session, and few enough that the scan
+# is no fast way to try words against the lexicon.
+SCAN_CALLS = 100
+SCAN_BYTES = 4 << 20
+SCAN_PATH = re.compile(r"crates/clean/[A-Za-z0-9_./-]+")
+SCAN_ANSWER = re.compile(r"(\S+)\t([0-9]+)\t([0-9]+(?:,[0-9]+)*)?")
+
+
+def scan_files(body: bytes) -> list[dict] | None:
+    """The files of a scan request, or None when it is not one."""
+    try:
+        request = tomllib.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError):
+        return None
+    files = request.get("file")
+    if set(request) != {"file"} or not isinstance(files, list):
+        return None
+    for f in files:
+        if not isinstance(f, dict) or not {"path", "head"} <= set(f) <= {"path", "start", "head"} \
+                or not all(isinstance(v, str) for v in f.values()) \
+                or not SCAN_PATH.fullmatch(f["path"]) or ".." in f["path"].split("/"):
+            return None
+    return files
+
+
+class Scanner:
+    """The name scan the relay serves to the box, counted and logged."""
+
+    def __init__(self, exe: str, repo: str, log: str):
+        self.exe, self.repo, self.log = exe, repo, log
+        self.lock = threading.Lock()
+        self.calls = 0
+
+    def answer(self, body: bytes) -> tuple[int, str]:
+        with self.lock:
+            self.calls += 1
+            call = self.calls
+        files = scan_files(body)
+        if call > SCAN_CALLS:
+            self.note(f"call {call}: refused, over {SCAN_CALLS} a session")
+            return 429, f"the name scan answers {SCAN_CALLS} calls a session"
+        if files is None:
+            self.note(f"call {call}: refused, not a scan request")
+            return 400, "not a scan request"
+        done = subprocess.run([self.exe, "names"], cwd=self.repo, input=body, capture_output=True,
+                              timeout=300)
+        lines = done.stdout.decode("utf-8", "replace").splitlines()
+        paths = [f["path"] for f in files]
+        answers = [SCAN_ANSWER.fullmatch(line) for line in lines]
+        if done.returncode not in (0, 1) or not all(answers) or [a[1] for a in answers] != paths:
+            self.note(f"call {call}: the scanner failed: {done.stderr.decode('utf-8', 'replace')[:200]}")
+            return 500, "the name scan failed"
+        note = [f"call {call}: {len(files)} files, {len(body)} bytes"]
+        for f, a in zip(files, answers):
+            if a[2] != "0":
+                text = f["head"].splitlines()
+                hit = [f"    {n}: {text[int(n) - 1] if 0 < int(n) <= len(text) else ''}" for n in a[3].split(",")]
+                note.append(f"  {f['path']}: {a[2]} hits\n" + "\n".join(hit))
+        self.note("\n".join(note))
+        return 200, "".join(f"{line}\n" for line in lines)
+
+    def note(self, text: str) -> None:
+        with self.lock, open(self.log, "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {text}\n")
 
 
 def blocks_refusal(blocks: object, allowed: frozenset[str]) -> str | None:
@@ -221,8 +292,10 @@ def watch_parent(parent: int) -> None:
         time.sleep(1)
 
 
-def serve(sock_path: str, auth: str, parent: int | None) -> None:
+def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str] | None) -> None:
     env, helper = load_auth(auth)
+    scanner = Scanner(*scan, os.path.join(os.path.dirname(os.path.abspath(sock_path)), "scan.log")) \
+        if scan else None
     base = upstream(env)
     prefix = [s for s in base.path.split("/") if s]
     credential = Credential(env, helper)
@@ -240,6 +313,9 @@ def serve(sock_path: str, auth: str, parent: int | None) -> None:
 
         def relay(self) -> None:
             self.close_connection = True
+            if scanner and self.path == SCAN_TARGET:
+                self.scan()
+                return
             if self.command != "POST":
                 self.send_error(405, "not a method of the API")
                 return
@@ -296,6 +372,23 @@ def serve(sock_path: str, auth: str, parent: int | None) -> None:
                 pass
             finally:
                 conn.close()
+
+        def scan(self) -> None:
+            length = int(self.headers.get("content-length") or 0)
+            if self.command != "POST" or length < 0 or length > SCAN_BYTES or "transfer-encoding" in self.headers:
+                self.send_error(400, "a POST of a scan request of an explicit length only")
+                return
+            status, text = scanner.answer(self.rfile.read(length))
+            if status != 200:
+                self.send_error(status, text)
+                return
+            data = text.encode()
+            self.send_response(200)
+            self.send_header("content-type", "text/plain; charset=utf-8")
+            self.send_header("content-length", str(len(data)))
+            self.send_header("connection", "close")
+            self.end_headers()
+            self.wfile.write(data)
 
         do_GET = do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_TRACE = relay
         do_CONNECT = relay
@@ -399,8 +492,11 @@ def image(name: str) -> int:
 
 def main() -> int:
     args = sys.argv[1:]
+    scan = None
+    if len(args) >= 3 and args[-3] == "--scan":
+        scan, args = (args[-2], args[-1]), args[:-3]
     if len(args) in (3, 4) and args[0] == "serve":
-        serve(args[1], args[2], int(args[3]) if len(args) == 4 else None)
+        serve(args[1], args[2], int(args[3]) if len(args) == 4 else None, scan)
         return 0
     if len(args) == 3 and args[0] == "env":
         for key, value in sorted(box_env(args[1], int(args[2])).items()):

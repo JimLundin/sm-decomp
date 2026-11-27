@@ -172,7 +172,8 @@ class Relay(unittest.TestCase):
         self.sock = os.path.join(self.dir.name, "api.sock")
         auth = {"env": {"ANTHROPIC_BASE_URL": f"http://127.0.0.1:{self.api.server_port}/lms/proxy/anthropic",
                         "ANTHROPIC_AUTH_TOKEN": "SECRET-TOKEN", "ANTHROPIC_CUSTOM_HEADERS": "X-Gateway-Key: gw"}}
-        self.relay = subprocess.Popen([sys.executable, "-I", str(HERE / "box_relay.py"), "serve", self.sock, "-"],
+        self.relay = subprocess.Popen([sys.executable, "-I", str(HERE / "box_relay.py"), "serve", self.sock, "-",
+                                       *self.extra()],
                                       stdin=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.relay.stdin.write(json.dumps(auth))
         self.relay.stdin.close()
@@ -180,6 +181,9 @@ class Relay(unittest.TestCase):
             if os.path.exists(self.sock) and pathlib.Path(self.sock).is_socket():
                 break
             time.sleep(0.05)
+
+    def extra(self) -> list[str]:
+        return []
 
     def tearDown(self):
         self.relay.kill()
@@ -189,7 +193,7 @@ class Relay(unittest.TestCase):
         self.api.server_close()
         self.dir.cleanup()
 
-    def send(self, raw: bytes) -> int:
+    def exchange(self, raw: bytes) -> bytes:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(self.sock)
         s.sendall(raw)
@@ -197,7 +201,10 @@ class Relay(unittest.TestCase):
         while chunk := s.recv(65536):
             data += chunk
         s.close()
-        return int(data.split(b" ", 2)[1])
+        return data
+
+    def send(self, raw: bytes) -> int:
+        return int(self.exchange(raw).split(b" ", 2)[1])
 
     def test_a_request_goes_with_the_key_its_host_and_allowed_headers(self):
         status = self.send(b"POST /lms/proxy/anthropic/v1/messages?beta=true HTTP/1.1\r\nHost: evil.example\r\n"
@@ -233,6 +240,62 @@ class Relay(unittest.TestCase):
             with self.subTest(raw=raw[:40]):
                 self.assertIn(self.send(raw), (400, 403, 405))
         self.assertEqual(self.seen, [])
+
+
+# A scanner that answers as `cleanroom names` does, one line a file, and adds a word to its line
+# for a file whose path holds "leak".
+FAKE_SCANNER = """import sys, tomllib
+for f in tomllib.loads(sys.stdin.read())["file"]:
+    hits = f["head"].count("quux")
+    lines = ",".join(str(i + 1) for i, l in enumerate(f["head"].splitlines()) if "quux" in l)
+    print(f["path"] + "\\t" + str(hits) + "\\t" + lines + ("\\tquux" if "leak" in f["path"] else ""))
+sys.exit(1 if "quux" in sys.stdin.read() else 0)
+"""
+
+
+def scan_request(*files: tuple[str, str]) -> bytes:
+    body = "".join(f'[[file]]\npath = "{p}"\nhead = """{h}"""\n' for p, h in files).encode()
+    return (b"POST /cleanroom/scan HTTP/1.1\r\nContent-Length: %d\r\n\r\n" % len(body)) + body
+
+
+class Scan(Relay):
+    """The relay's own name scan endpoint, in front of a fake scanner."""
+
+    def extra(self) -> list[str]:
+        scanner = pathlib.Path(self.dir.name, "scanner")
+        scanner.write_text(f"#!{sys.executable} -I\n{FAKE_SCANNER}")
+        scanner.chmod(0o700)
+        return ["--scan", str(scanner), self.dir.name]
+
+    def test_the_box_gets_counts_and_lines_and_the_scan_is_logged_not_forwarded(self):
+        reply = self.exchange(scan_request(("crates/clean/a/src/lib.rs", "fn f() {}\nlet quux = 1;\n"),
+                                           ("crates/clean/a/src/b.rs", "fine\n")))
+        self.assertTrue(reply.startswith(b"HTTP/1.1 200"), reply)
+        self.assertTrue(reply.endswith(b"\r\n\r\ncrates/clean/a/src/lib.rs\t1\t2\ncrates/clean/a/src/b.rs\t0\t\n"), reply)
+        self.assertEqual(self.seen, [])
+        log = pathlib.Path(self.dir.name, "scan.log").read_text()
+        self.assertIn("call 1: 2 files", log)
+        self.assertIn("crates/clean/a/src/lib.rs: 1 hits\n    2: let quux = 1;", log)
+
+    def test_an_answer_that_holds_more_than_counts_and_lines_never_reaches_the_box(self):
+        reply = self.exchange(scan_request(("crates/clean/a/src/leak.rs", "quux\n")))
+        self.assertTrue(reply.startswith(b"HTTP/1.1 500"), reply)
+        self.assertNotIn(b"quux", reply)
+
+    def test_a_request_that_is_not_a_scan_is_refused(self):
+        for raw in [scan_request(("docs/behaviours/x.md", "x")), scan_request(("crates/clean/../../x", "x")),
+                    b"POST /cleanroom/scan HTTP/1.1\r\nContent-Length: 3\r\n\r\n{x}",
+                    b"GET /cleanroom/scan HTTP/1.1\r\n\r\n"]:
+            with self.subTest(raw=raw[-30:]):
+                self.assertIn(self.send(raw), (400,))
+        self.assertEqual(self.seen, [])
+
+    def test_a_session_gets_a_capped_number_of_scans(self):
+        request = scan_request(("crates/clean/a/src/lib.rs", "fine\n"))
+        statuses = [self.send(request) for _ in range(box_relay.SCAN_CALLS + 1)]
+        self.assertEqual(statuses[:-1], [200] * box_relay.SCAN_CALLS)
+        self.assertEqual(statuses[-1], 429)
+        self.assertIn(f"call {box_relay.SCAN_CALLS + 1}: refused", pathlib.Path(self.dir.name, "scan.log").read_text())
 
 
 class Parent(unittest.TestCase):
