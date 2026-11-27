@@ -423,7 +423,7 @@ struct Run<'a> {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum PictureScope {
     Room,
-    Fight,
+    Fight(u8),
     ShaftActors,
 }
 
@@ -984,9 +984,10 @@ impl<'a> Run<'a> {
                 &self.state.room_video.video.memory.vram,
             )?);
         }
-        if self.picture_scope == PictureScope::Fight {
+        if let PictureScope::Fight(cursor) = self.picture_scope {
             fight_picture::append_observations(
-                *frame,
+                frame.current,
+                cursor,
                 &self.state.room_video.video,
                 outputs.attached_ridley_door.as_ref(),
                 (expected, actual),

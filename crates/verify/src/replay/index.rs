@@ -1117,6 +1117,9 @@ pub struct Expectations {
     /// Packet and member used by the native movement-work comparison.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub projection: Option<NativeProjection>,
+    /// Native capture coordinates used by a played comparison.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) played: Option<PlayedWindow>,
     /// Compared semantic field identities or quantities.
     pub fields: Vec<ObservationId>,
     /// Compared output identities or occurrences.
@@ -1124,6 +1127,22 @@ pub struct Expectations {
     #[serde(default)]
     /// Outputs compare only at this cut, or every cut when absent.
     pub output_cut: Option<u64>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+pub(super) enum PlayedWindow {
+    FightPicture { appends: [DoorAppend; 2] },
+    RibsReveal { cut: u64 },
+    ShaftActors { first: u64, picture_fields: usize },
+    Flyby { first: u64, output_fields: usize },
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct DoorAppend {
+    pub cut: u64,
+    pub cursor: u8,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1327,6 +1346,9 @@ impl TryFrom<IndexDocument> for Index {
             }
         }
         for case in &mut doc.cases {
+            if case.expectations.played.is_none() {
+                case.expectations.played = super::legacy_packets::played(&case.id.0).cloned();
+            }
             if case.fixture.is_none() {
                 case.fixture = by_provider.get(&case.inputs).cloned();
             }
@@ -3006,6 +3028,23 @@ impl Case {
         }
         if (case.expectations.projection.is_some()
             && case.inputs != InputProvider::NativeSearchInputs)
+            || case
+                .expectations
+                .played
+                .as_ref()
+                .is_some_and(|window| !match window {
+                    PlayedWindow::FightPicture { .. } => {
+                        case.inputs == InputProvider::ScopedCeresFightPicture
+                    }
+                    PlayedWindow::RibsReveal { .. } => {
+                        case.inputs == InputProvider::PlayedCeresInputs
+                            && super::played::ridley_ribs::is_case(case)
+                    }
+                    PlayedWindow::ShaftActors { .. } => {
+                        case.inputs == InputProvider::CeresShaftActors
+                    }
+                    PlayedWindow::Flyby { .. } => case.inputs == InputProvider::ScopedCeresFlyby,
+                })
             || (case.connected_packet.is_some()
                 && case.inputs != InputProvider::ConnectedOrdinaryInputs)
             || case.id.0.is_empty()
@@ -3043,11 +3082,17 @@ impl Case {
             return Some(0);
         }
         if matches!(self.inputs, InputProvider::CeresShaftActors) {
-            return Some(super::played::indexed::shaft::FIRST_CUT);
+            return match self.expectations.played {
+                Some(PlayedWindow::ShaftActors { first, .. }) => Some(first),
+                _ => None,
+            };
         }
         match self.start {
-            Start::CacheCut { frame } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
-                super::played::flyby_scope::first_cut(frame)
+            Start::CacheCut { .. } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
+                match self.expectations.played {
+                    Some(PlayedWindow::Flyby { first, .. }) => Some(first),
+                    _ => None,
+                }
             }
             Start::CacheCut { frame }
             | Start::NativeRecord { frame, .. }

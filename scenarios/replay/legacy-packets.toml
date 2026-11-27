@@ -38,3 +38,26 @@ deny-smaller-limit = { group = "Contact", seed = ["Footstep", "Footstep", "Foots
 deny-disabled = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Disabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
 deny-demo = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Demo", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
 deny-explosion = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Explosion", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
+
+[played."ridley/ordinary-picture"]
+kind = "fight-picture"
+appends = [{ cut = 682, cursor = 59 }, { cut = 702, cursor = 58 }]
+
+[played."ridley/shaft-actors"]
+kind = "shaft-actors"
+first = 2856
+picture_fields = 208
+
+[played."ridley/flyby"]
+kind = "flyby"
+first = 1158
+output_fields = 4987
+
+[played."ridley/alternate-flyby"]
+kind = "flyby"
+first = 1158
+output_fields = 4987
+
+[played."ridley/ordinary-ribs"]
+kind = "ribs-reveal"
+cut = 577

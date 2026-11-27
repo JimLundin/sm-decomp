@@ -72,11 +72,7 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
     }
     if case.inputs == InputProvider::ScopedCeresFightPicture {
         return case.kind == CaseKind::Scoped
-            && case.row == fight_picture::ROW
-            && matches!(
-                (&case.start, case.end.cut_inclusive),
-                (Start::CacheCut { frame: 608 }, 702)
-            )
+            && fight_picture::valid_window(case)
             && case.responsibilities == [Responsibility::Ceres]
             && case.content == ContentProvider::PlayerRomImport
             && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -91,6 +87,9 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
             && case.responsibilities == [Responsibility::Ceres]
+            && matches!((&case.start, &case.expectations.played),
+                (Start::CacheCut { frame }, Some(crate::replay::index::PlayedWindow::Flyby { first, output_fields }))
+                    if frame < first && *first <= case.end.cut_inclusive && *output_fields > 0)
             && case.expectations.fields == FLYBY_STATE
             && case.expectations.outputs == FLYBY_OUTPUTS
     } else if case.inputs == InputProvider::ScopedCeresWarning {
@@ -181,14 +180,7 @@ pub(in crate::replay) fn run(
         return super::ridley_ribs::run(&mut run, &mut rows, seed, controller, case, result);
     }
     if case.expectations.fields == FLYBY_STATE {
-        return flyby(
-            &mut run,
-            &mut rows,
-            seed,
-            start,
-            case.end.cut_inclusive,
-            result,
-        );
+        return flyby(&mut run, &mut rows, seed, case, result);
     }
     let mut frozen = actual(
         &run.state,
@@ -254,29 +246,47 @@ fn flyby(
     run: &mut Run<'_>,
     rows: &mut super::rows::Rows<'_>,
     seed: oracle_record::FrameRecord,
-    start: u64,
-    end: u64,
+    case: &Case,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
+    let Some(crate::replay::index::PlayedWindow::Flyby {
+        first,
+        output_fields,
+    }) = case.expectations.played
+    else {
+        return Err(data_failure(None, "flyby comparison window"));
+    };
     let mut digest = Vec::new();
     let frozen = ridley::flyby::frozen();
-    run.flyby_scope(rows, seed, start, end, |cut, mut fields| {
-        fields.retain(|field| flyby_selection(&field.field).is_some());
-        let semantics: Vec<_> = fields
-            .iter()
-            .filter(|field| flyby_selection(&field.field) == Some(false))
-            .cloned()
-            .collect();
-        let observed = ExpectedCut {
-            semantic_count: semantics.len(),
-            output_count: fields.len().saturating_sub(semantics.len()),
-            semantics,
-            fields,
-            replies: 0,
-        };
-        runner::record_cut(result, &mut digest, &observed, &frozen, cut)
-    })?;
+    run.flyby_scope(
+        rows,
+        seed,
+        first,
+        case.end.cut_inclusive,
+        |cut, mut fields| {
+            fields.retain(|field| flyby_selection(&field.field).is_some());
+            let semantics: Vec<_> = fields
+                .iter()
+                .filter(|field| flyby_selection(&field.field) == Some(false))
+                .cloned()
+                .collect();
+            let observed = ExpectedCut {
+                semantic_count: semantics.len(),
+                output_count: fields.len().saturating_sub(semantics.len()),
+                semantics,
+                fields,
+                replies: 0,
+            };
+            runner::record_cut(result, &mut digest, &observed, &frozen, cut)
+        },
+    )?;
     result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    if result.counts.outputs != output_fields {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "flyby output witnesses",
+        ));
+    }
     Ok(())
 }
 
@@ -356,4 +366,66 @@ fn warning(
     }
     result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::replay::index::{DoorAppend, Index, PlayedWindow, Start};
+
+    #[test]
+    fn played_comparisons_require_distinct_witnesses_inside_the_declared_run() {
+        let index =
+            Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
+        let case = |id| {
+            index
+                .cases
+                .iter()
+                .find(|case| case.id.0 == id)
+                .unwrap()
+                .clone()
+        };
+        let mut picture = case("ridley/ordinary-picture");
+        picture.id.0 = "invented/fight".into();
+        picture.start = Start::CacheCut { frame: 9 };
+        picture.end.cut_inclusive = 14;
+        picture.expectations.played = Some(PlayedWindow::FightPicture {
+            appends: [
+                DoorAppend { cut: 10, cursor: 3 },
+                DoorAppend { cut: 14, cursor: 4 },
+            ],
+        });
+        assert!(picture.validate().is_ok());
+        picture.end.cut_inclusive = 13;
+        assert!(picture.validate().is_err());
+        picture.end.cut_inclusive = 14;
+        if let Some(PlayedWindow::FightPicture {
+            appends: [first, second],
+        }) = &mut picture.expectations.played
+        {
+            first.cut = second.cut;
+        }
+        assert!(picture.validate().is_err());
+
+        let mut flyby = case("ridley/flyby");
+        let mut shaft = case("ridley/shaft-actors");
+        std::mem::swap(
+            &mut flyby.expectations.played,
+            &mut shaft.expectations.played,
+        );
+        assert!(flyby.validate().is_err());
+        assert!(shaft.validate().is_err());
+        shaft.expectations.played = Some(PlayedWindow::ShaftActors {
+            first: 100,
+            picture_fields: 1,
+        });
+        assert!(shaft.validate().is_err());
+
+        let mut ribs = case("ridley/ordinary-ribs");
+        ribs.expectations.played = Some(PlayedWindow::RibsReveal {
+            cut: ribs.end.cut_inclusive,
+        });
+        assert!(ribs.validate().is_err());
+        ribs.expectations.played = None;
+        assert!(ribs.validate().is_err());
+    }
 }

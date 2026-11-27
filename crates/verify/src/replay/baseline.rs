@@ -412,7 +412,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         | Outcome::CheckpointFailure { .. } => return false,
     }
     if case.inputs == super::index::InputProvider::CeresShaftActors {
-        return super::played::indexed::shaft::valid_counts(counts);
+        return super::played::indexed::shaft::valid_counts(case, counts);
     }
     if let Some(valid) = expanded_counts(case, counts) {
         return valid;
@@ -476,11 +476,13 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
             && counts.pending_boundaries == 0;
     }
     if case.inputs == super::index::InputProvider::ScopedCeresFlyby {
-        // The first successor finishes the retreat. The last restores the room and has
-        // no active zoom or two body palette observations.
-        return counts.cuts == 113
-            && counts.fields == 678
-            && counts.outputs == 4987
+        let Some(super::index::PlayedWindow::Flyby { output_fields, .. }) =
+            case.expectations.played
+        else {
+            return false;
+        };
+        return counts.cuts.checked_mul(6) == Some(counts.fields)
+            && counts.outputs == output_fields
             && counts.publications == 0
             && counts.replies == 0
             && counts.pending_boundaries == 0;

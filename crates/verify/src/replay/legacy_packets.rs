@@ -16,6 +16,7 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    played: BTreeMap<String, super::index::PlayedWindow>,
     sender_control: BTreeMap<String, SenderOfferControl>,
     fixture: Vec<FixturePair>,
     connected: BTreeMap<String, ConnectedPacket>,
@@ -28,6 +29,10 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
     ))
     .ok()
 });
+
+pub(super) fn played(id: &str) -> Option<&'static super::index::PlayedWindow> {
+    PACKETS.as_ref()?.played.get(id)
+}
 
 pub(super) fn connected(id: &str) -> Option<&'static ConnectedPacket> {
     PACKETS.as_ref()?.connected.get(id)

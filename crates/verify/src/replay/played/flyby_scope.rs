@@ -7,42 +7,30 @@ use super::{
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
 use oracle_record::FrameRecord;
 
-const STOPPED_RETREAT: u64 = 1157;
-
-/// First comparison after ordinary play reaches the stopped retreat.
-pub(in crate::replay) const fn first_cut(start: u64) -> Option<u64> {
-    let ready = if start < STOPPED_RETREAT {
-        STOPPED_RETREAT
-    } else {
-        start
-    };
-    ready.checked_add(1)
-}
-
 impl Run<'_> {
     pub(super) fn flyby_scope(
         &mut self,
         rows: &mut Rows<'_>,
         mut previous: FrameRecord,
-        start: u64,
+        first: u64,
         end: u64,
         mut record: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(), Outcome> {
-        let first = first_cut(start).ok_or_else(|| data_failure(Some(start), "flyby origin"))?;
-        if start < STOPPED_RETREAT {
+        let start = previous.index;
+        let ready = first
+            .checked_sub(1)
+            .filter(|&cut| cut >= start)
+            .ok_or_else(|| data_failure(Some(start), "flyby origin"))?;
+        if start < ready {
             let controller = seed_controller(&previous)?;
-            let (held, stop) = self.through(
-                rows,
-                previous,
-                controller,
-                start.saturating_add(1)..=STOPPED_RETREAT,
-            )?;
+            let (held, stop) =
+                self.through(rows, previous, controller, start.saturating_add(1)..=ready)?;
             match stop {
-                Stop::End if held == STOPPED_RETREAT.saturating_sub(start) => {}
+                Stop::End if held == ready.saturating_sub(start) => {}
                 Stop::At(outcome) => return Err(outcome),
                 Stop::End => return Err(data_failure(Some(start), "stopped flyby origin")),
             }
-            previous = rows.record(STOPPED_RETREAT)?;
+            previous = rows.record(ready)?;
         }
         for cut in first..=end {
             let current = rows.record(cut)?;
@@ -112,15 +100,6 @@ mod tests {
     use types::ceres_getaway::GetawayState;
 
     #[test]
-    fn comparison_starts_after_the_prelude_or_after_a_flyby_seed() {
-        assert_eq!(first_cut(1155), Some(1158));
-        assert_eq!(first_cut(1156), Some(1158));
-        assert_eq!(first_cut(1157), Some(1158));
-        assert_eq!(first_cut(1170), Some(1171));
-        assert_eq!(first_cut(u64::MAX), None);
-    }
-
-    #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn flyby_restores_both_native_paths_through_the_warning_handoff() {
         let sources = super::super::tests::sources();
@@ -133,7 +112,7 @@ mod tests {
             let mut rows = super::super::open_rows(&sources, &lock, row).unwrap();
             let seed = rows.record(1156).unwrap();
             let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
-            run.flyby_scope(&mut rows, seed, 1156, 1270, |_, _| Ok(()))
+            run.flyby_scope(&mut rows, seed, 1158, 1270, |_, _| Ok(()))
                 .unwrap();
             let settled = run.state.clone();
             let settled_drawing = run.drawing.retained().unwrap();
@@ -146,11 +125,11 @@ mod tests {
                 let seed = rows.record(1156).unwrap();
                 let mut resumed = Run::admit(&seed, &content, &sources.rom, row).unwrap();
                 resumed
-                    .flyby_scope(&mut rows, seed, 1156, cut, |_, _| Ok(()))
+                    .flyby_scope(&mut rows, seed, 1158, cut, |_, _| Ok(()))
                     .unwrap();
                 resumed.restore_flyby(&record).unwrap();
                 resumed
-                    .flyby_scope(&mut rows, record, cut, 1270, |_, _| Ok(()))
+                    .flyby_scope(&mut rows, record, cut + 1, 1270, |_, _| Ok(()))
                     .unwrap();
                 assert!(
                     resumed.state == settled,

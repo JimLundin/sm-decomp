@@ -11,16 +11,15 @@ use crate::replay::{
 };
 use oracle_record::FrameRecord;
 
-pub(in crate::replay) const FIRST_CUT: u64 = 2856;
-const LAST_CUT: u64 = 3075;
+use crate::replay::index::PlayedWindow;
 const SEMANTICS: usize = 5;
 const EVENTS: usize = 5;
 
 pub(super) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
-        && case.row == "chain-any-0006-E0B5"
-        && case.start == Start::CacheCut { frame: 1690 }
-        && case.end.cut_inclusive == LAST_CUT
+        && matches!((&case.start, &case.expectations.played),
+            (Start::CacheCut { frame }, Some(PlayedWindow::ShaftActors { first, picture_fields }))
+            if frame < first && *first <= case.end.cut_inclusive && *picture_fields > 0)
         && case.responsibilities == [Responsibility::Ceres]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -34,12 +33,16 @@ pub(super) fn valid(case: &Case) -> bool {
         && case.checkpoints
 }
 
-pub(in crate::replay) const fn valid_counts(counts: &Counts) -> bool {
-    // One overlay strip, two OAM buffers, two pending flags, and platform low bytes
-    // on 39 hall cuts and 164 shaft cuts.
-    const PICTURES: usize = 208;
+pub(in crate::replay) const fn valid_counts(case: &Case, counts: &Counts) -> bool {
+    let Some(PlayedWindow::ShaftActors { picture_fields, .. }) = case.expectations.played else {
+        return false;
+    };
     counts.fields == counts.cuts.saturating_mul(SEMANTICS)
-        && counts.outputs == counts.cuts.saturating_mul(EVENTS).saturating_add(PICTURES)
+        && counts.outputs
+            == counts
+                .cuts
+                .saturating_mul(EVENTS)
+                .saturating_add(picture_fields)
         && counts.publications == 0
         && counts.replies == 0
         && counts.pending_boundaries == 1
@@ -75,6 +78,9 @@ pub(super) fn run(
     case: &Case,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
+    let first = case
+        .first_cut()
+        .ok_or_else(|| data_failure(None, "shaft actor comparison window"))?;
     // The admitted room has no shaft actors. Holding that state preserves its RNG and
     // cannot supply a shaft state or a new request.
     let frozen = [frame::random_observation(run.state.frame.random)];
@@ -88,7 +94,7 @@ pub(super) fn run(
         let place = (row.as_str(), local);
         let step =
             |run: &mut Run<'_>| run.step_with_outputs(controller, &previous, &current, cut, place);
-        if cut < FIRST_CUT {
+        if cut < first {
             step(run).map_err(|outcome| at(cut, outcome))?;
         } else {
             let pending = run.state.room_video.pending_platform().is_some();
@@ -142,6 +148,12 @@ pub(super) fn run(
         }
         controller = controller.read(current.pad.0, polled(&current));
         previous = current;
+    }
+    if !valid_counts(case, &result.counts) {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "shaft actor picture and pending witnesses",
+        ));
     }
     Ok(())
 }

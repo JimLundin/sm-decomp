@@ -5,10 +5,16 @@ use core::ops::Range;
 use game::state::video::{Oam, OamEntry, Video};
 use oracle_record::FrameRecord;
 
-use super::Frame;
+use crate::replay::index::{Case, PlayedWindow, Start};
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
 
-pub(super) const ROW: &str = "chain-any-0006-E0B5";
+pub(super) const fn valid_window(case: &Case) -> bool {
+    matches!((&case.start, &case.expectations.played),
+        (Start::CacheCut { frame }, Some(PlayedWindow::FightPicture { appends: [first, second] }))
+        if *frame < first.cut && first.cut < second.cut && second.cut == case.end.cut_inclusive
+            && first.cursor != second.cursor && first.cursor <= 120 && second.cursor <= 120)
+}
+
 pub(super) const DOOR_CURSOR: &str = "ridley.ordinary.door-cursor";
 pub(super) const PREPARED: &str = "ridley.ordinary.prepared-oam";
 pub(super) const PHYSICAL: &str = "ridley.ordinary.physical-oam";
@@ -53,29 +59,24 @@ pub(super) fn admit(video: &mut Video, seed: &FrameRecord) -> Result<(), Outcome
 }
 
 pub(super) fn append_observations(
-    frame: Frame<'_>,
+    record: &FrameRecord,
+    expected_cursor: u8,
     video: &Video,
     door: Option<&Range<usize>>,
     (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
 ) -> Result<(), Outcome> {
-    // The independent writer trace attributes these spans before or after the layers.
-    let first = match frame.place {
-        (ROW, 682) => 59,
-        (ROW, 702) => 58,
-        _ => return Ok(()),
-    };
-    let record = frame.current;
+    // The independent writer trace identifies the door span in the shared OAM buffer.
     let prepared = record
         .wram
         .get(SHADOW)
-        .ok_or_else(|| data_failure(Some(frame.cut), PREPARED))?;
+        .ok_or_else(|| data_failure(Some(record.index), PREPARED))?;
     let cursor = |start: i64| Observation::quantity(DOOR_CURSOR, start);
     let observed_cursor = door
         .filter(|span| span.len() == 8)
         .and_then(|span| i64::try_from(span.start).ok())
         .unwrap_or(-1);
     expected.extend([
-        cursor(first),
+        cursor(i64::from(expected_cursor)),
         image(PREPARED, prepared.to_vec()),
         image(PHYSICAL, record.oam.to_vec()),
     ]);
@@ -126,7 +127,9 @@ pub(super) fn run(
 ) -> Result<(), Outcome> {
     use crate::replay::{readers::ExpectedCut, runner};
 
-    run.picture_scope = super::PictureScope::Fight;
+    let Some(PlayedWindow::FightPicture { appends }) = &case.expectations.played else {
+        return Err(data_failure(None, "ordinary fight picture witnesses"));
+    };
     admit(&mut run.state.room_video.video, &previous)?;
     let mut digest = Vec::new();
     let mut continuation = None;
@@ -139,7 +142,11 @@ pub(super) fn run(
     for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
+        let append = appends.iter().find(|append| append.cut == cut);
         let frame = |run: &mut super::Run<'_>| {
+            run.picture_scope = append.map_or(super::PictureScope::Room, |point| {
+                super::PictureScope::Fight(point.cursor)
+            });
             run.step(controller, &previous, &current, cut, (&row, local))
         };
         let mut fields = frame(run)?;
@@ -149,10 +156,10 @@ pub(super) fn run(
                 return Err(Outcome::CheckpointFailure { cut });
             }
         }
-        if local == 682 {
+        if appends.first().is_some_and(|first| first.cut == cut) {
             continuation = Some(restored(run, cut)?);
         }
-        if matches!(local, 682 | 702) {
+        if append.is_some() {
             fields
                 .retain(|field| matches!(field.field.as_str(), DOOR_CURSOR | PREPARED | PHYSICAL));
             let semantics: Vec<_> = fields
