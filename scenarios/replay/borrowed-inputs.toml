@@ -38,7 +38,7 @@ phase = "observed-interval-execution"
 
 [connected-ordinary-opportunity]
 readers = ["connected-ordinary-inputs"]
-provider = { packet = "connected-directory" }
+provider = { packet = "connected-directory", prefix = "authenticated-" }
 dependency = "unselected current ordinary stimuli"
 fields = ["controls", "items", "parity", "energy", "queue occupancy", "the owners active at her stride and her shot's charge", "geometry and current actors", "camera room settings"]
 phase = "actual current source opportunity"
@@ -95,3 +95,133 @@ dependency = "played.platform"
 provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "display upload", "audio readiness"]
 phase = "frame boundary"
+
+# Recorded ordinary inputs and scoped native opportunities.
+
+[recorded-movement-animation]
+readers = ["preceding-cut-movement-inputs"]
+selection = "movement"
+dependency = "movement.animation"
+provider = "preceding-cut-appearance-state-and-production-ahead"
+fields = ["appearance.playhead", "appearance.figure", "appearance.boost"]
+phase = "before-movement"
+
+[recorded-movement-frame]
+readers = ["preceding-cut-movement-inputs"]
+selection = "movement"
+dependency = "movement.world-and-controller"
+provider = "preceding-cut-independent-observations"
+fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry", "controller.held", "controller.pressed", "progress.equipment", "mode.cinematic", "clock.parity", "elevator.moving"]
+phase = "preceding-record-cut"
+
+[preceding-cannon-and-world]
+readers = ["preceding-cut-weapons-contact-inputs"]
+dependency = "weapons.cannon-and-world"
+provider = "preceding-cut-recorded-ordinary-weapons-inputs"
+fields = ["controller.held", "controller.pressed", "controller.previous_pressed", "pose.current", "pose.previous", "pose.pending_aim", "muzzle.centre", "movement.directional_travel", "camera.origin", "camera.vertical_fraction", "world.blocks", "world.bts", "world.dimensions", "mode.time_stopped"]
+phase = "preceding-record-cut"
+
+[watched-door-opportunities]
+readers = ["preceding-cut-weapons-contact-inputs"]
+dependency = "contact.actor-opportunities"
+provider = "independent-watched-m0-door-membership"
+fields = ["actor.processing_order", "actor.permissions", "actor.geometry", "actor.protection", "actor.figure", "actor.tangibility"]
+phase = "before-each-door-contact"
+
+[watched-cannon-and-world]
+readers = ["scoped-shot-drawing-inputs"]
+dependency = "weapons.cannon-and-world"
+provider = "preceding-cut-records-and-independent-shot-contact-watch"
+fields = ["mapped.controller", "pose.current", "pose.previous", "pose.pending-aim", "muzzle.centre", "movement.directional-travel", "camera.update-origin", "camera.vertical-fraction", "world.terrain", "mode.time-stopped"]
+phase = "before-ordinary-power-update"
+
+[watched-shot-contacts]
+readers = ["scoped-shot-drawing-inputs"]
+dependency = "contact.actor-opportunities"
+provider = "independent-shot-contact-watch"
+fields = ["actor.identity", "actor.processing-order", "actor.geometry", "actor.permissions"]
+phase = "before-each-door-contact"
+
+[watched-drawing-insertion]
+readers = ["scoped-shot-drawing-inputs"]
+dependency = "weapons.drawing-insertion"
+provider = "independent-shot-contact-watch"
+fields = ["camera.drawing-origin", "drawing.counter-parity", "drawing.incoming-cursor"]
+phase = "before-flying-picture-insertion"
+
+[stationary-hud-neighbours]
+readers = ["preceding-cut-hud-inputs"]
+dependency = "hud.upstream-status-controls-and-map"
+provider = "preceding-cut-independent-observations"
+fields = ["frame-counter", "physical-controls", "bindings", "stock-at-start", "equipment", "progress-gauges", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected", "main-gameplay-countdown"]
+phase = "record N for the frame count, controls and stock as the frame begins; record N+1 for the status, handlers, pose, position and room"
+
+[standing-appearance-neighbours]
+readers = ["preceding-cut-appearance-inputs"]
+dependency = "appearance.movement-equipment-liquid-and-controller"
+provider = "preceding-cut-standing-interval"
+fields = ["appearance.figure", "movement.standing_restart", "controller.held", "controller.bindings", "progress.equipment", "progress.energy", "liquid.slowdown", "sound.queue_count", "appearance.activities (cinematic, boss, special colour time)", "appearance.charge", "controller.shoot_held"]
+phase = "preceding-record-cut"
+
+[native-opportunity-seed]
+readers = ["native-search-inputs"]
+dependency = "movement seed and ordinary opportunity"
+provider = "selected native opportunity packet"
+fields = ["inputs/seed.bin", "ordinary opportunity"]
+phase = "selected seed before ordinary movement"
+
+[native-opportunity-frame-world]
+readers = ["native-search-inputs"]
+dependency = "Frame and opportunity-time World"
+provider = "selected native opportunity packet and imported movement content"
+fields = ["inputs/frame.bin", "inputs/world.bin", "imported content"]
+phase = "Frame before normal input and World after actor selection"
+
+[early-map-opportunity]
+readers = ["early-map-inputs"]
+dependency = "unselected current ordinary and Map producers"
+provider = { packet = "fixture-directory", prefix = "authenticated-" }
+fields = ["locked controls and bindings", "current equipment, liquid, the owners active at her stride, her shot's charge, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
+phase = "each actual input use from controller through the first Camera carry and second early Map"
+
+[early-map-hud-neighbours]
+readers = ["early-map-inputs"]
+dependency = "hud.frame-neighbours"
+provider = "pinned-record-cache"
+fields = ["stock-at-start", "status", "mute", "can-switch", "main-gameplay-countdown"]
+phase = "record N for her stock as the frame begins; record N+1 for the rest"
+
+[touchdown-movement-entry]
+readers = ["native-touchdown-inputs"]
+dependency = "movement.entry"
+provider = { packet = "fixture-inputs", prefix = "locked predecessor cut and " }
+fields = ["preceding movement state and committed figure", "held and pressed pad", "Ahead", "items", "elevator", "cinematic", "parity", "terrain", "two current solid actors in native order"]
+phase = "ordinary Movement entry"
+
+[touchdown-sender-ingress]
+readers = ["native-touchdown-inputs"]
+dependency = "sender.ingress and appearance.area"
+provider = { packet = "sender-inputs", suffix = " and the locked Magnet Stairs area" }
+fields = ["Contact queue and progress", "Contact suppression owners", "dry touchdown graphics arm"]
+phase = "before the Contact offer and at the later graphics opportunity"
+
+[tail-actor-impact]
+readers = ["native-health-tail-inputs"]
+dependency = "health.tail-impact"
+provider = "independent-scoped-ceres-tail-actor-offer"
+fields = ["tail-impact-per-frame"]
+phase = "each-frame"
+
+[health-frame-opportunity]
+readers = ["native-health-tail-inputs"]
+dependency = "health.frame-admission"
+provider = "independent-native-health-opportunity"
+fields = ["running-time", "equipped-varia", "equipped-gravity"]
+phase = "each-frame"
+
+[health-hud-neighbours]
+readers = ["native-health-tail-inputs"]
+dependency = "hud.tail-neighbours"
+provider = "independent-native-hud-tail-opportunities"
+fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
+phase = "each frame, after Health"

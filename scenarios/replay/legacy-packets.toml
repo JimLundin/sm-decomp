@@ -294,3 +294,36 @@ row = "any-intro-2219"
 origin = 1297
 end = 2233
 join = { kind = "discovery", segments = [{ row = "any-intro-2219", first = 1298, last = 2103 }, { row = "any-intro-4323", first = 0, last = 129 }] }
+
+[[movement_sources]]
+operations = ["recorded-movement-animation", "recorded-movement-frame"]
+sources = [
+    { dependency = "movement.world", provider = "preceding-cut-level-and-observed-interactive-roster", fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry"], phase = "preceding-record-cut" },
+    { dependency = "movement.animation-and-camera", provider = "preceding-cut-appearance-state-and-production-ahead", fields = ["appearance.playhead", "appearance.figure", "appearance.boost", "camera.remembered"], phase = "before-movement" },
+]
+
+[native_search."2adee318fb765d39da0fcb85a16a326de3c84522946df2b37811fe52782a880c".borrowed]
+operations = ["native-opportunity-seed", "native-opportunity-frame-world"]
+sources = [
+    { dependency = "complete scoped seed and ordinary opportunity", provider = "independently admitted native-search-inputs-v1 packet", fields = ["complete Samus", "ordinary opportunity", "Motion ordinal0"], phase = "video9233 selector424 through movement completion4283" },
+    { dependency = "Frame and immutable opportunity-time World", provider = "independent snapshots424/424/2189 with reviewed consumer and immutable-range closure", fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"], phase = "Frame424 before normal input; World2189 after actor selection and stable for earlier inside and later movement" },
+]
+
+[native_search."e6e41959d1d4ee9b9f8c811642849a18bc23a6a1df91f0acbedda613d2b1de73".borrowed]
+operations = ["native-opportunity-seed", "native-opportunity-frame-world"]
+sources = [
+    { dependency = "derived complete scoped seed and unique ordinary-right opportunity", provider = "independently admitted native-search-order-v1 source packet", fields = ["complete Samus", "derived actor centre words", "ordinary opportunity", "Motion ordinal0"], phase = "video9233 selector424 through complete movement return4052" },
+    { dependency = "Frame and immutable opportunity-time World", provider = "independent snapshots424/424/2215 with producer and immutable-range closure", fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"], phase = "Frame424 before normal input; World2215 after actor selection and stable for earlier inside and later movement" },
+]
+
+[[movement_sources]]
+operations = ["recorded-movement-animation", "recorded-movement-frame"]
+sources = [
+    { dependency = "movement.falling-neighbours", provider = "preceding pinned record and imported pose content", fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"], phase = "before movement" },
+]
+
+[[movement_sources]]
+operations = ["recorded-movement-animation", "recorded-movement-frame"]
+sources = [
+    { dependency = "movement.landing-neighbours", provider = "preceding pinned record and imported pose content", fields = ["room and actors", "controller", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"], phase = "before movement" },
+]

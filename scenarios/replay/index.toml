@@ -149,18 +149,12 @@ checkpoints = true
 limits = ["one-step travel witness", "upstream producers externally admitted", "prior-cut observed actor roster; current actor-selection update and request timing unproved", "movement receipts and downstream consumers outside declared comparisons", "pixel composition omitted"]
 
 [[case.borrowed]]
-dependency = "movement.world"
-provider = "preceding-cut-level-and-observed-interactive-roster"
-fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry"]
-phase = "preceding-record-cut"
-claim = "prior-cut membership and geometry observed; current actor-selection update and request timing unproved"
+operation = "recorded-movement-animation"
+claim = "feedback producer outside case"
 
 [[case.borrowed]]
-dependency = "movement.animation-and-camera"
-provider = "preceding-cut-appearance-state-and-production-ahead"
-fields = ["appearance.playhead", "appearance.figure", "appearance.boost", "camera.remembered"]
-phase = "before-movement"
-claim = "feedback producer outside case"
+operation = "recorded-movement-frame"
+claim = "prior-cut membership and geometry observed; current actor-selection update and request timing unproved"
 
 [[case]]
 id = "movement/W15"
@@ -195,17 +189,11 @@ reached = [
 ]
 
 [[case.borrowed]]
-dependency = "movement.animation"
-provider = "preceding-cut-appearance-state-and-production-ahead"
-fields = ["appearance.playhead", "appearance.figure", "appearance.boost"]
-phase = "before-movement"
+operation = "recorded-movement-animation"
 claim = "appearance producer external; only movement state carried"
 
 [[case.borrowed]]
-dependency = "movement.world-and-controller"
-provider = "preceding-cut-independent-observations"
-fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry", "controller.held", "controller.pressed", "progress.equipment", "mode.cinematic", "clock.parity", "elevator.moving"]
-phase = "preceding-record-cut"
+operation = "recorded-movement-frame"
 claim = "upstream changing producers external; current actor-selection update and request timing unproved"
 
 [[case]]
@@ -289,17 +277,11 @@ actors = [0, 1]
 inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 
 [[case.borrowed]]
-dependency = "weapons.cannon-and-world"
-provider = "preceding-cut-recorded-ordinary-weapons-inputs"
-fields = ["controller.held", "controller.pressed", "controller.previous_pressed", "pose.current", "pose.previous", "pose.pending_aim", "muzzle.centre", "movement.directional_travel", "camera.origin", "camera.vertical_fraction", "world.blocks", "world.bts", "world.dimensions", "mode.time_stopped"]
-phase = "preceding-record-cut"
+operation = "preceding-cannon-and-world"
 claim = "upstream context externally admitted; no control, motion, camera or geometry producer claim"
 
 [[case.borrowed]]
-dependency = "contact.actor-opportunities"
-provider = "independent-watched-m0-door-membership"
-fields = ["actor.processing_order", "actor.permissions", "actor.geometry", "actor.protection", "actor.figure", "actor.tangibility"]
-phase = "before-each-door-contact"
+operation = "watched-door-opportunities"
 claim = "bounded original watch validates ordered slots0 then1 and immutable preceding actor contact fields for this caller; actor selection and AI execution outside case"
 
 [[case]]
@@ -318,24 +300,15 @@ checkpoints = true
 limits = ["actual ordinary shot owner advances once from the vacant pool through removal", "Frame lacks live fire PRE, complete controller and cannon handoff, active actor progression and surrounding drawing production", "trail request and contact marker covered; trail allocation, door opening and receiver execution are excluded", "flying picture inserts through the exact sprite encoder at an observed incoming cursor; full OAM image, hardware transfer and pixels are excluded"]
 
 [[case.borrowed]]
-dependency = "weapons.cannon-and-world"
-provider = "preceding-cut-records-and-independent-shot-contact-watch"
-fields = ["mapped.controller", "pose.current", "pose.previous", "pose.pending-aim", "muzzle.centre", "movement.directional-travel", "camera.update-origin", "camera.vertical-fraction", "world.terrain", "mode.time-stopped"]
-phase = "before-ordinary-power-update"
+operation = "watched-cannon-and-world"
 claim = "observed PRE context supplied independently of the selected shot state"
 
 [[case.borrowed]]
-dependency = "contact.actor-opportunities"
-provider = "independent-shot-contact-watch"
-fields = ["actor.identity", "actor.processing-order", "actor.geometry", "actor.permissions"]
-phase = "before-each-door-contact"
+operation = "watched-shot-contacts"
 claim = "actual ordered native opportunities constrain the scoped production call"
 
 [[case.borrowed]]
-dependency = "weapons.drawing-insertion"
-provider = "independent-shot-contact-watch"
-fields = ["camera.drawing-origin", "drawing.counter-parity", "drawing.incoming-cursor"]
-phase = "before-flying-picture-insertion"
+operation = "watched-drawing-insertion"
 claim = "independent enclosing draw context supplies insertion authority; only attributed sprite entries are compared"
 
 [[case]]
@@ -375,20 +348,11 @@ inputs = "preceding-cut-hud-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["hud.grid", "hud.explored", "hud.energy", "hud.missiles", "hud.supers", "hud.bombs", "hud.highlighted", "hud.selected", "hud.one-shot", "hud.map-off"], outputs = [] }
 checkpoints = false
 limits = ["drops represented by Nothing under unselected invariant; turn-on represented by false under powered-on invariant; all alternatives require complete production state/output equivalence proof", "stationary upstream producer values borrowed and required unchanged", "exactly one ordinary HUD invocation supplied by scoped schedule; caller timing unproved", "click and switch events, video upload and composed pixels omitted", "durable HUD codec unavailable"]
+qualifications = ["With no item selected and the mini-map on, all 18 combinations of before-drop, after-drop and turn-on inputs preserve the complete state and outputs. The controls remain released and the case rejects pickups and boss events."]
 
 [[case.borrowed]]
-dependency = "hud.upstream-status-controls-and-map"
-provider = "preceding-cut-independent-observations"
-fields = ["frame-counter", "physical-controls", "bindings", "stock-at-start", "equipment", "progress-gauges", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected", "main-gameplay-countdown"]
-phase = "record N for the frame count, controls and stock as the frame begins; record N+1 for the status, handlers, pose, position and room"
+operation = "stationary-hud-neighbours"
 claim = "external quantities only; paired current cuts certify unchanged producers and one gameplay tick; main gameplay at both cuts runs the escape countdown"
-
-[[case.borrowed]]
-dependency = "hud.inert-drop-and-turn-on-inputs"
-provider = "complete-production-alternative-equivalence"
-fields = ["drops-before", "drops-after", "collected", "map-turned-on", "mother-brain-falls"]
-phase = "before-HUD-entry"
-claim = "initial seed selection None and mini-map On; physical controls empty throughout and pickups/boss events rejected; all3 before-drop x3 after-drop x2 turn-on alternatives preserve complete state and outputs; no claim that unrecorded drops are absent"
 
 [[case]]
 id = "appearance/standing-clip"
@@ -406,10 +370,7 @@ checkpoints = true
 limits = ["unchanged dry standing figure", "one ordinary animation update per advancing gameplay tick", "movement, equipment and liquid producers externally admitted", "appearance sound and drawing opportunities outside comparison", "her kept action, cannon delay and colour sequences decoded once from the start record, carried and not compared", "upstream timing and downstream pixels unproved"]
 
 [[case.borrowed]]
-dependency = "appearance.movement-equipment-liquid-and-controller"
-provider = "preceding-cut-standing-interval"
-fields = ["appearance.figure", "movement.standing_restart", "controller.held", "controller.bindings", "progress.equipment", "progress.energy", "liquid.slowdown", "sound.queue_count", "appearance.activities (cinematic, boss, special colour time)", "appearance.charge", "controller.shoot_held"]
-phase = "preceding-record-cut"
+operation = "standing-appearance-neighbours"
 claim = "unchanged figure, equipment and zero slowdown certify preceding-cut values; movement and producer timing unproved"
 
 [[case]]
@@ -539,26 +500,18 @@ limits = [
   "Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change."
 ]
 expectations = { provider = "native-complete-movement-work", projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "baseline-expected.toml" }, fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
+qualifications = [
+  "The seed and Frame snapshots come from selector 424. The World snapshot follows actor selection at 2189.",
+  "The independent projection supplies the complete reached and inside cells after Movement advances.",
+]
 
 [[case.borrowed]]
-dependency = "complete scoped seed and ordinary opportunity"
-provider = "independently admitted native-search-inputs-v1 packet"
-fields = ["complete Samus", "ordinary opportunity", "Motion ordinal0"]
-phase = "video9233 selector424 through movement completion4283"
+operation = "native-opportunity-seed"
 claim = "Source-arm/writer/hardware closure covers424..4282; complete independent raw input snapshots are seed424 and Frame424. No NMI-cut scheduler claim."
 
 [[case.borrowed]]
-dependency = "Frame and immutable opportunity-time World"
-provider = "independent snapshots424/424/2189 with reviewed consumer and immutable-range closure"
-fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"]
-phase = "Frame424 before normal input; World2189 after actor selection and stable for earlier inside and later movement"
+operation = "native-opportunity-frame-world"
 claim = "Fixed existing typed converters and player ROM content supply the clean production step; every actual grid query must stay admitted. Actor selection and upstream Frame/World producers remain external."
-[[case.borrowed]]
-dependency = "complete independent movement observations"
-provider = "independently reviewed native-search-work-v2 source projection"
-fields = ["complete reached", "complete inside"]
-phase = "selector424 through complete movement return"
-claim = "Frozen source-only projection; its reached and inside cells are read after production and never supply input or State."
 
 [[case]]
 id = "movement-native-enemy-stop-terrain-absence"
@@ -578,27 +531,18 @@ limits = [
   "Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically."
 ]
 expectations = { provider = "native-complete-movement-work", projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "intervention-expected.toml" }, fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
+qualifications = [
+  "The seed and Frame snapshots come from selector 424. The World snapshot follows actor selection at 2215.",
+  "The independent projection supplies the complete reached and inside cells after Movement advances.",
+]
 
 [[case.borrowed]]
-dependency = "derived complete scoped seed and unique ordinary-right opportunity"
-provider = "independently admitted native-search-order-v1 source packet"
-fields = ["complete Samus", "derived actor centre words", "ordinary opportunity", "Motion ordinal0"]
-phase = "video9233 selector424 through complete movement return4052"
+operation = "native-opportunity-seed"
 claim = "Independent source/hardware/writer and two-word intervention closure424..4051. No NMI scheduler, carried-cut State or played-alone claim."
 
 [[case.borrowed]]
-dependency = "Frame and immutable opportunity-time World"
-provider = "independent snapshots424/424/2215 with producer and immutable-range closure"
-fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"]
-phase = "Frame424 before normal input; World2215 after actor selection and stable for earlier inside and later movement"
+operation = "native-opportunity-frame-world"
 claim = "Native drawing-queue changes are retained. Idempotent zero SPEED_BOOSTER_LEVEL write is independently qualified. Fixed existing typed converters and actual grid guard supply one complete clean production step."
-
-[[case.borrowed]]
-dependency = "complete independent movement observations"
-provider = "independently reviewed native-search-work-v2 source projection"
-fields = ["complete reached", "complete inside"]
-phase = "selector424 through complete movement return"
-claim = "Frozen source-only projection; its reached and inside cells are read after production and never supply input or State."
 
 # The connected input manifest authenticates every member and its upstream provenance.
 # The packet bounds cover the fixture; the case horizon may select a reviewed prefix.
@@ -660,17 +604,12 @@ expectations = { provider = "native-early-map", fields = ["hud.explored", "hud.m
 limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves", "at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails", "each cut plays the HUD's whole frame and compares only the early Map; the status bar draws borrowed values and is not compared", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
 
 [[case.borrowed]]
-dependency = "unselected current ordinary and Map producers"
+operation = "early-map-opportunity"
 provider = "authenticated-movement-early-map-v1"
-fields = ["locked controls and bindings", "current equipment, liquid, the owners active at her stride, her shot's charge, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
-phase = "each actual input use from controller through the first Camera carry and second early Map"
 claim = "Movement, Appearance, Camera carry and early Map run the selected production owners with independently qualified external stimuli."
 
 [[case.borrowed]]
-dependency = "hud.frame-neighbours"
-provider = "pinned-record-cache"
-fields = ["stock-at-start", "status", "mute", "can-switch", "main-gameplay-countdown"]
-phase = "record N for her stock as the frame begins; record N+1 for the rest"
+operation = "early-map-hud-neighbours"
 claim = "other domains' values, no selected owner's; released controls leave the stock and can-switch unread, and the frame must raise no HUD event"
 
 [[case]]
@@ -1272,17 +1211,13 @@ checkpoints = true
 limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the frame's offer only: no audio turn or service is played, and the rest of the transport is a silent seed the frame never reads", "no native actor candidate visitation or individual terrain cell identities compared"]
 
 [[case.borrowed]]
-dependency = "movement.entry"
+operation = "touchdown-movement-entry"
 provider = "locked predecessor cut and movement-touchdown-v1/borrowed.toml"
-fields = ["preceding movement state and committed figure", "held and pressed pad", "Ahead", "items", "elevator", "cinematic", "parity", "terrain", "two current solid actors in native order"]
-phase = "ordinary Movement entry"
 claim = "the independently qualified predecessor provides the Movement seed and terrain; the live actor roster replaces the predecessor roster"
 
 [[case.borrowed]]
-dependency = "sender.ingress and appearance.area"
+operation = "touchdown-sender-ingress"
 provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
-fields = ["Contact queue and progress", "Contact suppression owners", "dry touchdown graphics arm"]
-phase = "before the Contact offer and at the later graphics opportunity"
 claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
 
 [[case]]
@@ -1301,17 +1236,13 @@ checkpoints = true
 limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the frame's offer only: no audio turn or service is played, and the rest of the transport is a silent seed the frame never reads", "no native actor candidate visitation or individual terrain cell identities compared"]
 
 [[case.borrowed]]
-dependency = "movement.entry"
+operation = "touchdown-movement-entry"
 provider = "locked predecessor cut and movement-touchdown-v1/borrowed.toml"
-fields = ["preceding movement state and committed figure", "held and pressed pad", "Ahead", "items", "elevator", "cinematic", "parity", "terrain", "two current solid actors in native order"]
-phase = "ordinary Movement entry"
 claim = "the independently qualified predecessor provides the Movement seed and terrain; the live actor roster replaces the predecessor roster"
 
 [[case.borrowed]]
-dependency = "sender.ingress and appearance.area"
+operation = "touchdown-sender-ingress"
 provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
-fields = ["Contact queue and progress", "Contact suppression owners", "dry touchdown graphics arm"]
-phase = "before the Contact offer and at the later graphics opportunity"
 claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
 
 [[case]]
@@ -1330,24 +1261,15 @@ checkpoints = true
 limits = ["compared at the two frame cuts after the origin; reads inside the frame are not compared", "Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the frame's tail impact", "Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver", "Drawing compares its committed energy history; hurt flash and visible rendering require their own producers", "HUD compares all sixteen CPU-side gauge words; IRQ and VRAM require separate proof", "auxiliary native cut window outside the played-alone milestone"]
 
 [[case.borrowed]]
-dependency = "health.tail-impact"
-provider = "independent-scoped-ceres-tail-actor-offer"
-fields = ["tail-impact-per-frame"]
-phase = "each-frame"
+operation = "tail-actor-impact"
 claim = "Ridley's eligible tail impact on the first frame and none on the second; Health decides whether it lands on its carried protection"
 
 [[case.borrowed]]
-dependency = "health.frame-admission"
-provider = "independent-native-health-opportunity"
-fields = ["running-time", "equipped-varia", "equipped-gravity"]
-phase = "each-frame"
+operation = "health-frame-opportunity"
 claim = "externally qualified clock and equipment; Health decides all carried values"
 
 [[case.borrowed]]
-dependency = "hud.tail-neighbours"
-provider = "independent-native-hud-tail-opportunities"
-fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
-phase = "each frame, after Health"
+operation = "health-hud-neighbours"
 claim = "unselected neighbour inputs only; the status bar reads whole energy from the frame's Health; her stock as the first frame begins is the origin record's and as the second begins the first frame's drawn stock; the origin's main gameplay runs the escape countdown"
 
 [[case]]
@@ -1622,10 +1544,10 @@ checkpoints = true
 limits = ["The fresh Down press and subsequent empty pad select and retain downward aim. A fresh Up press takes precedence, then releasing it returns the pose to forward.", "Only ordinary movement runs during the selected cuts."]
 
 [[case.borrowed]]
-dependency = "movement.falling-neighbours"
-provider = "preceding pinned record and imported pose content"
-fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
-phase = "before movement"
+operation = "recorded-movement-animation"
+
+[[case.borrowed]]
+operation = "recorded-movement-frame"
 claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
 
 [[case]]
@@ -1644,10 +1566,10 @@ checkpoints = true
 limits = ["Releasing shoot retains the forward falling pose with the cannon drawn.", "Only ordinary movement runs during the selected cuts."]
 
 [[case.borrowed]]
-dependency = "movement.falling-neighbours"
-provider = "preceding pinned record and imported pose content"
-fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
-phase = "before movement"
+operation = "recorded-movement-animation"
+
+[[case.borrowed]]
+operation = "recorded-movement-frame"
 claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
 
 [[case]]
@@ -1666,10 +1588,10 @@ checkpoints = true
 limits = ["Releasing Down retains the downward falling pose.", "Only ordinary movement runs during the selected cuts."]
 
 [[case.borrowed]]
-dependency = "movement.falling-neighbours"
-provider = "preceding pinned record and imported pose content"
-fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
-phase = "before movement"
+operation = "recorded-movement-animation"
+
+[[case.borrowed]]
+operation = "recorded-movement-frame"
 claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
 
 [[case]]
@@ -1710,10 +1632,10 @@ checkpoints = true
 limits = ["One grounded leap opportunity through the production floor and pose-fit path.", "The compared state covers the chosen pose, centre, base speeds and next active jump check."]
 
 [[case.borrowed]]
-dependency = "movement.landing-neighbours"
-provider = "preceding pinned record and imported pose content"
-fields = ["room and actors", "controller", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
-phase = "before movement"
+operation = "recorded-movement-animation"
+
+[[case.borrowed]]
+operation = "recorded-movement-frame"
 claim = "Movement computes the floor and accepts the landing pose against the independently supplied geometry."
 
 [[case]]

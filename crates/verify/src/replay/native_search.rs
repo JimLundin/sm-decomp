@@ -17,6 +17,27 @@ pub(super) struct Coordinates {
     pub source_completion_index: u64,
 }
 
+impl super::index::Start {
+    pub(super) fn native_opportunity(&self) -> Option<(&Path, &str, Coordinates)> {
+        let Self::NativeOpportunity {
+            path,
+            sha256,
+            video_frame,
+            source_start_index,
+            source_completion_index,
+        } = self
+        else {
+            return None;
+        };
+        let coordinates = Coordinates {
+            video_frame: *video_frame,
+            source_start_index: *source_start_index,
+            source_completion_index: *source_completion_index,
+        };
+        Some((path, sha256, coordinates))
+    }
+}
+
 pub(super) struct Packet<'a> {
     path: &'a Path,
     sha256: &'a str,
@@ -26,22 +47,8 @@ pub(super) struct Packet<'a> {
 
 impl<'a> Packet<'a> {
     pub fn for_case(case: &'a super::index::Case) -> Option<Self> {
-        use super::index::{Start, fixture_component, pinned_directory};
-        let Start::NativeOpportunity {
-            path,
-            sha256,
-            video_frame,
-            source_start_index,
-            source_completion_index,
-        } = &case.start
-        else {
-            return None;
-        };
-        let coordinates = Coordinates {
-            video_frame: *video_frame,
-            source_start_index: *source_start_index,
-            source_completion_index: *source_completion_index,
-        };
+        use super::index::{fixture_component, pinned_directory};
+        let (path, sha256, coordinates) = case.start.native_opportunity()?;
         let projection = case
             .expectations
             .projection

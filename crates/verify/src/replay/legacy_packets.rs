@@ -1,7 +1,8 @@
-//! Packet identities for format-1 cases written before the index declared their fixtures.
+//! Packet identities and source descriptions from published replay indices.
 
 use super::index::{
-    ConnectedPacket, FixturePair, InputProvider, NativeProjection, SenderOfferControl,
+    Borrowed, Case, ConnectedPacket, FixturePair, InputProvider, NativeProjection, Qualification,
+    SenderOfferControl,
 };
 use super::native_search::Coordinates;
 use serde::Deserialize;
@@ -12,10 +13,12 @@ struct Search {
     #[serde(flatten)]
     coordinates: Coordinates,
     projection: NativeProjection,
+    borrowed: PublishedSources,
 }
 
 #[derive(Deserialize)]
 struct Packets {
+    movement_sources: Vec<PublishedSources>,
     ordinary_witness: BTreeMap<String, super::recorded::Witness>,
     save_schedule: BTreeMap<String, super::index::SaveSchedule>,
     intro_join: BTreeMap<String, PublishedJoin>,
@@ -35,6 +38,82 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
     ))
     .ok()
 });
+
+#[derive(Deserialize)]
+struct PublishedSources {
+    sources: Vec<Borrowed>,
+    operations: Vec<String>,
+}
+
+impl PublishedSources {
+    fn matches(&self, rows: &[Borrowed]) -> bool {
+        self.sources.len() == rows.len()
+            && self.sources.iter().all(|s| {
+                rows.iter().any(|r| {
+                    s.provider == r.provider && r.describes(&s.dependency, &s.fields, &s.phase)
+                })
+            })
+    }
+
+    fn expand(&self, case: &mut Case) -> Result<(), &'static str> {
+        let operations = self
+            .operations
+            .iter()
+            .map(|op| {
+                super::borrowed::resolve(op, None, String::new())
+                    .ok_or("unknown published source operation")
+            })
+            .collect::<Result<_, _>>()?;
+        let published = std::mem::replace(&mut case.borrowed, operations);
+        case.qualifications
+            .extend(published.into_iter().map(Qualification::Published));
+        Ok(())
+    }
+}
+
+fn take_note(case: &mut Case, dependency: &str) {
+    case.borrowed.retain(|row| {
+        if row.dependency == dependency {
+            case.qualifications
+                .push(Qualification::Published(row.clone()));
+            false
+        } else {
+            true
+        }
+    });
+}
+
+pub(super) fn read_ordinary_sources(case: &mut Case) -> Result<(), &'static str> {
+    if case.inputs == InputProvider::PrecedingCutHudInputs {
+        take_note(case, "hud.inert-drop-and-turn-on-inputs");
+        return Ok(());
+    }
+    let packets = PACKETS.as_ref().ok_or("published source catalogue")?;
+    let recipe = if case.inputs == InputProvider::PrecedingCutMovementInputs {
+        packets
+            .movement_sources
+            .iter()
+            .find(|recipe| recipe.matches(&case.borrowed))
+    } else if case.inputs == InputProvider::NativeSearchInputs {
+        take_note(case, "complete independent movement observations");
+        case.start
+            .native_opportunity()
+            .and_then(|(_, pin, at)| {
+                packets
+                    .native_search
+                    .get(pin)
+                    .filter(|s| s.coordinates == at)
+            })
+            .map(|search| &search.borrowed)
+            .filter(|recipe| recipe.matches(&case.borrowed))
+    } else {
+        None
+    };
+    if let Some(recipe) = recipe {
+        recipe.expand(case)?;
+    }
+    Ok(())
+}
 
 pub(super) fn ordinary_witness(id: &str) -> Option<&'static super::recorded::Witness> {
     PACKETS.as_ref()?.ordinary_witness.get(id)

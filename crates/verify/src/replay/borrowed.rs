@@ -1,6 +1,6 @@
 //! Borrowed source operations belong to the input adapters that consume them.
 
-use super::index::{Borrowed, Case, InputProvider, Start};
+use super::index::{Borrowed, Case, InputProvider, Responsibility, Start};
 use serde::{Deserialize, Deserializer};
 use std::{collections::BTreeMap, sync::LazyLock};
 
@@ -21,6 +21,7 @@ struct Operation {
 enum Selection {
     #[default]
     All,
+    Movement,
     NativeOffer,
     ConstructedOffer,
     Ribs,
@@ -31,6 +32,7 @@ impl Selection {
     fn applies(&self, case: &Case) -> bool {
         match self {
             Self::All => true,
+            Self::Movement => case.responsibilities == [Responsibility::Movement],
             Self::NativeOffer => matches!(case.start, Start::NativeSenderOffer { .. }),
             Self::ConstructedOffer => matches!(case.start, Start::ConstructedSenderOffer { .. }),
             Self::Ribs => super::played::ridley_ribs::is_case(case),
@@ -43,7 +45,13 @@ impl Selection {
 #[serde(untagged, deny_unknown_fields)]
 enum Provider {
     Fixed(String),
-    Selected { packet: Packet },
+    Selected {
+        packet: Packet,
+        #[serde(default)]
+        prefix: String,
+        #[serde(default)]
+        suffix: String,
+    },
 }
 
 #[derive(Deserialize)]
@@ -51,6 +59,21 @@ enum Provider {
 enum Packet {
     SenderInputs,
     ConnectedDirectory,
+    FixtureInputs,
+    FixtureDirectory,
+}
+
+impl Packet {
+    fn selected<'a>(&self, case: &'a Case) -> Option<&'a str> {
+        match self {
+            Self::SenderInputs => Some(case.sender_packet().ok()?.input_path()),
+            Self::ConnectedDirectory => Some(&case.connected_packet()?.directory),
+            Self::FixtureInputs => Some(&case.fixture_pair().ok()?.inputs.path),
+            Self::FixtureDirectory => {
+                Some(case.fixture_pair().ok()?.inputs.path.split_once('/')?.0)
+            }
+        }
+    }
 }
 
 static OPERATIONS: LazyLock<Option<BTreeMap<String, Operation>>> = LazyLock::new(|| {
@@ -111,12 +134,18 @@ pub(super) fn read<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Bor
         .collect()
 }
 
+impl Borrowed {
+    pub(super) fn describes(&self, dependency: &str, fields: &[String], phase: &str) -> bool {
+        self.dependency == dependency
+            && self.phase == phase
+            && fields.len() == self.fields.len()
+            && fields.iter().all(|field| self.fields.contains(field))
+    }
+}
+
 impl Operation {
     fn describes(&self, input: &Borrowed) -> bool {
-        self.dependency == input.dependency
-            && self.phase == input.phase
-            && self.fields.len() == input.fields.len()
-            && self.fields.iter().all(|field| input.fields.contains(field))
+        input.describes(&self.dependency, &self.fields, &self.phase)
     }
 
     fn admits(&self, case: &Case, input: &Borrowed) -> bool {
@@ -124,15 +153,14 @@ impl Operation {
             && match &self.provider {
                 Provider::Fixed(provider) => *provider == input.provider,
                 Provider::Selected {
-                    packet: Packet::SenderInputs,
-                } => case
-                    .sender_packet()
-                    .is_ok_and(|packet| packet.input_path() == input.provider),
-                Provider::Selected {
-                    packet: Packet::ConnectedDirectory,
-                } => case.connected_packet().is_some_and(|packet| {
-                    input.provider.strip_prefix("authenticated-") == Some(packet.directory.as_str())
-                }),
+                    packet,
+                    prefix,
+                    suffix,
+                } => input
+                    .provider
+                    .strip_prefix(prefix)
+                    .and_then(|path| path.strip_suffix(suffix))
+                    .is_some_and(|path| packet.selected(case) == Some(path)),
             }
     }
 }
@@ -156,4 +184,25 @@ pub(super) fn valid(case: &Case) -> bool {
         && required
             .iter()
             .all(|op| case.borrowed.iter().any(|input| op.admits(case, input)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::index::{Index, InputProvider, Qualification};
+
+    #[test]
+    fn hud_qualifications_can_change_without_supplying_a_frame() {
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let mut case = index
+            .cases
+            .into_iter()
+            .find(|case| case.inputs == InputProvider::PrecedingCutHudInputs)
+            .unwrap();
+        case.qualifications.clear();
+        case.borrowed[0].claim.clear();
+        assert!(case.validate().is_ok());
+        case.qualifications
+            .push(Qualification::Published(case.borrowed.pop().unwrap()));
+        assert!(case.validate().is_err());
+    }
 }
