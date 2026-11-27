@@ -268,9 +268,13 @@ rebuild and a re-proof on this machine, which can wipe out the time running in p
 So before a lane starts, its brief lists the files it will change, and lanes running at once
 change disjoint files. A file that most work passes through belongs to one lane at a time:
 `tools/mutants.toml` and STATUS. Other lanes don't edit them; they hand their entries (a planted
-fault, a STATUS paragraph) to the root, who adds them when the lane lands. Each owner's part of
-the played loop is its own file in `production/played/` and `replay/played/`, and belongs to the
-lane that integrates that owner. The two loop files, the order of owners in a frame
+fault, a STATUS paragraph) to the root, who adds them when the lane lands. Put findings specific
+to the [title, file select and options](../replay-findings/title-file-select-and-options.md)
+or the [flight to Ceres](../replay-findings/flight-to-ceres.md) on the corresponding page as
+part of the owner's lane.
+
+Each owner's part of the played loop is its own file in `production/played/` and `replay/played/`,
+and belongs to the lane that integrates that owner. The two loop files, the order of owners in a frame
 (`crates/game/src/production/played.rs`) and the order its runner compares them in
 (`crates/verify/src/replay/played.rs`), take a few lines from each owner's lane: its State field,
 its faults, and its call in the order. So does the played tests' shared fixture
