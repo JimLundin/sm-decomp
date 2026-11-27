@@ -68,15 +68,16 @@ Run `python3 tools/check_mutants.py validate` to check manifest coverage and sou
 without building or running replay. Tree-sitter finds the
 Rust function containing each edit. Every alternative starts with the original
 function body and applies one manifest replacement. Cargo Gamma selects one
-alternative at process startup. The checker compares the first bad cut and field,
-then launches the same binary with the selector cleared and requires the full
-original receipt. [Rust grammar](https://github.com/tree-sitter/tree-sitter-rust/tree/v0.24.2)
+alternative at process startup. The checker counts the fault as killed when the case reports a
+difference, a data failure or a failed checkpoint continuation, or when the replay crashes. It
+then launches the same binary with the selector cleared and requires the full original receipt.
+[Rust grammar](https://github.com/tree-sitter/tree-sitter-rust/tree/v0.24.2)
 and [Cargo Gamma runtime](https://github.com/microsoft/ox-tools/blob/cargo-gamma-v0.8.0/crates/cargo-gamma-rt/src/lib.rs).
 
-The manifest supplies the reviewed edits and their expected replay outcomes.
+The manifest supplies the reviewed edits and the case each one must fail.
 Gamma's CLI generates its own mutations, so the checker uses its runtime directly.
-The played runner can exit successfully when it detects a fault. Its receipt gives
-the first differing cut and field. [Cargo Gamma mutation operators](https://github.com/microsoft/ox-tools/tree/cargo-gamma-v0.8.0/crates/cargo-gamma-engine/src/ops/registry)
+The played runner can exit successfully when it detects a fault. Its report line
+names where it stopped. [Cargo Gamma mutation operators](https://github.com/microsoft/ox-tools/tree/cargo-gamma-v0.8.0/crates/cargo-gamma-engine/src/ops/registry)
 
 Put each edit inside a gameplay or played-runner function. If a `const fn`
 calls an instrumented function, list the caller in `runtime_callers`. Only the

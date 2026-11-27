@@ -1,4 +1,3 @@
-"""Bridge fault credit requires an exact recorded difference and restored Pass."""
 import tempfile
 from contextlib import redirect_stdout
 from io import StringIO
@@ -13,10 +12,10 @@ import check_mutants
 from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, detected, receipt,
                            replay_selectable, scratch_files, source_path, validate_coverage)
 
-def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str = "audio.reply0") -> str:
+def outcome(status: str, case: str = "audio/example") -> str:
     text = f'format = 1\n[[cases]]\nid = "{case}"\nobservation_sha256 = "original"\n[cases.outcome]\nstatus = "{status}"\n'
     if status == "difference":
-        text += f'cut = {cut}\nfield = "{field}"\n'
+        text += 'cut = 3\nfield = "audio.reply0"\n'
     return text + '[cases.counts]\ncuts = 3\nrestorations = 2\n'
 
 class MutantCheck(unittest.TestCase):
@@ -42,15 +41,14 @@ class MutantCheck(unittest.TestCase):
 
     def test_rule_credit_requires_its_assigned_fault_and_complete_receipt(self) -> None:
         fault = Fault("contact", "played", PLAYED_RUNNER, "old", "new",
-                      "played steam 0 200", 137, "steam.hit", "PuffTouches")
-        placement = replace(fault, name="placement", cut=100, field="steam.vents",
-                            rule="VentPlaced")
+                      "played steam 0 200", "PuffTouches")
+        placement = replace(fault, name="placement", rule="VentPlaced")
         unassigned = replace(fault, name="unassigned", rule=None)
         def block(entry: Fault) -> list[str]:
             replay = f"TIMING replay case={entry.case} seconds=0.100000"
             return [
                 replay,
-                f"KILLED {entry.name}: {entry.case} cut{entry.cut} {entry.field}",
+                f"KILLED {entry.name}: {entry.case} difference",
                 f"TIMING restoration fault={entry.name} seconds=0.100000",
                 "TIMING input-check seconds=0.100000",
                 "TIMING compilation seconds=0.100000",
@@ -75,7 +73,7 @@ class MutantCheck(unittest.TestCase):
             "swapped restoration and resumed case": contact[:2] + [other[2], other[5], contact[-1]],
             "wrong restoration fault": contact[:2] + [other[2]] + contact[3:],
             "wrong resumed case": contact[:5] + [other[5]] + contact[6:],
-            "wrong kill cut": block(replace(fault, cut=138)),
+            "wrong kill name": block(replace(fault, name="contacts")),
             "unassigned": block(unassigned),
             "orphaned pass": [contact[-1]],
             "missing restoration": contact[:2] + contact[3:],
@@ -168,7 +166,7 @@ class MutantCheck(unittest.TestCase):
                 inputs.check(root)
 
     def exercise(self, result: tuple[int, str], restored: tuple[int, str] | None = None) -> bool:
-        fault = Fault("zero", "audio", "source.rs", "before", "after", "audio/example", 3, "audio.reply0")
+        fault = Fault("zero", "audio", "source.rs", "before", "after", "audio/example")
         healthy = (0, outcome("pass"))
         with tempfile.TemporaryDirectory() as directory:
             tree = Path(directory)
@@ -187,12 +185,18 @@ class MutantCheck(unittest.TestCase):
             with self.assertRaises(ValueError):
                 source_path(root, name)
 
-    def test_build_failure_missing_receipt_and_wrong_identity_cannot_kill(self) -> None:
-        for result in [(101, outcome("difference")), (1, ""), (1, outcome("unsupported")),
-                       (1, outcome("difference", case="another/case")), (1, outcome("difference", cut=4)),
-                       (1, outcome("difference", field="audio.reply1")), (0, outcome("pass"))]:
-            self.assertFalse(self.exercise(result))
-        self.assertTrue(self.exercise((1, "tools: " + outcome("difference"))))
+    def test_any_reported_difference_data_failure_or_crash_kills(self) -> None:
+        for result in [(1, "tools: " + outcome("difference")), (1, outcome("data-failure")),
+                       (1, outcome("checkpoint-failure")), (101, outcome("pass")), (-11, ""), (-6, "")]:
+            with self.subTest(result=result):
+                self.assertTrue(self.exercise(result))
+
+    def test_a_pass_an_unsupported_case_or_another_case_cannot_kill(self) -> None:
+        for result in [(0, outcome("pass")), (1, outcome("unsupported")), (1, ""),
+                       (1, outcome("difference", case="another/case")), (-9, ""),
+                       (-9, outcome("difference"))]:
+            with self.subTest(result=result):
+                self.assertFalse(self.exercise(result))
 
     def test_restored_baseline_must_pass(self) -> None:
         self.assertFalse(self.exercise((1, outcome("difference")), (1, outcome("difference"))))
@@ -240,8 +244,6 @@ file = "crates/game/src/production.rs"
 before = "measured"
 after = "zero"
 case = "audio/example"
-cut = 3
-field = "audio.reply0"
 ''', encoding="utf-8", newline="\n")
             for text, unique in [(b"let elapsed = measured;\n", True), (b"let elapsed = sampled;\n", False),
                                  (b"let a = measured;\nlet b = measured;\n", False)]:
@@ -257,7 +259,7 @@ field = "audio.reply0"
                             check_mutants.main(["validate"])
                     build.assert_not_called()
 
-    def test_a_played_run_kills_only_at_its_recorded_stop(self) -> None:
+    def test_a_played_run_kills_on_any_difference_or_data_failure(self) -> None:
         case = "played row-1 0 9"
         def report(stop: str, row: str = "row-1") -> str:
             return f'PLAYED_ALONE row={row} start=0 held=4 stop={stop} seed_held=["energy"]\n'
@@ -266,18 +268,26 @@ field = "audio.reply0"
         assert ended is not None
         self.assertEqual(ended["outcome"], {"status": "pass"})
         self.assertEqual(receipt(stopped, case), {"id": case, "report": stopped.strip(), "outcome": {
-            "status": "difference", "cut": 5, "field": "camera.x"}})
+            "status": "difference"}})
         for output in [report("End", row="row-2"), report("End") * 2, ""]:
             self.assertIsNone(receipt(output, case))
-        fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held", case, 5, "camera.x")
-        for result, killed in [((0, stopped), True), ((1, stopped), False),
-                               ((0, report('At(Difference { cut: 6, field: "camera.x" })')), False),
-                               ((0, report('At(DataFailure { cut: Some(5), source: "pad" })')), False),
-                               ((0, report('At(DataFailure { cut: Some(5), source: "camera.x" })')), True),
+        fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held", case)
+        for result, killed in [((0, stopped), True), ((1, 'tools: replay played: DataFailure { cut: None, source: "pad" }'), True),
+                               ((0, report('At(DataFailure { cut: Some(5), source: "pad" })')), True),
+                               ((0, report("At(CheckpointFailure { cut: 5 })")), True),
                                ((0, report('At(Unsupported { cut: Some(5), dependency: "camera.x" })')), False),
                                ((0, report("End")), False)]:
             with self.subTest(result=result):
                 self.assertEqual(detected(fault, result) is not None, killed)
+
+    def test_a_played_startup_result_other_than_a_data_failure_is_invalid(self) -> None:
+        fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held",
+                      "played row-1 0 9")
+        startup = 'tools: replay played: Unsupported { cut: None, dependency: "pad" }'
+        printed = StringIO()
+        with redirect_stdout(printed):
+            self.assertIsNone(detected(fault, (1, startup)))
+        self.assertTrue(printed.getvalue().startswith("INVALID stale: "), printed.getvalue())
 
 if __name__ == "__main__":
     unittest.main()

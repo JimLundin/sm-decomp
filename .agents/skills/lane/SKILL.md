@@ -59,7 +59,7 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   that target in CI (`gh workflow run ci.yml --ref <branch> -f target=<case or test>`) and
   include the run ID in the handoff.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
-  fails at the right frame and field, revert. Never commit the mutant.
+  fails, revert. Never commit the mutant.
 - **Fixing a failure.** Reproduce the exact failure (the same command, row, frame and field)
   before a second fix attempt. Never stack speculative fixes: revert one that didn't fix it
   before trying the next. The regression test asserts the property that was reported, not the

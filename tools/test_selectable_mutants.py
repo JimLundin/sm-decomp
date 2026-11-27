@@ -20,7 +20,7 @@ from test_check_mutants import outcome
 
 def change(source: bytes, ordinal: int, before: str, after: str) -> Replacement:
     fault = Fault(
-        str(ordinal), "test", "test.rs", before, after, "case", 1, "field"
+        str(ordinal), "test", "test.rs", before, after, "case"
     )
     return Replacement(
         ordinal,
@@ -86,8 +86,6 @@ fn main() { println!("{}", outer(3)); }
             "old",
             "new",
             case,
-            3,
-            "audio.reply0",
         )
         for edit_at in (1, 2, 3):
             with self.subTest(edit_at=edit_at), tempfile.TemporaryDirectory() as directory:
@@ -124,8 +122,6 @@ fn main() { println!("{}", outer(3)); }
                 "old",
                 "new",
                 case,
-                3,
-                "audio.reply0",
                 name,
             )
             for name in ("first", "second")

@@ -392,36 +392,27 @@ leftward movement on 1,264 and the first ordinary turn lands on 1,265.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Sixty-two planted faults in the fault manifest, those of the responsibility `played`, stop
-that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
-check at cut 2, and a camera State held rather than carried differs at cut 1 in
-`camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
-cut 17 in `controller.pressed`, checked against the preceding polling NMI from the M0 row's cut 16. A frame on which the doors
-restart the frame count counted on instead differs at cut 238 in `frame-count`. The last room's
-geometry, doors and camera room kept after a passage builds the next differ, played back to back
-from the M0 row's seed, at cut 348 (the next row's cut 3) in `movement.position`. Of the Ceres doors' faults,
-their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
-than before differs at cut 7 in `ceres.0.phase`. Of her frame's, her reaction run on a copy, so
-she keeps the State her moves started from, differs at cut 1 in `movement.pose`, and the energy
-the frame before left read one above the frame's, a fall that starts her hurt colours, at cut 1
-in `appearance.hurt-count`. In room 1, the pad's carry dropped from her
-height differs at cut 29 in `movement.position`; the beacon reading the count as the frame
-leaves it differs at cut 7, and reading no fade's steps at cut 257, in `doors.colours.screen`;
-and a frame whose work overran counted as finished differs at cut 253 in `finished-frames`. The
-beacon reading the HUD's count instead holds all 411 cuts: it reads bits 3 to 5 of the count,
-which the two counts share until a passage restarts the HUD's, and no frame of the overlay
-follows a restart before the escape. In Ridley's room, played from room 5's seed
-(`chain-any-0005-E06B`), the slam's hold a frame longer differs at cut 288 in `ceres.0.wait`;
-the passage into his room taken as finding the music always ready differs at cut 216 in
-`ceres.0.phase`; Ridley read as no passage under way, so waiting from the passage's fade in, at cut 282 in
-`ridley.phase`; his room's colours a colour out of place at cut 211, the passage's first cut
-whose work finished after the fetch, in `doors.colours.goal`; and the HUD meeting Ridley in
-Norfair rather than in Ceres at cut 211 in `hud.explored`. Played from room 6's seed, the baby's
-colour sets not shown differ at cut 151 in `doors.colours.screen` (its first set, at 145, holds
-the colours the row holds), the random number not drawn as the frame's work begins at cut 1
-in `random`, the camera reading her as going backwards by the push alone, the leap left out,
-at cut 621 in `camera.view.x.fraction`, and jump fed to her as held while she leaps dashing,
-which keeps jump held through her let-go, so at cut 728 she takes the striding jump, in `movement.pose`.
+The planted faults of the responsibility `played` stop that run, or the run of another Ceres row
+from its seed. A pad one frame stale fails the runner's pad alignment check. The others are a
+camera State held rather than carried; every button held at the seed taken as newly pressed,
+checked against the preceding polling NMI; a frame on which the doors restart the frame count
+counted on instead; and the last room's geometry, doors and camera room kept after a passage
+builds the next, played back to back from the M0 row's seed. Of the Ceres doors' faults, their
+State is held rather than carried, or they read her position after her moves rather than before.
+Of her frame's, her reaction runs on a copy, so she keeps the State her moves started from, or
+the energy the frame before left reads one above the frame's, a fall that starts her hurt
+colours. In room 1, the pad's carry drops from her height, the beacon reads the count as the
+frame leaves it or reads no fade's steps, and a frame whose work overran is counted as finished.
+The beacon reading the HUD's count instead holds all 411 cuts: it reads bits 3 to 5 of the
+count, which the two counts share until a passage restarts the HUD's, and no frame of the
+overlay follows a restart before the escape. In Ridley's room, played from room 5's seed
+(`chain-any-0005-E06B`), the faults hold the slam a frame longer, take the passage into his room
+as finding the music always ready, read Ridley as under no passage and so waiting from the
+passage's fade in, put his room's colours a colour out of place, and have the HUD meet Ridley in
+Norfair rather than in Ceres. Played from room 6's seed, they leave the baby's colour sets
+unshown, leave the random number undrawn as the frame's work begins, have the camera read her as
+going backwards by the push alone with the leap left out, and feed jump to her as held while she
+leaps dashing. That keeps jump held through her let-go, so she takes the striding jump.
 
 The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
 motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play; the door of
@@ -637,12 +628,15 @@ The gain is 13,321 cuts. The [per-case transition](../scenarios/replay/held-stat
 records both null counts for the former and current comparisons. Earlier replay figures remain
 historical evidence.
 
-[`tools/mutants.toml`](../tools/mutants.toml) pins one production wiring fault per supported
-responsibility to its exact recorded Difference cut and field. CI builds one
+[`tools/mutants.toml`](../tools/mutants.toml) plants at least one production wiring fault per
+supported responsibility in a case that witnesses it. CI builds one
 selectable replay executable for the full manifest. Each case must first pass. The checker runs
-each fault in its own process, verifies its recorded stop, and requires a fresh
-fault-free process to reproduce the complete clean receipt, including its digest and
-counts. The [fault checker](BUILDING.md#run-the-replay-faults) prints the hashes of all
+each fault in its own process. The fault is killed when its case reports a difference, a data
+failure or a failed checkpoint continuation, or when the replay crashes. It survives when its
+case passes, and a surviving fault fails the check, as does an Unsupported result. The manifest
+does not say where a fault is caught, so a fault caught at another cut or field than before
+still counts. A fresh fault-free process must then reproduce the complete clean receipt,
+including its digest and counts. The [fault checker](BUILDING.md#run-the-replay-faults) prints the hashes of all
 three receipts. Each fault's `before` text must match its
 file exactly once, so a refactor that moves or duplicates a patched line fails Quality's
 fault-runner test and local manifest validation before any fault build. Full pull-request, scheduled and manual CI
@@ -661,7 +655,7 @@ cases remain held boundaries and require no fault credit until they have reviewe
 
 Run `python3 tools/check_mutants.py rule-coverage LOG...` to see which catalogue rules a
 reviewed run detected. The report reads the entry IDs in the behaviour specs. Each credited
-rule names the fault whose log records its expected cut and field and a restored pass. Rules
+rule names the fault whose log records its kill and a restored pass. Rules
 without that evidence appear as `unknown`. Omitting the logs lists the whole catalogue with
 unknown coverage. A fault without a rule assignment contributes only to the unassigned count.
 

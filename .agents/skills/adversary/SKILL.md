@@ -55,7 +55,7 @@ Your brief names the import and integration branches, the blind review, and the 
 4. **The replay is honest.** Trace each case's seed, causal inputs, production entry and independent
    expectations. State carries between cuts; missing data fails; borrowed producers and exclusions
    limit the claim explicitly. Re-run the indexed case and confirm the declared one-line fault
-   fails at the expected cut and field. Model faults require role-authorised tooling.
+   fails it. Model faults require role-authorised tooling.
 5. **The baseline holds.** Compare the complete indexed outcomes, observation digests, counts,
    null evidence and continuations with `main`. A supported case becoming Unsupported or an
    earlier divergence is a regression. Review any explicit transition atom by atom; a held

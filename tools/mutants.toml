@@ -1,4 +1,4 @@
-# Production wiring faults must fail at the recorded cut and field.
+# A production wiring fault is killed when its case reports a difference or data failure, or crashes.
 # Each supported replay responsibility has a distinct semantic fault.
 
 
@@ -19,8 +19,6 @@ after = '''let again = samus.moves(admitted, world, rules).map_err(ProductionFau
         .map_err(ProductionFault::Movement)?;
     Ok(samus.react(moves, None))'''
 case = "movement/W15"
-cut = 815
-field = "movement.position.x"
 
 [[fault]]
 name = "weapons-cannon-disabled"
@@ -31,8 +29,6 @@ before = '''let events = beam::update(state, input, content.model(), rules, &mut
 after = '''let mut admitted = input.clone(); admitted.cannon.shoot = false;
     let events = beam::update(state, &admitted, content.model(), rules, &mut candidate_world);'''
 case = "weapons-contact/M0-four-searches"
-cut = 157
-field = "weapons.state"
 
 [[fault]]
 name = "weapons-flying-picture-next-slot"
@@ -42,8 +38,6 @@ before = '''let first_sprite = batch.sprites.0;'''
 after = '''if !flying.is_empty() { batch.sprites.0 = batch.sprites.0.wrapping_add(1); }
     let first_sprite = batch.sprites.0;'''
 case = "weapons-contact/M0-power-shot-drawing"
-cut = 157
-field = "weapons.oam-insertion"
 
 [[fault]]
 name = "contact-disabled"
@@ -53,8 +47,6 @@ file = "crates/game/src/production/weapons.rs"
 before = '''opportunity.conditions,'''
 after = '''enemy_interactions::ContactConditions { interactions_enabled: false, ..opportunity.conditions },'''
 case = "weapons-contact/M0-four-searches"
-cut = 160
-field = "contact.consumed-markers"
 
 [[fault]]
 name = "camera-follow-omitted"
@@ -64,8 +56,6 @@ file = "crates/game/src/production/camera_semantic.rs"
 before = '''*camera = camera.step(rules, frame);'''
 after = '''let _ = (camera, rules, frame);'''
 case = "camera/unchanged-centre-follow"
-cut = 1216
-field = "camera.view.x.pixel"
 
 [[fault]]
 name = "hud-clock-offset"
@@ -75,8 +65,6 @@ file = "crates/game/src/production/entries.rs"
 before = '''.frame_of_play(rules, pictures, inputs)'''
 after = '''.frame_of_play(rules, pictures, &interface_hud::FrameInputs { frame: interface_hud::FrameCount(inputs.frame.0.wrapping_add(8)), ..*inputs })'''
 case = "hud/stationary-map-blink"
-cut = 8
-field = "hud.grid"
 
 [[fault]]
 name = "appearance-double-update"
@@ -88,8 +76,6 @@ after = '''let (first, _) = samus_appearance::update(*state, frame, content, rul
         .map_err(|MissingClip(figure)| ClipFault::Missing(figure))?;
     let (after, outputs) = samus_appearance::update(first, frame, content, rules)'''
 case = "appearance/standing-clip"
-cut = 435
-field = "appearance.time-left"
 
 [[fault]]
 name = "progress-reports-omitted"
@@ -99,8 +85,6 @@ file = "crates/game/src/production/entries.rs"
 before = '''state.apply(rules, reports);'''
 after = '''let _ = reports; state.apply(rules, &[]);'''
 case = "progress/planet-awake-recorded"
-cut = 152
-field = "progress.events.PlanetAwake"
 
 [[fault]]
 name = "ceres-double-run"
@@ -111,8 +95,6 @@ before = '''let output = state.run(inputs, rules);'''
 after = '''let first = state.run(inputs, rules);
             let output = first.door.run(inputs, rules);'''
 case = "ceres/door-closes-after-departure"
-cut = 7
-field = "ceres.wait"
 
 [[fault]]
 name = "audio-music-turns-dropped"
@@ -122,8 +104,6 @@ file = "crates/game/src/production/audio.rs"
 before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
 after = "audio_transport::frame::play(state, &content.graph, offers, audio_transport::frame::FrameCadence { music: audio_transport::frame::TurnCount::ZERO, ..cadence });"
 case = "audio/native-control"
-cut = 0
-field = "track0.note"
 
 [[fault]]
 name = "audio-effect-turns-after-service"
@@ -133,8 +113,6 @@ file = "crates/game/src/production/audio.rs"
 before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
 after = "let cadence = match cadence.effects { audio_transport::frame::EffectCadence::AroundService { before, after } => audio_transport::frame::FrameCadence { effects: audio_transport::frame::EffectCadence::AroundService { before: audio_transport::frame::TurnCount::ZERO, after: audio_transport::frame::TurnCount::new(before.get() + after.get()).unwrap_or(after) }, ..cadence }, audio_transport::frame::EffectCadence::WithoutService(_) => cadence }; audio_transport::frame::play(state, &content.graph, offers, cadence);"
 case = "audio/native-control"
-cut = 11
-field = "audio.reply3"
 
 [[fault]]
 name = "movement-inside-cells-omitted"
@@ -146,8 +124,6 @@ after = '''let mut outcome = samus.react(moves, None);
     outcome.inside.clear();
     Ok(outcome)'''
 case = "movement-native-occupied-first-search"
-cut = 9233
-field = "movement.inside.count"
 
 [[fault]]
 name = "movement-required-enemy-input-omitted"
@@ -156,8 +132,6 @@ file = "crates/game/src/production/world.rs"
 before = "&self.enemies"
 after = "&[]"
 case = "movement-native-enemy-stop-terrain-absence"
-cut = 9233
-field = "movement.reached.complete.count"
 
 [[fault]]
 name = "connected-playhead-reseed"
@@ -168,8 +142,6 @@ before = '''        let playing = self.playing.0;'''
 after = '''        self.appearance.0.animation.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
         let playing = self.playing.0;'''
 case = "connected-ordinary/carried-running-camera"
-cut = 7
-field = "appearance.step"
 
 [[fault]]
 name = "early-map-reads-end-position"
@@ -178,8 +150,6 @@ file = "crates/game/src/production/connected.rs"
 before = '''owner.play(outcome.position_after_moves, premises)'''
 after = '''owner.play(samus.position, premises)'''
 case = "connected-ordinary/early-mini-map"
-cut = 79
-field = "movement.position.x"
 
 [[fault]]
 name = "connected-wrap-omitted"
@@ -189,8 +159,6 @@ before = '''        let mut camera = self.camera.0;'''
 after = '''        if appearance.animation.playhead.step < self.appearance.0.animation.playhead.step { appearance.animation.playhead.step = self.appearance.0.animation.playhead.step; }
         let mut camera = self.camera.0;'''
 case = "connected-ordinary/carried-running-camera"
-cut = 14
-field = "appearance.step"
 
 [[fault]]
 name = "connected-camera-omitted"
@@ -200,8 +168,6 @@ file = "crates/game/src/production/camera_semantic.rs"
 before = '''    step(camera, rules, &frame);'''
 after = '''    let _ = (camera, rules, &frame);'''
 case = "connected-ordinary/carried-running-camera"
-cut = 7
-field = "camera.view.x.fraction"
 
 [[fault]]
 name = "connected-motion-placement-omitted"
@@ -212,8 +178,6 @@ before = '''        if guard.rejected.get() {'''
 after = '''        samus.position = previous.position;
         if guard.rejected.get() {'''
 case = "connected-ordinary/carried-running-camera"
-cut = 7
-field = "movement.state.complete"
 
 [[fault]]
 name = "connected-playing-publication-omitted"
@@ -222,8 +186,6 @@ file = "crates/game/src/production/connected.rs"
 before = '''        self.playing = Model(selected);'''
 after = '''        let _ = selected;'''
 case = "connected-ordinary/carried-running-camera"
-cut = 7
-field = "appearance.playing"
 
 [[fault]]
 name = "connected-camera-view-reset"
@@ -233,8 +195,6 @@ before = '''    step(camera, rules, &frame);'''
 after = '''    *camera = camera.with_view(world_camera::ViewPosition(types::Pair { x: types::ZERO, y: types::ZERO }));
     step(camera, rules, &frame);'''
 case = "connected-ordinary/carried-running-camera"
-cut = 7
-field = "camera.view.x.fraction"
 
 [[fault]]
 name = "connected-stale-run"
@@ -244,8 +204,6 @@ file = "crates/game/src/production/connected.rs"
 before = "                pad: input.held,"
 after = "                pad: types::Buttons(input.held.0 | types::button::RUN.0),"
 case = "connected-ordinary/run-release-floor-aim"
-cut = 141
-field = "movement.state.complete"
 
 [[fault]]
 name = "sender-offer-demo-bypassed"
@@ -255,8 +213,6 @@ file = "crates/game/src/production/audio.rs"
 before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
 after = "let offers: Vec<_> = offers.iter().map(|offer| audio_transport::Offer { permission: if offer.permission == audio_transport::OfferPermission::Demo { audio_transport::OfferPermission::Enabled } else { offer.permission }, ..*offer }).collect(); audio_transport::frame::play(state, &content.graph, &offers, cadence);"
 case = "sender-offer/deny-demo"
-cut = 0
-field = "sender.queue"
 
 [[fault]]
 name = "live-touchdown-contact-omission-57"
@@ -266,8 +222,6 @@ file = "crates/game/src/production/sender.rs"
 before = "permission: current.transport_permission(),"
 after = "permission: if current.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { current.transport_permission() },"
 case = "movement/soft-touchdown-57"
-cut = 57
-field = "sender.queue"
 
 [[fault]]
 name = "live-touchdown-contact-omission-124"
@@ -277,8 +231,6 @@ file = "crates/game/src/production/sender.rs"
 before = "permission: current.transport_permission(),"
 after = "permission: if current.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { current.transport_permission() },"
 case = "movement/soft-touchdown-124"
-cut = 124
-field = "sender.queue"
 
 [[fault]]
 name = "health-tail-impact-not-delivered"
@@ -288,8 +240,6 @@ file = "crates/game/src/production/health_tail.rs"
 before = '''let health = self.health.0.play_frame(frame.tail, &rules);'''
 after = '''let health = self.health.0.play_frame(Impact::Absent, &rules);'''
 case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "health.protection"
 
 [[fault]]
 name = "health-tail-stale-history-commit"
@@ -298,8 +248,6 @@ file = "crates/game/src/production/health_tail.rs"
 before = '''self.drawn_energy = energy;'''
 after = '''let _ = energy;'''
 case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "appearance.drawing.energy"
 
 [[fault]]
 name = "health-tail-gauge-reads-energy-before-the-frame"
@@ -309,8 +257,6 @@ file = "crates/game/src/production/health_tail.rs"
 before = '''let hud = self.hud_frame(content, &frame.hud, energy)?;'''
 after = '''let hud = self.hud_frame(content, &frame.hud, self.health.0.energy.whole.get())?;'''
 case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "hud.gauge.shown"
 
 [[fault]]
 name = "health-tail-warning-request-dropped"
@@ -320,8 +266,6 @@ file = "crates/game/src/production/health_tail.rs"
 before = '''warning_sound: health.warning_sound,'''
 after = '''warning_sound: WarningSound::None,'''
 case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "health.warning.request"
 
 [[fault]]
 name = "played-pad-one-frame-stale"
@@ -330,8 +274,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "controller = controller.read(current.pad.0, polled(&current));"
 after = "controller = controller.read(previous.pad.0, polled(&previous));"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 2
-field = "played pad alignment"
 
 [[fault]]
 name = "played-seed-buttons-pressed"
@@ -340,8 +282,6 @@ file = "crates/verify/src/replay/played/platform.rs"
 before = "pressed: word(wram, source::JOYPAD1_NEWKEYS)?,"
 after = "pressed: word(wram, source::JOYPAD1_LASTKEYS)?,"
 case = "played chain-any-0003-DFD7 16 41"
-cut = 17
-field = "controller.pressed"
 
 [[fault]]
 name = "played-camera-state-held"
@@ -351,8 +291,6 @@ file = "crates/game/src/production/played.rs"
 before = "self.camera = Model(camera);"
 after = "self.camera = Model(self.camera.0);"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "camera.view.x.fraction"
 
 [[fault]]
 name = "played-room-tileset-colours-shifted"
@@ -361,8 +299,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "for (goal, colour) in goal.iter_mut().zip(colours) {"
 after = "for (goal, colour) in goal.iter_mut().zip(colours.skip(1)) {"
 case = "played chain-any-0003-DFD7 0 257"
-cut = 257
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-beam-not-shown"
@@ -371,8 +307,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "set(&mut screen, SpriteRow::BEAM, 0, &beam.0)?;"
 after = "set(&mut goal, SpriteRow::BEAM, 0, &beam.0)?;"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-contents-flash-is-common"
@@ -381,8 +315,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "set(&mut goal, SpriteRow::FLASH, 0, &rooms.actors.flash.0)?;"
 after = "set(&mut goal, SpriteRow::FLASH, 0, &rooms.actors.common.0)?;"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-common-is-flash"
@@ -391,8 +323,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "set(&mut goal, SpriteRow::COMMON, 0, &rooms.actors.common.0)?;"
 after = "set(&mut goal, SpriteRow::COMMON, 0, &rooms.actors.flash.0)?;"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-species-wrong-row"
@@ -401,8 +331,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "set(&mut goal, loaded.row, 0, &own.0)?;"
 after = "set(&mut goal, SpriteRow::COMMON, 0, &own.0)?;"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-doors-escape-set"
@@ -412,8 +340,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "ColourSet::Calm => &actors.ceres_doors.calm,"
 after = "ColourSet::Calm => &actors.ceres_doors.escape,"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-suit-varia"
@@ -422,8 +348,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "&suits.power"
 after = "&suits.varia"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-contents-fetch-lag-read"
@@ -432,8 +356,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "work_done: platform.ready || fetching_contents(doors),"
 after = "work_done: platform.ready,"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 300
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-health-tail-lands"
@@ -443,8 +365,6 @@ file = "crates/game/src/production/played/health.rs"
 before = "None => samus_health::Impact::Absent,"
 after = "None => samus_health::Impact::EligibleHit { worth: content.tail_worth },"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "appearance.hurt-count"
 
 [[fault]]
 name = "played-tail-hit-worth-nothing"
@@ -454,8 +374,6 @@ file = "crates/game/src/production/played/health.rs"
 before = "worth: content.tail_worth,"
 after = "worth: samus_health::WholeEnergy::ZERO,"
 case = "played chain-any-0006-E0B5 0 620"
-cut = 609
-field = "health.energy.whole"
 
 [[fault]]
 name = "played-hud-state-held"
@@ -464,8 +382,6 @@ file = "crates/game/src/production/played.rs"
 before = "self.hud = Model(hud_state);"
 after = "self.hud = Model(self.hud.0.clone());"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 8
-field = "hud.map-window"
 
 [[fault]]
 name = "played-hud-frame-count-late"
@@ -475,8 +391,6 @@ file = "crates/game/src/production/played/hud.rs"
 before = "frame: state.frame.count,"
 after = "frame: interface_hud::FrameCount(state.frame.count.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 7
-field = "hud.map-window"
 
 [[fault]]
 name = "played-hud-energy-not-health"
@@ -486,8 +400,6 @@ file = "crates/game/src/production/played/hud.rs"
 before = "now: health.energy.whole.get(),"
 after = "now: health.energy.whole.get().wrapping_sub(1),"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "hud.status-bar"
 
 [[fault]]
 name = "played-ceres-doors-held"
@@ -499,8 +411,6 @@ before = '''fn ran(&mut self, enemies: &Enemies) {
 after = '''fn ran(&mut self, enemies: &Enemies) {
         self.doors = self.doors.clone();'''
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "ceres.0.wait"
 
 [[fault]]
 name = "played-ceres-doors-read-her-after-moves"
@@ -520,8 +430,6 @@ after = '''            self.her_frame(inputs, content, rules, |after_moves| {
                 Ok(between)
             })'''
 case = "played chain-any-0003-DFD7 0 41"
-cut = 7
-field = "ceres.0.phase"
 
 # In flight the adapter drops his upward speed before each run: the lift-off at 879 leaves
 # -352/256 px a run, so his first rise, at 880, moves him from the wrong speed.
@@ -533,8 +441,6 @@ file = "crates/game/src/production/played/ridley.rs"
 before = "    let run = ridley.run(\n"
 after = "    let ridley = if matches!(ridley.phase, RidleyPhase::InFlight(_)) { CeresRidley { speed: types::Pair { x: ridley.speed.x, y: core::num::Wrapping(0) }, ..ridley } } else { ridley };\n    let run = ridley.run(\n"
 case = "played chain-any-0006-E0B5 0 896"
-cut = 880
-field = "ridley.position"
 
 [[fault]]
 name = "played-frame-count-not-restarted"
@@ -544,8 +450,6 @@ file = "crates/game/src/production/played/frame.rs"
 before = "Finishing::Restarts(_) => FrameCount(1),"
 after = "Finishing::Restarts(_) => FrameCount(frame.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 344"
-cut = 238
-field = "frame-count"
 
 [[fault]]
 name = "played-room-entered-keeps-the-last"
@@ -554,8 +458,6 @@ file = "crates/game/src/production/played/passage.rs"
 before = "self.room = room;"
 after = "drop(room);"
 case = "played chain-any-0003-DFD7 0 786"
-cut = 348
-field = "movement.position"
 
 [[fault]]
 name = "played-pad-carry-dropped"
@@ -565,8 +467,6 @@ file = "crates/game/src/production/shaft.rs"
 before = "samus.position.y = types::fixed(step.her_y, samus.position.y.sub());"
 after = "drop(step.her_y);"
 case = "played chain-any-0001-DF45 0 41"
-cut = 29
-field = "movement.position"
 
 [[fault]]
 name = "played-beacon-reads-the-count-after-the-frame"
@@ -576,8 +476,6 @@ file = "crates/game/src/production/played/shaft.rs"
 before = "self.frame.finished_frames,"
 after = "self.frame.finished_frames.wrapping_add(1),"
 case = "played chain-any-0001-DF45 0 41"
-cut = 7
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-beacon-ignores-the-fade"
@@ -587,8 +485,6 @@ file = "crates/game/src/production/played/shaft.rs"
 before = "self.passage.doors,"
 after = "world_doors::Doors::Play,"
 case = "played chain-any-0001-DF45 0 300"
-cut = 257
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-finished-frames-count-overruns"
@@ -597,8 +493,6 @@ file = "crates/game/src/production/played/frame.rs"
 before = "Finishing::Overrun => count,"
 after = "Finishing::Overrun => count.wrapping_add(1),"
 case = "played chain-any-0001-DF45 0 300"
-cut = 253
-field = "finished-frames"
 
 [[fault]]
 name = "played-movement-choices-forgotten"
@@ -608,8 +502,6 @@ before = "let moves = samus"
 after = '''samus.choices = samus_movement::Choices::starting_in(samus.pose);
         let moves = samus'''
 case = "played chain-any-0002-DF8D 0 30"
-cut = 26
-field = "movement.choices"
 
 [[fault]]
 name = "played-reaction-state-dropped"
@@ -622,8 +514,6 @@ after = '''let outcome = {
             dropped.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0)
         };'''
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "movement.pose"
 
 [[fault]]
 name = "played-hurt-previous-energy-higher"
@@ -632,8 +522,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = "energy: self.health.0.energy.whole.get(),"
 after = "energy: self.health.0.energy.whole.get().wrapping_add(1),"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "appearance.hurt-count"
 
 [[fault]]
 name = "played-tail-hit-not-reacted"
@@ -642,8 +530,6 @@ file = "crates/game/src/production/played.rs"
 before = "            hit,"
 after = "            hit: None,"
 case = "played chain-any-0006-E0B5 0 620"
-cut = 609
-field = "movement.pose"
 
 [[fault]]
 name = "played-tail-hit-kept-from-health"
@@ -653,8 +539,6 @@ file = "crates/game/src/production/played.rs"
 before = "played: (enemies, self.health_frame(hit, content, rules)),"
 after = "played: (enemies, self.health_frame(None, content, rules)),"
 case = "played chain-any-0006-E0B5 0 620"
-cut = 609
-field = "health.energy.whole"
 
 [[fault]]
 name = "played-tail-not-compared"
@@ -663,8 +547,6 @@ file = "crates/verify/src/replay/played/ridley.rs"
 before = "let tail = ridley::modelled_tail_segments(ridley);"
 after = "let tail = vec![None; 7];"
 case = "played chain-any-0006-E0B5 0 620"
-cut = 577
-field = "ridley.tail.0"
 
 [[fault]]
 name = "played-ridley-slam-hold-one-longer"
@@ -674,8 +556,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "ceres: boss_ceres_ridley::Rules::default(),"
 after = "ceres: boss_ceres_ridley::Rules { slam: boss_ceres_ridley::Wait::new(3).unwrap_or(boss_ceres_ridley::Rules::default().slam), ..boss_ceres_ridley::Rules::default() },"
 case = "played chain-any-0005-E06B 0 320"
-cut = 288
-field = "ceres.0.wait"
 
 [[fault]]
 name = "played-ridley-waits-in-the-passage"
@@ -684,8 +564,6 @@ file = "crates/game/src/production/played/ridley.rs"
 before = "station::Running::Passage => (true, None),"
 after = "station::Running::Passage => (false, None),"
 case = "played chain-any-0005-E06B 0 320"
-cut = 282
-field = "ridley.phase"
 
 [[fault]]
 name = "played-ridley-room-colours-shifted"
@@ -694,8 +572,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "GoalColours::RoomContent => set(goal, row, 0, own)?,"
 after = "GoalColours::RoomContent => set(goal, row, 1, own)?,"
 case = "played chain-any-0005-E06B 0 320"
-cut = 211
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-ridley-met-as-another-boss"
@@ -705,8 +581,6 @@ file = "crates/game/src/production/ridley.rs"
 before = "Boss::CeresRidley => interface_hud::Boss::RidleyInCeres,"
 after = "Boss::CeresRidley => interface_hud::Boss::RidleyInNorfair,"
 case = "played chain-any-0005-E06B 0 320"
-cut = 211
-field = "hud.explored"
 
 [[fault]]
 name = "played-baby-glow-skipped"
@@ -715,8 +589,6 @@ file = "crates/game/src/production/played/ridley.rs"
 before = "if let Some(colours) = run.colours {"
 after = "if let Some(colours) = run.colours.filter(|_| false) {"
 case = "played chain-any-0006-E0B5 0 300"
-cut = 151
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-random-not-drawn"
@@ -726,8 +598,6 @@ file = "crates/game/src/production/played/frame.rs"
 before = "if passing.work_begun {"
 after = "if false {"
 case = "played chain-any-0006-E0B5 0 300"
-cut = 1
-field = "random"
 
 [[fault]]
 name = "played-music-always-ready"
@@ -736,8 +606,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "music_ready: music_ready(&previous.wram)?,"
 after = "music_ready: true,"
 case = "played chain-any-0005-E06B 0 320"
-cut = 216
-field = "ceres.0.phase"
 
 [[fault]]
 name = "played-power-on-upload-end-early"
@@ -747,8 +615,6 @@ file = "crates/verify/src/replay/played/power_on.rs"
 before = "let ended = matches!(before, front_end::State::PowerOn(_)) && upload_ended(&record.apu_log);"
 after = "let ended = cut == 252;"
 case = "played any-power-on 0 567"
-cut = 255
-field = "power-on.finished-frames"
 
 [[fault]]
 name = "played-power-on-hold-short"
@@ -758,8 +624,6 @@ file = "crates/verify/src/replay/played/power_on.rs"
 before = "rules: &RULES,"
 after = "rules: &Rules { power_on: screens_boot::Rules { hold: screens_boot::HoldFrames(119), ..screens_boot::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
-cut = 33
-field = "power-on.hold"
 
 [[fault]]
 name = "played-title-fast-step-3"
@@ -768,8 +632,6 @@ file = "crates/verify/src/replay/played/power_on.rs"
 before = "rules: &RULES,"
 after = "rules: &Rules { title: screens_title::Rules { fast_step: screens_title::FastStep::new(3).unwrap(), ..screens_title::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
-cut = 308
-field = "front-end.screen"
 
 [[fault]]
 name = "played-file-select-menu-pace-3"
@@ -779,8 +641,6 @@ file = "crates/verify/src/replay/played/power_on.rs"
 before = "rules: &RULES,"
 after = "rules: &Rules { file_select: screens_file_select::Rules { menu_pace: types::file_select::MenuPace::new(3).unwrap(), ..screens_file_select::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
-cut = 403
-field = "front-end.screen"
 
 [[fault]]
 name = "played-options-up-moves-down"
@@ -790,8 +650,6 @@ file = "crates/game/src/production/played/front_end/options.rs"
 before = "Button::Up => Some(MenuAction::Up),"
 after = "Button::Up => Some(MenuAction::Down),"
 case = "played any-power-on 0 567"
-cut = 488
-field = "options.cursor"
 
 [[fault]]
 name = "played-options-moonwalk-left-off"
@@ -801,8 +659,6 @@ file = "crates/game/src/production/played/front_end/options.rs"
 before = "screen: Screen::Options(Options { menu, ..options }),"
 after = "screen: Screen::Options(Options { menu: { let mut kept = menu; kept.settings = options.menu.settings; kept }, ..options }),"
 case = "played any-power-on 0 567"
-cut = 519
-field = "options.moonwalk"
 
 [[fault]]
 name = "played-file-select-draws-after-going-on"
@@ -812,8 +668,6 @@ file = "crates/game/src/production/played/front_end/file_select.rs"
 before = "(_, FrameOfWork::GoesOn) => (0, report.frame),"
 after = "(_, FrameOfWork::GoesOn) => (finished, report.frame),"
 case = "played any-power-on 0 567"
-cut = 395
-field = "front-end.random"
 
 [[fault]]
 name = "played-file-select-choice-sound-2b"
@@ -822,8 +676,6 @@ file = "crates/verify/src/replay/played/screens.rs"
 before = "Sound::FileSelect(FileSelectSound::ChoiceMade) => code(LIBRARY_ONE.tag, 0x2A),"
 after = "Sound::FileSelect(FileSelectSound::ChoiceMade) => code(LIBRARY_ONE.tag, 0x2B),"
 case = "played any-power-on 0 567"
-cut = 433
-field = "front-end.sounds"
 
 [[fault]]
 name = "played-arrival-fade-rhythm-off-by-one"
@@ -833,8 +685,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "arrival: screens_arrival::Rules::REFERENCE,"
 after = "arrival: screens_arrival::Rules { rhythm: types::arrival::FadeFrames::NONE },"
 case = "played any-ceres-arrival 0 222"
-cut = 192
-field = "arrival.fade-count"
 
 [[fault]]
 name = "played-ridley-eye-not-shown"
@@ -844,8 +694,6 @@ file = "crates/game/src/production/played/ridley.rs"
 before = "ridley::show_eye(colours, palette);"
 after = "let _ = colours;"
 case = "played chain-any-0006-E0B5 0 538"
-cut = 514
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-flight-lag-stepped"
@@ -855,8 +703,6 @@ before = "let FrameEnd::Finished(music) = frame else {"
 after = '''let music = if let FrameEnd::Finished(music) = frame { music } else { MusicQueue::Clear };
     if false {'''
 case = "played any-fly-to-ceres 0 802"
-cut = 1
-field = "flight.stage"
 
 [[fault]]
 name = "played-flight-music-reversed"
@@ -866,8 +712,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "Some(step(state, scene, music, rules))"
 after = "let mut report = step(state, scene, music, rules); report.music.reverse(); Some(report)"
 case = "played any-fly-to-ceres 0 802"
-cut = 32
-field = "flight.music"
 
 [[fault]]
 name = "played-flight-arrival-waits-for-finished"
@@ -877,8 +721,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "Stage::Flight(flight) if flight.stage == FlightStage::Done => {"
 after = "Stage::Flight(flight) if flight.stage == FlightStage::Done && matches!(end, FrameEnd::Finished(_)) => {"
 case = "played any-fly-to-ceres 0 994"
-cut = 803
-field = "flight.active"
 
 [[fault]]
 name = "played-intro-press-dropped"
@@ -888,8 +730,6 @@ file = "crates/verify/src/replay/played/intro.rs"
 before = "pressed: controller.pressed != 0,"
 after = "pressed: false,"
 case = "played any-intro-6012 1 1499"
-cut = 1186
-field = "intro.stage"
 
 [[fault]]
 name = "played-doors-countdown-always-begun"
@@ -898,8 +738,6 @@ file = "crates/game/src/production/played.rs"
 before = "                hud::countdown_begun(&self.hud.0),"
 after = "                true,"
 case = "played chain-any-0003-DFD7 0 300"
-cut = 183
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-countdown-start-every-frame"
@@ -913,8 +751,6 @@ before = """let start = if warning::selected(&self.state.station) {
         };"""
 after = "let start = interface_hud::StartTime::new(1, 0);"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "hud.countdown.begun"
 
 [[fault]]
 name = "played-countdown-expiry-inverted"
@@ -924,8 +760,6 @@ file = "crates/verify/src/replay/played/hud.rs"
 before = "expiry(answer == CountdownExpiry::Expired)"
 after = "expiry(answer != CountdownExpiry::Expired)"
 case = "played chain-any-0003-DFD7 0 41"
-cut = 1
-field = "hud.countdown.expiry"
 
 [[fault]]
 name = "played-camera-backwards-push-alone"
@@ -934,8 +768,6 @@ file = "crates/game/src/production/camera_semantic.rs"
 before = "!= (current.pose.action == types::Action::Leaping))"
 after = "&& true)"
 case = "played chain-any-0006-E0B5 0 727"
-cut = 621
-field = "camera.view.x.fraction"
 
 [[fault]]
 name = "played-leap-letgo-jump-held"
@@ -944,8 +776,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = "pad: inputs.held,"
 after = "pad: if samus.run.dashing == Dashing::On && samus.pose.action == types::Action::Leaping { types::Buttons(inputs.held.0 | types::button::JUMP.0) } else { inputs.held },"
 case = "played chain-any-0006-E0B5 0 867"
-cut = 728
-field = "movement.pose"
 
 [[fault]]
 name = "played-quake-sign-flipped"
@@ -955,8 +785,6 @@ file = "crates/game/src/production/played/quake.rs"
 before = "Outcome::Updated(effects) => Ok(effects),"
 after = "Outcome::Updated(effects) => Ok(Effects { front: world_quake::Offset { x: -effects.front.x, y: -effects.front.y }, back: world_quake::Offset { x: -effects.back.x, y: -effects.back.y }, ..effects }),"
 case = "played chain-any-0007-E06B 0 258"
-cut = 1
-field = "quake.front"
 
 [[fault]]
 name = "played-quake-update-before-doors"
@@ -971,8 +799,6 @@ after = '''        let mut earlier = self.quake.0;
         }
         quake = earlier;'''
 case = "played chain-any-0007-E06B 0 258"
-cut = 2
-field = "quake.remaining"
 
 [[fault]]
 name = "played-quake-phase-held-while-shaking"
@@ -990,8 +816,6 @@ after = '''    let held = quake.shake.map(|_| quake.phase);
             Ok(effects)
         }'''
 case = "played chain-any-0007-E06B 0 258"
-cut = 1
-field = "quake.phase"
 
 [[fault]]
 name = "played-doors-read-no-shake-left"
@@ -1001,8 +825,6 @@ file = "crates/game/src/production/played/ceres_doors.rs"
 before = "shake_frames_left: quake.remaining().0,"
 after = "shake_frames_left: 0,"
 case = "played chain-any-0007-E06B 0 258"
-cut = 1
-field = "quake.remaining"
 
 [[fault]]
 name = "played-countdown-finished-frames-ahead"
@@ -1012,8 +834,6 @@ file = "crates/game/src/production/played/hud.rs"
 before = "finished: FinishedFrames(state.frame.finished_frames),"
 after = "finished: FinishedFrames(state.frame.finished_frames.wrapping_add(1)),"
 case = "played chain-any-0007-E06B 0 258"
-cut = 2
-field = "hud.countdown.time"
 
 [[fault]]
 name = "played-return-fetch-installs-during-graphics"
@@ -1022,8 +842,6 @@ file = "crates/game/src/production/played/passage.rs"
 before = "if loaded.awaiting_actors && passing.actor_fetch == ActorFetch::Place {"
 after = "if loaded.awaiting_actors && !matches!(passing.actor_fetch, ActorFetch::Clearing(_)) {"
 case = "played chain-any-0006-E0B5 1690 1781"
-cut = 1691
-field = "ceres.doors"
 
 [[fault]]
 name = "played-return-passage-drops-carried-position"
@@ -1032,8 +850,6 @@ file = "crates/game/src/production/played.rs"
 before = "        moved.position = her;"
 after = "        let _ = her;"
 case = "played chain-any-0006-E0B5 1698 1781"
-cut = 1699
-field = "movement.position"
 
 [[fault]]
 name = "played-return-countdown-finished-frames-behind"
@@ -1043,8 +859,6 @@ file = "crates/game/src/production/played/hud.rs"
 before = "finished: FinishedFrames(state.frame.finished_frames),"
 after = "finished: FinishedFrames(state.frame.finished_frames.wrapping_sub(1)),"
 case = "played chain-any-0006-E0B5 1776 1781"
-cut = 1777
-field = "hud.countdown.time"
 
 [[fault]]
 name = "played-doors-countdown-dormant-in-passage"
@@ -1053,8 +867,6 @@ file = "crates/game/src/production/played.rs"
 before = "                hud::countdown_begun(&self.hud.0),"
 after = "                false,"
 case = "played chain-any-0007-E06B 0 258"
-cut = 97
-field = "doors.colours.goal"
 
 [[fault]]
 name = "played-sounds-always-sent"
@@ -1063,8 +875,6 @@ file = "crates/verify/src/replay/played.rs"
 before = "sounds_sent: sounds_sent(&previous.wram)?,"
 after = "sounds_sent: sounds_sent(&previous.wram).map(|_| true)?,"
 case = "played chain-any-0008-E021 0 263"
-cut = 105
-field = "doors.colours.screen"
 
 [[fault]]
 name = "played-opening-hud-publishes-after-nineteen-music-waits"
@@ -1073,8 +883,6 @@ file = "crates/game/src/production/played/arrival.rs"
 before = "Self::MusicWaits(Self::MUSIC_WAITS) => Self::Published,"
 after = "Self::MusicWaits(19) => Self::Published,"
 case = "played any-ceres-arrival 0 222"
-cut = 183
-field = "hud.setup-publish"
 
 [[fault]]
 name = "played-opening-hud-uses-a-later-clock"
@@ -1084,8 +892,6 @@ file = "crates/game/src/production/played/arrival.rs"
 before = "                self.frame.count,"
 after = "                interface_hud::FrameCount(self.frame.count.0.wrapping_add(8)),"
 case = "played any-fly-to-ceres 0 1437"
-cut = 987
-field = "hud.map-window"
 
 [[fault]]
 name = "played-opening-hud-has-no-preview"
@@ -1095,8 +901,6 @@ file = "crates/game/src/production/played/arrival.rs"
 before = "                preview,"
 after = "                &[[interface_hud::PreviewCell::Empty; 5]; 3],"
 case = "played any-ceres-arrival 0 222"
-cut = 184
-field = "hud.map-window"
 
 [[fault]]
 name = "intro-drops-zebes-start"
@@ -1108,8 +912,6 @@ after = '''    let mut report = report;
     report.events.retain(|event| *event != screens_intro::IntroEvent::Flashback(FlashbackRequest::StartZebesFight));
     state.intro = next;'''
 case = "intro/flashback-from-page-one"
-cut = 1652
-field = "intro.events"
 
 [[fault]]
 name = "intro-finishes-without-encounter-reply"
@@ -1121,8 +923,6 @@ before = """    let replies = room_play(&room)?;
 after = """    let replies = room_play(&room)?;
     let report = room.finish(FightReply::Fighting, replies.discovery);"""
 case = "intro/flashback-from-page-one"
-cut = 2170
-field = "intro.stage"
 
 [[fault]]
 name = "intro-fight-room-start-delayed"
@@ -1132,8 +932,6 @@ file = "crates/game/src/production/played/intro_rooms.rs"
 before = "if let Some(start) = input.start {"
 after = "if input.finished && let Some(start) = input.start {"
 case = "intro-rooms/fight-first-turn"
-cut = 1651
-field = "intro-room.cell.0"
 
 [[fault]]
 name = "intro-discovery-room-start-delayed"
@@ -1143,8 +941,6 @@ file = "crates/game/src/production/played/intro_rooms.rs"
 before = "if let Some(start) = input.start {"
 after = "if input.finished && let Some(start) = input.start {"
 case = "intro-rooms/discovery-first-turn"
-cut = 1298
-field = "intro-room.width"
 
 [[fault]]
 name = "flashback-contact-line-shifted"
@@ -1156,8 +952,6 @@ after = '''let mut rules = rules;
     rules.contact.limit.0 = rules.contact.limit.0.saturating_add(1);
     screens_flashback::beat(state, rules, parity, dissolve, play)'''
 case = "flashback/zebes-encounter"
-cut = 109
-field = "flashback.brain"
 
 [[fault]]
 name = "playback-repress-during-hold-lost"
@@ -1172,8 +966,6 @@ after = '''pad: report.pad.map(|mut pad| {
     pad
 }),'''
 case = "screens-playback/intro-demos"
-cut = 1786
-field = "playback.current.fresh"
 
 [[fault]]
 name = "save-files-wrong-slot"
@@ -1184,8 +976,6 @@ before = '''owner.write_file(cut, run, live_map, stage)?;'''
 after = '''owner.state.active = Some(Slot::Second);
             owner.write_file(cut, run, live_map, stage)?;'''
 case = "save-files/power-on-through-ceres"
-cut = 19
-field = "save-files.battery.byte-0019"
 
 [[fault]]
 name = "save-files-missing-mirror"
@@ -1199,8 +989,6 @@ after = '''let pending = owner.state.pending;
                 owner.state.cartridge.slots[slot].mirror = state.cartridge.slots[slot].mirror;
             }'''
 case = "save-files/power-on-through-ceres"
-cut = 20
-field = "save-files.battery.byte-1ff0"
 
 [[fault]]
 name = "save-files-omitted-route"
@@ -1214,8 +1002,6 @@ after = '''owner.write_file(cut, run, live_map, stage)?;
                 *route = 0;
             }'''
 case = "save-files/power-on-through-ceres"
-cut = 19
-field = "save-files.battery.byte-0164"
 
 [[fault]]
 name = "played-steam-contact-disabled"
@@ -1225,8 +1011,6 @@ file = "crates/game/src/production/played/station.rs"
 before = "let hit = boss_ceres_ridley::run_vents(&mut ordinary, camera, her, &rules.ceres);"
 after = "let hit = boss_ceres_ridley::run_vents(&mut ordinary, camera, her.filter(|_| false), &rules.ceres);"
 case = "played chain-any-0009-DFD7 0 199"
-cut = 137
-field = "steam.hit"
 
 [[fault]]
 name = "played-steam-reuses-placement-seed"
@@ -1236,8 +1020,6 @@ file = "crates/game/src/production/room_loading.rs"
 before = "vents.push(Vent::place(facing, vent.position, drawn.number.0));"
 after = "vents.push(Vent::place(facing, vent.position, random.number.0));"
 case = "played chain-any-0008-E021 0 263"
-cut = 219
-field = "steam.vents"
 
 [[fault]]
 name = "cinematic-missile-second-draw-omitted"
@@ -1247,8 +1029,6 @@ file = "crates/game/src/production/played/intro_missiles.rs"
 before = '''let second = draw(&mut next, view, content)?;'''
 after = '''let second = SpriteDraw::default();'''
 case = "weapons/intro-ordinary-missiles"
-cut = 91
-field = "weapons.intro-oam"
 
 [[fault]]
 name = "played-brightening-jump-draw-at-completion"
@@ -1257,8 +1037,6 @@ file = "crates/game/src/production/played/passage.rs"
 before = '''        passing.work_begun'''
 after = '''        passing.work_done'''
 case = "played chain-any-0009-DFD7 0 330"
-cut = 291
-field = "movement.jump-held"
 
 [[fault]]
 name = "passage-jump-count-held"
@@ -1268,8 +1046,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = '''    history.draw(jump);'''
 after = '''    history.last_draw = jump;'''
 case = "movement/passage-jump-history"
-cut = 200
-field = "movement.drawn-jump-held"
 
 [[fault]]
 name = "escape-leap-landing-retains-facing"
@@ -1284,8 +1060,6 @@ after = '''    let leap = samus.pose;
     }
     Ok(result)'''
 case = "movement/escape-leap-landing"
-cut = 87
-field = "movement.landing.pose"
 
 [[fault]]
 name = "played-active-jump-latch-omitted"
@@ -1294,8 +1068,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = '''            self.last_draw_jump.0 = jump;'''
 after = '''            let _ = jump;'''
 case = "played chain-any-0010-DF8D 0 86"
-cut = 23
-field = "movement.last-draw-jump"
 
 [[fault]]
 name = "airborne-tail-hit-withheld"
@@ -1310,8 +1082,6 @@ after = """
     }
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
 case = "ridley/flight-tail"
-cut = 897
-field = "movement.pose"
 
 [[fault]]
 name = "airborne-tail-swish-withheld"
@@ -1324,8 +1094,6 @@ after = """
     run.swish = None;
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
 case = "ridley/flight-tail"
-cut = 931
-field = "ridley.tail.swish-request"
 
 [[fault]]
 name = "intro-delivery-starts-one-pixel-left"
@@ -1338,8 +1106,6 @@ after = """    if report.events.contains(&screens_intro::IntroEvent::PictureSele
     }
     state.intro = next;"""
 case = "intro/discovery-through-examination"
-cut = 2723
-field = "intro.pan"
 
 [[fault]]
 name = "intro-discovery-start-missing-at-interrupt"
@@ -1351,8 +1117,6 @@ after = """    let mut report = report;
     report.events.retain(|event| *event != screens_intro::IntroEvent::Discovery(DiscoveryRequest::StartDiscovery));
     Ok((PendingRoom { state, turn }, report))"""
 case = "intro/discovery-through-examination"
-cut = 1298
-field = "intro.events"
 
 [[fault]]
 name = "intro-resume-republishes-discovery-start"
@@ -1364,8 +1128,6 @@ after = """        let mut report = report;
         report.events.push(screens_intro::IntroEvent::Discovery(DiscoveryRequest::StartDiscovery));
         (state, report)"""
 case = "intro/discovery-through-examination"
-cut = 1299
-field = "intro.events"
 
 [[fault]]
 name = "falling-pad-release-stows-forward"
@@ -1379,8 +1141,6 @@ after = '''let outcome = samus.react(moves, None);
     }
     Ok(outcome)'''
 case = "movement/falling-aim"
-cut = 906
-field = "movement.pose"
 rule = "samus-movement/PadChart"
 
 [[fault]]
@@ -1392,8 +1152,6 @@ before = '''self.equipment(&report)?;
         self.pending = Some(Pending::Opening'''
 after = '''self.pending = Some(Pending::Opening'''
 case = "played any-power-on 0 569"
-cut = 569
-field = "intro-actor.started"
 
 [[fault]]
 name = "played-intro-cannon-controls-ineligible"
@@ -1403,8 +1161,6 @@ file = "crates/game/src/production/played/intro_rooms.rs"
 before = "eligibility: samus_appearance::ControlEligibility::Eligible,"
 after = "eligibility: samus_appearance::ControlEligibility::Ineligible,"
 case = "played any-power-on 0 2220"
-cut = 2220
-field = "intro-actor.cannon-delay"
 
 [[fault]]
 name = "played-intro-fight-install-skipped"
@@ -1416,8 +1172,6 @@ before = '''                self.actors
                 self.pending = Some(Pending::Fight { pressed, track });'''
 after = '''                self.pending = Some(Pending::Fight { pressed, track });'''
 case = "played any-power-on 0 2219"
-cut = 2219
-field = "intro-actor.shown"
 
 [[fault]]
 name = "played-intro-fight-encounter-skipped"
@@ -1427,8 +1181,6 @@ file = "crates/game/src/production/played/front_end/intro_actor.rs"
 before = "self.battle = Some(Battle {"
 after = "self.battle = false.then_some(Battle {"
 case = "played any-power-on 0 2219"
-cut = 2219
-field = "intro-encounter.started"
 
 [[fault]]
 name = "played-intro-quiet-actor-not-carried"
@@ -1441,8 +1193,6 @@ after = '''        let mut discarded_actor = room.clone();
         let motion = target
             .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
 case = "played any-power-on 0 2309"
-cut = 2221
-field = "intro-room.actor.clip-hold"
 
 [[fault]]
 name = "played-intro-quiet-encounter-not-carried"
@@ -1460,8 +1210,6 @@ after = '''        let mut discarded_encounter = self.encounter.clone();
         flashback::turn(
             target,'''
 case = "played any-power-on 0 2309"
-cut = 2221
-field = "flashback.brain"
 
 [[fault]]
 name = "retreat-handoff-keeps-hovering"
@@ -1476,8 +1224,6 @@ after = """
     }
     if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
 case = "ridley/offscreen-retreat"
-cut = 994
-field = "ridley.phase"
 
 [[fault]]
 name = "retreat-wall-placement-withheld"
@@ -1489,8 +1235,6 @@ before = """
                 .extend([backdrop.left_wall.door, backdrop.right_wall.door]);"""
 after = "            let _ = backdrop;"
 case = "ridley/offscreen-retreat"
-cut = 1157
-field = "ceres.doors"
 
 [[fault]]
 name = "played-intro-missile-release-skipped"
@@ -1500,8 +1244,6 @@ file = "crates/game/src/production/played/front_end/intro_cannon.rs"
 before = "new_press: pad.pressed.any(button::SHOOT),"
 after = "new_press: false,"
 case = "played any-power-on 0 2310"
-cut = 2310
-field = "intro-room.actor.missiles"
 
 [[fault]]
 name = "played-intro-missile-flight-state-discarded"
@@ -1535,8 +1277,6 @@ after = '''        let carried_slots = (actor.shots.0.count.0 != 0).then(|| acto
             actor.shots.0.slots = slots;
         }'''
 case = "played any-power-on 0 2311"
-cut = 2311
-field = "weapons.intro-slots"
 
 [[fault]]
 name = "played-intro-missile-impact-state-discarded"
@@ -1546,8 +1286,6 @@ file = "crates/game/src/production/played/front_end/intro_actor.rs"
 before = "missiles::hit(&mut room.actor.shots.0, slot, &content.missiles)"
 after = "missiles::hit(&mut room.actor.shots.0.clone(), slot, &content.missiles)"
 case = "played any-power-on 0 2329"
-cut = 2329
-field = "weapons.intro-slots"
 
 [[fault]]
 name = "played-intro-room-body-sampled-after-motion"
@@ -1623,8 +1361,6 @@ after = '''        if let Some(handoff) = turn.handoff {
         }
 '''
 case = "played any-power-on 0 2474"
-cut = 2400
-field = "intro-room.actor.radius.y"
 
 [[fault]]
 name = "played-intro-late-work-repeat-room-turn"
@@ -1635,8 +1371,6 @@ before = '''                    state.pending = Some(Pending::SpriteCommit);
 after = '''                    state.pending = Some(Pending::BeforeRoom { pressed, track });
                     drawn = 1;'''
 case = "played any-power-on 0 2474"
-cut = 2321
-field = "intro.dissolve"
 
 [[fault]]
 name = "played-intro-pose-history-shifts-without-choice"
@@ -1653,8 +1387,6 @@ before = '''        if her
 after = '''        actor.carry.0.older_pose = actor.carry.0.prior_pose;
         actor.carry.0.prior_pose = her.samus.pose;'''
 case = "played any-power-on 0 2475"
-cut = 2475
-field = "intro-room.actor.older-pose"
 
 [[fault]]
 name = "played-intro-room-sounds-dropped"
@@ -1663,8 +1395,6 @@ file = "crates/game/src/production/played/front_end/intro.rs"
 before = '            .chain(room_sounds)'
 after = '            .chain(room_sounds.into_iter().take(0))'
 case = "played any-power-on 0 2614"
-cut = 2517
-field = "front-end.sounds"
 
 [[fault]]
 name = "played-intro-room-sound-sent-to-wrong-queue"
@@ -1676,8 +1406,6 @@ after = '''                .map(|mut offer| {
                     super::Sound::Appearance(offer)
                 })'''
 case = "played any-power-on 0 2614"
-cut = 2517
-field = "front-end.sounds"
 
 [[fault]]
 name = "played-intro-standing-handoff-restarts-matching-clip"
@@ -1688,8 +1416,6 @@ before = '''        if self.carry.0.prior_pose != STANDING_LEFT {
 after = '''        {
             let Some(Instruction::Show(hold)) ='''
 case = "played any-power-on 0 2866"
-cut = 2615
-field = "intro-room.actor.clip-hold"
 
 [[fault]]
 name = "played-intro-locked-actor-not-carried"
@@ -1702,8 +1428,6 @@ after = '''        let mut discarded_actor = room.clone();
         let motion = target
             .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
 case = "played any-power-on 0 2866"
-cut = 2616
-field = "intro-room.actor.clip-hold"
 
 [[fault]]
 name = "discovery-return-skips-final-room-turn"
@@ -1713,8 +1437,6 @@ file = "crates/game/src/production/played/discovery.rs"
 before = "let room_runs = cut == Cut::Finished && next.order != DiscoveryOrder::Hidden;"
 after = "let room_runs = cut == Cut::Finished && next.order != DiscoveryOrder::Hidden && request != IntroRequest::FinishDiscovery;"
 case = "discovery/egg-to-page-three"
-cut = 2232
-field = "discovery.room-turn"
 
 [[fault]]
 name = "discovery-shell-drawn-behind-samus"
@@ -1724,8 +1446,6 @@ before = "draw.pieces.append(&mut room.pieces);"
 after = """core::mem::swap(&mut draw.pieces, &mut room.pieces);
                 draw.pieces.append(&mut room.pieces);"""
 case = "discovery/egg-to-page-three"
-cut = 1299
-field = "discovery.oam"
 
 
 [[fault]]
@@ -1736,8 +1456,6 @@ file = "crates/game/src/production/played/front_end/intro.rs"
 before = '            self.actors.start_discovery(actors_content(content)?)?;'
 after = '            let _ = actors_content(content)?;'
 case = "played any-power-on 0 3517"
-cut = 3517
-field = "intro-actor.shown"
 
 [[fault]]
 name = "played-ceres-arrival-save-waits-for-finished-cut"
@@ -1746,8 +1464,6 @@ file = "crates/game/src/production/played/front_end/cartridge.rs"
 before = "        if entered {"
 after = "        if entered && finished {"
 case = "played any-power-on 0 8315"
-cut = 8315
-field = "save-files.battery"
 
 [[fault]]
 name = "played-intro-flight-waits-until-shown"
@@ -1757,8 +1473,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "if intro.intro.stage != types::intro::IntroStage::Done {"
 after = "if intro.intro.stage != types::intro::IntroStage::Done || intro.intro.brightness == types::intro::Brightness::BLANKED {"
 case = "played any-intro-6012 1 1532"
-cut = 1501
-field = "flight.active"
 
 [[fault]]
 name = "played-intro-flight-loses-blanking"
@@ -1767,8 +1481,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "types::intro::Blanking::Blanked => types::flight::Visibility::Blanked,"
 after = "types::intro::Blanking::Blanked => types::flight::Visibility::Shown,"
 case = "played any-intro-6012 1 1532"
-cut = 1501
-field = "flight.brightness.blanked"
 
 [[fault]]
 name = "played-boot-intro-flight-waits-until-shown"
@@ -1778,8 +1490,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "if intro.intro.stage != types::intro::IntroStage::Done {"
 after = "if intro.intro.stage != types::intro::IntroStage::Done || intro.intro.brightness == types::intro::Brightness::BLANKED {"
 case = "played any-power-on 0 7513"
-cut = 7513
-field = "flight.active"
 
 [[fault]]
 name = "played-boot-intro-flight-loses-blanking"
@@ -1788,8 +1498,6 @@ file = "crates/game/src/production/played/flight.rs"
 before = "types::intro::Blanking::Blanked => types::flight::Visibility::Blanked,"
 after = "types::intro::Blanking::Blanked => types::flight::Visibility::Shown,"
 case = "played any-power-on 0 7513"
-cut = 7513
-field = "flight.brightness.blanked"
 
 [[fault]]
 name = "blackout-counts-during-wait"
@@ -1799,8 +1507,6 @@ file = "crates/game/src/production/blackout.rs"
 before = '''CountdownRuns::PresentationOnly'''
 after = '''CountdownRuns::MaintainCountdown'''
 case = "blackout/elevator-through-dispatch"
-cut = 165
-field = "blackout.timer-drawing"
 
 [[fault]]
 name = "blackout-early-live-blank"
@@ -1811,8 +1517,6 @@ before = '''if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {'''
 after = '''if scene.light == BlackoutLight::ForcedBlank { self.video.commit_registers(); }
         if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {'''
 case = "blackout/elevator-through-dispatch"
-cut = 239
-field = "blackout.scene"
 
 [[fault]]
 name = "blackout-loses-final-platform"
@@ -1821,8 +1525,6 @@ file = "crates/game/src/production/blackout/picture.rs"
 before = '''*word = (*word & 0xff00) | u16::from(tile);'''
 after = '''let _ = (word, tile);'''
 case = "blackout/pending-room-publication"
-cut = 241
-field = "blackout.memory"
 
 [[fault]]
 name = "blackout-drops-dispatch"
@@ -1834,8 +1536,6 @@ before = '''            dispatch,
 after = '''            dispatch: dispatch.filter(|_| false),
             standing_publication,'''
 case = "blackout/elevator-through-dispatch"
-cut = 242
-field = "blackout.requests"
 
 [[fault]]
 name = "ridley-flyby-shove-offer-withheld"
@@ -1845,8 +1545,6 @@ file = "crates/game/src/production/played/station.rs"
 before = "            picture,"
 after = "            picture: boss_ceres_ridley::GetawayEffects { push: None, ..picture },"
 case = "ridley/flyby"
-cut = 1262
-field = "ridley.flyby.push"
 
 [[fault]]
 name = "ridley-flyby-tile-low-bytes-withheld"
@@ -1856,8 +1554,6 @@ file = "crates/verify/src/replay/played/ridley/flyby.rs"
 before = "                        publish_tiles(&mut self.vram, uploads).ok_or_else(bad)?;"
 after = "                        publish_tiles(&mut self.vram, uploads.get(..0).unwrap_or_default()).ok_or_else(bad)?;"
 case = "ridley/flyby"
-cut = 1158
-field = "ridley.flyby.tiles.0"
 
 [[fault]]
 name = "station-explosion-ship-map"
@@ -1866,8 +1562,6 @@ file = "crates/game/src/production/played/explosion.rs"
 before = "Pages::Ship(MapRegion::Upper, content.ship_front.clone())"
 after = "Pages::Ship(MapRegion::Upper, content.ship_back.clone())"
 case = "explosion/station-blackout-to-zebes"
-cut = 733
-field = "explosion.ship-front"
 
 [[fault]]
 name = "zebes-skips-finished-setup"
@@ -1877,8 +1571,6 @@ file = "crates/game/src/production/played/zebes.rs"
 before = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, cut);"
 after = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, FrameAdvance::BorrowedLag);"
 case = "zebes/flight-to-zebes"
-cut = 1014
-field = "zebes.stage"
 
 
 
@@ -1889,8 +1581,6 @@ file = "crates/game/src/production/played/zebes.rs"
 before = "ship_map: content.ship_map.clone(),"
 after = "ship_map: Vec::new(),"
 case = "zebes/station-blackout-to-landing-load"
-cut = 1014
-field = "zebes.pages.ship"
 
 
 
@@ -1902,8 +1592,6 @@ file = "crates/game/src/production/played/zebes.rs"
 before = "self.flow = Flow::Loading(self.flow.destination());"
 after = "self.flow = Flow::Flight(self.flow.destination());"
 case = "zebes/station-blackout-to-landing-load"
-cut = 2123
-field = "zebes.flow"
 
 
 [[fault]]
@@ -1914,8 +1602,6 @@ file = "crates/game/src/production/played/zebes.rs"
 before = "self.flow = Flow::Loading(self.flow.destination());"
 after = "self.flow = Flow::Loading(LoadDestination::CeresStart);"
 case = "zebes/station-blackout-to-landing-load"
-cut = 2123
-field = "zebes.destination"
 
 [[fault]]
 name = "landing-keeps-outgoing-map"
@@ -1924,8 +1610,6 @@ file = "crates/game/src/production/played/landing_site.rs"
 before = "self.maps.active = self.maps.crateria;"
 after = "let _ = self.maps.crateria;"
 case = "landing-site/receiving-prefix"
-cut = 2124
-field = "landing.map"
 
 [[fault]]
 name = "landing-checkpoint-corrupts-pending-high-byte"
@@ -1938,8 +1622,6 @@ after = '''let mut state = checkpoint.state;
             { write.value ^= 1; }
             ProductionSeed::LandingSite(state)'''
 case = "landing-site/receiving-prefix"
-cut = 2125
-field = "landing.vram"
 
 [[fault]]
 name = "getaway-pass-discarded"
@@ -1948,8 +1630,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = "        movement.request_getaway();"
 after = "        let _ = movement;"
 case = "movement/getaway-shove-door"
-cut = 1262
-field = "movement.getaway-phase"
 rule = "samus-movement/GetawayArms"
 
 [[fault]]
@@ -1959,8 +1639,6 @@ file = "crates/game/src/production/played/samus.rs"
 before = "                view_left: getaway.view_left,"
 after = "                view_left: getaway.view_left - Wrapping(128),"
 case = "movement/getaway-shove-door"
-cut = 1263
-field = "movement.getaway-phase"
 rule = "samus-movement/GetawayStarts"
 
 [[fault]]
@@ -1973,8 +1651,6 @@ after = '''        let mut samus = self.movement.0;
             samus.getaway = samus_movement::Getaway::Idle;
         }'''
 case = "movement/getaway-shove-floor-and-wall"
-cut = 1264
-field = "movement.getaway-phase"
 rule = "samus-movement/GetawayTravels"
 
 [[fault]]
@@ -1985,8 +1661,6 @@ before = "        let world = super::ceres_doors::WithDoors::new(&inputs.geometr
 after = '''        let _ = doors;
         let world = super::ceres_doors::WithDoors::new(&inputs.geometry, &[]);'''
 case = "movement/getaway-shove-door"
-cut = 1264
-field = "movement.getaway-phase"
 rule = "samus-movement/GetawayTravels"
 
 [[fault]]
@@ -1996,8 +1670,6 @@ file = "crates/game/src/production/played/departure.rs"
 before = "station.maximum,"
 after = "station.health.0.energy.whole.get(),"
 case = "departure/station-dispatches-flight"
-cut = 1005
-field = "departure.schedule"
 
 
 [[fault]]
@@ -2007,8 +1679,6 @@ file = "crates/game/src/production/played/explosion.rs"
 before = "self.draw(content, &placement)?;"
 after = "let _ = placement;"
 case = "departure/interrupted-station-setup"
-cut = 283
-field = "departure.oam"
 
 [[fault]]
 name = "departure-loader-disables-pad-reads"
@@ -2017,8 +1687,6 @@ file = "crates/game/src/production/played/departure.rs"
 before = "self.carry.work_ready = false;"
 after = "self.carry.landing.control.auto_read = false; self.carry.work_ready = false;"
 case = "departure/flight-dispatches-loader"
-cut = 2124
-field = "departure.mirrors"
 
 [[fault]]
 name = "played-shaft-loses-cinematic-work-count"
@@ -2027,8 +1695,6 @@ file = "crates/game/src/production/escape_departure.rs"
 before = "            receipt.finished,"
 after = "            receipt.finished.wrapping_add(1),"
 case = "played chain-any-0011-DF45 239 2124"
-cut = 242
-field = "explosion.context"
 
 
 [[fault]]
@@ -2038,8 +1704,6 @@ file = "crates/game/src/production/escape_departure.rs"
 before = "!channel.restart_indirect_hdma(*header)"
 after = "!channel.restart_indirect_hdma(IndirectHdmaStart { lines: 1, ..*header })"
 case = "played chain-any-0011-DF45 239 2124"
-cut = 240
-field = "blackout.dma[2]"
 
 [[fault]]
 name = "ridley-warning-overlap-foreground-withheld"
@@ -2053,8 +1717,6 @@ before = '''    let both = [
 after = '''    let both = [update(WarningSheet::Sprites, last)];
     let _ = overlap;'''
 case = "ridley/warning-through-passage"
-cut = 1277
-field = "ridley.warning.art"
 
 [[fault]]
 name = "ridley-warning-glow-withheld"
@@ -2066,8 +1728,6 @@ after = '''        if effects.picture.colours.len() != 3 {
             *palette.screen.get_mut(position).ok_or_else(bad)? = write.colour;
         }'''
 case = "ridley/warning-through-passage"
-cut = 1286
-field = "doors.colours.screen"
 
 [[fault]]
 name = "ridley-warning-withheld-activation"
@@ -2077,8 +1737,6 @@ file = "crates/game/src/production/played/warning.rs"
 before = "        activation: effects.activation,"
 after = "        activation: None,"
 case = "ridley/warning-through-passage"
-cut = 1586
-field = "ceres.0.phase"
 
 [[fault]]
 name = "ridley-warning-quieting-clock-publication-withheld"
@@ -2088,8 +1746,6 @@ file = "crates/game/src/production/played/clock_picture.rs"
 before = "        if timing.publishes {"
 after = "        if timing.publishes && draws {"
 case = "ridley/warning-through-passage"
-cut = 1611
-field = "ridley.warning.clock.published"
 
 [[fault]]
 name = "shaft-closing-placement-stays-after-first-turn"
@@ -2099,8 +1755,6 @@ file = "crates/game/src/production/shaft_entry.rs"
 before = "self.placement = None;"
 after = "let _kept = self.placement;"
 case = "room-loading/escape-shaft-entry"
-cut = 234
-field = "shaft-entry.placement"
 
 
 [[fault]]
@@ -2113,8 +1767,6 @@ before = """        if first_live > 0 {
 after = """        if first_live > 0 {
             self.warning = None;"""
 case = "played chain-any-0006-E0B5 1270 2855"
-cut = 1690
-field = "ridley.placed"
 
 [[fault]]
 name = "played-boot-loses-tiled-shaft-hud-mode"
@@ -2124,8 +1776,6 @@ file = "crates/game/src/production/played/start.rs"
 before = "        started.room.entry.view.hud = tiled;"
 after = "        started.room.entry.view.hud = crate::state::video::BgMode::default();"
 case = "played any-power-on 0 13017"
-cut = 13015
-field = "shaft-entry.view"
 
 [[fault]]
 name = "appearance-elevator-body-publishes-before-nmi"
@@ -2138,8 +1788,6 @@ after = '''        let queued = self.video.batch.standing_strips;
             serviced = self.video.publish_standing_strips(&art.graphics);
         }'''
 case = "appearance/elevator-standing-picture"
-cut = 239
-field = "standing-body.publication"
 
 [[fault]]
 name = "appearance-elevator-body-drops-resumed-publication"
@@ -2151,8 +1799,6 @@ after = '''                    if !matches!(cut.work, Work::SaveCompleted) {
                         serviced = self.video.publish_standing_strips(&art.graphics);
                     }'''
 case = "appearance/elevator-standing-suspended"
-cut = 241
-field = "standing-body.publication"
 
 [[fault]]
 name = "appearance-elevator-body-loses-lower-second-row"
@@ -2165,8 +1811,6 @@ after = '''                    self.video.batch.standing_strips.lower_second = N
                     self.video.batch.standing_strips = queued;
                     serviced = queued;'''
 case = "appearance/elevator-standing-picture"
-cut = 165
-field = "standing-body.lower-second"
 
 [[fault]]
 name = "hud-locked-shaft-drops-pending-regular-upload"
@@ -2178,8 +1822,6 @@ after = '''        if !cut.publish {
         }
         let (standing_publication, regular_publication) = self.publish(cut, content)?;'''
 case = "hud/locked-shaft-publication"
-cut = 239
-field = "hud.pending-transfer"
 
 
 [[fault]]
@@ -2193,8 +1835,6 @@ after = '''                if matches!(cut.work, Work::SaveCompleted) {
                     regular = self.video.process_vram_writes(&content.graphics);
                 }'''
 case = "hud/locked-shaft-publication"
-cut = 241
-field = "hud.publication"
 
 [[fault]]
 name = "shaft-sound-ignore-room-hold"
@@ -2204,8 +1844,6 @@ file = "crates/game/src/production/played/shaft_sound.rs"
 before = "Sounds::Disabled => OfferPermission::Disabled,"
 after = "Sounds::Disabled => OfferPermission::Enabled,"
 case = "audio-sender/shaft-bursts"
-cut = 2872
-field = "sender.queue"
 
 [[fault]]
 name = "shaft-sound-service-before-offer"
@@ -2229,8 +1867,6 @@ after = '''        if let Some(reply) = reply {
         }
 '''
 case = "audio-sender/shaft-bursts"
-cut = 2911
-field = "sender.queue"
 
 [[fault]]
 name = "shaft-sound-cull-before-offer"
@@ -2249,8 +1885,6 @@ after = '''        let view = self.vent_camera();
         });
         let (sound, offer) = self.shaft_sound.next(sound_turn, doors, passing.audio.shaft_reply)?;'''
 case = "audio-sender/shaft-bursts"
-cut = 2941
-field = "sender.queue"
 
 [[fault]]
 name = "appearance-ordinary-body-loses-flicker-phase"
@@ -2264,8 +1898,6 @@ after = """push_time_left: push != PushFrames::NONE,
             timed_special_colour: false,
             finished_frame_parity: match parity { Parity::Even => Parity::Odd, Parity::Odd => Parity::Even },"""
 case = "samus-appearance/fight-first-protection"
-cut = 614
-field = "samus-oam.piece-count"
 
 [[fault]]
 name = "shaft-overlay-turn-clock-stalls"
@@ -2275,8 +1907,6 @@ file = "crates/game/src/production/played/shaft.rs"
 before = "self.actor_clocks.overlay.0.advance(Participation::Ran);"
 after = "self.actor_clocks.overlay.0.advance(Participation::Skipped);"
 case = "enemy-interactions/shaft-actor-picture"
-cut = 239
-field = "shaft-actors.clock.0"
 
 [[fault]]
 name = "shaft-effect-arrival-withheld"
@@ -2286,8 +1916,6 @@ file = "crates/game/src/production/played/shaft/burst.rs"
 before = "self.effects.slots.0.accept(arrival.map(|burst| Burst {"
 after = "self.effects.slots.0.accept(arrival.filter(|_| false).map(|burst| Burst {"
 case = "enemy-interactions/shaft-actor-picture"
-cut = 241
-field = "room-video.shaft-effects-first"
 
 [[fault]]
 name = "shaft-effect-layer-reversed"
@@ -2297,8 +1925,6 @@ file = "crates/game/src/production/played/room_video.rs"
 before = "for figure in sprites.effects {"
 after = "for figure in sprites.effects.into_iter().rev() {"
 case = "enemy-interactions/shaft-actor-picture"
-cut = 256
-field = "room-video.shaft-effects-first"
 
 [[fault]]
 name = "shaft-mounted-first-draw-omitted"
@@ -2308,8 +1934,6 @@ file = "crates/game/src/production/played/room_video.rs"
 before = "for (facing, figure, request) in sprites.actors.vents {"
 after = "for (facing, figure, request) in sprites.actors.vents.into_iter().skip(1) {"
 case = "enemy-interactions/shaft-actor-picture"
-cut = 445
-field = "mounted-vent.pending-oam"
 
 [[fault]]
 name = "shaft-held-sprite-publication-withheld"
@@ -2319,8 +1943,6 @@ file = "crates/game/src/production/played/room_video.rs"
 before = "if std::mem::take(&mut self.sprite_pending) {"
 after = "if std::mem::take(&mut self.sprite_pending) && self.pending_platform.is_none() {"
 case = "enemy-interactions/shaft-actor-picture"
-cut = 240
-field = "room-video.shaft-overlay-published"
 
 
 [[fault]]
@@ -2331,8 +1953,6 @@ file = "crates/game/src/production/played/room_video.rs"
 before = "            sprites.dust,"
 after = "            super::shaft::dust::Placement::None,"
 case = "appearance/shaft-wall-jump-dust"
-cut = 289
-field = "shaft-dust.prepared"
 
 [[fault]]
 name = "shaft-wall-jump-dust-ignores-dry-touchdown"
@@ -2342,5 +1962,3 @@ file = "crates/game/src/production/played/shaft/dust.rs"
 before = "            DustArrival::DryTouchdown"
 after = "            DustArrival::None"
 case = "appearance/shaft-wall-jump-dust"
-cut = 324
-field = "shaft-dust.state"

@@ -348,7 +348,11 @@ review included. Each session has three parts:
    decisions 27 and 31). Work goes only to the lowest rung of the ladder
    not yet reached (decisions 18 and 24): the items it still needs, then the indexed replay cases' first
    differences on its rows. A round or lane outside the rung's needs list doesn't start; the
-   planted faults and the gain over null (decisions 24 and 25) run alongside.
+   planted faults and the gain over null (decisions 24 and 25) run alongside. A planted fault
+   is killed when its case reports any difference or data failure or the replay crashes, and
+   fails the check only when its case still passes. Its manifest entry names the case, never the
+   cut or field where it is caught, so a fault that moves to another cut needs no change
+   ([STATUS](../STATUS.md#the-models-gain-over-the-null-model)).
 2. **Implementation.** Rounds and lanes run the plan, under the loop below.
 3. **Review.** New scope stops in the last part of the session. The root completes the work
    already in flight under the rule below and writes the session's review on the plan's issue:

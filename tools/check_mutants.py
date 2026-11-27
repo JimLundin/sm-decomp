@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -28,8 +29,6 @@ class Fault:
     before: str
     after: str
     case: str
-    cut: int
-    field: str
     rule: str | None = None
 
 def source_path(root: Path, source: str) -> Path:
@@ -129,21 +128,17 @@ def run_case(root: Path, case: str, executable: Path, *, env: Mapping[str, str])
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
 def played_receipt(output: str, case: str) -> dict[str, Any] | None:
-    """The run's one report line; its stop is the Debug form of the runner's `Stop`."""
     _, row, start, _ = case.split()
     lines = [line for line in output.splitlines()
-             if line.startswith(f"PLAYED_ALONE row={row} start={start} ")]
+             if line.startswith((f"PLAYED_ALONE row={row} start={start} ", "tools: replay played: "))]
     if len(lines) != 1:
         return None
-    stop = lines[0].partition(" stop=")[2]
-    outcome: dict[str, Any] = {"status": "other", "stop": stop.partition(" seed_held=")[0]}
-    if stop.startswith("End "):
-        outcome = {"status": "pass"}
-    elif found := re.match(r'At\(Difference \{ cut: (\d+), field: "([^"]+)" \}\) ', stop):
-        outcome = {"status": "difference", "cut": int(found[1]), "field": found[2]}
-    elif found := re.match(r'At\(DataFailure \{ cut: Some\((\d+)\), source: "([^"]+)" \}\) ', stop):
-        outcome = {"status": "data-failure", "cut": int(found[1]), "field": found[2]}
-    return {"id": case, "report": lines[0], "outcome": outcome}
+    status = "other"
+    if " stop=End " in lines[0]:
+        status = "pass"
+    elif found := re.search(r"(?: stop=At\(|^tools: replay played: )(\w+) ", lines[0]):
+        status = re.sub(r"(?<!^)(?=[A-Z])", "-", found[1]).lower()
+    return {"id": case, "report": lines[0], "outcome": {"status": status}}
 
 def receipt(output: str, case: str) -> dict[str, Any] | None:
     if case.startswith(PLAYED):
@@ -175,17 +170,25 @@ def validate_anchors(root: Path, faults: Sequence[Fault]) -> None:
     for fault in faults:
         require_unique_anchor(fault, source_path(root, fault.file).read_bytes())
 
+DETECTIONS = ("difference", "data-failure", "checkpoint-failure")
+# A Rust panic exits 101; these signals are the replay's own crash. SIGKILL is left out because the
+# OOM killer or the runner sends it, which says nothing about the fault.
+CRASHES = (101, *(-number for number in (signal.SIGSEGV, signal.SIGABRT, signal.SIGILL,
+                                         signal.SIGBUS, signal.SIGFPE)))
+
+
 def detected(fault: Fault, result: tuple[int, str]) -> dict[str, Any] | None:
     code, output = result
     observed = receipt(output, fault.case)
-    played = fault.case.startswith(PLAYED)
-    stops = ("difference", "data-failure") if played else ("difference",)
-    if code == (0 if played else 1) and observed is not None and any(
-        observed.get("outcome") == {"status": status, "cut": fault.cut, "field": fault.field} for status in stops
-    ):
-        print(f"KILLED {fault.name}: {fault.case} cut{fault.cut} {fault.field}", flush=True)
+    status = observed["outcome"].get("status") if observed is not None else None
+    if code in CRASHES:
+        print(f"KILLED {fault.name}: {fault.case} crash exit={code}", flush=True)
+        return {"id": fault.case, "outcome": {"status": "crash", "exit": code}}
+    if code in (0, 1) and status in DETECTIONS:
+        print(f"KILLED {fault.name}: {fault.case} {status}", flush=True)
         return observed
-    print(f"INVALID OR SURVIVED {fault.name}: {fault.case} expected cut{fault.cut} {fault.field} exit={code}", flush=True)
+    verdict = "SURVIVED" if status == "pass" else "INVALID"
+    print(f"{verdict} {fault.name}: {fault.case} status={status} exit={code}", flush=True)
     return None
 
 
@@ -216,9 +219,8 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> list[str]:
     required = {owner for case in supported for owner in cases[case]["responsibilities"]} | {"played"}
     for fault in faults:
         if fault.case.startswith(PLAYED):
-            _, _, start, end = fault.case.split()
-            if fault.responsibility != "played" or not int(start) < fault.cut <= int(end):
-                raise ValueError("a played fault must stop its run at a cut it plays")
+            if fault.responsibility != "played":
+                raise ValueError("a played fault must belong to the played responsibility")
         elif fault.case not in supported or fault.responsibility not in cases[fault.case]["responsibilities"]:
             raise ValueError("fault must witness its responsibility in a reviewed Pass case")
         source_path(root, fault.file)
@@ -264,10 +266,10 @@ def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
         for fault in faults:
             if fault.rule != rule:
                 continue
-            name, case, field = map(re.escape, (fault.name, fault.case, fault.field))
+            name, case = map(re.escape, (fault.name, fault.case))
             replay = rf"TIMING replay case={case}{seconds}"
             block = re.compile(
-                rf"^{replay}KILLED {name}: {case} cut{fault.cut} {field}\n"
+                rf"^{replay}KILLED {name}: {case} [^\n]+\n"
                 rf"(?:TIMING restoration fault={name}{seconds}{input_check}{compilation}|SELECTOR OFF fault={name}\n{input_check})"
                 rf"{replay}{input_check}RESTORED PASS {case}$(?!\nRESTORED PASS )",
                 re.MULTILINE,
