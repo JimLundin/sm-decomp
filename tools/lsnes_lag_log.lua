@@ -1,17 +1,10 @@
 -- lsnes rr2-beta23: read-only per-frame observations, never change input/state.
 -- Flat NMI counters include boot/reset and coroutine waits: this log does not classify lag.
--- input.get observes live controls; movie_subframe and WRAM joypad record playback evidence.
+-- input.get observes live controls; the WRAM joypad word records playback evidence.
 local path = assert(os.getenv("SM_LSNES_LOG"), "set SM_LSNES_LOG to a new output path")
 local limit = tonumber(os.getenv("SM_LSNES_FRAMES"))
 assert(limit == nil or (limit > 0 and limit == math.floor(limit)), "invalid frame limit")
-local eof_mode = os.getenv("SM_LSNES_EOF_CONTINUATION") == "1"
-local suffixes = {"", ".polls.csv", ".events.csv", ".error.txt"}
-if eof_mode then
-    for _, suffix in ipairs({".eof-polls.csv", ".eof-hardware.csv", ".phases.csv", ".milestones.csv"}) do
-        suffixes[#suffixes + 1] = suffix
-    end
-end
-for _, suffix in ipairs(suffixes) do
+for _, suffix in ipairs({"", ".error.txt"}) do
     local existing = io.open(path .. suffix, "rb")
     if existing then
         existing:close()
@@ -20,38 +13,10 @@ for _, suffix in ipairs(suffixes) do
 end
 local log = assert(io.open(path, "wb"))
 log:write("input_frame,movie_frame,nmi_before,nmi_after,including_lag_before,including_lag_after,emulator_lag,game_state,room,x,y,input_callbacks,first_live_input,last_live_input,joypad_before,joypad_after\n")
-local capture_from = tonumber(os.getenv("SM_LSNES_CAPTURE_FROM")) or 1
-assert(capture_from > 0 and capture_from == math.floor(capture_from), "invalid capture start")
-assert(eof_mode or capture_from == 1, "narrow capture requires EOF continuation mode")
-assert(capture_from == 1 or not os.getenv("SM_LSNES_SEEDS"),
-    "narrow capture reuses an existing seed; SM_LSNES_SEEDS is unsupported")
 local declared_frames = movie.framecount()
-assert(not eof_mode or (limit and limit > declared_frames), "EOF continuation requires a finite later frame limit")
-local eof_polls, eof_hardware, phases, milestones
-if eof_mode then
-    eof_polls = assert(io.open(path .. ".eof-polls.csv", "wb"))
-    eof_polls:write("movie_frame,callback,subframe,movie_subframe_index,declared_frames,readonly,selected_axes,nmi,joypad_latched\n")
-    eof_hardware = assert(io.open(path .. ".eof-hardware.csv", "wb"))
-    eof_hardware:write("event,movie_frame,nmi,joypad_latched,a,pbpc\n")
-    phases = assert(io.open(path .. ".phases.csv", "wb"))
-    phases:write("movie_frame,nmi,state,room,cinematic_function,credits_enabled,credits_cursor,credits_scroll\n")
-    milestones = assert(io.open(path .. ".milestones.csv", "wb"))
-    milestones:write("event,movie_frame,nmi,state,credits_cursor\n")
-end
-local function record_milestone(event, frame)
-    if not milestones then return end
-    milestones:write(string.format("%s,%d,%d,%d,%d\n", event, frame,
-        memory.readword(0x7E05B6), memory.readword(0x7E0998), memory.readword(0x7E19F7)))
-    milestones:flush()
-end
-local roll_done = nil
 local before = nil
-local polls = assert(io.open(path .. ".polls.csv", "wb"))
-polls:write("movie_frame,callback,subframe,nmi,including_lag,live_controller_word,joypad_latched,movie_subframe_index,movie_subframe\n")
 local rows = 0
 local last_frame = 0
-local events = nil
-local event_count = 0
 -- Set to an existing, empty target/seeds/<movie> directory. Dumps stay local.
 local seed_dir = os.getenv("SM_LSNES_SEEDS")
 local seeds = nil
@@ -63,7 +28,6 @@ local seed_count = 0
 local seed_origin_frame = nil
 local seed_origin_subframe = nil
 local seed_io_writes = {}
-local seed_input_state = nil
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
@@ -103,30 +67,7 @@ local function capture_room(frame, boundary)
     local existing = io.open(seed_dir .. "/" .. register_file, "rb")
     if existing then existing:close(); error("refusing to overwrite seed: " .. register_file) end
     local registers = assert(memory.getregisters(), "core has no register observations")
-    registers.seed_movie_frame = frame
-    registers.seed_room = room
-    if seed_mb_phases and room == 0xDD58 then
-        registers.seed_mother_brain_form = memory.readword(0x7E7800)
-        registers.seed_mother_brain_body_function = memory.readword(0x7E0FA8)
-    end
-    registers.seed_nmi = memory.readword(0x7E05B6)
-    registers.seed_boundary_frame = movie.currentframe()
     registers.seed_boundary_pc = 0x808348
-    registers.seed_boundary_event = event_count
-    assert(seed_input_state, "seed has no observed controller read")
-    assert(seed_input_state.seed_input_frame <= registers.seed_boundary_frame,
-        "seed controller observation is after the seed video frame")
-    assert((seed_input_state.seed_input_nmi + 1) % 65536 == registers.seed_nmi,
-        "seed controller observation is from another NMI")
-    assert(seed_input_state.seed_input_room == room, "seed controller observation is from another room")
-    assert(seed_input_state.seed_input_event <= event_count, "invalid controller event association")
-    assert(seed_input_state.seed_input_debug == 0 and memory.readword(0x7E05D1) == 0,
-        "debug controller normalization is unsupported")
-    for _, address in ipairs({0x87, 0x89}) do
-        assert(seed_input_state[string.format("seed_input_%04X", address)] == memory.readword(0x7E0000 + address),
-            "controller repeat configuration changed after the read")
-    end
-    for name, value in pairs(seed_input_state) do registers[name] = value end
     -- DMAP..NTRL are passive readable registers in the pinned bsnes core.
     for channel = 0, 7 do
         for offset = 0, 10 do
@@ -169,9 +110,10 @@ local function capture_room(frame, boundary)
     seed_pending = false
     seed_origin_frame = nil
 end
-function on_input(subframe)
+function on_input()
     assert(movie.readonly(), "recording movie must remain read-only")
     local frame = movie.currentframe()
+    assert(frame <= declared_frames, "unexpected input after declared movie end")
     local word = 0
     for index = 0, 11 do
         if input.get(0, index) ~= 0 then word = word + 2 ^ (15 - index) end
@@ -184,73 +126,32 @@ function on_input(subframe)
     assert(frame == before[1], "new movie frame before prior output")
     before[4] = before[4] + 1
     before[6] = word
-    local movie_index = movie.current_first_subframe()
-    local recorded = ""
-    if frame <= declared_frames then
-        recorded = movie.get_frame(movie_index):serialize()
-    else
-        assert(eof_mode, "unexpected input after declared movie end")
-        assert(movie.framecount() == declared_frames and movie.readonly(), "movie changed during continuation")
-        local selected = movie.read_subframes(frame, 0)
-        local keys, encoded = {}, {}
-        for key, _ in pairs(selected) do keys[#keys + 1] = key end
-        table.sort(keys)
-        for _, key in ipairs(keys) do encoded[#encoded + 1] = tostring(key) .. "=" .. tostring(selected[key]) end
-        eof_polls:write(string.format("%d,%d,%d,%d,%d,1,%s,%d,%d\n", frame, before[4], subframe and 1 or 0,
-            movie_index, declared_frames, table.concat(encoded, ";"), memory.readword(0x7E05B6), memory.readword(0x7E008B)))
-    end
-    assert(not string.find(recorded, "[,\r\n]"), "unexpected movie serialization")
-    if frame >= capture_from then polls:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%s\n", frame, before[4],
-        subframe and 1 or 0, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
-        word, memory.readword(0x7E008B), movie_index, recorded)) end
 end
 function on_frame_emulated()
     assert(before ~= nil, "frame output without corresponding input boundary")
     local frame = movie.currentframe()
     assert(frame == before[1], "movie frame changed during emulation")
     capture_room(frame)
-    if frame >= capture_from then log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+    log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
         frame - 1, frame, before[2], memory.readword(0x7E05B6),
         before[3], memory.readword(0x7E05B8), memory.get_lag_flag() and 1 or 0,
         memory.readword(0x7E0998), memory.readword(0x7E079B),
         memory.readword(0x7E0AF6), memory.readword(0x7E0AFA),
         before[4], before[5], before[6], before[7], memory.readword(0x7E008B)))
-        if phases then
-            phases:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d\n", frame,
-                memory.readword(0x7E05B6), memory.readword(0x7E0998), memory.readword(0x7E079B),
-                memory.readword(0x7E1F51), memory.readword(0x7E19FF), memory.readword(0x7E19F7),
-                memory.readword(0x7E1997)))
-        end
-    end
-    if milestones and frame % 12000 == 0 then
-        record_milestone("heartbeat", frame)
-    end
     rows = rows + 1
     last_frame = frame
     before = nil
-    if rows % 1000 == 0 then
-        log:flush(); polls:flush()
-        if eof_mode then phases:flush(); eof_polls:flush(); eof_hardware:flush() end
-    end
-    if milestones and frame == declared_frames then
-        record_milestone("declared_end", frame)
-    end
-    if (not eof_mode and frame == declared_frames) or (roll_done and frame >= roll_done + 240) or frame == limit then
-        record_milestone("capture_end", frame)
+    if rows % 1000 == 0 then log:flush() end
+    if frame == declared_frames or frame == limit then
         log:flush()
         log:close()
-        polls:close()
         log = nil
         exec("quit-emulator")
     end
 end
 function on_quit()
-    if eof_mode then
-        for _, file in ipairs({eof_polls, eof_hardware, phases, milestones}) do file:flush(); file:close() end
-    end
     if seeds ~= nil then seeds:close(); seeds = nil end
-    if log ~= nil then log:flush(); log:close(); polls:flush(); polls:close(); log = nil end
-    if events ~= nil then events:close(); events = nil end
+    if log ~= nil then log:flush(); log:close(); log = nil end
 end
 local function guarded(callback)
     return function(...)
@@ -266,7 +167,6 @@ end
 on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
 if seed_dir then
-    assert(os.getenv("SM_LSNES_BOUNDARIES") == "1", "controller seed metadata requires boundary events")
     -- The video callback can suspend in the middle of a CPU opcode. Observe
     -- the next normal wait's PLB fetch instead, before its stack effects.
     -- bsnes has incremented PC for this fetch; retain both observed PC and
@@ -288,69 +188,6 @@ if seed_dir then
             end
         end
     end
-end
-if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
-    events = assert(io.open(path .. ".events.csv", "wb"))
-    events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad,scroll_frame,irq_handler,waiting_nmi,direction\n")
-    -- CPU-bus exec addresses in lsnes are 0x1000000 + SNES PC.
-    -- ReadJoypadInputs runs inside ROM NMI, but at the next native update's start.
-    for _, hook in ipairs({{0x808338, "wait_enter"}, {0x80834A, "wait_exit"},
-            {0x858136, "no_update_enter"}, {0x858142, "no_update_exit"}, {0x809459, "joypad_begin"}, {0x80946A, "joypad_read"},
-            {0x82E3C0, "place_enter"}, {0x82DF6C, "vblank_wait_enter"},
-            {0x82DF70, "vblank_wait_exit"}, {0x82E4A8, "place_exit"},
-            {0x82E4A9, "more_enter"}, {0x82E524, "scroll_wait_enter"},
-            {0x82E52B, "scroll_wait_exit"}, {0x82E565, "more_exit"},
-            {0x80AE4E, "scroll_irq_enter"}, {0x80AE73, "scroll_irq_exit"},
-            {0x80987B, "irq_enter"}, {0x809602, "lag_nmi"}, {0x82E039, "door_dma"},
-            {0x82E41D, "cre_decode_enter"}, {0x82E424, "cre_decode_exit"},
-            {0x82E42E, "tiles_decode_enter"}, {0x82E435, "tiles_decode_exit"},
-            {0x82E43F, "palette_decode_enter"}, {0x82E446, "palette_decode_exit"}}) do
-        local kind = hook[2]
-        memory.registerexec(0x1000000 + hook[1], guarded(function()
-            assert(movie.readonly(), "recording movie must remain read-only")
-            event_count = event_count + 1
-            if movie.currentframe() < capture_from then return end
-            if eof_mode and kind == "joypad_read" and movie.currentframe() > declared_frames then
-                local registers = memory.getregisters()
-                eof_hardware:write(string.format("%d,%d,%d,%d,%d,%d\n",event_count,movie.currentframe(),memory.readword(0x7E05B6),memory.readword(0x7E008B),registers.a,registers.pbpc))
-            end
-            if seed_dir and kind == "joypad_begin"
-                    and (seed_pending or memory.readword(0x7E079B) ~= seed_room
-                        or (seed_mb_phases and memory.readword(0x7E079B) == 0xDD58)) then
-                -- This is the last observed read before the pending seed. Keep
-                -- its exact producer state, not an inferred previous pad word.
-                local registers = assert(memory.getregisters())
-                assert(registers.d == 0, "nonzero controller direct page is unsupported")
-                seed_input_state = {
-                    seed_input_version = 1, seed_input_pc = 0x809459,
-                    seed_input_event = event_count, seed_input_dp = registers.d,
-                    seed_input_frame = movie.currentframe(),
-                    seed_input_nmi = memory.readword(0x7E05B6),
-                    seed_input_room = memory.readword(0x7E079B),
-                    seed_input_debug = memory.readword(0x7E05D1),
-                }
-                for _, address in ipairs({0x87, 0x89, 0x8B, 0x8F, 0x93, 0x97, 0xA3}) do
-                    seed_input_state[string.format("seed_input_%04X", address)] =
-                        memory.readword(0x7E0000 + address)
-                end
-            end
-            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", event_count,
-                movie.currentframe(), kind, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
-                memory.readword(0x7E0998), memory.readword(0x7E079B),
-                memory.readword(0x7E0AF6), memory.readword(0x7E0AFA), memory.readword(0x7E008B),
-                memory.readword(0x7E0925), memory.readword(0x7E00AB), memory.readbyte(0x7E05B4), memory.readword(0x7E0791)))
-            if event_count % 100 == 0 then events:flush() end
-        end))
-    end
-end
-if eof_mode then
-    -- Credits' final script command starts the post-roll ending sequence.
-    memory.registerexec(0x18BF6FE, guarded(function()
-        if movie.currentframe() < capture_from then return end
-        assert(movie.readonly() and memory.readword(0x7E0998) == 39, "unexpected credits endpoint")
-        roll_done = movie.currentframe()
-        record_milestone("credits_roll_endpoint", roll_done)
-    end))
 end
 exec("set-speed turbo")
 exec("clear-pause-on-end")
