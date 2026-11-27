@@ -28,14 +28,6 @@ pub(in crate::replay) fn interrupted(record: &FrameRecord) -> Result<bool, Outco
                 && nmi.interrupted_pc == 0x0080_82ce))
 }
 
-pub(in crate::replay) fn admit(
-    path: &Path,
-    record: &FrameRecord,
-) -> Result<(Production, ProductionContent, ProductionRules), Outcome> {
-    let (shaft, assets) = seed(path, record)?;
-    admit_owned(shaft, assets, record.index)
-}
-
 pub(super) fn seed(path: &Path, record: &FrameRecord) -> Result<(Shaft, Content), Outcome> {
     let image = std::fs::read(path).map_err(|_| data_failure(None, "shaft ROM file"))?;
     let rom = Rom::new(image).map_err(|_| data_failure(None, "shaft ROM pin"))?;

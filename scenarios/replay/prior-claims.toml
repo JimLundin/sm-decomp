@@ -3814,3 +3814,59 @@ source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079
 identity = "movement/passage-jump-history"
 before_values = [160, 320, 0, 0, 0, 146, 305, 160, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 3fe5394e5c92af0959e8d0e85e8b747dabe3c709205593c821a50fcaeb6ad80c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "explosion/station-blackout-to-zebes"
+before_values = [763, 6662, 2212, 0, 0, 32, 2311, 763, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 90f51e9b523dffdfc101e7ebf9719e874f2cf6b58c88900c79c2f0870e792979; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "zebes/flight-to-zebes"
+before_values = [1119, 16659, 1119, 0, 0, 9, 14439, 1119, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 9b4dbd8c216cfab65559ee5aca6ec51e5f3336f277cdf3edbc33cfe6354b9697; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "zebes/station-blackout-to-landing-load"
+before_values = [1119, 22254, 3345, 0, 0, 9, 18922, 1119, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 0a8728b69fa11375c372a92dc87dde0ad91a6944e8b283fc8e6e76ce045f5ef4; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/interrupted-station-setup"
+before_values = [35, 175, 43, 0, 0, 31, 168, 35, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 61452e579bffbc9b4422b90b8185709dd8eaf3ecc98179c393269a31d78509d3; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/music-transfer"
+before_values = [30, 150, 42, 0, 0, 27, 144, 30, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 4a3bdba88c8487ab8c7e59ffd1113b3d0eb97c11c07d882406c373c6f0060a48; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/station-dispatches-flight"
+before_values = [12, 60, 24, 0, 0, 8, 54, 12, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest b00cad002cee145e3795866149471e6e63f52be471cb72f426b6f62d83fc0595; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/flight-dispatches-loader"
+before_values = [2, 10, 14, 0, 0, 0, 3, 2, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 316d192f763fa20ab2b5ca9703dc77e3ff63e1e0dd9b252e60e172b269dfb013; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/shaft-save-to-landing"
+before_values = [2, 10, 14, 0, 0, 0, 3, 2, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 316d192f763fa20ab2b5ca9703dc77e3ff63e1e0dd9b252e60e172b269dfb013; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

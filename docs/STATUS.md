@@ -501,12 +501,12 @@ destination, health, energy capacity, caption choice, palette and OAM.
 The platform supplies work completion at each cut. The music service supplies
 its busy reply after service.
 
-The indexed case `explosion/station-blackout-to-zebes` checks every cut from
-that intake. It compares the scene and its ordered requests, the affine matrix,
-the fractional sprite placements and burst samples, the visible OAM entries
-and their high bits, and all 256 published colours. At setup it compares the
-complete Mode 7 map and graphics and the overlaid sprite graphics. At breakup
-it compares the two replacement map regions. The flash request names its center.
+The played runs from cuts 239 and 241 check every cut from that intake, and the
+power-on run checks the same cuts. They compare the scene and its ordered
+requests, the affine matrix, the fractional sprite placements and burst samples,
+the visible OAM entries and their high bits, and all 256 published colours. At
+setup they compare the complete Mode 7 map and graphics and the overlaid sprite
+graphics. At breakup they compare the two replacement map regions. The flash request names its center.
 The interrupted setup writes, the flash's scanline window, hidden sprite
 retention and final pixel composition are outside these comparisons.
 The elevator and cartridge supply the intake. The station's last output is the

@@ -86,8 +86,6 @@ impl Pinned for DiscoveryPin {
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
-    /// Complete station explosion and its receiving owners.
-    Explosion(Box<crate::production::played::explosion::State>),
     /// The continuous shaft and its departing cinematics.
     Escape(Box<crate::production::escape_departure::State>),
     /// Ceres shaft blackout, its live owners and suspended picture.

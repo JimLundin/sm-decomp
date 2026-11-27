@@ -9,9 +9,6 @@ use crate::lock::RowId;
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    if case.inputs == InputProvider::StationExplosion {
-        return super::explosion::admit(case, sources);
-    }
     if case.inputs == InputProvider::Blackout {
         return super::blackout::admit(case, sources);
     }
@@ -33,14 +30,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::DiscoveryInputs {
         return super::discovery::admit(case, sources);
     }
-    if case.inputs == InputProvider::Departure {
-        return super::departure::admit(case, sources);
-    }
     if case.inputs == InputProvider::LandingSiteTiming {
         return super::landing_site::admit(case, sources);
-    }
-    if case.inputs == InputProvider::ZebesFlightInputs {
-        return super::zebes::admit(case, sources);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(case, sources);

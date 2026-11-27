@@ -35047,3 +35047,99 @@ witness_case_ids = []
 test_ids = []
 reason = "The played run of chain-any-0009-DFD7 from cut 0 holds every cut through 330, and the power-on run holds the same cuts. At each of this case's compared cuts, 171 to 330, it compares movement.last-draw-jump under the same name and value, and movement.jump-held, which carries the same held count and the same landed or ended flag from the same record words that movement.drawn-jump-held packed. The held count fault now stops that run. The scoped case only repeated that comparison."
 lost_observations = ["movement/passage-jump-history: its compared cuts and fields are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The scoped jump history owner and its per-cut restorations are gone."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "explosion/station-blackout-to-zebes"
+before_values = [763, 6662, 2212, 0, 0, 32, 2311, 763, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. At each of this case's compared cuts, 242 to 1004, they compare every field and output the case compared, under the same name and from the same record value. Its ship map fault now stops the played run from cut 239. The scoped case only repeated that comparison."
+lost_observations = ["explosion/station-blackout-to-zebes: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "zebes/flight-to-zebes"
+before_values = [1119, 16659, 1119, 0, 0, 9, 14439, 1119, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. At each of this case's compared cuts, 1005 to 2123, they compare every field and output the case compared, under the same name and from the same record value. Its setup fault now stops the played run from cut 239. The scoped case only repeated that comparison."
+lost_observations = ["zebes/flight-to-zebes: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "zebes/station-blackout-to-landing-load"
+before_values = [1119, 22254, 3345, 0, 0, 9, 18922, 1119, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. At each of this case's compared cuts, 1005 to 2123, they compare every field and output the case compared, under the same name and from the same record value, except zebes.landing.join at cut 2123. That join packed the receiving record's finished count, flow, energy, capacity, destination, brightness and plane, which the played runs compare at cut 2124 as departure.schedule, health, display and plane. Its three faults now stop the played run from cut 239. The scoped case only repeated that comparison."
+lost_observations = ["zebes/station-blackout-to-landing-load: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same quantities, and the loader join one cut later. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/interrupted-station-setup"
+before_values = [35, 175, 43, 0, 0, 31, 168, 35, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 250 to 284 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. Its placement draw fault now stops the played run from cut 239. The case only repeated those comparisons."
+lost_observations = ["departure/interrupted-station-setup: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/music-transfer"
+before_values = [30, 150, 42, 0, 0, 27, 144, 30, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 305 to 334 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. The case only repeated those comparisons."
+lost_observations = ["departure/music-transfer: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/station-dispatches-flight"
+before_values = [12, 60, 24, 0, 0, 8, 54, 12, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 1004 to 1015 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. Its flight capacity fault now stops the played run from cut 239. The case only repeated those comparisons."
+lost_observations = ["departure/station-dispatches-flight: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/flight-dispatches-loader"
+before_values = [2, 10, 14, 0, 0, 0, 3, 2, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 2123 and 2124 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. Its pad read fault now stops the played run from cut 239. The case only repeated those comparisons."
+lost_observations = ["departure/flight-dispatches-loader: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24e"
+identity = "departure/shaft-save-to-landing"
+before_values = [2, 10, 14, 0, 0, 0, 3, 2, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 2123 and 2124 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. The case only repeated those comparisons."
+lost_observations = ["departure/shaft-save-to-landing: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]

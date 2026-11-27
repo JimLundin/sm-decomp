@@ -1,4 +1,4 @@
-//! Independent recorded inputs and observations for the production flight to Zebes.
+//! Independent recorded inputs and observations for the played flight to Zebes.
 
 use data::rom::Rom;
 use game::production::played::zebes::{Flow, LoadDestination, Output, State};
@@ -13,12 +13,9 @@ use screens_zebes::{ColourEffectRequest, FrameAdvance};
 use types::zebes::{Brightness, FlightView, ScenePicture, StarField, SubtitleChoice, ZebesStage};
 
 use super::compare::Observation;
-use super::index::{Case, ObservationId, Responsibility};
-use super::readers::{
-    ActualReader, AdmittedCase, CutTape, ExpectedCut, ExpectedReader, InputReader,
-};
-use super::result::{Counts, Outcome};
-use super::{Sources, data_failure};
+use super::data_failure;
+use super::readers::ExpectedCut;
+use super::result::Outcome;
 
 const GAME_FLOW: usize = 0x0998;
 const SCENE: usize = 0x1f51;
@@ -32,65 +29,7 @@ const LANDING_SITE: u16 = 0x22;
 const CERES_START: u16 = 0x1f;
 const SUBTITLES: usize = 0x09e2;
 
-pub(super) const SCOPED_FIELDS: &[ObservationId] = &[
-    ObservationId::ZebesStage,
-    ObservationId::ZebesPicture,
-    ObservationId::ZebesMotion,
-];
-pub(super) const SCOPED_OUTPUTS: &[ObservationId] = &[ObservationId::ZebesRequests];
-pub(super) const INTEGRATED_FIELDS: &[ObservationId] = &[
-    ObservationId::ZebesStage,
-    ObservationId::ZebesPicture,
-    ObservationId::ZebesMotion,
-    ObservationId::ZebesHealth,
-    ObservationId::ZebesSchedule,
-];
-pub(super) const INTEGRATED_OUTPUTS: &[ObservationId] = &[
-    ObservationId::ZebesRequests,
-    ObservationId::ZebesPages,
-    ObservationId::ZebesOam,
-    ObservationId::ZebesPalette,
-];
-
 // Every cut compares light. A finished cut adds the scene, transform and seven pictures.
-const SCENE_FIELDS_ON_FINISH: usize = 14;
-const RECEIVING_FIELDS: usize = 5;
-const DRAW_OUTPUTS_ON_FINISH: usize = 2;
-const SETUP_OUTPUTS: usize = 5;
-
-pub(super) fn valid_counts(case: &Case, counts: &Counts) -> bool {
-    let integrated = case
-        .responsibilities
-        .contains(&Responsibility::ZebesDrawing);
-    let base_fields = if integrated {
-        RECEIVING_FIELDS.saturating_add(1)
-    } else {
-        1
-    };
-    let Some(finished_fields) = counts
-        .fields
-        .checked_sub(counts.cuts.saturating_mul(base_fields))
-    else {
-        return false;
-    };
-    let finished = finished_fields / SCENE_FIELDS_ON_FINISH;
-    let outputs = if integrated {
-        counts
-            .cuts
-            .saturating_add(finished.saturating_mul(DRAW_OUTPUTS_ON_FINISH))
-            .saturating_add(if finished > 0 { SETUP_OUTPUTS } else { 0 })
-    } else {
-        counts.cuts
-    };
-    finished <= counts.cuts
-        && finished_fields.is_multiple_of(SCENE_FIELDS_ON_FINISH)
-        // Only a finished flight-to-load handoff adds the independent receiving observation.
-        && (counts.outputs == outputs
-            || (integrated && finished > 0 && counts.outputs.checked_sub(1) == Some(outputs)))
-        && counts.publications == 0
-        && counts.replies == 0
-        && counts.pending_boundaries == 0
-}
 
 const PICTURES: [(ScenePicture, usize, u16); 7] = [
     (ScenePicture::Planet, 30, 0x9558),
@@ -207,69 +146,6 @@ pub(super) fn advance(
     }
 }
 
-pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let window = case.cache_window()?;
-    let lock = super::read_lock(sources)?;
-    let mut rows = super::played::open_rows(sources, &lock, window.row)?;
-    let mut previous = rows.record(window.origin)?;
-    let (production, content, rules) = admit_seed(&sources.rom, &previous)?;
-    let integrated = case
-        .responsibilities
-        .contains(&Responsibility::ZebesDrawing);
-    let first = *window.cuts.start();
-    let mut schedule = Vec::new();
-    let mut input_cuts = Vec::new();
-    let mut expected_cuts = Vec::new();
-    for cut in window.cuts {
-        let current = rows.successor(cut, &previous)?;
-        schedule.push(cut);
-        input_cuts.push(cadence(&current));
-        let mut observed = expected(&previous, &current, integrated)?;
-        if word(&current, GAME_FLOW)? == LOADING_FLOW {
-            if cut < case.end.cut_inclusive {
-                return Err(data_failure(
-                    Some(cut.saturating_add(1)),
-                    "flight beyond loading handoff",
-                ));
-            }
-            if integrated {
-                let graphics = super::landing_site::graphics(sources)?;
-                let next = cut
-                    .checked_add(1)
-                    .ok_or_else(|| data_failure(Some(cut), "flight receiving cut"))?;
-                let (landing, _) =
-                    super::landing_site::receiving(&mut rows, next, &current, &graphics)?;
-                observed.fields.push(landing_join(&landing)?);
-                observed.output_count = observed.output_count.saturating_add(1);
-            }
-        }
-        expected_cuts.push(observed);
-        previous = current;
-    }
-    let ProductionContent::Zebes(imported) = &content else {
-        return Err(data_failure(None, "flight content scope"));
-    };
-    let actual = ActualReader::Zebes {
-        integrated,
-        scene: imported.scene,
-    };
-    Ok(AdmittedCase {
-        production,
-        content,
-        rules,
-        schedule,
-        actual,
-        inputs: InputReader::Zebes(CutTape {
-            first,
-            values: input_cuts,
-        }),
-        expected: ExpectedReader::RecordedCuts(CutTape {
-            first,
-            values: expected_cuts,
-        }),
-    })
-}
-
 fn byte(record: &FrameRecord, index: usize) -> Result<u8, Outcome> {
     record
         .wram
@@ -315,26 +191,9 @@ fn state(production: &Production) -> Result<&State, Outcome> {
     }
 }
 
-pub(super) fn initial(
-    production: &Production,
-    scene: &types::zebes::ZebesScene,
-    integrated: bool,
-) -> Result<Vec<Observation>, Outcome> {
-    let state = state(production)?;
-    let output = Output {
-        scene: screens_zebes::FrameReport {
-            picture: screens_zebes::report::publish(&state.scene.0, scene),
-            requests: screens_zebes::Requests::NONE,
-        },
-        pages: None,
-    };
-    actual(production, &output, integrated)
-}
-
 pub(super) fn actual(
     production: &Production,
     output: &Output,
-    integrated: bool,
 ) -> Result<Vec<Observation>, Outcome> {
     let state = state(production)?;
     let owned = &state.scene.0;
@@ -424,13 +283,11 @@ pub(super) fn actual(
             at.into_iter().flatten(),
         ));
     }
-    fields.extend(actual_outputs(state, output, integrated));
+    fields.extend(actual_outputs(state, output));
     Ok(fields)
 }
 
-fn actual_outputs(state: &State, output: &Output, integrated: bool) -> Vec<Observation> {
-    let owned = &state.scene.0;
-    let picture = &output.scene.picture;
+fn actual_outputs(state: &State, output: &Output) -> Vec<Observation> {
     let mut fields = Vec::new();
     let request = match (
         output.scene.requests.colour_effect,
@@ -443,34 +300,6 @@ fn actual_outputs(state: &State, output: &Output, integrated: bool) -> Vec<Obser
         (None, false) => 0,
     };
     fields.push(quantity("request", request));
-    if !integrated {
-        return fields;
-    }
-    if let Flow::Loading(destination) = state.flow {
-        fields.push(packed(
-            "landing.join",
-            [
-                state.finished,
-                flow_word(state.flow),
-                state.health.0.energy.whole.get(),
-                state.maximum,
-                destination_word(destination),
-                if picture.light == Brightness::Blanked {
-                    0x80
-                } else {
-                    0
-                },
-                u16::from(owned.pose.angle.0),
-                owned.pose.zoom.0,
-                picture.plane.scroll.x.cast_unsigned(),
-                picture.plane.scroll.y.cast_unsigned(),
-                plane_word(picture.plane.matrix.a),
-                plane_word(picture.plane.matrix.b),
-                plane_word(picture.plane.matrix.c),
-                plane_word(picture.plane.matrix.d),
-            ],
-        ));
-    }
     if let Some(pages) = &output.pages {
         fields.push(bytes("pages.ship", pages.ship_map.clone()));
         fields.push(bytes(
@@ -543,7 +372,6 @@ fn oam_bytes(entries: impl IntoIterator<Item = [u8; 4]>, high: &[u8]) -> Vec<u8>
 pub(super) fn expected(
     previous: &FrameRecord,
     current: &FrameRecord,
-    integrated: bool,
 ) -> Result<ExpectedCut, Outcome> {
     let w = |at| word(current, at);
     let b = |at| byte(current, at);
@@ -560,19 +388,17 @@ pub(super) fn expected(
             raw_light & 15
         },
     )];
-    if integrated {
-        semantics.extend([
-            quantity("energy", w(ENERGY)?),
-            quantity("maximum", w(ENERGY_CAPACITY)?),
-            quantity("finished", w(FINISHED)?),
-            quantity("flow", w(GAME_FLOW)?),
-            quantity("destination", w(DESTINATION)?),
-        ]);
-    }
+    semantics.extend([
+        quantity("energy", w(ENERGY)?),
+        quantity("maximum", w(ENERGY_CAPACITY)?),
+        quantity("finished", w(FINISHED)?),
+        quantity("flow", w(GAME_FLOW)?),
+        quantity("destination", w(DESTINATION)?),
+    ]);
     if !held {
         semantics.extend(expected_picture(current, stage)?);
     }
-    let outputs = expected_outputs(previous, current, integrated, held, setup)?;
+    let outputs = expected_outputs(previous, current, held, setup)?;
     let semantic_count = semantics.len();
     let output_count = outputs.len();
     let fields = semantics.iter().chain(&outputs).cloned().collect();
@@ -682,7 +508,6 @@ fn expected_picture(current: &FrameRecord, stage: i32) -> Result<Vec<Observation
 fn expected_outputs(
     previous: &FrameRecord,
     current: &FrameRecord,
-    integrated: bool,
     held: bool,
     setup: bool,
 ) -> Result<Vec<Observation>, Outcome> {
@@ -702,7 +527,7 @@ fn expected_outputs(
         0
     };
     let mut outputs = vec![quantity("request", request)];
-    if integrated && setup {
+    if setup {
         outputs.extend([
             bytes(
                 "pages.ship",
@@ -726,7 +551,7 @@ fn expected_outputs(
             packed("palette.setup", previous.cgram.iter().copied()),
         ]);
     }
-    if integrated && !held {
+    if !held {
         let low = current
             .oam
             .get(..512)
@@ -753,26 +578,6 @@ fn has_effect(record: &FrameRecord, id: u16) -> Result<bool, Outcome> {
     Ok(false)
 }
 
-fn landing_join(record: &FrameRecord) -> Result<Observation, Outcome> {
-    let values = words_at(
-        record,
-        [FINISHED, GAME_FLOW, ENERGY, ENERGY_CAPACITY, DESTINATION],
-    )?;
-    let plane = words_at(
-        record,
-        [
-            0x198d, 0x198f, 0x00b1, 0x00b3, 0x0078, 0x007a, 0x007c, 0x007e,
-        ],
-    )?;
-    Ok(packed(
-        "landing.join",
-        values
-            .into_iter()
-            .chain([u16::from(byte(record, 0x0051)?)])
-            .chain(plane),
-    ))
-}
-
 fn words_at<const N: usize>(record: &FrameRecord, at: [usize; N]) -> Result<Vec<u16>, Outcome> {
     at.into_iter().map(|index| word(record, index)).collect()
 }
@@ -796,7 +601,7 @@ pub(super) fn play_cut(
     };
     super::compared(
         cut,
-        &expected(previous, current, true)?.fields,
-        &actual(production, &output, true)?,
+        &expected(previous, current)?.fields,
+        &actual(production, &output)?,
     )
 }

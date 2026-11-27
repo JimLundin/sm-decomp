@@ -72,14 +72,6 @@ pub(super) fn admit(
             OwnedState::Departure(run)
         }
         (
-            ProductionSeed::Explosion(state),
-            ProductionContent::Explosion(content),
-            ProductionRules::Explosion(_),
-        ) => {
-            state.validate(content).map_err(AdmissionFault::Explosion)?;
-            OwnedState::Explosion(state)
-        }
-        (
             ProductionSeed::Escape(state),
             ProductionContent::Escape(content),
             ProductionRules::Departure(_),
@@ -186,14 +178,6 @@ pub(super) fn advance_scene(
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
-        (
-            OwnedState::Explosion(state),
-            ProductionContent::Explosion(content),
-            ProductionRules::Explosion(rules),
-            AdvanceInput::Explosion(cut),
-        ) => ProductionOutputs::Explosion(Box::new(state.advance(content, *rules, cut).map_err(
-            |fault| ProductionFault::Unsupported(super::Unsupported::Explosion(fault)),
-        )?)),
         (
             OwnedState::Escape(state),
             ProductionContent::Escape(content),

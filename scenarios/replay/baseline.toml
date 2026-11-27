@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "d6b1047f1cf5cd6a7a264be222fb388751f9adf9fac7cd80ceac4f05249e37c0"
+index_sha256 = "4b513d02aee695a0517d8891d3d89458c16db8cf9fbd532d96b05a1a3600531d"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1222,60 +1222,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "explosion/station-blackout-to-zebes"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "90f51e9b523dffdfc101e7ebf9719e874f2cf6b58c88900c79c2f0870e792979"
-
-[case.counts]
-cuts = 763
-fields = 6662
-outputs = 2212
-publications = 0
-replies = 0
-null_cuts = 32
-null_fields = 2311
-restorations = 763
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "zebes/flight-to-zebes"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "9b4dbd8c216cfab65559ee5aca6ec51e5f3336f277cdf3edbc33cfe6354b9697"
-
-[case.counts]
-cuts = 1119
-fields = 16659
-outputs = 1119
-publications = 0
-replies = 0
-null_cuts = 9
-null_fields = 14439
-restorations = 1119
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "zebes/station-blackout-to-landing-load"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "0a8728b69fa11375c372a92dc87dde0ad91a6944e8b283fc8e6e76ce045f5ef4"
-
-[case.counts]
-cuts = 1119
-fields = 22254
-outputs = 3345
-publications = 0
-replies = 0
-null_cuts = 9
-null_fields = 18922
-restorations = 1119
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "landing-site/receiving-prefix"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1326,96 +1272,6 @@ replies = 0
 null_cuts = 0
 null_fields = 75
 restorations = 9
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "departure/interrupted-station-setup"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "61452e579bffbc9b4422b90b8185709dd8eaf3ecc98179c393269a31d78509d3"
-
-[case.counts]
-cuts = 35
-fields = 175
-outputs = 43
-publications = 0
-replies = 0
-null_cuts = 31
-null_fields = 168
-restorations = 35
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "departure/music-transfer"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "4a3bdba88c8487ab8c7e59ffd1113b3d0eb97c11c07d882406c373c6f0060a48"
-
-[case.counts]
-cuts = 30
-fields = 150
-outputs = 42
-publications = 0
-replies = 0
-null_cuts = 27
-null_fields = 144
-restorations = 30
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "departure/station-dispatches-flight"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "b00cad002cee145e3795866149471e6e63f52be471cb72f426b6f62d83fc0595"
-
-[case.counts]
-cuts = 12
-fields = 60
-outputs = 24
-publications = 0
-replies = 0
-null_cuts = 8
-null_fields = 54
-restorations = 12
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "departure/flight-dispatches-loader"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "316d192f763fa20ab2b5ca9703dc77e3ff63e1e0dd9b252e60e172b269dfb013"
-
-[case.counts]
-cuts = 2
-fields = 10
-outputs = 14
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 3
-restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "departure/shaft-save-to-landing"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "316d192f763fa20ab2b5ca9703dc77e3ff63e1e0dd9b252e60e172b269dfb013"
-
-[case.counts]
-cuts = 2
-fields = 10
-outputs = 14
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 3
-restorations = 2
 pending_boundaries = 0
 pending_restorations = 0
 
