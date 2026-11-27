@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# Packs the lockstep record cache (A2) for the ci-data release, where the
-# `verify / lockstep-ratchet` job fetches it.
+# Packs the lockstep record cache (A2) for the ci-data release, where verify.yml's
+# CACHE_ASSET pins it.
 #
-#   tools/ci/pack_lockstep_cache.sh <cache-dir> <rom> [out-dir]
+#   ROWS="ROW..." tools/ci/pack_lockstep_cache.sh <cache-dir> <rom> [out-dir]
 #
 # <cache-dir> holds one directory per row: the lean tier (lean.txt, lean.bin) or
 # the full tier (index.txt, records.bin), and hits.txt when it was recorded with
-# watches; `tools cache-lean` turns a full tier into a lean one. The rows are those
-# scenarios/locks/lockstep.ratchet.txt names, or those ROWS lists. The tar is
-# deterministic, so its name is a hash of its contents: the same cache packs to
-# the same name. xz -9e because the records are snapshots of nearly the same
+# watches; `tools cache-lean` turns a full tier into a lean one. ROWS lists the
+# rows. The tar is deterministic, so its name is a hash of its contents: the same
+# cache packs to the same name. xz -9e because the records are snapshots of nearly the same
 # state: 627 MB pack to about 1 MB, and the runner unpacks them in seconds.
 # Encryption matches the seed bundles (docs/ORACLE.md): AES-256-CBC,
 # PBKDF2 with 200000 iterations and SHA-256, passphrase
@@ -17,15 +16,13 @@
 # SHA-256; the root uploads it and pins both in .github/workflows/verify.yml.
 set -euo pipefail
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-  echo "usage: $0 <cache-dir> <rom> [out-dir]" >&2
+if [ $# -lt 2 ] || [ $# -gt 3 ] || [ -z "${ROWS:-}" ]; then
+  echo "usage: ROWS=\"ROW...\" $0 <cache-dir> <rom> [out-dir]" >&2
   exit 2
 fi
 cache=$1
 rom=$2
 out=${3:-${TEMP:-/tmp}/collab/ci-cache}
-here=$(cd "$(dirname "$0")/../.." && pwd)
-ratchet=$here/scenarios/locks/lockstep.ratchet.txt
 
 rom_sha256=12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72
 if [ "$(sha256sum <"$rom" | cut -d' ' -f1)" != "$rom_sha256" ]; then
@@ -33,13 +30,7 @@ if [ "$(sha256sum <"$rom" | cut -d' ' -f1)" != "$rom_sha256" ]; then
   exit 1
 fi
 
-# The ratchet's `row ROW ticks N equal N` lines name the rows, unless ROWS lists others
-# (a harness cache: every row the harnesses read).
-if [ -n "${ROWS:-}" ]; then
-  read -ra rows <<<"$ROWS"
-else
-  mapfile -t rows < <(sed -nE 's/^row ([a-z0-9-]+) .*/\1/p' "$ratchet" | sort -u)
-fi
+read -ra rows <<<"$ROWS"
 for row in "${rows[@]}"; do
   if [ -f "$cache/$row/lean.txt" ]; then
     files="lean.txt lean.bin"

@@ -394,7 +394,7 @@ with `LIBRARY_PATH` set).
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-lean LOCK FROM TO ROW...` | writes record cache rows again as the lean tier |
-| `tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
+| `ROWS="..." tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
 
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
 `relock-v2-lsnes/` directory. Capture checks each selected row's pad SHA-256 and length, then
