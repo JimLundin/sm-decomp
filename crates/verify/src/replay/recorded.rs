@@ -10,8 +10,6 @@ use super::readers::{
 use super::result::Outcome;
 use super::{Sources, appearance, camera, data_failure, production_failure, progress, weapons};
 use crate::cache::Cache;
-use crate::lock::RowId;
-use crate::replay::cache_failure;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
@@ -393,18 +391,16 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let Start::CacheCut { frame } = case.start else {
         return Err(data_failure(None, "recorded recipe start"));
     };
-    let lock = super::read_lock(sources)?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "indexed lock row"))?;
-    if case.end.cut_inclusive >= row.frames.0 {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "comparison beyond locked row",
-        ));
-    }
-    let inputs = Box::new(Cache::open(&sources.cache, row).map_err(cache_failure(None))?);
-    let expected = Box::new(Cache::open(&sources.cache, row).map_err(cache_failure(None))?);
+    let inputs = Box::new(super::row_cache(
+        sources,
+        &case.row,
+        case.end.cut_inclusive,
+    )?);
+    let expected = Box::new(super::row_cache(
+        sources,
+        &case.row,
+        case.end.cut_inclusive,
+    )?);
     if let Some(witness) = case.ordinary_witness() {
         witness.qualify_origin(&inputs)?;
     }

@@ -4,9 +4,6 @@ use super::index::{Case, ContentProvider, ExpectedProvider, InputProvider, Respo
 use super::readers::{ActualReader, AdmittedCase, ExpectedReader, InputReader, record};
 use super::result::Outcome;
 use super::{Sources, audio, data_failure, movement};
-use crate::cache::Cache;
-use crate::lock::RowId;
-use crate::replay::cache_failure;
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
@@ -157,18 +154,8 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let Start::CacheCut { frame: start } = case.start else {
         return Err(data_failure(None, "movement start contract"));
     };
-    let lock = super::read_lock(sources)?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "indexed lock row"))?;
-    if case.end.cut_inclusive >= row.frames.0 {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "comparison beyond locked row",
-        ));
-    }
-    let input_cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
-    let expected_cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
+    let input_cache = super::row_cache(sources, &case.row, case.end.cut_inclusive)?;
+    let expected_cache = super::row_cache(sources, &case.row, case.end.cut_inclusive)?;
     if let Some(witness) = case.ordinary_witness() {
         witness.qualify_origin(&expected_cache)?;
     }

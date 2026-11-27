@@ -4,9 +4,10 @@ mod expected;
 mod inputs;
 mod observe;
 
-use super::{Sources, compare::Observation, data_failure, index::Case, readers, result::Outcome};
-use crate::replay::cache_failure;
-use crate::{cache::Cache, lock::RowId};
+use super::{
+    Sources, cache_failure, compare::Observation, data_failure, index::Case, readers,
+    result::Outcome,
+};
 use canonical::model::Model;
 use data::rom::Rom;
 use game::{
@@ -28,17 +29,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
     let super::index::Start::CacheCut { frame: first } = case.start else {
         return Err(data_failure(None, "missile cache origin"));
     };
-    let lock = super::read_lock(sources)?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "missile lock row"))?;
-    if case.end.cut_inclusive >= row.frames.0 {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "missile row horizon",
-        ));
-    }
-    let cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
+    let cache = super::row_cache(sources, &case.row, case.end.cut_inclusive)?;
     let bad_rom = || data_failure(None, "missile player ROM");
     let image =
         Rom::new(std::fs::read(&sources.rom).map_err(|_| bad_rom())?).map_err(|_| bad_rom())?;

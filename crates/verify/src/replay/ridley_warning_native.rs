@@ -168,13 +168,9 @@ pub(super) fn strokes(before: &FrameRecord, after: &FrameRecord) -> Result<u8, O
 #[test]
 #[ignore = "pinned record cache"]
 fn warning_native_admits_both_room_origins() {
-    use crate::cache::Cache;
-    use crate::lock::{Lock, RowId};
-    let root = std::path::PathBuf::from(std::env::var_os("SM_CACHE").unwrap());
-    let lock = std::fs::read_to_string(std::env::var_os("SM_LOCK").unwrap()).unwrap();
-    let lock = Lock::parse(&lock).unwrap();
+    let sources = super::played::tests::sources();
     for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
-        let cache = Cache::open(&root, lock.row(&RowId(row.to_owned())).unwrap()).unwrap();
+        let cache = super::row_cache(&sources, row, 1270).unwrap();
         let record = |number| super::readers::record(&cache, number).unwrap();
         let origin = record(1270);
         let anchor = state(&origin).unwrap();
@@ -320,16 +316,11 @@ fn assert_clock_sprite(
 #[test]
 #[ignore = "pinned record cache and player ROM"]
 fn warning_clock_holds_across_the_first_passage_steps() {
-    use crate::cache::Cache;
-    use crate::lock::{Lock, RowId};
-    use std::path::PathBuf;
-    let fixture = |name| PathBuf::from(std::env::var_os(name).unwrap());
-    let root = fixture("SM_CACHE");
-    let lock = Lock::parse(&std::fs::read_to_string(fixture("SM_LOCK")).unwrap()).unwrap();
-    let rom = data::rom::Rom::new(std::fs::read(fixture("SM_ROM")).unwrap()).unwrap();
+    let sources = super::played::tests::sources();
+    let rom = data::rom::Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
     let figures = import::countdown::import(rom.lorom()).unwrap();
     let witness = |row: &str, checks: &[(u64, u8, u8, bool)]| {
-        let cache = Cache::open(&root, lock.row(&RowId(row.to_owned())).unwrap()).unwrap();
+        let cache = super::row_cache(&sources, row, 1612).unwrap();
         for &(cut, age, hundredths, draws) in checks {
             let record = super::readers::record(&cache, cut).unwrap();
             let observed = state(&record).unwrap();

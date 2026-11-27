@@ -74,6 +74,17 @@ fn read_lock(sources: &Sources) -> Result<crate::lock::Lock, Outcome> {
     crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))
 }
 
+fn row_cache(sources: &Sources, row: &str, last: u64) -> Result<crate::cache::Cache, Outcome> {
+    let lock = read_lock(sources)?;
+    let row = lock
+        .row(&crate::lock::RowId(row.to_owned()))
+        .ok_or_else(|| data_failure(None, "indexed lock row"))?;
+    if last >= row.frames.0 {
+        return Err(data_failure(Some(last), "comparison beyond locked row"));
+    }
+    crate::cache::Cache::open(&sources.cache, row).map_err(cache_failure(None))
+}
+
 /// Admit and replay one case through production with carried selected state.
 #[must_use]
 pub fn run(case: &Case, sources: &Sources) -> CaseResult {

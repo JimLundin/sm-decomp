@@ -4,8 +4,7 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
 };
 use super::{appearance, camera, compare::Observation, hud};
-use crate::replay::cache_failure;
-use crate::{cache::Cache, lock::RowId};
+use crate::cache::Cache;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed,
@@ -293,11 +292,7 @@ pub(super) const fn field_count(case: &super::index::Case, cuts: usize) -> Optio
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let window = case.cache_window()?;
     let (first, second) = (*window.cuts.start(), *window.cuts.end());
-    let lock = super::read_lock(sources)?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "early Map locked row"))?;
-    let cache = Cache::open(&sources.cache, row).map_err(cache_failure(None))?;
+    let cache = super::row_cache(sources, &case.row, case.end.cut_inclusive)?;
     let origin = record(&cache, window.origin)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,

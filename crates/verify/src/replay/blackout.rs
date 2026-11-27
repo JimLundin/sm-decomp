@@ -11,11 +11,6 @@ use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
 use super::{Sources, data_failure, production_failure, result::Outcome};
-use crate::replay::cache_failure;
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-};
 use data::rom::Rom;
 use game::production::{
     self, AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -85,23 +80,6 @@ impl Tape<blackout::Cut> {
     }
 }
 
-fn cache(case: &Case, sources: &Sources) -> Result<Cache, Outcome> {
-    let lock = Lock::parse(
-        &std::fs::read_to_string(&sources.lock).map_err(|_| data_failure(None, "blackout lock"))?,
-    )
-    .map_err(|_| data_failure(None, "blackout lock format"))?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "blackout row"))?;
-    if case.end.cut_inclusive >= row.frames.0 {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "blackout cached window",
-        ));
-    }
-    Cache::open(&sources.cache, row).map_err(cache_failure(None))
-}
-
 fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Outcome> {
     let bad = || data_failure(Some(record.index), "blackout elevator origin");
     if !elevator_room(record)? {
@@ -133,7 +111,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let Start::CacheCut { frame } = case.start else {
         return Err(data_failure(None, "blackout seed"));
     };
-    let cache = cache(case, sources)?;
+    let cache = super::row_cache(sources, &case.row, case.end.cut_inclusive)?;
     let rom =
         Rom::new(std::fs::read(&sources.rom).map_err(|_| data_failure(None, "blackout ROM file"))?)
             .map_err(|_| data_failure(None, "blackout ROM pin"))?;
@@ -291,9 +269,7 @@ mod owned_standing {
     #[ignore = "pinned record cache and player ROM"]
     fn first_locked_turn_reads_the_carried_look() -> Result<(), Outcome> {
         let sources = played::tests::sources();
-        let lock = Lock::parse(&std::fs::read_to_string(&sources.lock).unwrap()).unwrap();
-        let row = lock.row(&RowId("chain-any-0011-DF45".to_owned())).unwrap();
-        let cache = Cache::open(&sources.cache, row).unwrap();
+        let cache = crate::replay::row_cache(&sources, "chain-any-0011-DF45", 165).unwrap();
         let prior = record(&cache, 164)?;
         let current = record(&cache, 165)?;
         let image = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
