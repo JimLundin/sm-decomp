@@ -85,7 +85,7 @@ pub(in crate::replay::played) fn expected(
     Ok(fields)
 }
 
-/// A missing run is the null step used at the cut-993 origin.
+/// With no new turn the last backdrop stays visible, and no bound is hit.
 pub(in crate::replay::played) fn actual(
     own: &played::State,
     run: Option<&RidleyRun>,
@@ -98,8 +98,15 @@ pub(in crate::replay::played) fn actual(
         Stage::Getaway => 1,
         Stage::Escape => 2,
     };
-    let backdrop = run.and_then(|run| run.backdrop);
-    let mut fields = state(stage, u16::from(backdrop.is_none()));
+    let backdrop = run.map_or_else(
+        || {
+            own.station
+                .ridley
+                .is_some_and(|ridley| matches!(ridley.phase, RidleyPhase::Getaway(_)))
+        },
+        |run| run.backdrop.is_some(),
+    );
+    let mut fields = state(stage, u16::from(!backdrop));
     fields.extend(wall_fields(&own.station.doors));
     fields.push(Observation::quantity(
         "ridley.retreat.bound",
@@ -112,7 +119,7 @@ pub(in crate::replay::played) fn actual(
         },
     ));
     for (current, physical, range) in PALETTES {
-        let bytes = if backdrop.is_some() {
+        let bytes = if backdrop {
             own.palette
                 .screen
                 .get(range)

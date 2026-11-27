@@ -74,79 +74,108 @@ impl Picture {
             ),
             named("stroke", i64::from(native::strokes(previous, current)?)),
         ];
-        let warning = outputs.warning.as_ref();
-        let mut actual = vec![
-            phase(model_phase(state.phase)?),
-            named("glow", i64::from(state.glow.get())),
-            named(
-                "stage",
-                match room.station.stage {
-                    boss_ceres_ridley::Stage::Calm => 0,
-                    boss_ceres_ridley::Stage::Getaway => 1,
-                    boss_ceres_ridley::Stage::Escape => 2,
-                },
-            ),
-            named(
-                "main-boss",
-                i64::from(room.progress.defeated[types::Area::Ceres][types::BossKind::MainBoss]),
-            ),
-            named(
-                "defeat-offer",
-                i64::from(
-                    warning
-                        .and_then(played::warning::Output::progress_report)
-                        .is_some(),
-                ),
-            ),
-            named(
-                "music",
-                if warning.is_some_and(|warning| warning.music.is_some()) {
-                    i64::from(boss_ceres_ridley::EscapeTrack::DELAY)
-                } else {
-                    -1
-                },
-            ),
-            named(
-                "stroke",
-                i64::from(warning.is_some_and(|warning| warning.stroke.is_some())),
-            ),
-        ];
         self.colours
             .advance(&room.palette, frame.publishes)
             .map_err(|_| bad())?;
+        for (field, slots) in [("english", 81..84), ("heading", 97..100)] {
+            fields.push(words(
+                format!("ridley.warning.{field}.live"),
+                read_live_colours(current, slots.clone()).ok_or_else(bad)?,
+            ));
+            let published = current.cgram.get(slots).ok_or_else(bad)?;
+            fields.push(words(
+                format!("ridley.warning.{field}.published"),
+                published.iter().copied(),
+            ));
+        }
+        fields.extend(self.art(expected.phase, &current.vram).ok_or_else(bad)?);
+        let actual = self.produced(room, state, outputs.warning.as_ref())?;
+        Ok((fields, actual))
+    }
+
+    fn produced(
+        &self,
+        room: &played::State,
+        state: types::ceres_warning::WarningState,
+        warning: Option<&played::warning::Output>,
+    ) -> Result<Vec<Observation>, Outcome> {
+        let mut fields = warning_activity(room, state, warning)?;
         let (live, published) = self.colours.values();
-        for ((field, slots), (live, published)) in [("english", 81..84), ("heading", 97..100)]
+        for (field, (live, published)) in ["english", "heading"]
             .into_iter()
             .zip(live.into_iter().zip(published))
         {
-            let native_live = read_live_colours(current, slots.clone()).ok_or_else(bad)?;
-            fields.push(words(format!("ridley.warning.{field}.live"), native_live));
-            actual.push(words(
+            fields.push(words(
                 format!("ridley.warning.{field}.live"),
                 live.map(types::Colour::bits),
             ));
-            let native_published = current.cgram.get(slots).ok_or_else(bad)?;
             fields.push(words(
-                format!("ridley.warning.{field}.published"),
-                native_published.iter().copied(),
-            ));
-            actual.push(words(
                 format!("ridley.warning.{field}.published"),
                 published.map(types::Colour::bits),
             ));
         }
-        let footprint = self.footprint.as_ref().ok_or_else(bad)?;
-        let (sheets, text) = footprint.ranges(expected.phase, self.admitted_warning_plane);
-        for (name, spans) in [
-            ("ridley.warning.art", sheets),
-            ("ridley.warning.text", text),
-        ] {
-            fields.push(art_words(name, &current.vram, &spans).ok_or_else(bad)?);
-            actual
-                .push(art_words(name, &room.room_video.video.memory.vram, &spans).ok_or_else(bad)?);
-        }
-        Ok((fields, actual))
+        fields.extend(
+            self.art(
+                model_phase(state.phase)?,
+                &room.room_video.video.memory.vram,
+            )
+            .ok_or_else(|| data_failure(None, "Ceres warning picture"))?,
+        );
+        Ok(fields)
     }
+
+    fn art(&self, phase: native::Phase, vram: &[u16]) -> Option<[Observation; 2]> {
+        let (sheets, text) = self
+            .footprint
+            .as_ref()?
+            .ranges(phase, self.admitted_warning_plane);
+        Some([
+            art_words("ridley.warning.art", vram, &sheets)?,
+            art_words("ridley.warning.text", vram, &text)?,
+        ])
+    }
+
+    pub(super) fn held(&self, room: &played::State) -> Result<Vec<Observation>, Outcome> {
+        let state = room
+            .station
+            .warning
+            .or_else(|| selected(&room.station).then(types::ceres_warning::WarningState::ready))
+            .ok_or_else(|| data_failure(None, "held warning state"))?;
+        let mut fields = self.produced(room, state, None)?;
+        fields.extend(super::ceres_doors::actual(&room.station));
+        fields.extend(super::quake::actual(room, None));
+        fields.extend(super::frame::actual(room.frame));
+        fields.extend(super::hud::countdown(room.hud.0.countdown));
+        fields.push(super::hud::expiry_actual(
+            interface_hud::CountdownExpiry::NoExpiry,
+        ));
+        if let interface_hud::Countdown::Begun(clock) = room.hud.0.countdown {
+            let sprites = game::exact::countdown::sprites(
+                &self.timer,
+                clock.place.whole_pixels(),
+                clock.time_left,
+            )
+            .ok_or_else(|| data_failure(None, "held countdown drawing"))?;
+            let mut batch = game::state::video::NmiBatch::default();
+            batch.draw_sprites(&sprites);
+            let expected = crate::replay::blackout::observe::oam_bytes(&batch.oam);
+            for (field, pieces) in [
+                ("clock.shadow", &room.clock_picture.prepared),
+                ("clock.published", &room.clock_picture.published),
+            ] {
+                fields.push(named(
+                    field,
+                    i64::from(
+                        !pieces.is_empty()
+                            && pieces.len() == sprites.pieces.len()
+                            && contains_clock(&expected, pieces),
+                    ),
+                ));
+            }
+        }
+        Ok(fields)
+    }
+
     pub(super) fn clock(
         &self,
         frame: &Frame<'_>,
@@ -202,6 +231,49 @@ impl Picture {
         }
         Ok((fields, actual))
     }
+}
+
+fn warning_activity(
+    room: &played::State,
+    state: types::ceres_warning::WarningState,
+    warning: Option<&played::warning::Output>,
+) -> Result<Vec<Observation>, Outcome> {
+    Ok(vec![
+        phase(model_phase(state.phase)?),
+        named("glow", i64::from(state.glow.get())),
+        named(
+            "stage",
+            match room.station.stage {
+                boss_ceres_ridley::Stage::Calm => 0,
+                boss_ceres_ridley::Stage::Getaway => 1,
+                boss_ceres_ridley::Stage::Escape => 2,
+            },
+        ),
+        named(
+            "main-boss",
+            i64::from(room.progress.defeated[types::Area::Ceres][types::BossKind::MainBoss]),
+        ),
+        named(
+            "defeat-offer",
+            i64::from(
+                warning
+                    .and_then(played::warning::Output::progress_report)
+                    .is_some(),
+            ),
+        ),
+        named(
+            "music",
+            if warning.is_some_and(|warning| warning.music.is_some()) {
+                i64::from(boss_ceres_ridley::EscapeTrack::DELAY)
+            } else {
+                -1
+            },
+        ),
+        named(
+            "stroke",
+            i64::from(warning.is_some_and(|warning| warning.stroke.is_some())),
+        ),
+    ])
 }
 
 fn contains_clock(image: &[u8], pieces: &[[u8; 5]]) -> bool {
