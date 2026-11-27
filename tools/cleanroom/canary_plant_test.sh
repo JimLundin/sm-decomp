@@ -19,9 +19,9 @@ git -c user.name=fixture -c user.email=fixture@invalid commit -qm 'Invented sour
 sources="$TEMP/c4a/logs"
 awk 'BEGIN { for (i = 1; i <= 850; i++) print "Invented text source line " i }' >"$sources/text.md"
 printf 'An invented short state file.\n' >"$sources/state.txt"
-{ printf 'MZ\000'; awk 'BEGIN { for (i = 1; i <= 850; i++) print "Invented binary payload" }'; } >"$sources/payload.dll"
+{ printf '\177ELF\000'; awk 'BEGIN { for (i = 1; i <= 850; i++) print "Invented binary payload" }'; } >"$sources/payload.bin"
 { awk 'BEGIN { for (i = 1; i <= 30000; i++) print "Invented long text prefix" }'; printf '\000binary tail\n'; } >"$sources/late.data"
-for name in text.md state.txt payload.dll late.data; do cp "$sources/$name" "$tmp/$name.original"; done
+for name in text.md state.txt payload.bin late.data; do cp "$sources/$name" "$tmp/$name.original"; done
 fail() { echo "FAIL $*" >&2; exit 1; }
 expect_status() {
   local want=$1 status=0
@@ -31,17 +31,17 @@ expect_status() {
 }
 unchanged() { cmp -s "$1" "$2" || fail "bytes changed: $(basename "$1")"; }
 expect_status 0 plant
-for name in state.txt payload.dll late.data; do unchanged "$sources/$name" "$tmp/$name.original"; done
+for name in state.txt payload.bin late.data; do unchanged "$sources/$name" "$tmp/$name.original"; done
 if cmp -s "$sources/text.md" "$tmp/text.md.original"; then fail 'text source was not planted'; fi
 [ "$(wc -l <"$sources/text.md")" -eq 854 ] || fail 'text markers are missing'
 expect_status 0 unplant
-for name in text.md state.txt payload.dll late.data; do unchanged "$sources/$name" "$tmp/$name.original"; done
+for name in text.md state.txt payload.bin late.data; do unchanged "$sources/$name" "$tmp/$name.original"; done
 # A stale active entry may point at a binary. Even a matching token must not rewrite it.
-printf 'invented_binary_token\n' >>"$sources/payload.dll"
-cp "$sources/payload.dll" "$tmp/binary-active.original"
-printf 'invented_binary_token\tfile\t%s\n' "$sources/payload.dll" >"$CLEANROOM_PRIVATE/active.tsv"
+printf 'invented_binary_token\n' >>"$sources/payload.bin"
+cp "$sources/payload.bin" "$tmp/binary-active.original"
+printf 'invented_binary_token\tfile\t%s\n' "$sources/payload.bin" >"$CLEANROOM_PRIVATE/active.tsv"
 expect_status 0 unplant
-unchanged "$sources/payload.dll" "$tmp/binary-active.original"
+unchanged "$sources/payload.bin" "$tmp/binary-active.original"
 # Real scanner/reader failures must stop before replacing source bytes.
 export CANARY_FAULT
 function tr() { if [ "$CANARY_FAULT" = classifier ]; then return 2; fi; command tr "$@"; }
@@ -72,5 +72,5 @@ unset -f tr wc grep awk
 unset CANARY_FAULT
 expect_status 0 unplant
 unchanged "$sources/text.md" "$tmp/text.md.original"
-unchanged "$sources/payload.dll" "$tmp/binary-active.original"
+unchanged "$sources/payload.bin" "$tmp/binary-active.original"
 echo 'CANARY PLANT OK: text markers, binary bytes, restoration and read failures'

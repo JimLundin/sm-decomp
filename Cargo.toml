@@ -60,9 +60,8 @@ incremental = true
 codegen-units = 16
 lto = false
 
-# The registry crates whose build scripts the development machine can't run (Defender blocks a
-# freshly built executable): each is its published copy with the script's output baked in, by
-# tools/vendor_nobuild.sh; CI's tools/vendor_nobuild_check.sh holds it to the real script.
+# Vendored crates include the outputs of their published build scripts.
+# tools/vendor_nobuild.sh generates them and tools/vendor_nobuild_check.sh verifies them.
 [patch.crates-io]
 proc-macro2 = { path = "vendor/proc-macro2-1.0.107" }
 quote = { path = "vendor/quote-1.0.47" }

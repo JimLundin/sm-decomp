@@ -236,7 +236,6 @@ class AdjustedVectors(unittest.TestCase):
                           "0 ignored; 0 measured; 2 filtered out; finished in 0.00s\n").encode()
                 return subprocess.CompletedProcess(command, 0 if passed else 101, output)
             with patch("adjusted_vectors_run.test_command", return_value=["runner"]), \
-                 patch("adjusted_vectors_run.os.name", "posix"), \
                  patch("adjusted_vectors_run.subprocess.run", side_effect=runner):
                 self.assertEqual(check_domain(root, "demo"), 0)
             self.assertEqual([c for c, _ in calls], [["runner"]] +
@@ -469,21 +468,14 @@ class AdjustedVectors(unittest.TestCase):
             root = Path(directory)
             tests = root / "crates/clean/demo/tests"
             tests.mkdir(parents=True)
-            with patch("adjusted_vectors_run.os.name", "posix"):
-                self.assertEqual(test_command("demo", root),
-                                 ["cargo", "test", "--locked", "-p", "demo", "--lib"])
-                # An unrelated integration target doesn't replace a unit-based adapter.
-                (tests / "other.rs").write_text("// Invented target.\n", encoding="utf-8")
-                self.assertEqual(test_command("demo", root)[-1], "--lib")
-                (tests / "vectors.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-                self.assertEqual(test_command("demo", root),
-                                 ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
-            with patch("adjusted_vectors_run.os.name", "nt"):
-                self.assertEqual(test_command("demo", root),
-                                 ["bash", "tools/lane/run_tests.sh", "--suite", "test:vectors", "demo"])
-                (tests / "vectors.rs").unlink()
-                self.assertEqual(test_command("demo", root),
-                                 ["bash", "tools/lane/run_tests.sh", "--suite", "lib", "demo"])
+            self.assertEqual(test_command("demo", root),
+                             ["cargo", "test", "--locked", "-p", "demo", "--lib"])
+            # An unrelated integration target doesn't replace a unit-based adapter.
+            (tests / "other.rs").write_text("// Invented target.\n", encoding="utf-8")
+            self.assertEqual(test_command("demo", root)[-1], "--lib")
+            (tests / "vectors.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
+            self.assertEqual(test_command("demo", root),
+                             ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
 
     def test_nested_vectors_select_the_integration_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -491,12 +483,8 @@ class AdjustedVectors(unittest.TestCase):
             tests = root / "crates/clean/demo/tests/vectors"
             tests.mkdir(parents=True)
             (tests / "main.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-            with patch("adjusted_vectors_run.os.name", "posix"):
-                self.assertEqual(test_command("demo", root),
-                                 ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
-            with patch("adjusted_vectors_run.os.name", "nt"):
-                self.assertEqual(test_command("demo", root),
-                                 ["bash", "tools/lane/run_tests.sh", "--suite", "test:vectors", "demo"])
+            self.assertEqual(test_command("demo", root),
+                             ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
 
     def test_owners_selects_the_check_and_its_domains(self) -> None:
         for arguments, owners, probed in ((["--owners"], ["alpha", "beta"], []),

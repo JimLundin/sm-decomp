@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Lane worktrees that start from a warm build, and their cleanup.
 #   worktree.sh add <branch> <path> <base>  a worktree on a new branch, its target/ seeded
-#   worktree.sh remove <path>               the worktree, its target/ and its test-DLL folder
+#   worktree.sh remove <path>               the worktree and its target/
 #   worktree.sh seed                        builds the one seed at origin/main (the root, off-hours)
 # The seed is one worktree at $SM_SEED_DIR (default $TEMP/sm-seed, $TEMP else $TMPDIR else /tmp),
 # built the way lanes build:
@@ -20,17 +20,12 @@
 # rebuild. A target directory shared by two worktrees would be wrong: built under the same flags,
 # artifacts have the same names, and each worktree's own source times would let one lane run
 # what the other built.
-# Overrides: SM_SEED_DIR, SM_SEED_COPY, SM_TEST_DLL_DIR.
+# Overrides: SM_SEED_DIR, SM_SEED_COPY.
 set -euo pipefail
 scratch=${TEMP:-${TMPDIR:-/tmp}}
 seed=${SM_SEED_DIR:-$scratch/sm-seed}
-# The build state worth carrying: clippy's metadata, the clean-room clippy pass's, and the test
-# builds of tools/lane/test_dll.py on Windows (cargo test's are in debug). Release and
-# verify-profile builds are a lane's own.
-parts=(debug clean-clippy x86_64-pc-windows-gnu)
-
-# The test-DLL folder run_tests.sh uses for worktree $1 on Windows.
-dll_dir() { echo "${SM_TEST_DLL_DIR:-$scratch/sm-test-dll/$(basename "$1")-$(printf %s "$1" | cksum | cut -d' ' -f1)}"; }
+# Lanes seed the test and clippy build directories.
+parts=(debug clean-clippy)
 
 # Links seed part $1 into target directory $2, with private copies of the files rewritten in
 # place; fails, leaving nothing, where the file system can't link.
@@ -70,9 +65,7 @@ case "${1:-}" in
     ;;
   remove)
     [ "$#" -eq 2 ] || { echo "usage: worktree.sh remove <path>" >&2; exit 2; }
-    # The path as run_tests.sh spells it, which names the test-DLL folder.
     path=$(cd "$2" && cd "$(git rev-parse --show-toplevel)" && pwd)
-    rm -rf "$(dll_dir "$path")"
     rm -rf "$path/target"
     git worktree remove --force "$path"
     git worktree prune

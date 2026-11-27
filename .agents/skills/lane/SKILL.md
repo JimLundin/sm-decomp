@@ -47,21 +47,14 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   `cargo deny` where cargo-deny is installed. A failing check names its finding. When a gate on
   this machine already passed the same tree over the same base with the same tools, it prints
   `GATE REUSED` naming that pass and runs nothing; `SM_GATE_FRESH=1` runs it anyway.
-- Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Linux (and CI) it is
-  `cargo test -p <crate>...`. Windows only: Defender blocks fresh test executables (exit 126), so
-  there it links each test target as a DLL and runs it through Python (`tools/lane/test_dll.py`;
-  overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`, `SM_TEST_JOBS`), builds every named
-  crate's targets in one cargo run and runs the suites at once, so name all the crates in one
-  call; doc tests run only in CI there. The replay tests execute recorded cases, so build them
+- Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]` runs Cargo tests for the
+  named crates. The replay tests execute recorded cases, so build them
   optimised with `CARGO_PROFILE_TEST_OPT_LEVEL=3`.
 - Behaviour: run the affected indexed cases, then the complete required replay baseline as
   [STATUS](../../../docs/STATUS.md) shows. Local acceptance and CI use the same runner.
   Compare case outcomes, declared fields/outputs, null evidence and checkpoint continuations;
   an expected Unsupported result is a held boundary, never a passing behaviour case.
-- **Local runs are slow; plan around them.** On a Windows machine, one fixture-backed
-  replay test takes several minutes through the DLL runner, and a long case can take longer. That's
-  several times the same test on CI's Linux runner; on Linux a local run is `cargo test` at
-  about CI's speed. Iterate locally on the narrowest single test,
+- Iterate locally on the narrowest single test,
   started from the saved checkpoint nearest the question rather than from cut 1. Send full
   cases, the required witnesses and fault checks to focused CI (`gh workflow run ci.yml --ref
   <branch> -f target=<case or test>`), which runs without blocking the machine. Your lane ends
@@ -86,8 +79,6 @@ under the commit rules above.
 - Kill only processes you started, by PID. Delete your own build outputs. Releasing a worktree
   in your handoff also authorizes the cleanup agent to remove its build outputs.
 - The root alone uploads to ci-data and posts to issues.
-- Python on Windows writes CRLF unless you pass `newline="\n"`; some tools write Latin-1. Check
-  new text files with `file`.
 - `gh` can hang: wrap a short `gh` query in `timeout 120`.
 - Don't block on long work. Run builds, `gate.sh`, replays and `gh run watch` in the background
   (the shell tool's background mode): the harness notifies you when the command exits. For "wait
@@ -96,13 +87,13 @@ under the commit rules above.
   foreground loop. A foreground command at the 10-minute cap is a sign the wait belongs in the
   background.
 - Other lanes fetch in the shared clone, so branches move while you work. Compare explicit hashes.
-- ORACLE §8 lists the oracle's pitfalls (lsnes, Mesen, DLL runners).
+- ORACLE §8 lists the oracle's pitfalls (lsnes, Mesen).
 
 ## Resources
 
 - Keep about 30 GB of disk free (`df -h .`). Delete `target/` only for a finished or abandoned
   lane; remove a finished worktree with `bash tools/lane/worktree.sh remove <path>`, which also
-  deletes its `target/` and, on Windows, its test-DLL folder under `$TEMP/sm-test-dll`. On Linux
+  deletes its `target/`. For warm builds,
   set `TEMP` to a folder on the same disk file system as your worktrees
   ([BUILDING](../../../docs/BUILDING.md#setting-up-on-linux)), so the seed's hard links work.
 - The seed is the one shared build state, about one lane's size. The root refreshes it at main

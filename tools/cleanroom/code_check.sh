@@ -54,10 +54,7 @@
 # What it can't see: macro-generated include! calls beyond `std::$x`, registry crates the
 # allowlist admits (and their transitive build scripts), and anything that runs outside cargo.
 #
-# Speed: process start-up is the cost on Windows (MSYS and an on-access scanner make each spawn
-# 50-500 ms), so a crate costs a handful of processes, not some per file: source_scan.awk runs
-# every per-source rule over all of a crate's sources in one awk, shape_scan.awk the shapes in
-# another, and the rest is shell built-ins.
+# Batch the crate's sources in one awk pass for each scan.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 start=$PWD

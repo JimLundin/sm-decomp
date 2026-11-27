@@ -33,7 +33,6 @@ set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 private=${CLEANROOM_PRIVATE:-$HOME/.cleanroom}
 temp=${TEMP:-${TMPDIR:-/tmp}}
-temp=$(cygpath -u "$temp" 2>/dev/null || echo "$temp")
 die() { echo "canary: $*" >&2; exit 2; }
 
 words="samus speed velocity momentum position pose jump fall gravity run walk dash morph ball

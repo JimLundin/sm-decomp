@@ -108,20 +108,17 @@ saved state is taken at the boundary that ends the step it was requested before.
 
 ## 2. Toolchain and layout
 
-**LakeSnes.** `bash tools/oracle/build_lakesnes.sh [--target x86_64-windows-gnu|x86_64-linux-gnu]`
+**LakeSnes.** `bash tools/oracle/build_lakesnes.sh`
 fetches the pinned upstream files (each checked against its SHA-256), applies
 `crates/oracle/native/fixes/*.patch` to a copy, compiles them and the bridge with **Zig 0.15.2**,
 writes `liboracle_lakesnes.a` and prints its directory; put that on `LIBRARY_PATH` for Cargo
-(`#[link(kind = "static", modifiers = "-bundle")]`). Overrides: `ZIG` (default the
-`sm-decomp-tools` Zig, else `zig` on `PATH`) and `SM_LAKESNES_CACHE` (default
-`sm-decomp-tools/lakesnes-oracle-9db90b8`). Zig because it is the project's one C toolchain (no
-MSVC or MinGW gcc on the Windows hosts); no `build.rs` because Defender blocks freshly built
-executables, build scripts included. Linux adds `-fPIC -D_DEFAULT_SOURCE`.
+(`#[link(kind = "static", modifiers = "-bundle")]`). Set `ZIG` for an executable outside
+`PATH` and `SM_LAKESNES_CACHE` to override the source and archive cache (default
+`${XDG_CACHE_HOME:-$HOME/.cache}/sm-decomp-tools/lakesnes-oracle-9db90b8`).
 
-**lsnes.** rr2-beta23, at `%LOCALAPPDATA%/sm-decomp-experiments/20261025/tas-alignment/lsnes-rr2-beta23/`
-or wherever `SM_LSNES` points. Requests go to its stdin; each record goes to a file it
-overwrites, announced as `R <bytes>` on stdout (text mode on Windows, so no binary there). Each
-lsnes runs in its own run directory with `APPDATA=<run dir>/config`, keeps `stderr.txt`, the
+**lsnes.** Set `SM_LSNES` to the rr2-beta23 executable, or install it as `lsnes` on `PATH`.
+Requests go to stdin. Each response overwrites a file and announces its size as `R <bytes>` on stdout.
+Each process has its own home and config under `<run dir>/config`. The run directory keeps `stderr.txt`, the
 server's `lua.log` (`OH_LOG`) and `lsnes.log` there, and reports them if it exits. `SM_LSNES_KEEP=1`
 keeps the directory. A record not announced within 60 s (first step) or 30 s (later) kills that
 lsnes and fails the row as silent. The script loads a start itself (`OH_START`, `load-state`):
@@ -131,13 +128,12 @@ lsnes rejects a state given on its command line with this ROM and hangs.
 `https://github.com/nesdev-org/MesenCE/releases/download/2.2.1/Mesen_2.2.1_Windows.zip`
 (zip SHA-256 `c19e10b3b3865eb0e86e4d01bf09a5027a4452081c04b5bd5b6cbbf76e346fd6`, `Mesen.exe`
 `8ef403d6b9af32075416193914d7993ce8480b347fe1f20a0cfd9815374933e7`), unpacked in
-`%LOCALAPPDATA%/sm-decomp-tools/mesence-2.2.1/` and run from a copy beside a `settings.json` of
-`{}`, which makes it portable:
+a private run directory beside an empty `settings.json` (`{}`). For a Linux build, use the same settings:
 
 ```sh
 rm -rf mesence-2.2.1-run/Saves   # a kept save changes the boot from frame 268
 SM_MESEN_INPUTS=movies/any.inputs SM_MESEN_LOG=out.csv SM_MESEN_FRAMES=9001 \
-  mesence-2.2.1-run/Mesen.exe --testRunner --timeout=150 --doNotSaveSettings \
+  mesence-2.2.1-run/Mesen --testRunner --timeout=150 --doNotSaveSettings \
   --debug.scriptWindow.allowIoOsAccess=true --snes.port1.type=SnesController \
   --snes.ramPowerOnState=AllZeros --snes.spcClockSpeedAdjustment=40 \
   tools/oracle/mesen_lag_log.lua rom/sm.smc
@@ -397,7 +393,7 @@ the `seed_record` pins, so only the `bundles` line changes.
 ## 6. Commands
 
 Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build --profile verify -p oracle`
-with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI as a DLL (Pitfalls).
+with `LIBRARY_PATH` set).
 
 | Command | Does |
 | --- | --- |
@@ -436,7 +432,7 @@ decrypted bundles (corpus still reads each row's seed and movie name there).
 `tools/oracle/record_caches.sh ROWS BUNDLE DATA ROM CACHE [JOBS]` does it for a list of rows,
 8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
 passes `--watch-pcs` too, for the `hits.txt` the independent causal input providers read.
-`ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
+`ORACLE` names the oracle command.
 
 ## 7. Data: the ROM, bundles and the cipher
 
@@ -476,11 +472,6 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 
 ## 8. Pitfalls
 
-- **Defender** blocks freshly built executables at random (exit 126), build scripts included.
-  Locally, build a cdylib exporting `sm_oracle_run(argc, argv)` around `oracle::cli::main` and call it
-  from Python with ctypes, as `tools/lane/test_dll.py` does for tests. Only `$TEMP` allows executables.
-  A DLL in use can't be relinked: build under a new name. CI runs ordinary binaries. A registry
-  crate with a build script is used through its baked copy in `vendor/` ([crates](../crates/README.md)).
 - **A killed lsnes** usually shows as `took no request`.
 - **A callback that unregisters itself** while lsnes dispatches it makes lsnes call a freed entry
   (`attempt to call a nil value`, then death), so the cut callback stays on the NMI handler's RTI.

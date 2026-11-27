@@ -6,8 +6,8 @@
 # (tools/check_mutants.py plan, which runs no fault); and the adjusted vectors' rule owners
 # (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
-# They don't wait on each other's build locks: each clippy pass has its own target directory, and
-# verify's lib tests link for an explicit target triple (tools/lane/test_dll.py).
+# The clean-room clippy pass has its own target directory (see below).
+
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
 # of the commit where the branch left BASE) and what it ran with: the toolchain, cargo-deny and
 # shellcheck or their absence, Python, the environment variables cargo, rustc, the gate and the
@@ -20,26 +20,19 @@
 # SM_GATE_FRESH=1 runs the checks anyway.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
 # default origin/main; a stacked branch names the branch it builds on), SM_GATE_PASSED (where the
-# passes are recorded). Off Windows the toolchain is the cargo on PATH, which rustup points at
-# rust-toolchain.toml's channel.
+# passes are recorded). Rustup selects rust-toolchain.toml's channel.
+
 BASE=${SM_GATE_BASE:-origin/main}
 # Every subject check compares with BASE, so one that doesn't resolve stops the gate.
 git rev-parse --verify -q "$BASE^{commit}" >/dev/null || {
   echo "GATE: the base $BASE is not a commit here; set SM_GATE_BASE to the one the branch builds on"
   exit 2
 }
-CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
-case "$(uname -s)" in
-  MINGW* | MSYS* | CYGWIN*)
-    R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}"
-    export SM_PY="${SM_PY:-$LOCALAPPDATA/sm-decomp-tools/python-3.13.7/python.exe}"
-    ;;
-  *) R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}" ;;
-esac
+R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}"
 # The dependency rules (deny.toml). cargo-deny is a prebuilt binary, found on PATH or in cargo's
 # bin directory; where it is missing the gate says so and CI's Quality holds the rules.
 deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny")
-[ -x "$deny" ] || [ -x "$deny.exe" ] || deny=
+[ -x "$deny" ] || deny=
 PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
 key=
 # The configuration files cargo and rustfmt read from outside the tree: in CARGO_HOME, rustfmt's
@@ -47,8 +40,6 @@ key=
 # build in (lib.sh's outside_home_temp: /tmp when TEMP is in the home) and every folder above them.
 configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml} "$HOME"/{rustfmt,.rustfmt}.toml
   "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
-[ -z "${USERPROFILE:-}" ] || configs+=("$USERPROFILE"/{rustfmt,.rustfmt}.toml)
-[ -z "${APPDATA:-}" ] || configs+=("$APPDATA"/rustfmt/{rustfmt,.rustfmt}.toml)
 build_temp=$(. tools/cleanroom/lib.sh && outside_home_temp) || build_temp=
 for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}" ${build_temp:+"$build_temp"}; do
   up=
@@ -79,7 +70,7 @@ if [ -n "$build_temp" ] && [ -z "$(git status --porcelain --untracked-files=all)
   left=$(git merge-base "$BASE" HEAD); then
   ran_with=$({
     "$R/rustc" --version 2>&1
-    if [ -n "$deny" ]; then echo "cargo-deny $deny"; cksum <"$deny" 2>/dev/null || cksum <"$deny.exe"
+    if [ -n "$deny" ]; then echo "cargo-deny $deny"; cksum <"$deny"
     else echo "no cargo-deny"; fi
     if shellcheck=$(command -v shellcheck); then echo "shellcheck $shellcheck"; cksum <"$shellcheck"
     else echo "no shellcheck"; fi
@@ -146,7 +137,8 @@ start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -
 # The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
 # Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
 # would re-check `types` and everything that depends on it in both passes on every run.
-CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot -p screens_arrival -p screens_blackout -p screens_zebes -p screens_explosion -p screens_flight -p screens_intro -p screens_discovery -p screens_flashback -p screens_playback -p screens_title -p screens_file_select -p screens_options -p save_files --all-targets --no-deps -- -D warnings
+CARGO="$R/cargo" start clean-clippy bash tools/ci/lint_clean.sh \
+  --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -- -D warnings
 if [ -n "$deny" ]; then
   PATH="$R:$PATH" start deny "$deny" --locked check bans
 else
@@ -162,7 +154,7 @@ start doc-links sh tools/check_doc_links.sh
 # their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
 if changed crates scenarios docs/behaviours docs/architecture/domains.toml README.md Cargo.toml \
   Cargo.lock rust-toolchain.toml; then
-  SM_RUST_BIN="$R" start verify-lib bash tools/lane/run_tests.sh --suite lib verify
+  PATH="$R:$PATH" start verify-lib bash tools/lane/run_tests.sh --suite lib verify
 else skip verify-lib; fi
 # The planted faults' manifest and runner, the sources check_mutants.py lets a fault patch, and the
 # replay cases whose responsibilities each fault witnesses.
@@ -211,7 +203,7 @@ fi
 if ! passed verify-lib; then
   fail "VERIFY LIB FAIL"
   # Each failing test, then where each panicked with the panic's first line.
-  { grep -E '^test .* FAILED$|^test_dll:' "$O/verify-lib.log"
+  { grep -E '^test .* FAILED$' "$O/verify-lib.log"
     grep -A1 'panicked at' "$O/verify-lib.log" | grep -v '^--$'; } | reason verify-lib
   ! grep -q 'committed_readme_is_current .* FAILED' "$O/verify-lib.log" ||
     echo "README STALE: run cargo run -p tools --bin tools -- report --write"

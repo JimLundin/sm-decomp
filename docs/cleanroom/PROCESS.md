@@ -228,8 +228,7 @@ reported as exclusions, not improvement targets.
 Use `cs version` to record the analyzer version and `cs review --help` for its supported input
 forms. `cs review COMMIT:./path/to/file.rs` measures a committed file; `cs review --file-list
 PATHS --output REPORT` writes a human-readable report for a newline-separated path list.
-Keep reports outside the repository and confined exports. On Windows, check the output's
-encoding before reading it; the CLI can emit CP1252. Machine-readable null scores mean
+Keep reports outside the repository and confined exports. Machine-readable null scores mean
 "no scorable code" and are excluded from averages.
 
 The step is complete when the coordination log and landing/session review record:

@@ -122,12 +122,7 @@ class PublishNativeFixtureTest(unittest.TestCase):
         source.write_bytes(b"reviewed")
         expected = self.target / "expected"
         expected.unlink()
-        try:
-            expected.symlink_to(source)
-        except OSError as error:
-            if getattr(error, "winerror", None) != 1314:
-                raise
-            self.skipTest("Windows symlink creation requires Developer Mode or privilege")
+        expected.symlink_to(source)
         self.assertNotEqual(self.publish(), 0)
         self.assertTrue(expected.is_symlink())
 

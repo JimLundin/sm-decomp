@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# launch_config_test.sh: launch.sh's confinement as written, on this machine's branch, without a
-# session: CLEANROOM_DRY_RUN=1 on a throwaway probe export with a fake CLI. Off Windows it checks
+# launch_config_test.sh: launch.sh's confinement as written, on Linux, without a
+# session: CLEANROOM_DRY_RUN=1 on a throwaway probe export with a fake CLI. It checks
 # that the deny rules cover the home around the exports' root, the other exports, the temporary
 # folder, the canary record, the project's checkout and the system folders, but not the export;
 # that the environment is the lane's; that the key from ANTHROPIC_API_KEY stays out of the
@@ -8,19 +8,14 @@
 # the export's tests. Then it runs the box from the record's box.txt, with the fake CLI trying
 # each way out from inside (the home, the canary record, the temporary folder, the checkout, a
 # search from /, writes into the lane, the network, the key) and the relay passing a request to
-# a fake API with the key added; it needs docker. On Windows it checks the rules it has always
-# written. The probe's scan builds the cleanroom scanner, as score_scan_test.sh does.
+# a fake API with the key added. It needs Docker.
+# The probe builds the same cleanroom scanner as score_scan_test.sh.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd -P)
-case "$(uname -s)" in
-  MINGW* | MSYS* | CYGWIN*) windows=1 py_default=$LOCALAPPDATA/sm-decomp-tools/python-3.13.7/python.exe ;;
-  *) windows=0 py_default=python3 ;;
-esac
 . "$here/lib.sh"
 # Outside the home, where host tools would open and fetch the repositories this makes.
-fixture=launch-config
-[ "$windows" = 1 ] || fixture=launch-config-under-a-long-temporary-directory
+fixture=launch-config-under-a-long-temporary-directory
 tmp=$(mktemp -d "$(outside_home_temp)/$fixture-XXXXXX") || exit 1
 tmp=$(cd "$tmp" && pwd -P) || exit 1
 sibling=
@@ -28,29 +23,25 @@ record_dir=
 trap 'rm -rf "$tmp" ${sibling:+"$sibling"} ${record_dir:+"$record_dir"}' EXIT
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
-python=${CLEANROOM_PY:-${SM_PY:-$py_default}}
+python=${CLEANROOM_PY:-${SM_PY:-python3}}
 
-# Off Windows the session's home and temporary folder are the test's, so the rules name them.
-if [ "$windows" = 0 ]; then
-  record_dir=$(mktemp -d /tmp/launch-record-XXXXXX) || exit 1
-  export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo} RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
-  export HOME="$tmp/home" TEMP="$tmp/scratch"
-  # The exports' root is outside the home, as launch.sh demands, with another export in it.
-  mkdir -p "$HOME" "$tmp/root/other-domain" "$TEMP/c4a/logs"
-  echo private >"$HOME/notes.txt"
-  mkdir -p "$HOME/.ssh" && echo key >"$HOME/.ssh/id"
-  # A dotfile in a folder on the export's path, which only the walk's `.[!.]*` names.
-  mkdir -p "$tmp/.dot" && echo key >"$tmp/.dot/id"
-  # A sibling of the main checkout, which the rules name as sm-decomp*.
-  main=$(cd "$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
-  candidate="$(dirname "$main")/sm-decomp-launch-test-$$"
-  [ -e "$candidate" ] || { mkdir "$candidate" 2>/dev/null && sibling=$candidate; }
-  root="$tmp/root"
-  quoted_sibling="$root/"'a"b'
-  mkdir "$quoted_sibling" || exit 1
-else
-  root="$tmp/cleanroom"
-fi
+# The session's home and temporary folder are the test's, so the rules name them.
+record_dir=$(mktemp -d /tmp/launch-record-XXXXXX) || exit 1
+export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo} RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
+export HOME="$tmp/home" TEMP="$tmp/scratch"
+# The exports' root is outside the home, as launch.sh demands, with another export in it.
+mkdir -p "$HOME" "$tmp/root/other-domain" "$TEMP/c4a/logs"
+echo private >"$HOME/notes.txt"
+mkdir -p "$HOME/.ssh" && echo key >"$HOME/.ssh/id"
+# A dotfile in a folder on the export's path, which only the walk's `.[!.]*` names.
+mkdir -p "$tmp/.dot" && echo key >"$tmp/.dot/id"
+# A sibling of the main checkout, which the rules name as sm-decomp*.
+main=$(cd "$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
+candidate="$(dirname "$main")/sm-decomp-launch-test-$$"
+[ -e "$candidate" ] || { mkdir "$candidate" 2>/dev/null && sibling=$candidate; }
+root="$tmp/root"
+quoted_sibling="$root/"'a"b'
+mkdir "$quoted_sibling" || exit 1
 export CLEANROOM_PRIVATE="${record_dir:-$tmp/home/.cleanroom}" CLEANROOM_DRY_RUN=1
 mkdir -p "$CLEANROOM_PRIVATE" "$tmp/bin"
 printf '#!/bin/sh\nexit 3\n' >"$tmp/bin/claude" && chmod 755 "$tmp/bin/claude"
@@ -84,14 +75,9 @@ lane=$(CLEANROOM_AUTH="$tmp/auth" launch "with CLEANROOM_AUTH") || exit 1
 [ -d "$lane" ] || { echo "FAIL no lane directory"; exit 1; }
 "$python" -I -c 'import json, sys; json.load(open(sys.argv[1], encoding="utf-8"))' "$lane/settings.json" ||
   fail "settings.json is not JSON"
-# On Windows the credential is in the settings; elsewhere it stays with the relay outside the box.
-if [ "$windows" = 1 ]; then
-  grep -q 'test-key' "$lane/settings.json" || fail "CLEANROOM_AUTH is not in the settings"
-else
-  grep -q 'echo test-key' "$lane/settings.json" && fail "the key helper is in the box's settings"
-  grep -q '"ANTHROPIC_API_KEY": "cleanroom-relay"' "$lane/settings.json" || fail "the box's settings hold no placeholder key"
-  grep -q '"ANTHROPIC_BASE_URL": "http://127.0.0.1:8765"' "$lane/settings.json" || fail "the box's base URL is not the relay's"
-fi
+grep -q 'echo test-key' "$lane/settings.json" && fail "the key helper is in the box's settings"
+grep -q '"ANTHROPIC_API_KEY": "cleanroom-relay"' "$lane/settings.json" || fail "the box's settings hold no placeholder key"
+grep -q '"ANTHROPIC_BASE_URL": "http://127.0.0.1:8765"' "$lane/settings.json" || fail "the box's base URL is not the relay's"
 grep -qE '@[A-Z_]+@' "$lane/brief.txt" && fail "the probe brief keeps a placeholder"
 grep -q '^PYTHON is "' "$lane/brief.txt" || fail "the probe brief doesn't name PYTHON"
 [ "$(head -1 "$lane/argv.txt")" = "$CLAUDE_BIN" ] || fail "the CLI is not CLAUDE_BIN"
@@ -104,14 +90,6 @@ for rule in 'Bash(*=/*)' 'Bash(*=\\*)' 'Bash(* --pathspec-from-file*)' 'Bash(* -
   grep -qxF "$rule" "$tmp/deny.txt" || fail "no deny rule $rule"
 done
 
-if [ "$windows" = 1 ]; then
-  for rule in 'Read(//c/Users/**)' 'Grep(//c/Users/**)' 'Read(//d/**)'; do
-    grep -qF "\"$rule\"" "$lane/settings.json" || fail "no deny rule $rule"
-  done
-  grep -q 'vector_runner.py' "$lane/brief.txt" || fail "the brief has no runner command"
-  [ "$bad" -eq 0 ] && echo "LAUNCH CONFIG TEST OK (Windows)"
-  exit "$bad"
-fi
 
 # Which paths the deny rules cover: a rule `Read(//P)` the path P, `Read(//P/**)` all under P.
 covered=$("$python" -I - "$lane/settings.json" "$ex/Cargo.toml" "$HOME/notes.txt" \
@@ -137,7 +115,7 @@ for p in "$HOME/notes.txt" "$CLEANROOM_PRIVATE/tokens.tsv" "$tmp/root/other-doma
   "$TEMP/c4a/logs/b90.txt" "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" "$tmp/.dot/id" /proc/self/environ; do
   grep -qx "$p Read,Glob,Grep,Edit,Write" <<<"$covered" || fail "not denied every tool: $(grep "^$p " <<<"$covered")"
 done
-grep -qxF 'Bash(*:\\*)' "$tmp/deny.txt" || fail "no deny rule for a drive path off Windows"
+grep -qxF 'Bash(*:\\*)' "$tmp/deny.txt" || fail "no deny rule for a drive path"
 grep -qxF "Read(/$quoted_sibling/**)" "$tmp/deny.txt" || fail "no deny rule for the sibling with a double quote"
 [ -z "$sibling" ] || grep -qxF "Read(/$sibling/**)" "$tmp/deny.txt" || fail "the checkout's sibling $sibling is not denied by name"
 grep -qx 'Bash(cleanroom-tests)' < <("$python" -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["allow"]))' "$lane/settings.json") ||
@@ -146,7 +124,6 @@ grep -qx "HOME=$lane/home" "$lane/env.txt" || fail "HOME is not the lane's home"
 grep -qx "CLAUDE_CONFIG_DIR=$lane/home/.claude" "$lane/env.txt" || fail "the CLI's config is not the lane's"
 grep -qx "TMPDIR=$lane/tmp" "$lane/env.txt" || fail "TMPDIR is not the lane's"
 grep -q "^PATH=$lane/bin:" "$lane/env.txt" || fail "the lane's bin/ does not lead PATH"
-grep -q '^USERPROFILE=' "$lane/env.txt" && fail "a Windows variable off Windows"
 grep -q 'bin/cleanroom-tests' "$lane/vector_runner.sha256" || fail "the runner script is not in the digest"
 [ "$(tail -1 "$lane/awk.path" | cut -c1)" = / ] || fail "awk.path is not absolute"
 

@@ -104,7 +104,7 @@ Jim's decisions, 2026-11-09:
     that job, it helps model the domain, and it builds on the development machine. The root
     approves each, at an exact version: `tools/cleanroom/allowed_deps.txt` lists those the
     clean crates may use, with their kinds and features, and `code_check.sh` refuses the rest.
-    A crate whose build script Defender would block is used through a baked copy in `vendor/`
+    The workspace patches selected crates with baked build-script outputs in `vendor/`
     ([crates](../../crates/README.md)).
 13. **Vectors hold RAM observations and invented content only**, in every domain. A vector
     carries what the records show of RAM and content made up in our own format to tell the rules

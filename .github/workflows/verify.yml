@@ -23,6 +23,11 @@ permissions:
 env:
   RUSTC_BOOTSTRAP: "1"
   CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
+  CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
+  CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
+  # Root pins the validated fixture set after uploading its ciphertext.
+  AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
+  AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
 
 jobs:
   # The rebuild's content tests read the real ROM (data::room's Morph Ball Room test returns
@@ -42,7 +47,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           JOB: ${{ github.job }}
-          WORKER: ${{ matrix.worker }}
           TARGET: ${{ inputs.target }}
           # Scheduled and dispatched runs always do the work, so their diagnostics print.
           COLD: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
@@ -115,12 +119,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions: *verdict_permissions
     timeout-minutes: 120
-    env: &replay_fixtures
-      CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
-      CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
-      # Root pins the validated fixture set after uploading its ciphertext.
-      AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
-      AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
     steps:
       - uses: actions/checkout@v4
       - *verdict
@@ -156,37 +154,10 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
             -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
-      - &audio_native
-        name: Fetch and validate the pinned native fixtures and continuation seed
+      - &native_fixtures
+        name: Fetch and validate the replay fixtures
         if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &sender_offers
-        name: Fetch observed sender offer windows
-        if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_sender_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &movement_touchdown
-        name: Fetch the native Movement touchdown witnesses
-        if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_movement_touchdown.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &connected_ordinary
-        name: Fetch the reviewed connected ordinary opportunities
-        if: steps.verdict.outputs.reused == ''
-        run: |
-          bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-          bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-          bash tools/ci/fetch_movement_early_map.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &shot_drawing
-        name: Fetch the reviewed scoped power shot witness
-        if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &native_search
-        name: Fetch and qualify the pinned native search packets
-        if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_native_search_packets.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &health_tail
-        name: Fetch the scoped Health tail origin and independent witnesses
-        if: steps.verdict.outputs.reused == ''
-        run: bash tools/ci/fetch_health_tail.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+        run: bash tools/ci/fetch_replay_fixtures.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run one verification library test
         if: steps.verdict.outputs.reused == '' && contains(inputs.target, '::')
         env: &witness_env
@@ -257,7 +228,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.fault-plan.outputs.matrix) }}
-    env: *replay_fixtures
+    env:
+      WORKER: ${{ matrix.worker }}
     steps:
       - uses: actions/checkout@v4
       - *verdict
@@ -265,13 +237,7 @@ jobs:
       - *rom
       - *decrypt
       - *unpack_cache
-      - *audio_native
-      - *sender_offers
-      - *movement_touchdown
-      - *connected_ordinary
-      - *shot_drawing
-      - *native_search
-      - *health_tail
+      - *native_fixtures
       - name: Install the Rust parser for selectable replay faults
         if: steps.verdict.outputs.reused == ''
         run: |
@@ -281,7 +247,6 @@ jobs:
         if: steps.verdict.outputs.reused == ''
         env:
           CARGO_INCREMENTAL: "1"
-          WORKER: ${{ matrix.worker }}
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \

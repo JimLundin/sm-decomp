@@ -57,7 +57,6 @@ done
 mkdir -p "$out"
 plain=$(mktemp "$out/lockstep-cache.XXXXXX")
 trap 'rm -f "$plain" "$plain.xz"' EXIT
-# Written through stdout: GNU tar reads "C:/..." as a remote host.
 (cd "$cache" && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
   --mode=u+rw,go-w,a+rX -cf - "${rows[@]}") >"$plain"
 name=lockstep-cache-$(sha256sum <"$plain" | cut -c1-16).tar.xz.enc

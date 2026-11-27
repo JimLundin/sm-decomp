@@ -2,8 +2,8 @@
 # worktree_test.sh: worktree.sh add gives a new lane worktree the seed's build state, hard-linked
 # except for the dep-info files cargo rewrites in place, so the lane's rewrites leave the seed as
 # it was; it leaves newer than that state exactly the files that differ from the seed's commit;
-# SM_SEED_COPY=1 copies instead; without a seed the lane starts cold; remove deletes the worktree,
-# its target/ and its test-DLL folder. Builds a throwaway repository.
+# SM_SEED_COPY=1 copies instead; without a seed the lane starts cold; remove deletes the worktree
+# and its target/. Builds a throwaway repository.
 set -u
 export GIT_AUTHOR_NAME=worktree-check GIT_AUTHOR_EMAIL=worktree-check@localhost
 export GIT_COMMITTER_NAME=worktree-check GIT_COMMITTER_EMAIL=worktree-check@localhost
@@ -28,7 +28,7 @@ echo built >"$built/deps/x.rlib" && echo info >"$built/deps/x.d"
 echo info >"$built/.fingerprint/x-1/dep-lib-x" && echo shipped >"$tmp/seed/target/release/out"
 
 # Cargo takes independent locks in each seeded profile, including cross builds.
-profiles=(debug clean-clippy/debug x86_64-pc-windows-gnu/debug)
+profiles=(debug clean-clippy/debug)
 locks=(.cargo-lock .cargo-build-lock .cargo-artifact-lock)
 for profile in "${profiles[@]}"; do
   mkdir -p "$tmp/seed/target/$profile"
@@ -37,7 +37,7 @@ for profile in "${profiles[@]}"; do
   done
 done
 
-export SM_SEED_DIR="$tmp/seed" SM_TEST_DLL_DIR="$tmp/dll"
+export SM_SEED_DIR="$tmp/seed"
 bash "$worktree" add cold "$tmp/cold" HEAD | grep -q "first build is cold" || fail "an unbuilt seed is used"
 [ -e "$tmp/cold/target" ] && fail "an unbuilt seed is copied"
 touch "$tmp/seed/target/.seeded"
@@ -78,9 +78,7 @@ for lane in linked copied; do
   [ -z "$(git -C "$tmp/$lane" status --porcelain)" ] || fail "$lane: the worktree is not clean"
 done
 
-mkdir -p "$tmp/dll" && echo dll >"$tmp/dll/x.dll"
 bash "$worktree" remove "$tmp/linked" || fail "remove failed"
 [ -e "$tmp/linked" ] && fail "the worktree remains"
-[ -e "$tmp/dll" ] && fail "the test-DLL folder remains"
 [ "$(cat "$built/deps/x.rlib")" = built ] || fail "remove touched the seed"
 exit "$bad"

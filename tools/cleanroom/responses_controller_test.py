@@ -66,9 +66,9 @@ class Contract(unittest.TestCase):
     def test_all_probe_denials(self) -> None:
         # Each original launch_probe CHECK has the same denied capability here.
         checks: list[tuple[str, dict[str, str]]] = [
-            ("cleanroom", {"action": "read", "path": "C:/Users/JIM~1.LUN/record.txt"}),
-            ("cleanroom", {"action": "read", "path": "C:/Users/Jim.Lundin/record.html"}),
-            ("cleanroom", {"action": "search", "path": "C:/Users/Jim.Lundin/logs", "text": "speed"}),
+            ("cleanroom", {"action": "read", "path": "/tmp/observations/record.txt"}),
+            ("cleanroom", {"action": "read", "path": "/home/operator/record.html"}),
+            ("cleanroom", {"action": "search", "path": "/home/operator/logs", "text": "speed"}),
             ("cleanroom", {"action": "list", "path": "../**"}),
             ("Bash", {"action": "git -C external show HEAD"}),
             ("Bash", {"action": "git show HEAD:CLEANROOM.md"}),
@@ -77,7 +77,7 @@ class Contract(unittest.TestCase):
             ("Bash", {"action": "curl https://example.invalid"}),
             ("WebFetch", {"action": "fetch"}),
             ("WebSearch", {"action": "search"}),
-            ("cleanroom", {"action": "read", "path": "C:/Users/user/.claude/memory/MEMORY.md"}),
+            ("cleanroom", {"action": "read", "path": "/home/operator/.claude/memory/MEMORY.md"}),
             ("Agent", {"action": "spawn"}),
             ("cleanroom", {"action": "write", "path": str(self.lane / "config"), "text": "{}"}),
             ("PowerShell", {"action": "read tokens"}),
@@ -87,7 +87,7 @@ class Contract(unittest.TestCase):
             ("Bash", {"action": "python -c print(1)"}),
             ("cleanroom", {"action": "runner", "args": "--help"}),
             ("Bash", {"action": "python -I other.py"}),
-            ("Bash", {"action": "py -c print(1)"}),
+            ("Bash", {"action": "python -c print(1)"}),
             ("Bash", {"action": "python3 -c print(1)"}),
             ("cleanroom", {"action": "write", "path": "crates/clean/types/vector_runner.py", "text": "print(1)"}),
             ("cleanroom", {"action": "commit", "text": "Clean types; a probe marker"}),
@@ -257,10 +257,7 @@ class Contract(unittest.TestCase):
         with self.assertRaises(Refused):
             self.broker.path("crates/clean/types/src/link.rs")
         inside.unlink()
-        try:
-            inside.symlink_to(outside)
-        except OSError:
-            return  # Windows developer-mode is not guaranteed; hardlink case always runs.
+        inside.symlink_to(outside)
         with self.assertRaises(Refused):
             self.broker.path("crates/clean/types/src/link.rs")
 
@@ -340,7 +337,6 @@ class Contract(unittest.TestCase):
         records = (self.lane / "transcript").read_text(encoding="utf-8").splitlines()
         self.assertEqual(len(records), 3)
 
-    @unittest.skipUnless(sys.platform == "linux", "Linux controller cancellation")
     def test_transport_cancellation_during_retry_wait(self) -> None:
         rate_limit = fixture_http_error(429, "1")
         open_request = unittest.mock.Mock(side_effect=rate_limit)
@@ -677,7 +673,6 @@ class Streams(unittest.TestCase):
 
 
 class LinuxExecution(unittest.TestCase):
-    @unittest.skipUnless(sys.platform == "linux", "Linux launcher")
     def test_wrapper_prepares_and_forwards_role(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             base = Path(raw)
@@ -694,7 +689,6 @@ class LinuxExecution(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), "invented-controller.toml")
 
-    @unittest.skipUnless(sys.platform == "linux", "Linux launcher")
     def test_wrapper_forwards_termination_and_checks_canaries(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             base = Path(raw)
@@ -729,7 +723,7 @@ class LinuxExecution(unittest.TestCase):
                     if wrapper.poll() is None:
                         wrapper.kill()
 
-    @unittest.skipUnless(sys.platform == "linux" and os.environ.get("CLEANROOM_DOCKER_TEST") == "1",
+    @unittest.skipUnless(os.environ.get("CLEANROOM_DOCKER_TEST") == "1",
                          "local Linux Docker integration")
     def test_box_boundary_and_timeout(self) -> None:
         from responses_box import CommandBox, RUNNER_FILES
@@ -782,7 +776,6 @@ class LinuxExecution(unittest.TestCase):
 
 
 class Preparation(unittest.TestCase):
-    @unittest.skipUnless(os.name == "nt", "Windows launcher")
     def test_wrapper_prepares_only_and_forwards_role(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             base = Path(raw)
@@ -793,10 +786,8 @@ class Preparation(unittest.TestCase):
                 "assert '--prepare' in sys.argv\n"
                 "assert sys.argv[sys.argv.index('--mode')+1]=='blind-reviewer'\n"
                 "print('invented-controller.toml')\n", encoding="utf-8")
-            env = {"SYSTEMROOT": os.environ["SYSTEMROOT"], "PATH": os.environ.get("PATH", ""),
-                   "CLEANROOM_PY": sys.executable, "CLEANROOM_BASH": str(Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe"),
-                   "CLEANROOM_GIT": shutil.which("git") or "git", "CLEANROOM_CARGO": "C:/dummy/cargo.exe"}
-            result = subprocess.run([env["CLEANROOM_BASH"], str(base / "launch_responses.sh"),
+            env = {"PATH": os.environ["PATH"], "CLEANROOM_PY": sys.executable}
+            result = subprocess.run(["bash", str(base / "launch_responses.sh"),
                                      "--prepare-only", "--mode", "blind-reviewer", "export", "brief", "transcript", "lane"],
                                     cwd=base, env=env, capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -823,7 +814,7 @@ class Preparation(unittest.TestCase):
             brief.write_text("Build the invented model.\n", encoding="utf-8")
             git = shutil.which("git")
             assert git is not None
-            env = {"PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
+            env = {"PATH": os.environ.get("PATH", ""),
                    "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
             def run(*args: str) -> str:
                 return subprocess.run([git, *args], cwd=export, env=env, capture_output=True,
@@ -833,16 +824,11 @@ class Preparation(unittest.TestCase):
             run("-c", "user.name=fixture", "-c", "user.email=fixture@invalid", "commit", "-qm", "Invented export")
             overrides = {"CLEANROOM_GIT": git}
             overrides["RUSTUP_HOME"] = os.environ.get("RUSTUP_HOME", str(Path.home() / ".rustup"))
-            if os.name == "nt":
-                overrides["CLEANROOM_BASH"] = str(Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
-                overrides["CLEANROOM_CARGO"] = str(Path(os.environ["USERPROFILE"]) / ".rustup/toolchains/1.99.1-x86_64-pc-windows-gnu/bin/cargo.exe")
-                overrides["CARGO_TARGET_DIR"] = str(Path(os.environ["TEMP"]) / "collab/checks-can-fail/target")
             with patch.object(Path, "home", return_value=home), patch.dict(os.environ, overrides):
                 def prepared(mode: str, label: str) -> Broker:
                     path = prepare(export, base / label, brief, base / (label + ".transcript"), mode=mode)
                     config = tomllib.loads(path.read_text(encoding="utf-8"))
-                    if sys.platform == "linux":
-                        self.assertEqual(config["execution"], "docker")
+                    self.assertEqual(config["execution"], "docker")
                     return Broker(export, base / label, config)
                 broker = prepared("implementer", "initial")
                 # The runner's awk is pinned by absolute path, and a changed pin or scan script is

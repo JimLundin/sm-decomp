@@ -60,10 +60,7 @@ const STDERR: &str = "stderr.txt";
 const LUA_LOG: &str = "lua.log";
 /// The server's watched-PC trace, in the run's directory.
 const TRACE_LOG: &str = "trace.log";
-/// lsnes's configuration directory, inside the run's directory. lsnes takes
-/// it from `APPDATA` (`%APPDATA%/lsnes`); a shared one races when several
-/// processes start in the same second, and the loser stops at a fatal
-/// "not writable" message without exiting.
+/// lsnes's private home and configuration directory for this run.
 const CONFIG: &str = "config";
 /// How long the first record may take: lsnes starts, loads the ROM and the
 /// server, and runs a frame.
@@ -73,16 +70,9 @@ const STEP_TIMEOUT: Duration = Duration::from_secs(30);
 /// How long lsnes may take to quit once asked.
 const QUIT_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// The executable: `SM_LSNES`, or the copy this machine keeps.
+/// The `SM_LSNES` executable, or `lsnes` on PATH.
 fn executable() -> PathBuf {
-    std::env::var_os("SM_LSNES").map_or_else(
-        || {
-            PathBuf::from(std::env::var_os("LOCALAPPDATA").unwrap_or_default()).join(
-                "sm-decomp-experiments/20261025/tas-alignment/lsnes-rr2-beta23/lsnes-bsnes.exe",
-            )
-        },
-        PathBuf::from,
-    )
+    std::env::var_os("SM_LSNES").map_or_else(|| PathBuf::from("lsnes"), PathBuf::from)
 }
 
 /// Why an lsnes process stopped serving.
@@ -514,7 +504,8 @@ impl Lsnes {
             .current_dir(&directory)
             .env("OH_RECORD", directory.join("record.bin"))
             .env("OH_LOG", directory.join(LUA_LOG))
-            .env("APPDATA", &config)
+            .env("HOME", &config)
+            .env("XDG_CONFIG_HOME", &config)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(stderr)

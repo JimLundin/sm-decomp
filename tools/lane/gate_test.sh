@@ -13,7 +13,8 @@ fail() { echo "FAIL $*"; bad=1; }
 scratch=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-XXXXXX") || exit 1
 trap 'rm -rf "$scratch"' EXIT
 repo=$scratch/repo bin=$scratch/bin ran=$scratch/ran
-mkdir -p "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
+mkdir -p "$repo/tools/ci" "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
+cp "$here/../ci/lint_clean.sh" "$repo/tools/ci/"
 cp "$here/gate.sh" "$repo/tools/lane/gate.sh"
 # Run the real selector, mapping its /tmp result to a private stand-in for the fallback case.
 sed 's/^outside_home_temp() {/select_outside_home_temp() {/' "$here/../cleanroom/lib.sh" \
@@ -52,7 +53,7 @@ for name in faults owners; do
   path=$repo/tools/check_mutants.py
   [ "$name" = owners ] && path=$repo/tools/cleanroom/adjusted_vectors_run.py
   printf 'import os, pathlib, sys\npathlib.Path(%s, "%s").write_text("")\nprint(os.environ.get("GATE_TEST_OUT_%s", ""))\nsys.exit(int(os.environ.get("GATE_TEST_STATUS_%s", "0")))\n' \
-    "r'$(cygpath -w "$ran" 2>/dev/null || echo "$ran")'" "$name" "$name" "$name" >"$path"
+    "r'$ran'" "$name" "$name" "$name" >"$path"
 done
 git -C "$repo" init -q -b lane/test
 git -C "$repo" -c core.autocrlf=false add -A
@@ -92,7 +93,7 @@ out=$(gate RUSTFLAGS=--cap-lints=allow) || fail "a gate with other flags failed:
 mv "$bin/cargo-deny" "$bin/no-cargo-deny"
 no_deny=$bin
 while IFS= read -r dir; do
-  [ -z "$dir" ] || [ -e "$dir/cargo-deny" ] || [ -e "$dir/cargo-deny.exe" ] || no_deny=$no_deny:$dir
+  [ -z "$dir" ] || [ -e "$dir/cargo-deny" ] || no_deny=$no_deny:$dir
 done < <(tr : '\n' <<<"$PATH")
 out=$(gate PATH="$no_deny") || fail "a gate without cargo-deny failed: $out"
 ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate without cargo-deny reused a pass that ran it: $out"

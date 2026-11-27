@@ -22,8 +22,6 @@
 # corpus output is kept in `<cache>/.logs/<row>.log`.
 #
 # ORACLE is the command that runs the oracle's command line, default `target/verify/oracle`.
-# Where Defender blocks fresh executables (docs/ORACLE.md §8), it is the Python DLL runner, for
-# example ORACLE="python $TEMP/collab/run.py $TEMP/collab/oracle_cache.dll".
 #
 # WATCH_PCS, when set, is the comma-separated list of instruction addresses passed to corpus as
 # `--watch-pcs`, so each row also gets its `hits.txt` (docs/ORACLE.md §6): the harnesses that hear

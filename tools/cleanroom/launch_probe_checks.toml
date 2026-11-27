@@ -88,7 +88,7 @@ pattern = 'file_path=[^=]*settings\.json'
 [[check]]
 step = "CHECK 15"
 tools = ["Bash"]
-pattern = '^powershell '
+pattern = '^pwsh '
 
 [[check]]
 step = "CHECK 16"
@@ -123,7 +123,7 @@ pattern = '^"?{python}"? -I other\.py'
 [[check]]
 step = "CHECK 22"
 tools = ["Bash"]
-pattern = '^py -c'
+pattern = '^python -c'
 
 [[check]]
 step = "CHECK 23"

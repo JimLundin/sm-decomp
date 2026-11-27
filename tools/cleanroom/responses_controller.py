@@ -139,11 +139,9 @@ def digest(path: Path) -> str:
 
 
 def plain(path: Path) -> None:
-    """Reject links, Windows reparse points and multiply linked files."""
+    """Reject symbolic and hard links."""
     info = path.lstat()
-    if (stat.S_ISLNK(info.st_mode) or
-            getattr(info, "st_file_attributes", 0) & 0x400 or
-            (stat.S_ISREG(info.st_mode) and info.st_nlink != 1)):
+    if stat.S_ISLNK(info.st_mode) or (stat.S_ISREG(info.st_mode) and info.st_nlink != 1):
         raise Refused("linked path")
 
 
@@ -180,16 +178,15 @@ class Broker:
                                     for p in self.writable):
             raise Refused("invalid import paths")
         self.env = dict(config["environment"])
-        allowed = {"PATH", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "TMPDIR",
-                   "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "CARGO_HOME", "RUSTUP_HOME",
-                   "CARGO_TARGET_DIR", "RUSTC", "RUSTDOC", "MSYS", "SM_PY", "CLEANROOM_PY", "SM_SCAN_DLL_DIR", "SM_RUST_BIN"}
+        allowed = {"PATH", "HOME", "TEMP", "TMP", "TMPDIR", "CARGO_HOME", "RUSTUP_HOME",
+                   "CARGO_TARGET_DIR", "RUSTC", "RUSTDOC", "SM_PY", "CLEANROOM_PY"}
         if set(self.env) - allowed or any(not isinstance(v, str) for v in self.env.values()):
             raise Refused("environment not allowlisted")
         self.env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
                          "GIT_AUTHOR_NAME": "implementer", "GIT_AUTHOR_EMAIL": "implementer@cleanroom.invalid",
                          "GIT_COMMITTER_NAME": "implementer", "GIT_COMMITTER_EMAIL": "implementer@cleanroom.invalid"})
         self.box = None
-        if sys.platform == "linux" and config.get("execution") == "docker":
+        if config.get("execution") == "docker":
             from responses_box import CommandBox
             self.box = CommandBox(self.root, self.lane, config, self.env)
         self.frozen: dict[Path, str] = {}
@@ -494,8 +491,7 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
     """Operator-side preparation; never invoked by a model tool."""
     root_plain(export)
     export = export.resolve(strict=True)
-    linux = sys.platform == "linux"
-    if linux and export.is_relative_to(Path.home().resolve()):
+    if export.is_relative_to(Path.home().resolve()):
         raise Refused("Linux exports must be outside the operator home")
     git_config_plain(export)
     root_plain(lane)
@@ -524,36 +520,16 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         paths[name] = str(candidate)
     python = str(Path(sys.executable).resolve(strict=True))
     home = Path.home()
-    git_install = Path(paths["bash"]).parent.parent
     environment = {
-        "PATH": os.pathsep.join(dict.fromkeys([str(Path(p).parent) for p in paths.values()] +
-                                              [str(git_install / "usr/bin"), str(git_install / "mingw64/bin")] +
-                                              [str(Path(os.environ.get("SYSTEMROOT", "C:/Windows")) / "System32")])),
-        "HOME": str(lane / "home"), "USERPROFILE": str(lane / "home"),
-        "APPDATA": str(lane / "home" / "AppData" / "Roaming"),
-        "LOCALAPPDATA": str(lane / "home" / "AppData" / "Local"),
-        "TEMP": str(lane / "tmp"), "TMP": str(lane / "tmp"),
-        "SYSTEMROOT": os.environ.get("SYSTEMROOT", "C:/Windows"),
-        "WINDIR": os.environ.get("WINDIR", "C:/Windows"),
+        "PATH": os.pathsep.join(dict.fromkeys(
+            [str(Path(paths["cargo"]).parent), "/usr/local/bin", "/usr/bin", "/bin"])),
+        "HOME": str(lane / "home"),
+        "TEMP": "/tmp", "TMP": "/tmp", "TMPDIR": "/tmp",
         "CARGO_HOME": str(lane / "cargo"),
-        "RUSTUP_HOME": os.environ.get("RUSTUP_HOME", str(home / ".rustup")),
-        "MSYS": "winsymlinks:native",
+        "RUSTUP_HOME": str(Path(os.environ.get("RUSTUP_HOME", str(home / ".rustup"))).resolve()),
         "SM_PY": python, "CLEANROOM_PY": python,
-        "SM_SCAN_DLL_DIR": str(lane / "scan-dlls"),
-        "SM_RUST_BIN": str(Path(paths["cargo"]).parent),
         "CARGO_TARGET_DIR": str(export / "target"),
     }
-    if linux:
-        environment = {
-            "PATH": os.pathsep.join(dict.fromkeys(
-                [str(Path(paths["cargo"]).parent), "/usr/local/bin", "/usr/bin", "/bin"])),
-            "HOME": str(lane / "home"),
-            "TEMP": "/tmp", "TMP": "/tmp", "TMPDIR": "/tmp",
-            "CARGO_HOME": str(lane / "cargo"),
-            "RUSTUP_HOME": str(Path(os.environ.get("RUSTUP_HOME", str(home / ".rustup"))).resolve()),
-            "SM_PY": python, "CLEANROOM_PY": python,
-            "CARGO_TARGET_DIR": str(export / "target"),
-        }
     git = [paths["git"], "-c", "core.hooksPath=" + str(lane / "hooks"), "-c", "core.fsmonitor=false",
            "-c", "core.pager=cat", "-c", "diff.external=", "-c", "core.attributesFile=" + os.devnull]
     safe_env = dict(environment, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
@@ -654,11 +630,10 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         "environment": environment, "commands": commands,
     }
     config["trusted_files"] += [str(p) for p in here.iterdir() if p.is_file() and p.suffix in (".sh", ".awk", ".txt")]
-    if linux:
-        config["execution"] = "docker"
-        config["trusted_files"].extend(str(path) for path in
-                                       (here / "responses_box.py", here / "box_relay.py",
-                                        here.parent.parent / "Cargo.toml"))
+    config["execution"] = "docker"
+    config["trusted_files"].extend(str(path) for path in
+                                   (here / "responses_box.py", here / "box_relay.py",
+                                    here.parent.parent / "Cargo.toml"))
     config["trusted_files"].append(config["provider_config"])
     config_path = lane / "controller.toml"
     config["trusted_files"].append(str(config_path))
@@ -731,18 +706,17 @@ def main() -> int:
     if args.config is None:
         parser.error("config or --prepare required")
     config = tomllib.loads(args.config.read_text(encoding="utf-8"))
-    if sys.platform == "linux" and config.get("execution") != "docker":
+    if config.get("execution") != "docker":
         raise Refused("Linux Responses commands require Docker")
-    if sys.platform == "linux":
-        stop_signals = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
+    stop_signals = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
 
-        def interrupted(signum: int, _frame: Any) -> None:
-            for stop_signal in stop_signals:
-                signal.signal(stop_signal, signal.SIG_IGN)
-            raise SystemExit(128 + signum)
+    def interrupted(signum: int, _frame: Any) -> None:
+        for stop_signal in stop_signals:
+            signal.signal(stop_signal, signal.SIG_IGN)
+        raise SystemExit(128 + signum)
 
-        for signum in stop_signals:
-            signal.signal(signum, interrupted)
+    for signum in stop_signals:
+        signal.signal(signum, interrupted)
     root, lane = Path(config["export"]), Path(config["lane"])
     broker = Broker(root, lane, config)
     if broker.box is not None:

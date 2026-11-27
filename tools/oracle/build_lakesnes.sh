@@ -3,24 +3,20 @@
 # upstream LakeSnes sources, unmodified, and the crate's bridge, compiled with
 # the project's pinned Zig 0.15.2 (docs/ORACLE.md, "Toolchain").
 #
-# Usage: tools/oracle/build_lakesnes.sh [--target x86_64-windows-gnu|x86_64-linux-gnu]
-# Environment: ZIG (default: the sm-decomp-tools Zig, else zig on PATH),
+# Usage: tools/oracle/build_lakesnes.sh [--target x86_64-linux-gnu]
+# Environment: ZIG (default: zig on PATH),
 # SM_LAKESNES_CACHE (default: sm-decomp-tools/lakesnes-oracle-9db90b8).
 # It prints the library directory; put it on LIBRARY_PATH for Cargo.
 set -euo pipefail
 
 revision=9db90b86e46a377609305e298dd92d71cd1d4c8a
 root=$(cd "$(dirname "$0")/../.." && pwd)
-target=x86_64-windows-gnu
-if [ "${1:-}" = --target ]; then target=$2; fi
-if [ -n "${LOCALAPPDATA:-}" ]; then
-  tools="$LOCALAPPDATA/sm-decomp-tools"
-else
-  tools="${XDG_CACHE_HOME:-$HOME/.cache}/sm-decomp-tools"
+target=x86_64-linux-gnu
+if (( $# )) && [[ $# != 2 || $1 != --target || $2 != "$target" ]]; then
+  echo "usage: build_lakesnes.sh [--target $target]" >&2; exit 2
 fi
-cache=${SM_LAKESNES_CACHE:-"$tools/lakesnes-oracle-${revision:0:7}"}
-zig=${ZIG:-"$tools/zig-x86_64-windows-0.15.2/zig.exe"}
-if [ ! -x "$zig" ]; then zig=zig; fi
+cache=${SM_LAKESNES_CACHE:-"${XDG_CACHE_HOME:-$HOME/.cache}/sm-decomp-tools/lakesnes-oracle-${revision:0:7}"}
+zig=${ZIG:-zig}
 
 pins="27568d73a4ce17ced1bf37e86bfee6fcb9b0f6a27de517ddbc16c946c5c509fd LICENSE.txt
 f9dabfaf4e1b154bf7496117f7d0d5d6bbe7c19aa9d898da14985f69ed20ca7e snes/apu.c
@@ -72,8 +68,7 @@ library="$cache/lib-$target"
 objects="$library/objects"
 mkdir -p "$objects"
 flags=(-target "$target" -O2 -std=c11 -fno-sanitize=undefined -ffp-contract=off -fno-strict-aliasing
-  -I "$build/snes")
-if [ "$target" = x86_64-linux-gnu ]; then flags+=(-fPIC -D_DEFAULT_SOURCE); fi
+  -I "$build/snes" -fPIC -D_DEFAULT_SOURCE)
 for unit in cpu apu spc dsp ppu cart input statehandler snes_other; do
   "$zig" cc "${flags[@]}" -c "$build/snes/$unit.c" -o "$objects/lakesnes_$unit.o"
 done

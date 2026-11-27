@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vendor_nobuild.sh CRATE VERSION: write vendor/CRATE-VERSION/, the published crate with its build
 # script removed and what that script emits on the pinned toolchain baked in, so nothing in the
-# build runs a freshly built executable (Defender blocks those on the development machine). The
+# build runs a freshly built executable. The
 # root Cargo.toml's [patch.crates-io] points at the copy; tools/vendor_nobuild_check.sh holds the
 # baked values to the real build scripts' output in CI. Rerun it on an upgrade, with a recipe
 # below for any crate whose build script changed.

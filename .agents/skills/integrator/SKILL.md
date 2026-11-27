@@ -36,8 +36,7 @@ model needs a change, report it as a finding for the next round.
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and
    complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. Run crate
-   tests with `tools/lane/run_tests.sh`: on Linux that is `cargo test`; only on Windows does it
-   link the tests as DLLs. When `played.toml` moves, regenerate the README in the same commit
+   tests with `tools/lane/run_tests.sh`. When `played.toml` moves, regenerate the README in the same commit
    (`cargo run -p tools --bin tools -- report --write`); Quality fails a README the tree doesn't
    generate. At a round's landing the root regenerates it again after its own `domains.toml`
    change. Done when Quality and every required case hold.

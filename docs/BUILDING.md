@@ -24,8 +24,7 @@ change rebuilds quickly. CI and every verifier command in [STATUS](STATUS.md) an
 [ORACLE](ORACLE.md) build with `--profile verify`, whose output is in `target/verify/`.
 
 The oracle crate links a native LakeSnes archive: `bash tools/oracle/build_lakesnes.sh` builds it
-with Zig 0.15.2 and prints the directory to put on `LIBRARY_PATH`. On a Windows host that blocks
-fresh test executables, run tests with `tools/lane/run_tests.sh <crate>...`.
+with Zig 0.15.2 and prints the directory to put on `LIBRARY_PATH`.
 
 CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
 the README) and verification jobs for the ROM content tests and the complete indexed replay
@@ -53,7 +52,6 @@ Set `SM_CACHE`, `SM_ROM` and `SM_AUDIO_NATIVE` to the sources the case uses.
 For a library test, set its [fixture variables](../.github/workflows/verify.yml) to absolute
 paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the native search
 contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
-On a Windows host that blocks new executables, the hosted command above runs the same test.
 
 ## Run the replay faults
 
@@ -93,10 +91,7 @@ values cover the complete clean, faulty and restored receipts.
 
 ## Setting up on Linux
 
-The repository's tools run on Linux as they do on CI's ubuntu-24.04 runner. The Windows
-workarounds (the DLL test runner, the clean room's Python test command) don't apply there:
-`tools/lane/run_tests.sh` is `cargo test`. Only the clone and the GitHub issues carry over from
-another machine; everything below is set up once.
+CI runs on Ubuntu 24.04. The following setup also supports local builds and replays.
 
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
@@ -135,18 +130,15 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PA
 rm "$TEMP/$asset"
 ```
 
-The native fixtures some indexed cases also read come from the `tools/ci/fetch_*.sh` scripts
-that `verify.yml`'s replay job runs, each given the ROM and one folder. `fetch_audio_native.sh`
+The native fixtures some indexed cases also read come from `tools/ci/fetch_replay_fixtures.sh`,
+which takes the ROM and an installation directory. `fetch_audio_native.sh`
 needs `AUDIO_NATIVE_ASSET` and `AUDIO_NATIVE_SHA256`, pinned beside the cache's in `verify.yml`:
 
 ```sh
 export AUDIO_NATIVE_ASSET=$(sed -n "s/^ *AUDIO_NATIVE_ASSET: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
 export AUDIO_NATIVE_SHA256=$(sed -n "s/^ *AUDIO_NATIVE_SHA256: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
 native=$TEMP/collab/audio-native
-for f in audio_native sender_offers movement_touchdown connected_ordinary connected_run_slope \
-  movement_early_map shot_contact native_search_packets health_tail; do
-  bash tools/ci/fetch_$f.sh rom/sm.smc "$native" || break
-done
+bash tools/ci/fetch_replay_fixtures.sh rom/sm.smc "$native"
 ```
 
 Then point the variables of `verify.yml`'s witness environment at it: `SM_AUDIO_NATIVE` and
@@ -157,8 +149,7 @@ Then point the variables of `verify.yml`'s witness environment at it: `SM_AUDIO_
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
 **The clean room.** `tools/cleanroom/export.sh` writes exports under `$CLEANROOM_ROOT` (default
-`/cleanroom` off Windows, outside the home), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. Off Windows
-the session runs in a box: a docker container with no network whose file system holds only the
+`/cleanroom`, outside the home), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. The session runs in a box: a docker container with no network whose file system holds only the
 export, the lane's home and temporary folder, and read-only `/usr`, toolchain, CLI and settings.
 Inside it the launch's pattern rules still deny every place beside the export's path, as a
 second layer; its header says what each layer holds and why. The session needs an API key:

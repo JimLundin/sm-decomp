@@ -99,7 +99,7 @@ class Completion(unittest.TestCase):
         for changed in [None, "shape_scan.awk", "awk.path"]:
             with self.subTest(changed=changed), tempfile.TemporaryDirectory() as directory:
                 root = pathlib.Path(directory)
-                edit = (f"with open(pathlib.Path(os.environ.get('USERPROFILE') or os.environ['HOME']).parent / {changed!r}, 'a') as f:\n"
+                edit = (f"with open(pathlib.Path(os.environ['HOME']).parent / {changed!r}, 'a') as f:\n"
                         "    f.write('changed')\n") if changed else ""
                 result = launch(root, session=(
                     "import os, pathlib, sys\n"
@@ -115,7 +115,7 @@ def launch(root, session=None):
     SESSION, when given, is the Python that stands in for launch_stream.py and the CLI it runs."""
     tools = root / "tools"
     tools.mkdir()
-    # launch.sh names the project's trees from the checkout it is in, and off Windows refuses an
+    # launch.sh names the project's trees from the checkout it is in, and refuses an
     # export inside the temporary folder, so the copy is a repository and TEMP is elsewhere.
     subprocess.run(["git", "init", "-q", str(tools)], check=True)
     scratch = root / "scratch"
@@ -147,33 +147,21 @@ def launch(root, session=None):
     (tools / "canary.sh").write_text('echo checked >"$CLEANROOM_PRIVATE/canary-checked"\nexit 0\n', encoding="utf-8")
     (root / "brief").write_text("Invented brief.\n", encoding="utf-8")
     (root / "auth").write_text('  "env": {"ANTHROPIC_API_KEY": "invented-key"},\n', encoding="utf-8")
-    cli = root / ("fake.cmd" if os.name == "nt" else "fake.sh")
-    cli.write_text("@echo invented failure 1>&2\n@exit /b 7\n" if os.name == "nt" else "#!/bin/sh\necho invented failure >&2\nexit 7\n", encoding="utf-8", newline="\n")
+    cli = root / "fake.sh"
+    cli.write_text("#!/bin/sh\necho invented failure >&2\nexit 7\n", encoding="utf-8", newline="\n")
     cli.chmod(0o755)
     env = os.environ.copy()
     env.pop("FOUNDRY_LMS_TOKEN", None)
-    env.update(CLAUDE_BIN=pathlib.Path(sys.executable).as_posix() if os.name == "nt" else cli.as_posix(), CLEANROOM_PY=pathlib.Path(sys.executable).as_posix(),
+    env.update(CLAUDE_BIN=cli.as_posix(), CLEANROOM_PY=pathlib.Path(sys.executable).as_posix(),
                CLEANROOM_PRIVATE=(root / "private").as_posix(), CLEANROOM_AUTH=(root / "auth").as_posix(),
                CLEANROOM_COMPLETION_SECONDS="0.2", TEMP=str(scratch), TMPDIR=str(scratch))
-    env["USERPROFILE"] = root.as_posix()
-    if os.name != "nt":
-        # The export is outside this home, as launch.sh demands; the toolchain keeps its own.
-        home = pathlib.Path.home()
-        env.setdefault("CARGO_HOME", str(home / ".cargo"))
-        env.setdefault("RUSTUP_HOME", str(home / ".rustup"))
-        env["HOME"] = (root / "home").as_posix()
-        (root / "home").mkdir()
-    if os.name != "nt":
-        # launch.sh's Windows path conversion is immaterial to the invented export.
-        binary = root / "bin"
-        binary.mkdir()
-        converter = binary / "cygpath"
-        converter.write_text('#!/bin/sh\nshift\nprintf "%s\\n" "$1"\n', encoding="utf-8")
-        converter.chmod(0o755)
-        env["PATH"] = str(binary) + os.pathsep + env["PATH"]
+    # The export is outside this home, as launch.sh demands; the toolchain keeps its own.
+    home = pathlib.Path.home()
+    env.setdefault("CARGO_HOME", str(home / ".cargo"))
+    env.setdefault("RUSTUP_HOME", str(home / ".rustup"))
+    env["HOME"] = (root / "home").as_posix()
+    (root / "home").mkdir()
     bash = shutil.which("bash")
-    if os.name == "nt":
-        bash = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
     # A hang guard: a launch takes about 8 s alone and up to 40 s beside the gate's other checks, so
     # this allows over four times the slowest seen.
     return subprocess.run([bash, str(tools / "launch.sh"), str(export),

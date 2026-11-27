@@ -39,7 +39,6 @@ the control); else 0. An entry no vector adjusts is listed and left to adjusted_
 which gates it at the domain's spec round.
 """
 
-import os
 import re
 import subprocess
 import sys
@@ -320,9 +319,6 @@ def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int
 def test_command(crate: str, root: Path) -> list[str]:
     tests = root / "crates/clean" / crate / "tests"
     dedicated = (tests / "vectors.rs").is_file() or (tests / "vectors/main.rs").is_file()
-    if os.name == "nt":
-        target = "test:vectors" if dedicated else "lib"
-        return ["bash", "tools/lane/run_tests.sh", "--suite", target, crate]
     command = ["cargo", "test", "--locked", "-p", crate]
     return command + (["--test", "vectors"] if dedicated else ["--lib"])
 
@@ -384,7 +380,7 @@ def check_domain(root: Path, domain: str) -> int:
                                     check=False)
         except OSError as error:
             raise CannotProbe("the test runner could not be launched") from error
-        return completed_test(result, failure_code=1 if os.name == "nt" else 101,
+        return completed_test(result, failure_code=101,
                               selected=selection)
 
     entries = parameter_entries(spec)

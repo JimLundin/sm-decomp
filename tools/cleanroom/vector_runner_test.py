@@ -43,12 +43,12 @@ class Runner(unittest.TestCase):
         targets = [(crate.name, "--lib", "", crate) for crate in crates]
         ran: list[str] = []
 
-        def run_target(_cargo: str, _workspace: pathlib.Path, _out: pathlib.Path,
+        def run_target(_cargo: str, _workspace: pathlib.Path,
                        target: tuple[str, str, str, pathlib.Path]) -> None:
             ran.append(target[0])
 
         output = io.StringIO()
-        with patch.object(vector_runner, "clean_targets", return_value=(self.lane / "target", targets)), \
+        with patch.object(vector_runner, "clean_targets", return_value=targets), \
                 patch.object(vector_runner, "run_target", side_effect=run_target), \
                 contextlib.redirect_stdout(output):
             status = vector_runner.run("cargo", workspace)

@@ -1,4 +1,3 @@
-import os
 import subprocess
 import tempfile
 import unittest
@@ -52,9 +51,7 @@ fn main() { println!("{}", outer(3)); }
         ]
         generated = instrument_file(source, variants, ["outer"])
         with tempfile.TemporaryDirectory() as directory:
-            executable = Path(directory) / (
-                "switch.exe" if os.name == "nt" else "switch"
-            )
+            executable = Path(directory) / "switch"
             subprocess.run(
                 ["rustc", "--edition=2024", "-", "-o", str(executable)],
                 input=generated,

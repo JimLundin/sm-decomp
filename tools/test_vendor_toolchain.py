@@ -1,7 +1,6 @@
 """Exercise the vendor verifier with toolchain proxies and invented build outputs.
 
-The shell runs the complete production script. Mock proxies avoid compiling fresh
-executables on Windows; CI separately compares the real published build scripts.
+The shell runs the production verifier against mock proxies. CI compares the published build scripts.
 """
 
 import os

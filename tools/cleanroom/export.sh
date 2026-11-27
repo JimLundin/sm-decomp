@@ -6,7 +6,7 @@
 # `git archive` from COMMIT (default HEAD), plus the generated files. It has no history, no other
 # ref, no remote and no alternates, and DEST must lie outside the project's directories. The
 # script ends by asserting all of that. DEST defaults to ROOT/DOMAIN, ROOT the exports' root:
-# $CLEANROOM_ROOT, else C:/cleanroom on Windows and /cleanroom elsewhere. Off Windows DEST must lie
+# $CLEANROOM_ROOT, default /cleanroom. DEST must lie
 # outside the home: host tools run git in the repositories they find there (an editor's source
 # control runs `git status` under its workspace), and a session writes the export.
 #
@@ -36,11 +36,7 @@ commit=HEAD
 [ $# -ge 1 ] || die "usage: export.sh [-c COMMIT] DOMAIN [DEST]"
 domain=$1
 check_domain "$domain"
-case "$(uname -s)" in
-  MINGW* | MSYS* | CYGWIN*) windows=1 root_default=C:/cleanroom ;;
-  *) windows=0 root_default=/cleanroom ;;
-esac
-dest=${2:-${CLEANROOM_ROOT:-$root_default}/$domain}
+dest=${2:-${CLEANROOM_ROOT:-/cleanroom}/$domain}
 src=$(git rev-parse --show-toplevel)
 sha=$(git rev-parse --verify "$commit^{commit}")
 
@@ -51,7 +47,7 @@ dest=$(cd "$dest" && pwd -P)
 [ -z "$(ls -A "$dest")" ] || die "$dest is not empty; remove it or choose another DEST"
 main=$(cd "$(git rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
 under() { case "$1/" in "$2"/*) return 0 ;; esac; return 1; }
-if [ "$windows" = 0 ] && under "$dest" "$(cd "$HOME" && pwd -P)"; then
+if under "$dest" "$(cd "$HOME" && pwd -P)"; then
   rmdir "$dest" 2>/dev/null || true
   die "$dest is in the home; exports go under a root outside it (CLEANROOM_ROOT, default /cleanroom)"
 fi
@@ -63,7 +59,6 @@ for proj in "$(dirname "$main")"/sm-decomp*; do
   [ -d "$proj" ] && under "$dest" "$(cd "$proj" && pwd -P)" && die "$dest is inside $proj"
 done
 temp=${TEMP:-${TMPDIR:-/tmp}}
-[ "$windows" = 0 ] || temp=$(cygpath -u "$temp")
 [ -d "$temp/collab" ] && under "$dest" "$(cd "$temp/collab" && pwd -P)" && die "$dest is inside $temp/collab"
 
 # Copy the allowlisted entries that exist in COMMIT. A missing spec or vector file stops the
@@ -160,23 +155,11 @@ fi
 # The clean crates' clippy configuration: the root's test allowances and the G5 ceilings.
 git show "$sha:tools/cleanroom/clippy.toml" >"$dest/clippy.toml"
 
-# How the tests run: the runner launch.sh names in the brief, on Windows as a Python command
-# because the machine blocks test executables, elsewhere as one bare command running cargo test.
-rules_first="It first checks two of
-  DESIGN.md's rules, modules importing in one direction only and no struct that only wraps one
-  call's arguments, and names each place that breaks one;"
-if [ "$windows" = 1 ]; then
-  tests_bullet="- \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
-  Run the tests with the one command your brief gives, a Python interpreter on a fixed runner
-  outside this directory, exactly as written and with nothing added. $rules_first then it links each test target of the
-  clean crates as a library, runs it and prints libtest's output. A broken rule fails the run as
-  a failed test does. No other Python is allowed."
-else
-  tests_bullet="- Run the tests with the one command your brief gives, a fixed runner outside this directory,
-  exactly as written and with nothing added. $rules_first then it runs \`cargo test\` for each test target of the
+tests_bullet="- Run the tests with the one command your brief gives, a fixed runner outside this directory,
+  exactly as written and with nothing added. It checks the module and argument rules
+  in DESIGN.md, then runs \`cargo test\` for each test target of the
   clean crates and prints libtest's output. A broken rule fails the run as a failed test does.
   No Python is allowed."
-fi
 
 cat >"$dest/CLEANROOM.md" <<EOF
 # Clean room: $domain

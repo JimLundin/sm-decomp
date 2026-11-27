@@ -65,7 +65,7 @@ implementer_commit "$tmp/leaky" crates/clean/import_test/tests/leak.rs \
   '//! Reads a file.
 #[test]
 fn leak() {
-    let _ = std::fs::read("C:/secret");
+    let _ = std::fs::read("/private/fixture");
 }'
 mkexport "$tmp/named"
 implementer_commit "$tmp/named" crates/clean/import_test/src/lib.rs \

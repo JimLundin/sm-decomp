@@ -1,11 +1,7 @@
 """Run a clean-room export's tests, the one Python a confined implementer may run.
 
 It runs each lib and integration-test target of the clean crates (those under `crates/clean/`)
-in the current directory's workspace. Off Windows that is `cargo test` per target. On Windows
-Defender quarantines freshly linked test `.exe` files but loads DLLs, so `cargo test` cannot
-run in a clean-room session there: this links each target as a DLL and calls its libtest `main`
-in a child interpreter, as tools/lane/test_dll.py does; libtest reads its arguments from
-`GetCommandLineW`, so the child rewrites that buffer first.
+in the current workspace with `cargo test`.
 
 Before the tests it runs the shape rules import.sh refuses a crate for (shape_scan.awk: G6, a
 struct that only carries one call's arguments, and G7, a cycle of module references) over each
@@ -14,12 +10,10 @@ findings name only their files, lines and modules.
 
 It takes no arguments: launch.sh copies it and the two scan scripts it runs into the lane
 directory, out of the session's reach, writes beside them the absolute path of the awk it runs
-(awk.path), allows exactly `<python> -I <that copy>` (off Windows, a script that runs it) and
-checks their sha256 after the session.
+(awk.path) and checks their sha256 after the session.
 """
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -27,30 +21,11 @@ from pathlib import Path
 
 # The scripts of code_check.sh's shape rules, beside this runner in the repository and in a lane.
 SHAPE_SCAN = ("strip_rust.awk", "shape_scan.awk")
-# The awk the lane pinned, by absolute path. A bare `awk` on Windows resolves in the working
-# directory, the export, before PATH, where a session could put an `awk.bat`.
 AWK_PIN = "awk.path"
 HERE = Path(__file__).resolve().parent
 
-# The child: rewrite the command line to the DLL alone, then call its libtest main.
-CHILD = """
-import ctypes, subprocess, sys
-dll = sys.argv[1]
-kernel32 = ctypes.WinDLL("kernel32")
-kernel32.GetCommandLineW.restype = ctypes.c_void_p
-line = kernel32.GetCommandLineW()
-new = subprocess.list2cmdline([dll])
-if len(new) > len(ctypes.wstring_at(line)):
-    sys.exit("vector_runner: the DLL path does not fit the command line")
-ctypes.memmove(line, ctypes.create_unicode_buffer(new), (len(new) + 1) * 2)
-harness = ctypes.CDLL(dll)
-argv = (ctypes.c_char_p * 2)(dll.encode(), None)
-sys.stdout.flush()
-sys.exit(harness.main(1, argv))
-"""
 
-
-def clean_targets(cargo: str, workspace: Path) -> tuple[Path, list[tuple[str, str, str, Path]]]:
+def clean_targets(cargo: str, workspace: Path) -> list[tuple[str, str, str, Path]]:
     meta = json.loads(
         subprocess.run(
             [cargo, "metadata", "--no-deps", "--format-version", "1"],
@@ -73,7 +48,7 @@ def clean_targets(cargo: str, workspace: Path) -> tuple[Path, list[tuple[str, st
                 found.append((name, "--test", target["name"], manifest.parent))
             elif "lib" in kinds and target.get("test", True):
                 found.append((name, "--lib", "", manifest.parent))
-    return Path(meta["target_directory"]), found
+    return found
 
 
 def library_sources(crate: Path) -> list[str]:
@@ -128,37 +103,24 @@ def shape_failures(awk: str, crates: list[Path]) -> list[str]:
     return [f"shapes ({len(shapes)} findings)"] if shapes else []
 
 
-def run_target(cargo: str, workspace: Path, out: Path, target: tuple[str, str, str, Path]) -> str | None:
-    """Runs one test target, on Windows linked as a DLL; its failed entry, if it fails."""
-    crate, kind, name, root = target
+def run_target(cargo: str, workspace: Path, target: tuple[str, str, str, Path]) -> str | None:
+    """Run one test target and return its label on failure."""
+    crate, kind, name, _ = target
     label = f"{crate} {kind} {name}".strip()
-    if os.name != "nt":
-        test = [cargo, "test", "-p", crate, kind, *([name] if name else [])]
-        print(f"     Running {label}", flush=True)
-        return label if subprocess.run(test, cwd=workspace).returncode != 0 else None
-    dll = out / f"{crate}-{name or 'lib'}.dll"
-    build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
-    build += [name] if name else []
-    build += ["--", "-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
-    print(f"     Running {label} ({dll.name})", flush=True)
-    if subprocess.run(build, cwd=workspace).returncode != 0:
-        return f"{label} (build)"
-    # cargo test runs a target in its package's directory.
-    run = [sys.executable, "-I", "-c", CHILD, str(dll)]
-    return label if subprocess.run(run, cwd=root).returncode != 0 else None
+    test = [cargo, "test", "-p", crate, kind, *([name] if name else [])]
+    print(f"     Running {label}", flush=True)
+    return label if subprocess.run(test, cwd=workspace).returncode != 0 else None
 
 
 def run(cargo: str, workspace: Path) -> int:
     """The shape rules, then every clean crate test target; 1 when anything fails."""
     awk = pinned_awk(workspace)
-    target_dir, targets = clean_targets(cargo, workspace)
+    targets = clean_targets(cargo, workspace)
     if not targets:
         sys.exit("vector_runner: no clean crate test targets here")
-    out = target_dir / "vector-runner"
-    out.mkdir(parents=True, exist_ok=True)
     failed = shape_failures(awk, list(dict.fromkeys(root for *_, root in targets)))
     for target in targets:
-        if (failure := run_target(cargo, workspace, out, target)) is not None:
+        if (failure := run_target(cargo, workspace, target)) is not None:
             failed.append(failure)
     if failed:
         print("vector_runner: FAILED " + ", ".join(failed), flush=True)
