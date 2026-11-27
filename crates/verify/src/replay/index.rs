@@ -2508,16 +2508,15 @@ fn early_map_provider_valid(case: &Case) -> bool {
 }
 
 fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
+    let Start::CacheCut { frame } = case.start else {
+        return false;
+    };
     recorded
         && case.content == ContentProvider::PlayerRomImport
-        && ((case.inputs == InputProvider::ScopedIntroInputs
-            && case.row == "any-intro-0568"
-            && matches!(case.start, Start::CacheCut { frame: 1650 })
-            && case.end.cut_inclusive == 2948)
+        // A delivery start must include both the interrupted room turn and its resume.
+        && (case.inputs == InputProvider::ScopedIntroInputs
             || (case.inputs == InputProvider::ScopedIntroDeliveryInputs
-                && case.row == "any-intro-2219"
-                && matches!(case.start, Start::CacheCut { frame: 1297 })
-                && case.end.cut_inclusive == 3794))
+                && case.end.cut_inclusive.saturating_sub(frame) >= 2))
         && case.expectations.fields == [ObservationId::IntroState]
         && case.expectations.outputs == [ObservationId::IntroPublications]
         && case.expectations.output_cut.is_none()

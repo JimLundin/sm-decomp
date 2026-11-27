@@ -121,13 +121,12 @@ use crate::replay::compare::Observation;
 use crate::replay::index::{Case, Start};
 use crate::replay::played::{open_rows, read_lock};
 use crate::replay::readers::ExpectedCut;
-use crate::replay::result::CaseResult;
+use crate::replay::result::{CaseResult, Counts};
 use crate::replay::{Sources, compared, runner::record_cut};
 use game::production::played::intro::{EncounterReplies, FightInput};
 use oracle_record::FrameRecord;
 use screens_intro::{
-    DiscoveryReply, DiscoveryRequest, IntroEvent, Language, PictureLayout, Report, ScenePicture,
-    TextTiles,
+    DiscoveryReply, DiscoveryRequest, IntroEvent, PictureLayout, Report, ScenePicture, TextTiles,
 };
 
 const EGG_SCRIPT: super::WramWord = wram("DISCOVERY_EGG_INSTRUCTION", 0x1b39);
@@ -261,6 +260,27 @@ fn publications(events: &[IntroEvent], palette: Option<&types::Palette>) -> Vec<
     result
 }
 
+/// The staged discovery start and its resumed room turn each compare full State.
+pub(in crate::replay) fn valid_count_shape(counts: &Counts) -> bool {
+    // Every cut compares brightness. A turn that runs also compares the other 29 State
+    // fields and two report fields, with optional clicks and the two palette portions.
+    let Some(extra) = counts.fields.checked_sub(counts.cuts.saturating_mul(2)) else {
+        return false;
+    };
+    let turns = extra / 29;
+    // The start publishes both palette portions. The resumed turn publishes neither;
+    // neither turn has the text click comparison.
+    let least = turns.saturating_mul(2).saturating_add(2);
+    let most = turns.saturating_mul(5).saturating_sub(4);
+    (2..=counts.cuts).contains(&turns)
+        && extra.is_multiple_of(29)
+        && counts.null_cuts >= counts.cuts.saturating_sub(turns)
+        && (least..=most).contains(&counts.outputs)
+        && counts.publications == 0
+        && counts.replies == 0
+        && counts.pending_boundaries == 1
+}
+
 /// Run the delivery scope with the same production adapter used by the normal intro caller.
 /// D0 publishes only stage work. D1 consumes its pending room turn.
 pub(in crate::replay) fn run(
@@ -278,19 +298,10 @@ pub(in crate::replay) fn run(
         content,
         mut reading,
     } = Scenes::import(&sources.rom, Part::Delivery)?;
-    if !finished(&previous) || word(&previous.wram, super::LANGUAGE)? != 0 {
-        return Err(data_failure(
-            Some(start),
-            "English intro seed at finished frame",
-        ));
-    }
-    let seed = reading.state(&previous.wram)?;
-    if seed.stage != IntroStage::PageTwoWaits {
-        return Err(data_failure(Some(start), "intro seed waits after page 2"));
-    }
-    let state = intro::admit(Language::English, seed, shown(&previous.wram)?)
-        .map_err(|_| data_failure(Some(start), "delivery admission"))?;
-    let mut runner = SceneRun::Ready(state);
+    let state = reading
+        .page_seed(&previous, IntroStage::PageTwoWaits)
+        .map_err(|outcome| crate::replay::played::at(start, outcome))?;
+    let mut runner = SceneRun::Opening(state);
     let mut controller = Controller::seeded(&previous.wram)?;
     let mut began = previous.clone();
     let mut digest = Vec::new();
@@ -301,8 +312,8 @@ pub(in crate::replay) fn run(
             if current.video_frame != previous.video_frame.wrapping_add(1) {
                 return Err(data_failure(Some(cut), "delivery row join"));
             }
-            let partial = cut == first;
-            let resumed = matches!(runner, SceneRun::Pending(_));
+            let partial = matches!(runner, SceneRun::Opening(_));
+            let resumed = matches!(runner, SceneRun::Pending(..));
             let mut null = observations(&View {
                 part: Part::Delivery,
                 state: &runner.state().intro,
@@ -310,7 +321,7 @@ pub(in crate::replay) fn run(
             });
             null.extend(publications(&[], None));
             let (next, output) = runner
-                .advance(&content, &began, &previous, &current, controller, partial)
+                .advance(&content, &began, &previous, &current, controller, cut)
                 .map_err(|outcome| crate::replay::played::at(cut, outcome))?;
             runner = next;
             let (expected, actual) = project(
@@ -348,15 +359,16 @@ pub(in crate::replay) fn run(
 }
 
 enum SceneRun {
+    Opening(intro::State),
     Ready(intro::State),
-    Pending(intro::PendingRoom),
+    Pending(intro::PendingRoom, u64),
 }
 
 impl SceneRun {
     const fn state(&self) -> &intro::State {
         match self {
-            Self::Ready(state) => state,
-            Self::Pending(room) => room.state(),
+            Self::Opening(state) | Self::Ready(state) => state,
+            Self::Pending(room, _) => room.state(),
         }
     }
 
@@ -367,14 +379,14 @@ impl SceneRun {
         previous: &FrameRecord,
         current: &FrameRecord,
         controller: Controller,
-        partial: bool,
+        cut: u64,
     ) -> Result<(Self, Option<Report>), Outcome> {
         let fault = |fault| Outcome::Unsupported {
             cut: None,
             dependency: format!("intro frame {fault:?}"),
         };
         match self {
-            Self::Ready(state) if partial => {
+            Self::Opening(state) => {
                 if finished(current) {
                     return Err(data_failure(None, "discovery start interruption"));
                 }
@@ -386,9 +398,9 @@ impl SceneRun {
                     super::RULES,
                 )
                 .map_err(fault)?;
-                Ok((Self::Pending(pending), Some(report)))
+                Ok((Self::Pending(pending, cut), Some(report)))
             }
-            Self::Pending(room) => {
+            Self::Pending(room, saved_cut) => {
                 if !finished(current) {
                     return Err(data_failure(None, "discovery room turn completion"));
                 }
@@ -401,7 +413,7 @@ impl SceneRun {
                 let restored =
                     intro::PendingRoom::restore(decoded).resume(content, super::RULES, replies);
                 if restored != moved {
-                    return Err(Outcome::CheckpointFailure { cut: 1298 });
+                    return Err(Outcome::CheckpointFailure { cut: saved_cut });
                 }
                 let (next, report) = restored;
                 Ok((Self::Ready(next), Some(report)))

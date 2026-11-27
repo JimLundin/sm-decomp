@@ -283,12 +283,7 @@ impl Scenes {
 
     #[cfg(test)]
     pub(super) fn page_two_seed(&mut self, record: &FrameRecord) -> Result<intro::State, Outcome> {
-        let seed = self.reading.state(&record.wram)?;
-        if seed.stage != IntroStage::PageTwoWaits || !finished(record) {
-            return Err(data_failure(None, "discovery seed after page two"));
-        }
-        intro::admit(Language::English, seed, shown(&record.wram)?)
-            .map_err(|_| data_failure(None, "discovery intro seed"))
+        self.reading.page_seed(record, IntroStage::PageTwoWaits)
     }
 
     /// The intro's State fields at `current`, recorded and played, for a run that plays on into
@@ -730,6 +725,25 @@ struct Reading {
 }
 
 impl Reading {
+    fn page_seed(
+        &mut self,
+        record: &FrameRecord,
+        page: IntroStage,
+    ) -> Result<intro::State, Outcome> {
+        if !finished(record) || !active(&record.wram)? || word(&record.wram, LANGUAGE)? != 0 {
+            return Err(data_failure(None, "finished English intro seed"));
+        }
+        let state = self.state(&record.wram)?;
+        if state.stage != page {
+            return Err(data_failure(
+                None,
+                "intro seed at the required waiting page",
+            ));
+        }
+        intro::admit(Language::English, state, shown(&record.wram)?)
+            .map_err(|_| data_failure(None, "indexed intro admission"))
+    }
+
     fn expected(
         &mut self,
         began: &FrameRecord,

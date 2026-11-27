@@ -257,14 +257,7 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
         );
     }
     if case.inputs == InputProvider::ScopedIntroDeliveryInputs {
-        return Some(
-            counts.cuts == 2497
-                && counts.fields == 77233
-                && counts.outputs == 6532
-                && counts.publications == 0
-                && counts.replies == 0
-                && counts.pending_boundaries == 1,
-        );
+        return Some(super::played::intro::delivery::valid_count_shape(counts));
     }
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
@@ -687,6 +680,47 @@ limits = ["invented scope A"]
         assert!(!valid_counts(&case, &boundary));
         boundary.counts.restorations = 0;
         assert!(valid_counts(&case, &boundary));
+    }
+
+    #[test]
+    fn short_intro_windows_still_require_complete_state_outputs_and_room_restore() {
+        use crate::replay::index::{InputProvider, Start};
+        let (snapshot, baseline, _) = fixture();
+        let mut case = snapshot.index().cases[0].clone();
+        let mut floor = baseline.cases[0].clone();
+        case.start = Start::CacheCut { frame: 10 };
+        case.end.cut_inclusive = 12;
+        case.checkpoints = false;
+        case.inputs = InputProvider::ScopedIntroInputs;
+        floor.counts = Counts {
+            cuts: 2,
+            fields: 31,
+            outputs: 10,
+            null_cuts: 1,
+            ..Counts::default()
+        };
+        assert!(valid_counts(&case, &floor));
+        floor.counts.outputs = 2;
+        assert!(!valid_counts(&case, &floor));
+        floor.counts.outputs = 10;
+        floor.counts.fields = 4;
+        assert!(!valid_counts(&case, &floor));
+
+        case.inputs = InputProvider::ScopedIntroDeliveryInputs;
+        floor.counts = Counts {
+            cuts: 2,
+            fields: 62,
+            outputs: 6,
+            pending_boundaries: 1,
+            pending_restorations: 1,
+            ..Counts::default()
+        };
+        assert!(valid_counts(&case, &floor));
+        floor.counts.pending_restorations = 0;
+        assert!(!valid_counts(&case, &floor));
+        floor.counts.pending_restorations = 1;
+        floor.counts.fields -= 1;
+        assert!(!valid_counts(&case, &floor));
     }
 
     #[test]

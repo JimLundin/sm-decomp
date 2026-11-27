@@ -2,9 +2,7 @@
 //! The input tape carries the encounter reply that production consumes between the stage
 //! and script steps.
 
-use super::{
-    Controller, FrameEnd, Part, Scenes, finished, frame_input, intro, polled, shown, word,
-};
+use super::{Controller, FrameEnd, Part, Scenes, finished, frame_input, polled};
 use crate::replay::compare::Observation;
 use crate::replay::index::{Case, Start};
 use crate::replay::played::{at, open_rows, read_lock};
@@ -16,7 +14,7 @@ use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
 use game::state::owned::OwnedState;
-use screens_intro::{Language, Report};
+use screens_intro::Report;
 
 pub(in crate::replay) struct Inputs {
     first: u64,
@@ -79,17 +77,25 @@ pub(in crate::replay) fn initial(production: &Production) -> Result<Vec<Observat
     Ok(fields)
 }
 
-/// The grouped State and output observations in the pinned flashback schedule.
+/// An interrupted turn compares only the two brightness fields and the frame-finished flag.
 pub(in crate::replay) fn valid_count_shape(counts: &Counts) -> bool {
-    const FINISHED: usize = 1293;
-    const INTERRUPTED: usize = 5;
-    const PALETTE_PUBLICATIONS: usize = 66;
-    const SPRITE_SEVEN_PUBLICATIONS: usize = 64;
-    (counts == &Counts::default()
-        || (counts.cuts == FINISHED + INTERRUPTED
-            && counts.fields == FINISHED * 29 + INTERRUPTED * 2
-            && counts.outputs
-                == FINISHED * 7 + INTERRUPTED + PALETTE_PUBLICATIONS + SPRITE_SEVEN_PUBLICATIONS))
+    if counts.cuts == 0 {
+        return counts == &Counts::default();
+    }
+    // Holding State gives exactly the interrupted cuts: a finished frame always publishes
+    // frame-finished, which the held step leaves clear.
+    let finished = counts.cuts.saturating_sub(counts.null_cuts);
+    let brightness = counts.cuts.saturating_mul(2);
+    let frames = counts.cuts;
+    // A finished turn adds 26 State fields and the owned colours after page 1. It adds
+    // six report fields and up to two palette portions, one of which the boss can own.
+    finished > 0
+        && counts.fields.checked_sub(brightness).is_some_and(|extra| {
+            (finished.saturating_mul(26)..=finished.saturating_mul(27)).contains(&extra)
+        })
+        && counts.outputs.checked_sub(frames).is_some_and(|extra| {
+            (finished.saturating_mul(6)..=finished.saturating_mul(8)).contains(&extra)
+        })
         && counts.publications == 0
         && counts.replies == 0
         && counts.pending_boundaries == 0
@@ -107,18 +113,9 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         content,
         mut reading,
     } = Scenes::import(&sources.rom, Part::Flashback)?;
-    if !finished(&seed) || word(&seed.wram, super::LANGUAGE)? != 0 {
-        return Err(data_failure(
-            Some(start),
-            "English intro seed at finished frame",
-        ));
-    }
-    let state = reading.state(&seed.wram)?;
-    if state.stage != types::intro::IntroStage::PageOneWaits {
-        return Err(data_failure(Some(start), "intro seed waits after page 1"));
-    }
-    let state = intro::admit(Language::English, state, shown(&seed.wram)?)
-        .map_err(|_| data_failure(Some(start), "indexed intro admission"))?;
+    let state = reading
+        .page_seed(&seed, types::intro::IntroStage::PageOneWaits)
+        .map_err(|outcome| at(start, outcome))?;
     let mut controller = Controller::seeded(&seed.wram)?;
     let mut began = seed.clone();
     let mut previous = seed;
