@@ -73,7 +73,26 @@ struct Step {
 /// The ordered cartridge requests and source cuts for a battery witness.
 pub struct SaveSchedule(Vec<Step>);
 
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(in crate::replay) enum SaveSource {
+    DiagnosticFrontier,
+    ArrivalCapture,
+    EscapeCapture,
+}
+
 impl SaveSchedule {
+    pub(in crate::replay) fn uses(&self, source: SaveSource) -> bool {
+        self.0.iter().any(|step| {
+            matches!(
+                (source, step.request),
+                (SaveSource::DiagnosticFrontier, Request::Diagnostic(_))
+                    | (SaveSource::ArrivalCapture, Request::Arrival)
+                    | (SaveSource::EscapeCapture, Request::Escape)
+            )
+        })
+    }
+
     pub(in crate::replay) fn valid(&self, case: &Case) -> bool {
         !self.0.is_empty()
             && u64::try_from(self.0.len()) == Ok(case.end.cut_inclusive)

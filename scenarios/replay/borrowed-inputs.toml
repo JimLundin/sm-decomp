@@ -396,3 +396,255 @@ dependency = "shaft.platform"
 provider = "recorded-work-and-publication"
 fields = ["scheduler.finished", "scheduler.begun", "scheduler.published"]
 phase = "per cut"
+
+# Intro scenes, cartridge requests and passage draws.
+
+[intro-work-completion]
+readers = ["scoped-intro-inputs"]
+dependency = "platform.work"
+provider = "current NMI return"
+fields = ["work finished"]
+phase = "at the frame cut"
+
+[intro-polled-buttons]
+readers = ["scoped-intro-inputs", "scoped-intro-delivery-inputs"]
+dependency = "controller.buttons"
+provider = "movie pad and polling NMI"
+fields = ["origin held and fresh latch", "movie buttons", "controller polled"]
+phase = "at the origin and each poll before the next work frame"
+
+[intro-track-wait]
+readers = ["scoped-intro-inputs"]
+dependency = "audio"
+provider = "pinned preceding music queue"
+fields = ["track waits"]
+phase = "beginning of work"
+
+[intro-zebes-return]
+readers = ["scoped-intro-inputs"]
+dependency = "Zebes encounter"
+provider = "pinned boss hold count and callback"
+fields = ["ready to return"]
+phase = "after room play"
+
+[intro-room-fight-start]
+readers = ["intro-room-join"]
+selection = { intro-room = "fight" }
+dependency = "intro-rooms.start"
+provider = "intro_join.scene"
+fields = ["start fight"]
+phase = "at interrupted room setup"
+
+[intro-room-completion]
+readers = ["intro-room-join"]
+dependency = "platform.work"
+provider = "two locked NMI returns"
+fields = ["work finished"]
+phase = "at interrupted setup and the completed first turn"
+
+[intro-room-demo]
+readers = ["intro-room-join"]
+dependency = "playback.buttons"
+provider = "scoped neutral demo pad"
+fields = ["demo held", "demo fresh"]
+phase = "at the first room turn"
+
+[intro-room-appearance]
+readers = ["intro-room-join"]
+dependency = "appearance.neighbours"
+provider = "locked page origin"
+fields = ["equipped items", "charge", "sound occupancy"]
+phase = "at the first room turn"
+
+[intro-room-discovery-start]
+readers = ["intro-room-join"]
+selection = { intro-room = "discovery" }
+dependency = "intro-rooms.start"
+provider = "intro_join.scene"
+fields = ["start discovery"]
+phase = "at interrupted room setup"
+
+[flashback-page-handoff]
+readers = ["flashback-segments"]
+dependency = "intro.setup"
+provider = "intro_join.handoff"
+fields = ["inherited room background Y"]
+phase = "at the interrupted fight setup"
+
+[flashback-stage-timing]
+readers = ["flashback-segments"]
+dependency = "intro.stage"
+provider = "current cinematic counter and return dissolve"
+fields = ["counter parity", "dissolve reaches zero"]
+phase = "on a reached actor turn after the intro stage"
+
+[flashback-actor-opportunity]
+readers = ["flashback-segments"]
+dependency = "platform.completion-and-actor-phase"
+provider = "recorded NMI completion and cinematic counter"
+fields = ["finished", "actor phase reached in work frame"]
+phase = "each NMI cut"
+
+[flashback-room-play]
+readers = ["flashback-segments"]
+dependency = "room.after-motion-play"
+provider = "current Samus centre and preceding actor turn weapon slots"
+fields = ["Samus whole X", "ordered missile candidates from flight or ammunition debit"]
+phase = "after movement and weapon advance"
+
+[flashback-publication-camera]
+readers = ["flashback-segments"]
+dependency = "camera.origin"
+provider = "current finished record"
+fields = ["camera X", "camera Y"]
+phase = "on finished presentation cuts"
+
+[playback-room-entry]
+readers = ["cinematic-actor-segments"]
+dependency = "intro.scene-start"
+provider = "adjacent cinematic actor gates and current entry placement"
+fields = ["actor gate opening", "entry whole X"]
+phase = "at room setup"
+
+[playback-actor-opportunity]
+readers = ["cinematic-actor-segments"]
+dependency = "intro.actor-turn"
+provider = "preceding actor gate and adjacent cinematic counters"
+fields = ["actors enabled", "counter advanced", "current crossfade count"]
+phase = "after stage work, before the scene-object hide"
+
+[playback-before-motion-x]
+readers = ["cinematic-actor-segments"]
+dependency = "samus"
+provider = "preceding pinned record"
+fields = ["samus.whole-x"]
+phase = "before motion on the next reached actor opportunity"
+
+[scheduled-cartridge-request]
+readers = ["save-file-schedule"]
+dependency = "cartridge.request"
+provider = "save_steps.request"
+fields = ["ordered cartridge request"]
+phase = "at each scheduled movie coordinate"
+
+[scheduled-boot-frontier]
+readers = ["save-file-schedule"]
+selection = { save = "diagnostic-frontier" }
+dependency = "platform.boot"
+provider = "save_steps.request.diagnostic"
+fields = ["clear frontier", "mirror test frontier", "restore frontier", "file erase frontier"]
+phase = "at a scheduled diagnostic request"
+
+[save-arrival-capture]
+readers = ["save-file-schedule"]
+selection = { save = "arrival-capture" }
+dependency = "cartridge.arrival"
+provider = "locked predecessor of the arrival request"
+fields = ["profile settings", "persistent progress", "remembered maps", "live explored grid"]
+phase = "on the movie frame before the arrival write"
+
+[save-escape-capture]
+readers = ["save-file-schedule"]
+selection = { save = "escape-capture" }
+dependency = "cartridge.escape"
+provider = "locked predecessor of the escape request"
+fields = ["working profile", "persistent progress", "remembered maps", "live explored grid", "area", "station"]
+phase = "on the movie frame before the escape write"
+
+[intro-missile-cannon]
+readers = ["intro-missile-inputs"]
+dependency = "intro.cannon-and-shot-phase"
+provider = "authored ROM demo controls and pinned lean record"
+fields = ["work opportunity", "cannon mode and eligibility", "fresh and held demo buttons", "prior fresh movie shoot", "muzzle pose", "centre and inherited motion"]
+phase = "before weapons"
+
+[intro-missile-contact]
+readers = ["intro-missile-inputs"]
+dependency = "encounter.late-hit"
+provider = "independently observed preceding boss phase and reference contact rule"
+fields = ["boss can take hits", "reference contact line"]
+phase = "after flight"
+
+[intro-missile-terrain]
+readers = ["intro-missile-inputs"]
+dependency = "room.terrain"
+provider = "locked demo origin"
+fields = ["room dimensions in blocks", "terrain cells and block marks"]
+phase = "once at the origin, before flight"
+
+[intro-missile-room]
+readers = ["intro-missile-inputs"]
+dependency = "room.view"
+provider = "preceding locked record"
+fields = ["camera origin", "room width and height in screens"]
+phase = "before the weapon update"
+
+[intro-missile-presentation]
+readers = ["intro-missile-inputs"]
+dependency = "platform.publication"
+provider = "adjacent NMI cuts and current drawing gate"
+fields = ["work opportunity", "NMI completion", "actors visible", "current view origin"]
+phase = "after the weapon update and at publication"
+
+[passage-jump-sample]
+readers = ["passage-jump-draws"]
+dependency = "passage.history-writing-draw"
+provider = "pinned passage phase and platform cuts"
+fields = ["history-writing draw", "held jump sampled from the preceding cut"]
+phase = "draw within passage work"
+
+[intro-delivery-work]
+readers = ["scoped-intro-delivery-inputs"]
+dependency = "platform.work"
+provider = "current NMI return"
+fields = ["interrupted start", "resumed room turn", "work finished"]
+phase = "at the setup cut, its successor and each later frame cut"
+
+[intro-discovery-start-track]
+readers = ["scoped-intro-delivery-inputs"]
+dependency = "audio"
+provider = "scoped discovery start"
+fields = ["no track waits"]
+phase = "at interrupted discovery setup"
+
+[intro-delivery-track-wait]
+readers = ["scoped-intro-delivery-inputs"]
+dependency = "audio"
+provider = "music queue at the last finished cut"
+fields = ["track waits"]
+phase = "at the start of subsequent completed work frames"
+
+[intro-egg-reply]
+readers = ["scoped-intro-delivery-inputs"]
+dependency = "discovery encounter"
+provider = "pinned egg instruction and hold"
+fields = ["ready for page 3"]
+phase = "after room play"
+
+[discovery-stage-request]
+readers = ["discovery-segments"]
+dependency = "intro.stage-and-return"
+provider = "locked lean records"
+fields = ["intro discovery setup stage", "post-stage page-three dissolve count"]
+phase = "before the room turn and at the encounter's late finish"
+
+[discovery-frame-completion]
+readers = ["discovery-segments"]
+dependency = "platform.finished-frame"
+provider = "locked lean records"
+fields = ["completed frame count"]
+phase = "each NMI cut"
+
+[discovery-after-motion]
+readers = ["discovery-segments"]
+dependency = "room.movement"
+provider = "current locked record"
+fields = ["whole Samus centre"]
+phase = "after room movement, before the discovery turn"
+
+[discovery-publication-camera]
+readers = ["discovery-segments"]
+dependency = "camera.origin"
+provider = "current locked record"
+fields = ["camera scroll"]
+phase = "at finished drawing publication"

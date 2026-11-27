@@ -1286,11 +1286,22 @@ inputs = "scoped-intro-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["intro.state"], outputs = ["intro.publications"] }
 checkpoints = false
 limits = ["The last finished cut of page 1 supplies the sole seed and latched press. Production carries State through interrupted cut 1651 in the next record row.", "Compares the intro through the last finished cut of page 2. The fight room, demo, Samus, weapons, encounter and rendering need their own cases.", "The boss owns sprite palette 7 during its hurt flash. Intro palette comparison covers the other entries on those cuts."]
-borrowed = [
-  { dependency = "platform", provider = "pinned NMI completion", fields = ["work finished"], phase = "cut", claim = "only the intro is dispatched" },
-  { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "audio service is outside this scope" },
-  { dependency = "Zebes encounter", provider = "pinned boss hold count and callback", fields = ["ready to return"], phase = "after room play", claim = "the intro consumes the independently observed encounter cue" },
-]
+
+[[case.borrowed]]
+operation = "intro-work-completion"
+claim = "The NMI decides whether this turn completes."
+
+[[case.borrowed]]
+operation = "intro-polled-buttons"
+claim = "The intro takes fresh presses from the retained movie controller."
+
+[[case.borrowed]]
+operation = "intro-track-wait"
+claim = "audio service is outside this scope"
+
+[[case.borrowed]]
+operation = "intro-zebes-return"
+claim = "the intro consumes the independently observed encounter cue"
 
 [[case]]
 id = "intro-rooms/fight-first-turn"
@@ -1309,18 +1320,20 @@ checkpoints = true
 limits = ["row-relative cuts 1651 and 1652 continue at any-intro-2219 cuts 0 and 1, movie 2219 and 2220", "opening actor and inherited room image admitted only at the one preceding text cut", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
 
 [[case.borrowed]]
-dependency = "intro-rooms.start"
-provider = "page-one-movie-press"
-fields = ["intro.page-one-ready", "controller.new"]
-phase = "at-frame-start"
-claim = "the page-one wait and the pad latch are admitted at the origin; the production join receives the resulting start intent"
+operation = "intro-room-fight-start"
+claim = "The finished page-one origin must have a polling NMI, matching movie buttons and a fresh press."
 
 [[case.borrowed]]
-dependency = "intro-rooms.turn"
-provider = "bounded-demo-and-platform"
-fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"]
-phase = "around-room-join"
-claim = "work completion is borrowed from the NMI cut; neutral demo and unselected appearance stimuli are independently admitted"
+operation = "intro-room-completion"
+claim = "The two cuts bracket the same room turn."
+
+[[case.borrowed]]
+operation = "intro-room-demo"
+claim = "The scoped first turn uses a neutral demo pad."
+
+[[case.borrowed]]
+operation = "intro-room-appearance"
+claim = "The turn retains the appearance inputs from the page origin."
 
 [[case]]
 id = "intro-rooms/discovery-first-turn"
@@ -1339,18 +1352,20 @@ checkpoints = true
 limits = ["scoped cuts 1298 and 1299 are movie 3517 and 3518", "preceding page-two actor and retained room image admitted once", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
 
 [[case.borrowed]]
-dependency = "intro-rooms.start"
-provider = "scoped-page-two-handoff"
-fields = ["intro.discovery-start"]
-phase = "at-frame-start"
-claim = "the discovery intent is the independently observed page-two handoff, with the preceding actor kept once at admission"
+operation = "intro-room-discovery-start"
+claim = "The finished page-two origin qualifies the discovery handoff."
 
 [[case.borrowed]]
-dependency = "intro-rooms.turn"
-provider = "bounded-demo-and-platform"
-fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"]
-phase = "around-room-join"
-claim = "work completion is borrowed from the NMI cut; neutral demo and unselected appearance stimuli are independently admitted"
+operation = "intro-room-completion"
+claim = "The two cuts bracket the same room turn."
+
+[[case.borrowed]]
+operation = "intro-room-demo"
+claim = "The scoped first turn uses a neutral demo pad."
+
+[[case.borrowed]]
+operation = "intro-room-appearance"
+claim = "The turn retains the appearance inputs from the page origin."
 
 [[case]]
 id = "flashback/zebes-encounter"
@@ -1369,25 +1384,24 @@ checkpoints = true
 limits = ["Room collision, demo, Samus, weapons and intro are external in this witness", "The missile result ends at the encounter's requested slot. Weapons carries the impact State and cinematic sound policy.", "OAM compares visible encounter pieces at finished cuts and omits absolute slot placement among other owners' sprites", "Flash cuts compare the encounter's flash row to the WRAM mirror and CGRAM. The dissolve, palette effects and upload sequence need their own producers.", "The cue and hide compare to the observed intro stage and draw gate transition. Integrated scheduling requires the live consumers."]
 
 [[case.borrowed]]
-dependency = "intro.setup-and-clock"
-provider = "locked lean cache"
-fields = ["any-intro-0568 cut 1650 latched press and inherited background Y", "cinematic counter parity", "return dissolve reaches zero"]
-phase = "start and after-stage actor phase"
-claim = "Setup is dispatched from the page-one handoff. The intro's cue and visibility replies come from the encounter's carried state."
+operation = "flashback-page-handoff"
+claim = "The handoff must precede the first segment and show the page-one wait with a latched press."
 
 [[case.borrowed]]
-dependency = "platform.completion-and-actor-phase"
-provider = "recorded NMI completion and cinematic counter"
-fields = ["finished", "actor phase reached in work frame"]
-phase = "each NMI cut"
+operation = "flashback-stage-timing"
+claim = "The encounter consumes the current stage timing."
+
+[[case.borrowed]]
+operation = "flashback-actor-opportunity"
 claim = "The witness carries actor state through all four overruns. Work that already reached the encounter holds that state when it finishes."
 
 [[case.borrowed]]
-dependency = "room.after-motion-play"
-provider = "locked lean cache Samus and prior weapon slots"
-fields = ["Samus whole X", "flying missile shots with position and slot precedence", "camera origin"]
-phase = "after movement and weapon advance, with the camera read at publication"
-claim = "Missile candidates are derived from prior flight or the ammo debit before the independent impact comparison. Movement and flight are external inputs."
+operation = "flashback-room-play"
+claim = "The room supplies candidates before the encounter handles contact."
+
+[[case.borrowed]]
+operation = "flashback-publication-camera"
+claim = "The camera positions the encounter drawing."
 
 [[case]]
 id = "screens-playback/intro-demos"
@@ -1421,17 +1435,15 @@ fields = ["playback.phase", "playback.progress", "playback.last.held", "playback
 outputs = ["playback.start", "playback.current.held", "playback.current.fresh", "playback.previous.held", "playback.previous.fresh", "playback.finish", "playback.authority"]
 
 [[case.borrowed]]
-dependency = "intro-and-platform"
-provider = "pinned cinematic actor gate, work counter, entry placement and fade count"
-fields = ["intro.scene-start", "intro.room-actors", "platform.actor-pad-opportunity", "intro.crossfade"]
-phase = "scene setup or post-stage actor opportunity before the later scene-object hide"
-claim = "The recorded work marker identifies the reached actor opportunity on these cuts."
+operation = "playback-room-entry"
+claim = "Opening the gate selects the recorded room from its entry placement."
 
 [[case.borrowed]]
-dependency = "samus"
-provider = "preceding pinned record"
-fields = ["samus.whole-x"]
-phase = "before motion on the next reached actor opportunity"
+operation = "playback-actor-opportunity"
+claim = "The old gate admits the final actor turn on the hide cut."
+
+[[case.borrowed]]
+operation = "playback-before-motion-x"
 claim = "The witness takes whole X from the movement owner for the approach cue."
 
 [[case]]
@@ -1479,18 +1491,20 @@ checkpoints = true
 limits = ["logical cuts are the ordered startup, arrival, escape and landing boundaries", "cold battery from power-on cut zero only", "the menu confirms its initial cursor without moving it", "live screen, health, progress, HUD, map and clock inputs and their timing are externally admitted", "continues both saves after their payload is visible", "compares the full battery including unselected slots and opaque bytes"]
 
 [[case.borrowed]]
-dependency = "platform.boot"
-provider = "observed diagnostic and initial erase frontiers"
-fields = ["clear frontiers", "mirror test frontier", "restore frontier"]
-phase = "in-progress boot operations"
-claim = "scope produces the transient bytes from the admitted battery and sequence progress"
+operation = "scheduled-cartridge-request"
+claim = "The schedule requests each cartridge operation. File selection uses the live menu cursor."
 
 [[case.borrowed]]
-dependency = "cartridge.capture"
-provider = "preceding locked cut's working profile, progress and maps"
-fields = ["options and profile", "persistent progress", "explored area maps", "live explored grid", "location", "save opportunities"]
-phase = "before selection and each save"
-claim = "save uses the prior live owners; the staged save image is only an expectation"
+operation = "scheduled-boot-frontier"
+claim = "The cartridge computes the transient battery image from the indexed frontier."
+
+[[case.borrowed]]
+operation = "save-arrival-capture"
+claim = "Arrival retains the chosen file profile and applies the captured settings."
+
+[[case.borrowed]]
+operation = "save-escape-capture"
+claim = "The escape write uses the working owners at the preceding movie frame."
 
 [[case]]
 id = "weapons/intro-ordinary-missiles"
@@ -1508,25 +1522,24 @@ checkpoints = true
 limits = ["The scoped witness compares the intro battle's ordinary missiles and exhaust", "OAM is compared in encounter publication order among weapon pieces. Samus and encounter graphics remain external.", "The comparison checks silent weapon requests against the cinematic source rule. The receiving sound queue is outside this witness.", "The room has zero width in screens. This recording supplies no point-contact reaction."]
 
 [[case.borrowed]]
-dependency = "intro.cannon-and-shot-phase"
-provider = "authored ROM demo controls and pinned lean record"
-fields = ["work opportunity", "cannon mode and eligibility", "fresh and held demo buttons", "prior fresh movie shoot", "muzzle pose", "centre and inherited motion"]
-phase = "before weapons"
+operation = "intro-missile-cannon"
 claim = "Cannon and projectile timing are borrowed. Inventory debits, live shots and the protection result advance from a single seed."
 
 [[case.borrowed]]
-dependency = "encounter.late-hit"
-provider = "independently observed preceding boss phase and reference contact rule"
-fields = ["boss can take hits", "reference contact line"]
-phase = "after flight"
+operation = "intro-missile-contact"
 claim = "The scoped callback chooses from the production candidate slots. Impact columns are read only in the independent comparison."
 
 [[case.borrowed]]
-dependency = "platform.publication-and-world"
-provider = "pinned lean record"
-fields = ["view origin", "room grid and width in screens", "drawing gate", "NMI completion"]
-phase = "work and presentation"
-claim = "Two drawing visits age exhaust on the authorized beat. A later NMI can publish the retained output."
+operation = "intro-missile-terrain"
+claim = "The same grid answers terrain queries throughout the demo."
+
+[[case.borrowed]]
+operation = "intro-missile-room"
+claim = "The weapon update receives the preceding room view."
+
+[[case.borrowed]]
+operation = "intro-missile-presentation"
+claim = "An interrupted draw prepares output for the next completed publication."
 
 [[case]]
 id = "movement/falling-aim"
@@ -1610,10 +1623,7 @@ checkpoints = true
 limits = ["The comparison covers the carried count, pending movement check and draw sample during the passage.", "The played run separately exercises passage scheduling. This scope borrows draw opportunities."]
 
 [[case.borrowed]]
-dependency = "passage.history-writing-draw"
-provider = "pinned passage phase and platform cuts"
-fields = ["history-writing draw", "held jump sampled from the preceding cut"]
-phase = "draw within passage work"
+operation = "passage-jump-sample"
 claim = "Advance a single admitted jump history from cut 170. The expected count and previous draw sample never supply live input."
 
 [[case]]
@@ -1728,11 +1738,26 @@ inputs = "scoped-intro-delivery-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["intro.state"], outputs = ["intro.publications"] }
 checkpoints = false
 limits = ["The sole seed is the last finished cut of page 2. The start publishes on movie cut 3517. Restore the staged state and pending room token and compare the resumed report against both the observed cut and the moved continuation at 3518.", "The other interrupted cuts compare only brightness. The encounter, room, movement, graphics and audio service have separate owners."]
-borrowed = [
-  { dependency = "platform", provider = "pinned NMI completion and the independently qualified discovery start interruption", fields = ["work phase"], phase = "cut", claim = "Intro state advances only through admitted work boundaries" },
-  { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "The intro runs with the queue reply while audio service stays outside the scope" },
-  { dependency = "discovery encounter", provider = "pinned egg instruction and hold", fields = ["ready for page 3"], phase = "after room play", claim = "Only the intro consumes the externally observed cue" },
-]
+
+[[case.borrowed]]
+operation = "intro-delivery-work"
+claim = "The opening must interrupt setup and the next NMI must complete its pending room turn."
+
+[[case.borrowed]]
+operation = "intro-polled-buttons"
+claim = "The intro takes fresh presses from the retained movie controller."
+
+[[case.borrowed]]
+operation = "intro-discovery-start-track"
+claim = "The opening stage receives the fixed no-wait reply."
+
+[[case.borrowed]]
+operation = "intro-delivery-track-wait"
+claim = "The later intro turns sample the preceding queue."
+
+[[case.borrowed]]
+operation = "intro-egg-reply"
+claim = "Only the intro consumes the externally observed cue"
 
 [[case]]
 id = "ridley/offscreen-retreat"
@@ -1789,25 +1814,20 @@ checkpoints = true
 limits = ["Run cut 2104 is any-intro-4323 cut 0. Both rows carry one encounter, from before setup through the return.", "OAM covers visible discovery pieces on finished cuts. An invented room piece exercises the production compositor against the native relative order. The caret, Samus and projectile art, tile graphics, palette installation and transfers belong to other owners.", "Sound queues witness the identity and order of the scene's offers. The allowance follows the observed call site; transport acceptance and playback are separate.", "The live intro, T1, demo, camera and Samus must supply the scoped dependencies for power-on play."]
 
 [[case.borrowed]]
-dependency = "intro.stage-and-return"
-provider = "locked lean records"
-fields = ["intro discovery setup stage", "post-stage page-three dissolve count"]
-phase = "before the room turn and at the encounter's late finish"
+operation = "discovery-stage-request"
 claim = "The intro requests setup and finish. The encounter produces its own page-three cue."
 
 [[case.borrowed]]
-dependency = "platform.finished-frame"
-provider = "locked lean records"
-fields = ["completed frame count"]
-phase = "each NMI cut"
+operation = "discovery-frame-completion"
 claim = "The scene can place the pair on an unfinished setup, then run its first turn on completion."
 
 [[case.borrowed]]
-dependency = "room.after-movement"
-provider = "locked lean records"
-fields = ["whole Samus centre", "camera scroll"]
-phase = "after the room and before discovery's turn"
-claim = "The room runs when the incoming discovery order permits it, including the return's final hide. Recorded geometry, controls and movement are outside this scope."
+operation = "discovery-after-motion"
+claim = "The encounter uses the post-motion centre for its own turn."
+
+[[case.borrowed]]
+operation = "discovery-publication-camera"
+claim = "The camera places the encounter sprites on screen."
 
 [[case]]
 id = "blackout/elevator-through-dispatch"

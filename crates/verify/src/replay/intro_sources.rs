@@ -43,7 +43,7 @@ impl Segment {
 
 #[derive(Deserialize, Serialize)]
 #[serde(remote = "Scene", rename_all = "kebab-case")]
-enum Room {
+pub(super) enum Room {
     Fight,
     Discovery,
 }
@@ -139,7 +139,7 @@ fn source<'a>(
     Ok((rows, seed))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct RecordCut {
     row: String,

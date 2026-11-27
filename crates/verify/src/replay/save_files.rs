@@ -4,6 +4,7 @@ mod schedule;
 
 use schedule::Request;
 pub use schedule::SaveSchedule;
+pub(super) use schedule::SaveSource;
 
 use data::rom::Rom;
 use game::exact::save_files::{Format, profile_from_bytes, progress_from_bytes};

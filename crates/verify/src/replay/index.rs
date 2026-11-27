@@ -1483,6 +1483,7 @@ impl TryFrom<IndexDocument> for Index {
                 case.inputs = InputProvider::SaveFileBoundaries;
             }
             super::legacy_packets::read_intro_join(case)?;
+            super::borrowed::normalize_published_intro(case)?;
             super::legacy_packets::read_ordinary_sources(case)?;
             if case.inputs.uses_played_witnesses() {
                 case.played_witnesses =

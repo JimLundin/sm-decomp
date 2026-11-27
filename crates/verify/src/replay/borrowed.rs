@@ -2,7 +2,14 @@
 
 pub(super) mod escape;
 
+mod published_intro;
+
+pub(super) use published_intro::normalize as normalize_published_intro;
+
 use super::index::{Borrowed, Case, InputProvider, Responsibility, Start};
+use super::intro_sources::{Join, Room};
+use super::save_files::SaveSource;
+use game::production::played::intro_rooms::Start as Scene;
 use serde::{Deserialize, Deserializer};
 use std::{collections::BTreeMap, sync::LazyLock};
 
@@ -29,6 +36,8 @@ enum Selection {
     ConstructedOffer,
     Ribs,
     OrdinaryRoom,
+    IntroRoom(#[serde(with = "Room")] Scene),
+    Save(SaveSource),
 }
 
 impl Selection {
@@ -41,6 +50,13 @@ impl Selection {
             Self::ConstructedOffer => matches!(case.start, Start::ConstructedSenderOffer { .. }),
             Self::Ribs => super::played::ridley_ribs::is_case(case),
             Self::OrdinaryRoom => !super::played::ridley_ribs::is_case(case),
+            Self::IntroRoom(scene) => matches!(
+                &case.intro_join, Some(Join::Room { scene: selected, .. }) if selected == scene
+            ),
+            Self::Save(source) => case
+                .save_steps
+                .as_ref()
+                .is_some_and(|steps| steps.uses(*source)),
         }
     }
 }

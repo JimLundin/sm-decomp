@@ -1,0 +1,52 @@
+[[source]]
+operations = ["intro-work-completion", "intro-polled-buttons"]
+from = { readers = ["scoped-intro-inputs"], dependency = "platform", provider = "pinned NMI completion", fields = ["work finished"], phase = "cut" }
+
+[[source]]
+operations = ["intro-room-fight-start"]
+from = { readers = ["intro-room-join"], selection = { intro-room = "fight" }, dependency = "intro-rooms.start", provider = "page-one-movie-press", fields = ["intro.page-one-ready", "controller.new"], phase = "at-frame-start" }
+
+[[source]]
+operations = ["intro-room-completion", "intro-room-demo", "intro-room-appearance"]
+from = { readers = ["intro-room-join"], dependency = "intro-rooms.turn", provider = "bounded-demo-and-platform", fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"], phase = "around-room-join" }
+
+[[source]]
+operations = ["intro-room-discovery-start"]
+from = { readers = ["intro-room-join"], selection = { intro-room = "discovery" }, dependency = "intro-rooms.start", provider = "scoped-page-two-handoff", fields = ["intro.discovery-start"], phase = "at-frame-start" }
+
+[[source]]
+operations = ["flashback-page-handoff", "flashback-stage-timing"]
+handoff = { row = "any-intro-0568", cut = 1650 }
+from = { readers = ["flashback-segments"], dependency = "intro.setup-and-clock", provider = "locked lean cache", fields = ["any-intro-0568 cut 1650 latched press and inherited background Y", "cinematic counter parity", "return dissolve reaches zero"], phase = "start and after-stage actor phase" }
+
+[[source]]
+operations = ["flashback-room-play", "flashback-publication-camera"]
+from = { readers = ["flashback-segments"], dependency = "room.after-motion-play", provider = "locked lean cache Samus and prior weapon slots", fields = ["Samus whole X", "flying missile shots with position and slot precedence", "camera origin"], phase = "after movement and weapon advance, with the camera read at publication" }
+
+[[source]]
+operations = ["playback-room-entry", "playback-actor-opportunity"]
+from = { readers = ["cinematic-actor-segments"], dependency = "intro-and-platform", provider = "pinned cinematic actor gate, work counter, entry placement and fade count", fields = ["intro.scene-start", "intro.room-actors", "platform.actor-pad-opportunity", "intro.crossfade"], phase = "scene setup or post-stage actor opportunity before the later scene-object hide" }
+
+[[source]]
+operations = ["scheduled-cartridge-request", "scheduled-boot-frontier"]
+from = { readers = ["save-file-schedule"], dependency = "platform.boot", provider = "observed diagnostic and initial erase frontiers", fields = ["clear frontiers", "mirror test frontier", "restore frontier"], phase = "in-progress boot operations" }
+
+[[source]]
+operations = ["save-arrival-capture", "save-escape-capture"]
+from = { readers = ["save-file-schedule"], dependency = "cartridge.capture", provider = "preceding locked cut's working profile, progress and maps", fields = ["options and profile", "persistent progress", "explored area maps", "live explored grid", "location", "save opportunities"], phase = "before selection and each save" }
+
+[[source]]
+operations = ["intro-missile-terrain", "intro-missile-room", "intro-missile-presentation"]
+from = { readers = ["intro-missile-inputs"], dependency = "platform.publication-and-world", provider = "pinned lean record", fields = ["view origin", "room grid and width in screens", "drawing gate", "NMI completion"], phase = "work and presentation" }
+
+[[source]]
+operations = ["intro-delivery-work", "intro-polled-buttons"]
+from = { readers = ["scoped-intro-delivery-inputs"], dependency = "platform", provider = "pinned NMI completion and the independently qualified discovery start interruption", fields = ["work phase"], phase = "cut" }
+
+[[source]]
+operations = ["intro-discovery-start-track", "intro-delivery-track-wait"]
+from = { readers = ["scoped-intro-delivery-inputs"], dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work" }
+
+[[source]]
+operations = ["discovery-after-motion", "discovery-publication-camera"]
+from = { readers = ["discovery-segments"], dependency = "room.after-movement", provider = "locked lean records", fields = ["whole Samus centre", "camera scroll"], phase = "after the room and before discovery's turn" }
