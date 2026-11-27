@@ -122,12 +122,7 @@ reason() { head -20 | grep . || tail -n 5 "$O/$1.log"; }
 # Starts check $1 in the background; its output goes to $O/$1.log and its status to $O/$1.status.
 start() { local name=$1; shift; { "$@" >"$O/$name.log" 2>&1; echo $? >"$O/$name.status"; } & }
 passed() { [ "$(cat "$O/$1.status" 2>/dev/null)" = 0 ]; }
-# Whether the branch changes any of the paths: committed since it left BASE, or not yet
-# committed (untracked files included).
-changed() {
-  ! git diff --quiet "$BASE...HEAD" -- "$@" ||
-    [ -n "$(git status --porcelain --untracked-files=all -- "$@")" ]
-}
+. tools/lane/changes.sh || exit 1
 # Records check $1 as passed without running it, its subject unchanged.
 skip() { echo skipped >"$O/$1.log"; echo 0 >"$O/$1.status"; }
 skipped() { [ "$(cat "$O/$1.log" 2>/dev/null)" = skipped ]; }
@@ -152,20 +147,20 @@ CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh "$BASE"
 start doc-links sh tools/check_doc_links.sh
 # What verify's lib tests read: the README and the report it measures (the crates, the specs and
 # their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
-if changed crates scenarios docs/behaviours docs/architecture/domains.toml README.md Cargo.toml \
+if changed_since "$BASE" crates scenarios docs/behaviours docs/architecture/domains.toml README.md Cargo.toml \
   Cargo.lock rust-toolchain.toml; then
   PATH="$R:$PATH" start verify-lib bash tools/lane/run_tests.sh --suite lib verify
 else skip verify-lib; fi
 # The planted faults' manifest and runner, the sources check_mutants.py lets a fault patch, and the
 # replay cases whose responsibilities each fault witnesses.
-if changed tools/mutants.toml tools/check_mutants.py crates/game/src/production \
+if changed_since "$BASE" tools/mutants.toml tools/check_mutants.py crates/game/src/production \
   crates/game/src/production.rs crates/verify/src/replay/played.rs scenarios/replay/index.toml \
   scenarios/replay/baseline.toml; then
   start faults "${SM_PY:-python3}" -I tools/check_mutants.py plan
 else skip faults; fi
 # The rule owners, the specs' Parameter entries, the vectors' overrides and the clean crates that
 # make a domain probed.
-if changed tools/cleanroom/adjusted_rule_owners tools/cleanroom/adjusted_probe_tests.toml \
+if changed_since "$BASE" tools/cleanroom/adjusted_rule_owners tools/cleanroom/adjusted_probe_tests.toml \
   tools/cleanroom/adjusted_vectors_run.py scenarios/vectors docs/behaviours crates/clean; then
   start owners "${SM_PY:-python3}" -I tools/cleanroom/adjusted_vectors_run.py --owners
 else skip owners; fi
