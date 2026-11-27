@@ -1359,7 +1359,8 @@ rules = ["world-intro-rooms/ShowIntroRoom"]
 profile = "reference"
 responsibilities = ["intro-rooms"]
 content = "player-rom-import"
-inputs = "intro-room-join-inputs"
+inputs = "intro-room-join"
+intro_join = { kind = "room", scene = "fight", records = { row = "any-intro-2219", first = 0, last = 1 } }
 expectations = { provider = "pinned-record-cache", fields = ["intro-room.grid", "intro-room.actor", "intro-room.finished-frames"], outputs = [] }
 checkpoints = true
 limits = ["row-relative cuts 1651 and 1652 continue at any-intro-2219 cuts 0 and 1, movie 2219 and 2220", "opening actor and inherited room image admitted only at the one preceding text cut", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
@@ -1388,7 +1389,8 @@ rules = ["world-intro-rooms/ShowIntroRoom"]
 profile = "reference"
 responsibilities = ["intro-rooms"]
 content = "player-rom-import"
-inputs = "intro-room-join-inputs"
+inputs = "intro-room-join"
+intro_join = { kind = "room", scene = "discovery", records = { row = "any-intro-2219", first = 1298, last = 1299 } }
 expectations = { provider = "pinned-record-cache", fields = ["intro-room.grid", "intro-room.actor", "intro-room.finished-frames"], outputs = [] }
 checkpoints = true
 limits = ["scoped cuts 1298 and 1299 are movie 3517 and 3518", "preceding page-two actor and retained room image admitted once", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
@@ -1459,7 +1461,8 @@ rules = [
 profile = "reference"
 responsibilities = ["playback"]
 content = "player-rom-import"
-inputs = "cinematic-actor-opportunities"
+inputs = "cinematic-actor-segments"
+intro_join = { kind = "playback", segments = [{ row = "any-intro-2219", first = 0, last = 2103 }, { row = "any-intro-4323", first = 0, last = 129 }] }
 checkpoints = true
 limits = [
     "One carried playback state through any-intro-2219 and through cut 129 of any-intro-4323",

@@ -218,11 +218,19 @@ pub enum InputProvider {
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
+    #[serde(rename = "intro-room-join")]
     IntroRoomJoinInputs,
+    /// Published witness with implicit recorded successors.
+    #[serde(rename = "intro-room-join-inputs")]
+    PublishedIntroRoomJoinInputs,
     /// Locked encounter phase, after-motion room facts and presentation opportunities.
     FlashbackInputs,
     /// Recorded scene setup and reached room actor opportunities.
+    #[serde(rename = "cinematic-actor-segments")]
     CinematicActorOpportunities,
+    /// Published witness with implicit recorded successors.
+    #[serde(rename = "cinematic-actor-opportunities")]
+    PublishedCinematicActorOpportunities,
     /// Ordered startup and save boundaries from pinned preceding cuts.
     #[serde(rename = "save-file-schedule")]
     SaveFileBoundaries,
@@ -1311,6 +1319,9 @@ pub struct Case {
     /// Ordered requests with their independent battery observation coordinates.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub save_steps: Option<SaveSchedule>,
+    /// Locked record segments for the intro room and playback providers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) intro_join: Option<super::intro_sources::Join>,
     /// Reviewed fixture for connected ordinary inputs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connected_packet: Option<ConnectedPacket>,
@@ -1399,6 +1410,7 @@ impl TryFrom<IndexDocument> for Index {
                 case.save_steps = super::legacy_packets::save_schedule(&case.id.0).cloned();
                 case.inputs = InputProvider::SaveFileBoundaries;
             }
+            super::legacy_packets::read_intro_join(case)?;
             if case.native_packet.is_none() {
                 let shared = declarations.iter().find(|packet| packet.applies_to(case));
                 let published = super::legacy_packets::native(case);
@@ -2584,12 +2596,7 @@ fn intro_missile_provider_valid(case: &Case, recorded: bool) -> bool {
 fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
     recorded
-        && case.row == super::playback::ORIGIN_ROW
-        && case.start
-            == (Start::CacheCut {
-                frame: super::playback::ORIGIN,
-            })
-        && case.end.cut_inclusive == super::playback::END
+        && case.intro_join.is_some()
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::CinematicActorOpportunities
         && case.expectations.fields
@@ -3104,6 +3111,13 @@ impl Case {
             return Err(IndexFault::InvalidCase(case.id.clone()));
         }
         if case.inputs == InputProvider::NativeFrameInputs && case.audio_packet().is_err() {
+            return Err(IndexFault::InvalidCase(case.id.clone()));
+        }
+        if case
+            .intro_join
+            .as_ref()
+            .is_some_and(|join| !join.valid(case))
+        {
             return Err(IndexFault::InvalidCase(case.id.clone()));
         }
         if (case.expectations.projection.is_some()

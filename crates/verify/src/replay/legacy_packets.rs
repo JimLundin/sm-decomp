@@ -17,6 +17,7 @@ struct Search {
 #[derive(Deserialize)]
 struct Packets {
     save_schedule: BTreeMap<String, super::index::SaveSchedule>,
+    intro_join: BTreeMap<String, PublishedJoin>,
     played: BTreeMap<String, super::index::PlayedWindow>,
     native_cases: std::collections::BTreeSet<String>,
     sender_control: BTreeMap<String, SenderOfferControl>,
@@ -46,6 +47,41 @@ pub(super) fn native(case: &super::index::Case) -> Option<&'static super::index:
 
 pub(super) fn save_schedule(id: &str) -> Option<&'static super::index::SaveSchedule> {
     PACKETS.as_ref()?.save_schedule.get(id)
+}
+
+#[derive(Deserialize)]
+struct PublishedJoin {
+    row: String,
+    origin: u64,
+    end: u64,
+    join: super::intro_sources::Join,
+}
+
+pub(super) fn read_intro_join(case: &mut super::index::Case) -> Result<(), &'static str> {
+    case.inputs = if case.inputs == InputProvider::PublishedIntroRoomJoinInputs {
+        InputProvider::IntroRoomJoinInputs
+    } else if case.inputs == InputProvider::PublishedCinematicActorOpportunities {
+        InputProvider::CinematicActorOpportunities
+    } else {
+        return Ok(());
+    };
+    let published = PACKETS
+        .as_ref()
+        .and_then(|p| p.intro_join.get(&case.id.0))
+        .ok_or("unknown published intro source")?;
+    if case.intro_join.is_some()
+        || case.row != published.row
+        || case.start
+            != (super::index::Start::CacheCut {
+                frame: published.origin,
+            })
+        || case.end.cut_inclusive != published.end
+        || !published.join.valid(case)
+    {
+        return Err("changed published intro source");
+    }
+    case.intro_join = Some(published.join.clone());
+    Ok(())
 }
 
 pub(super) fn played(id: &str) -> Option<&'static super::index::PlayedWindow> {

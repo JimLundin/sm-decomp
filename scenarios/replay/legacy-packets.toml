@@ -159,3 +159,21 @@ cut = 577
     { row = "chain-any-0011-DF45", cut = 2123, request = "hold" },
     { row = "any-zebes-arrival", cut = 0, request = "hold" },
 ]
+
+[intro_join."intro-rooms/fight-first-turn"]
+row = "any-intro-0568"
+origin = 1650
+end = 1652
+join = { kind = "room", scene = "fight", records = { row = "any-intro-2219", first = 0, last = 1 } }
+
+[intro_join."intro-rooms/discovery-first-turn"]
+row = "any-intro-2219"
+origin = 1297
+end = 1299
+join = { kind = "room", scene = "discovery", records = { row = "any-intro-2219", first = 1298, last = 1299 } }
+
+[intro_join."screens-playback/intro-demos"]
+row = "any-intro-0568"
+origin = 1650
+end = 3884
+join = { kind = "playback", segments = [{ row = "any-intro-2219", first = 0, last = 2103 }, { row = "any-intro-4323", first = 0, last = 129 }] }

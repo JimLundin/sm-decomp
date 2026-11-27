@@ -2,11 +2,12 @@
 
 use super::compare::Observation;
 use super::index::Case;
-use super::played::rows::Rows;
-use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
+use super::intro_sources::{self, Join};
+use super::readers::{
+    ActualReader, AdmittedCase, CutTape, ExpectedCut, ExpectedReader, InputReader,
+};
 use super::result::Outcome;
 use super::{Sources, data_failure, production_failure};
-use crate::lock::Lock;
 use data::rom::{Lorom, Rom, RomAddress};
 use game::production::playback::{
     Authority, CrossfadeCount, Cut, CutReport, Handoff, ScenePhase, SceneStart, WholeX, buttons,
@@ -17,38 +18,21 @@ use game::production::{
 use game::state::owned::OwnedState;
 use types::playback::{PadSample, TimelinePlace};
 
-pub(super) const ORIGIN_ROW: &str = "any-intro-0568";
-pub(super) const ORIGIN: u64 = 1650;
-const BATTLE_ROW: &str = "any-intro-2219";
-const BATTLE_END: u64 = 2103;
-const DISSOLVE_ROW: &str = "any-intro-4323";
-const DISSOLVE_END: u64 = 129;
-// Replay cuts use the movie's continuous coordinates from the beginning of ORIGIN_ROW.
-const FIRST: u64 = ORIGIN + 1;
-pub(super) const END: u64 = FIRST + BATTLE_END + 1 + DISSOLVE_END;
-
-pub(super) fn at<T>(values: &[T], cut: u64) -> Result<&T, Outcome> {
-    cut.checked_sub(FIRST)
-        .and_then(|offset| usize::try_from(offset).ok())
-        .and_then(|index| values.get(index))
-        .ok_or_else(|| data_failure(Some(cut), "playback sequence cut"))
-}
-
 pub(super) fn advance(
     production: &mut Production,
-    inputs: &[Cut],
+    inputs: &CutTape<Cut>,
     cut: u64,
 ) -> Result<ProductionOutputs, Outcome> {
     production
-        .advance(AdvanceInput::Playback(*at(inputs, cut)?))
+        .advance(AdvanceInput::Playback(*inputs.at(cut)?))
         .map_err(|fault| production_failure(cut, fault))
 }
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .ok()
-        .and_then(|text| Lock::parse(&text).ok())
-        .ok_or_else(|| data_failure(None, "intro replay lock"))?;
+    let Some(Join::Playback { segments }) = &case.intro_join else {
+        return Err(data_failure(None, "intro playback sources"));
+    };
+    let lock = super::read_lock(sources)?;
     let image = std::fs::read(&sources.rom).map_err(|_| data_failure(None, "player ROM file"))?;
     let rom = Rom::new(image).map_err(|_| data_failure(None, "player ROM pin"))?;
     let content = ProductionContent::Playback(
@@ -57,19 +41,18 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             .into(),
     );
     let rules = ProductionRules::Playback;
-    let root = sources
-        .lock
-        .ancestors()
-        .nth(3)
-        .ok_or_else(|| data_failure(None, "intro replay lock path"))?;
-    let mut rows = Rows::open(&lock, root, &sources.cache, &case.row)?;
-    let mut prior = rows.record(ORIGIN)?;
-    if rows.place(FIRST)? != (BATTLE_ROW.to_owned(), 0) {
-        return Err(data_failure(Some(FIRST), "intro battle continuation"));
-    }
-    if word(&prior.wram, 0x0a88)? != 0 || word(&prior.wram, 0x1a57)? != 0 {
+    let (mut rows, mut prior) = intro_sources::origin(case, sources, &lock)?;
+    let origin = prior.index;
+    let first = origin
+        .checked_add(1)
+        .ok_or_else(|| data_failure(Some(origin), "intro playback first cut"))?;
+    if !super::played::intro::active(&prior.wram)?
+        || Phase::native(&prior.wram)? != Phase::Off
+        || Pad::retained(&prior.wram)? != Pad::NEUTRAL
+        || word(&prior.wram, 0x1a57)? != 0
+    {
         return Err(data_failure(
-            Some(ORIGIN),
+            Some(origin),
             "prior page with no demo or actors",
         ));
     }
@@ -78,27 +61,44 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         content.clone(),
         rules.clone(),
     )
-    .map_err(|_| data_failure(Some(ORIGIN), "playback origin admission"))?;
+    .map_err(|_| data_failure(Some(origin), "playback origin admission"))?;
     let native = NativeTimelines::read(rom.lorom())?;
     let mut inputs = Vec::new();
     let mut expected = Vec::new();
-    for cut in FIRST..=END {
-        let current = rows.record(cut)?;
-        inputs.push(stimulus(&prior.wram, &current.wram)?);
-        expected.push(native.observe(&prior.wram, &current.wram)?);
-        prior = current;
-    }
-    if rows.place(END)? != (DISSOLVE_ROW.to_owned(), DISSOLVE_END) {
-        return Err(data_failure(Some(END), "intro dissolve continuation"));
+    let mut before = origin;
+    for segment in segments {
+        let start = before
+            .checked_add(1)
+            .ok_or_else(|| data_failure(Some(before), "intro playback successor"))?;
+        let last = segment.qualify(&mut rows, start)?;
+        for cut in start..=last {
+            let current = rows.record(cut)?;
+            if prior.video_frame.checked_add(1) != Some(current.video_frame) {
+                return Err(data_failure(
+                    Some(cut),
+                    "intro playback consecutive video cuts",
+                ));
+            }
+            inputs.push(stimulus(&prior.wram, &current.wram)?);
+            expected.push(native.observe(&prior.wram, &current.wram)?);
+            prior = current;
+        }
+        before = last;
     }
     Ok(AdmittedCase {
         production,
         content,
         rules,
-        inputs: InputReader::Playback(inputs),
-        expected: ExpectedReader::Playback(expected),
+        inputs: InputReader::Playback(CutTape {
+            first,
+            values: inputs,
+        }),
+        expected: ExpectedReader::RecordedCuts(CutTape {
+            first,
+            values: expected,
+        }),
         actual: ActualReader::Playback,
-        schedule: (FIRST..=case.end.cut_inclusive).collect(),
+        schedule: (first..=case.end.cut_inclusive).collect(),
     })
 }
 
@@ -138,7 +138,7 @@ fn stimulus(before: &[u8], after: &[u8]) -> Result<Cut, Outcome> {
     Ok(Cut { start, actor })
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 struct Pad {
     held: i64,
     fresh: i64,
@@ -506,13 +506,16 @@ fn holding_a_started_scene_keeps_its_phase_without_reissuing_the_handoff() {
     let mut reader = ActualReader::Playback;
     let started = reader
         .accept(
-            &InputReader::Playback(vec![cut]),
+            &InputReader::Playback(CutTape {
+                first: 1,
+                values: vec![cut],
+            }),
             &production,
             output,
-            FIRST,
+            1,
         )
         .unwrap();
-    let held = reader.held(&production, FIRST + 1).unwrap();
+    let held = reader.held(&production, 2).unwrap();
     assert!(started.contains(&Observation::quantity("playback.start", 1)));
     assert!(held.contains(&Observation::quantity("playback.phase", 1)));
     assert!(held.contains(&Observation::quantity("playback.start", -1)));

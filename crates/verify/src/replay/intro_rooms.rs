@@ -4,14 +4,13 @@ use super::compare::Observation;
 use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility,
 };
+use super::intro_sources::{self, Join};
 use super::played::platform::{Controller, finished, polled};
 use super::readers::{
-    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
+    ActualReader, AdmittedCase, CutTape, ExpectedCut, ExpectedReader, InputReader,
 };
 use super::result::Outcome;
 use super::{Sources, appearance, data_failure, health_tail, movement, production_failure};
-use crate::cache::Cache;
-use crate::lock::{Lock, RowId};
 use crate::source::{self, WramWord};
 use canonical::model::Model;
 use core::num::Wrapping;
@@ -30,38 +29,12 @@ use interface_hud::{Ammo, SelectableItem, Selection};
 use types::{Pair, Pose, Position};
 use weapons_projectiles as beam;
 
-const FIGHT_ROW: &str = "any-intro-0568";
-const ROOMS_ROW: &str = "any-intro-2219";
-const FIGHT_ORIGIN: u64 = 1650;
-const DISCOVERY_ORIGIN: u64 = 1297;
-
 pub(super) const GRID_FIELDS: usize = 2 + rooms::BACKED_CELLS * 2;
 pub(super) const ACTOR_FIELDS: usize = 18;
 
-fn recipe(case: &Case) -> Option<(u64, rooms::Start, u64)> {
-    use super::index::Start::CacheCut;
-    match (case.row.as_str(), &case.start, case.end.cut_inclusive) {
-        (
-            FIGHT_ROW,
-            CacheCut {
-                frame: FIGHT_ORIGIN,
-            },
-            1652,
-        ) => Some((FIGHT_ORIGIN, rooms::Start::Fight, 0)),
-        (
-            ROOMS_ROW,
-            CacheCut {
-                frame: DISCOVERY_ORIGIN,
-            },
-            1299,
-        ) => Some((DISCOVERY_ORIGIN, rooms::Start::Discovery, 1298)),
-        _ => None,
-    }
-}
-
 pub(super) fn valid(case: &Case) -> bool {
     use ObservationId as O;
-    recipe(case).is_some()
+    case.intro_join.is_some()
         && case.kind == CaseKind::Scoped
         && case.responsibilities == [Responsibility::IntroRooms]
         && case.rules == [rooms::RULE]
@@ -97,53 +70,48 @@ impl Inputs {
     }
 }
 
-pub(super) struct Expected {
-    cache: Cache,
-    first: u64,
-    first_record: u64,
-}
-
-impl Expected {
-    pub(super) fn read(&self, cut: u64) -> Result<ExpectedCut, Outcome> {
-        let number = self
-            .first_record
-            .saturating_add(cut.saturating_sub(self.first));
-        let record = record(&self.cache, number)?;
-        let wram = &record.wram;
-        let mut fields = grid(&mirror(wram)?);
-        fields.extend(ActorView::read(wram)?.observations());
-        fields.push(clock(word(wram, source::NMI_FRAME_COUNTER_WORD)?));
-        Ok(ExpectedCut {
-            semantics: fields.clone(),
-            semantic_count: fields.len(),
-            fields,
-            output_count: 0,
-            replies: 0,
-        })
-    }
+fn expected(record: &oracle_record::FrameRecord) -> Result<ExpectedCut, Outcome> {
+    let wram = &record.wram;
+    let mut fields = grid(&mirror(wram)?);
+    fields.extend(ActorView::read(wram)?.observations());
+    fields.push(clock(word(wram, source::NMI_FRAME_COUNTER_WORD)?));
+    Ok(ExpectedCut {
+        semantics: fields.clone(),
+        semantic_count: fields.len(),
+        fields,
+        output_count: 0,
+        replies: 0,
+    })
 }
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let (origin, start, first_record) =
-        recipe(case).ok_or_else(|| data_failure(None, "intro room join recipe"))?;
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "record lock file"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "record lock schema"))?;
-    let cache = |id: &str| {
-        let row = lock
-            .row(&RowId(id.into()))
-            .ok_or_else(|| data_failure(None, "intro room lock row"))?;
-        Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "intro room cache pins"))
+    let Some(Join::Room {
+        scene: start,
+        records,
+    }) = &case.intro_join
+    else {
+        return Err(data_failure(None, "intro room sources"));
     };
-    let origin_cache = cache(&case.row)?;
-    let seed = record(&origin_cache, origin)?;
-    let input_cache = if case.row == ROOMS_ROW {
-        origin_cache
-    } else {
-        cache(ROOMS_ROW)?
-    };
-    let pending = record(&input_cache, first_record)?;
-    let done = record(&input_cache, first_record.saturating_add(1))?;
+    let start = *start;
+    let lock = super::read_lock(sources)?;
+    let (mut rows, seed) = intro_sources::origin(case, sources, &lock)?;
+    let origin = seed.index;
+    let first = origin
+        .checked_add(1)
+        .ok_or_else(|| data_failure(Some(origin), "intro first turn"))?;
+    let last = records.qualify(&mut rows, first)?;
+    let pending = rows.record(first)?;
+    let done = rows.record(last)?;
+    if !super::played::intro::waiting_for_room(&seed.wram, start)?
+        || !finished(&seed)
+        || finished(&pending)
+        || !finished(&done)
+    {
+        return Err(data_failure(
+            Some(origin),
+            "intro page and interrupted setup",
+        ));
+    }
     if [pending.video_frame, done.video_frame]
         != [
             seed.video_frame.wrapping_add(1),
@@ -191,23 +159,21 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         finished: finished(&done),
         ..setup
     };
-    let first = origin.saturating_add(1);
     Ok(AdmittedCase {
         production,
         content: production_content,
         rules,
         actual: ActualReader::IntroRooms,
-        schedule: vec![first, first.saturating_add(1)],
+        schedule: vec![first, last],
         inputs: InputReader::IntroRooms(Inputs {
             first,
             setup,
             completion,
         }),
-        expected: ExpectedReader::IntroRooms(Box::new(Expected {
-            cache: cache(ROOMS_ROW)?,
+        expected: ExpectedReader::RecordedCuts(CutTape {
             first,
-            first_record,
-        })),
+            values: vec![expected(&pending)?, expected(&done)?],
+        }),
     })
 }
 

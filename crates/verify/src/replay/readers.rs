@@ -33,7 +33,7 @@ pub(super) enum InputReader {
     Intro(super::played::intro::indexed::Inputs),
     IntroRooms(super::intro_rooms::Inputs),
     Flashback(super::flashback::Inputs),
-    Playback(Vec<game::production::playback::Cut>),
+    Playback(CutTape<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
     ShaftEntry(Vec<game::production::shaft_entry::Opportunity>),
@@ -59,9 +59,8 @@ pub(super) enum ExpectedReader {
     Explosion(super::explosion::Tape<ExpectedCut>),
     Blackout(Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
-    IntroRooms(Box<super::intro_rooms::Expected>),
+    RecordedCuts(CutTape<ExpectedCut>),
     Flashback(super::flashback::Expectations),
-    Playback(Vec<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
     IntroMissiles(super::intro_missiles::Expected),
     ShaftEntry(Vec<ExpectedCut>),
@@ -120,6 +119,20 @@ pub(super) struct ExpectedCut {
     pub semantic_count: usize,
     pub output_count: usize,
     pub replies: usize,
+}
+
+pub(super) struct CutTape<T> {
+    pub first: u64,
+    pub values: Vec<T>,
+}
+
+impl<T> CutTape<T> {
+    pub(super) fn at(&self, cut: u64) -> Result<&T, Outcome> {
+        cut.checked_sub(self.first)
+            .and_then(|offset| usize::try_from(offset).ok())
+            .and_then(|index| self.values.get(index))
+            .ok_or_else(|| data_failure(Some(cut), "recorded sequence cut"))
+    }
 }
 
 pub(super) struct AdmittedCase {
@@ -453,11 +466,10 @@ impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
             Self::Intro(expected) => expected.read(cut),
-            Self::IntroRooms(expected) => expected.read(cut),
             Self::Explosion(expected) => expected.read(cut),
             Self::Blackout(tape) | Self::JumpHistory(tape) => tape.at(cut).cloned(),
             Self::Flashback(expected) => expected.at(cut),
-            Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
+            Self::RecordedCuts(expected) => expected.at(cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::ShaftEntry(tape) => super::shaft_entry::at(tape, cut).cloned(),

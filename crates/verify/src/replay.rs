@@ -20,6 +20,7 @@ mod hud;
 pub mod index;
 mod intro_missiles;
 mod intro_rooms;
+mod intro_sources;
 mod jump_history;
 mod landing_site;
 mod legacy_packets;

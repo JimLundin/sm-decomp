@@ -136,6 +136,22 @@ const STAGES: [(u16, IntroStage); 23] = [
     (0xbca0, IntroStage::Done),
 ];
 
+pub(in crate::replay) fn active(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(word(wram, source::GAME_STATE)? == INTRO)
+}
+
+pub(in crate::replay) fn waiting_for_room(
+    wram: &[u8],
+    room: game::production::played::intro_rooms::Start,
+) -> Result<bool, Outcome> {
+    use game::production::played::intro_rooms::Start;
+    let stage = match room {
+        Start::Fight => IntroStage::PageOneWaits,
+        Start::Discovery => IntroStage::PageTwoWaits,
+    };
+    Ok(active(wram)? && STAGES.contains(&(word(wram, source::CINEMATIC_ACTIVE)?, stage)))
+}
+
 /// The options' language: 0 for English.
 const LANGUAGE: WramWord = wram("JAPANESE_TEXT", 0x09e2);
 /// The dissolves' counts, to the scene and to the text.
@@ -225,7 +241,7 @@ pub(super) enum Part {
 /// dissolve from page 4's text to the scene, before page 5 has begun, so the record's stages read
 /// right as the run plays on. None for any other seed.
 pub(super) fn starts(wram: &[u8]) -> Result<Option<Part>, Outcome> {
-    if word(wram, source::GAME_STATE)? != INTRO {
+    if !active(wram)? {
         return Ok(None);
     }
     Ok(match word(wram, source::CINEMATIC_ACTIVE)? {
