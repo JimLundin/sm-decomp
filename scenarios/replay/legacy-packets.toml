@@ -278,3 +278,15 @@ row = "chain-any-0003-DFD7"
 first = 157
 last = 160
 actors = [0, 1]
+
+[intro_join."flashback/zebes-encounter"]
+row = "any-intro-2219"
+origin = 0
+end = 650
+join = { kind = "flashback", handoff = { row = "any-intro-0568", cut = 1650 }, segments = [{ row = "any-intro-2219", first = 0, last = 650 }] }
+
+[intro_join."discovery/egg-to-page-three"]
+row = "any-intro-2219"
+origin = 1297
+end = 2233
+join = { kind = "discovery", segments = [{ row = "any-intro-2219", first = 1298, last = 2103 }, { row = "any-intro-4323", first = 0, last = 129 }] }

@@ -83,7 +83,6 @@ const LARGE_IMAGES: [u16; 8] = [0, 0x985d, 0x9864, 0x987a, 0x9890, 0x98a6, 0x98b
 
 pub(in crate::replay) struct Expectations {
     encounter_tiles: BTreeSet<u16>,
-    tape: Vec<ExpectedCut>,
 }
 
 impl Expectations {
@@ -113,25 +112,33 @@ impl Expectations {
                 );
             }
         }
-        Ok(Self {
-            encounter_tiles,
-            tape: Vec::new(),
-        })
+        Ok(Self { encounter_tiles })
     }
 
     pub(super) fn read_record(
-        &mut self,
-        previous_turn: &FrameRecord,
+        &self,
+        previous: &FrameRecord,
         current: &FrameRecord,
-        timing: super::inputs::Timing,
         cut: u64,
-    ) -> Result<(), Outcome> {
+    ) -> Result<ExpectedCut, Outcome> {
         let bad = || data_failure(Some(cut), "flashback encounter record");
-        let observed = decode(current, timing.starting()).ok_or_else(bad)?;
+        let pending = word(current, SCRIPT) == 0xcb05 && word(current, PICTURE) == 0;
+        let observed = decode(current, pending).ok_or_else(bad)?;
+        let finished = word(current, 0x05b6) != word(previous, 0x05b6);
+        // A live brain advances its script, picture, hold or elapsed count on each turn.
+        // After it retires, a completed empty frame still reports an encounter turn.
+        let acted = !pending
+            && if word(previous, SCRIPT) != 0 || word(current, SCRIPT) != 0 {
+                [SCRIPT, PICTURE, HOLD, 0x1b7d]
+                    .into_iter()
+                    .any(|addr| word(previous, addr) != word(current, addr))
+            } else {
+                finished
+            };
         let semantics = state(&observed);
         let mut fields = semantics.clone();
-        let events = if timing.takes_turn() {
-            Some(observed_effects(previous_turn, current).ok_or_else(bad)?)
+        let events = if acted {
+            Some(observed_effects(previous, current).ok_or_else(bad)?)
         } else {
             None
         };
@@ -153,31 +160,22 @@ impl Expectations {
             None
         };
         fields.extend(palette(colours));
-        let drawing = if timing.finished {
+        let drawing = if finished {
             Some(self.oam(&current.oam).ok_or_else(bad)?)
         } else {
             None
         };
         fields.push(oam(drawing));
         fields.push(background(
-            timing.finished.then(|| word(current, 0x00b3).cast_signed()),
+            finished.then(|| word(current, 0x00b3).cast_signed()),
         ));
-        self.tape.push(ExpectedCut {
+        Ok(ExpectedCut {
             semantic_count: semantics.len(),
             output_count: fields.len().saturating_sub(semantics.len()),
             fields,
             semantics,
             replies: 0,
-        });
-        Ok(())
-    }
-
-    pub(in crate::replay) fn at(&self, cut: u64) -> Result<ExpectedCut, Outcome> {
-        usize::try_from(cut)
-            .ok()
-            .and_then(|cut| self.tape.get(cut))
-            .cloned()
-            .ok_or_else(|| data_failure(Some(cut), "flashback expected cut"))
+        })
     }
 
     fn oam(&self, oam: &[u8]) -> Option<Vec<u8>> {

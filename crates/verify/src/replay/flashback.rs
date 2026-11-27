@@ -4,11 +4,8 @@
 mod expected;
 mod inputs;
 
+use super::intro_sources::{self, Join};
 use super::{Sources, compare::Observation, data_failure, index::Case, readers, result::Outcome};
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-};
 use data::rom::Rom;
 use game::{
     production::{
@@ -20,58 +17,44 @@ use game::{
 use oracle_record::FrameRecord;
 use types::{Colour, PALETTE_SLOTS, Palette, ROW_COLOURS};
 
-pub(super) use expected::Expectations;
 pub(super) use inputs::Inputs;
 
-pub(super) const ROW: &str = "any-intro-2219";
-pub(super) const END: u64 = 650;
-const HANDOFF_ROW: &str = "any-intro-0568";
-const HANDOFF_CUT: u64 = 1650;
-
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "flashback record lock file"))?;
-    let lock =
-        Lock::parse(&lock).map_err(|_| data_failure(None, "flashback record lock schema"))?;
-    let open = |id: &str| {
-        let row = lock
-            .row(&RowId(id.to_owned()))
-            .ok_or_else(|| data_failure(None, "flashback indexed lock row"))?;
-        Cache::open(&sources.cache, row)
-            .map_err(|_| data_failure(None, "flashback record cache pins"))
+    let Some(Join::Flashback { handoff, segments }) = &case.intro_join else {
+        return Err(data_failure(None, "flashback sources"));
     };
+    let first = case
+        .first_cut()
+        .ok_or_else(|| data_failure(None, "flashback first comparison"))?;
+    let cuts = first..=case.end.cut_inclusive;
+    let lock = super::read_lock(sources)?;
+    let (rows, press) = handoff.before(case, first, sources, &lock)?;
     let bad_rom = || data_failure(None, "flashback player ROM");
     let image =
         Rom::new(std::fs::read(&sources.rom).map_err(|_| bad_rom())?).map_err(|_| bad_rom())?;
     let rom = image.lorom();
     let art = import::flashback::load(rom)
         .map_err(|_| data_failure(None, "flashback clip and palette import"))?;
-    let handoff = readers::record(&open(HANDOFF_ROW)?, HANDOFF_CUT)?;
-    let cache = open(&case.row)?;
-    let schedule: Vec<_> = (0..=case.end.cut_inclusive).collect();
-    let mut stimuli = Inputs::new(&handoff)?;
-    let mut expected = Expectations::new(rom)?;
-    let mut previous = handoff;
+    let mut stimuli = Inputs::new(&press, first)?;
+    let native = expected::Expectations::new(rom)?;
+    let mut expected = Vec::new();
     let mut last_turn = None;
-    for (&cut, current) in schedule.iter().zip(cache.records_without_pictures()) {
-        let (actual_cut, current) =
-            current.map_err(|_| data_failure(Some(cut), "flashback record bytes"))?;
-        if actual_cut.0 != cut || current.wram.len() != 0x2_0000 {
-            return Err(data_failure(Some(cut), "flashback record shape"));
-        }
-        let timing = inputs::timing(&previous, &current, cut)?;
-        let prior_turn = last_turn.as_ref().unwrap_or(&previous);
-        stimuli.read(prior_turn, &current, timing, cut)?;
-        expected.read_record(prior_turn, &current, timing, cut)?;
-        if timing.takes_turn() {
-            last_turn = Some(current.clone());
-        }
-        previous = current;
-    }
-
-    if previous.index != case.end.cut_inclusive {
-        return Err(data_failure(None, "complete flashback record horizon"));
-    }
+    intro_sources::visit(
+        rows,
+        press,
+        segments,
+        cuts.clone(),
+        |cut, prior, current| {
+            let timing = inputs::timing(prior, current, cut, cut == first)?;
+            let previous_turn = last_turn.as_ref().unwrap_or(prior);
+            stimuli.read(previous_turn, current, timing, cut)?;
+            expected.push(native.read_record(prior, current, cut)?);
+            if timing.takes_turn() {
+                last_turn = Some(current.clone());
+            }
+            Ok(())
+        },
+    )?;
 
     let content = ProductionContent::Flashback(Box::new(art));
     let rules = ProductionRules::Flashback(Rules::REFERENCE);
@@ -89,9 +72,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         content,
         rules,
         inputs: readers::InputReader::Flashback(stimuli),
-        expected: readers::ExpectedReader::Flashback(expected),
+        expected: readers::ExpectedReader::RecordedCuts(readers::CutTape {
+            first,
+            values: expected,
+        }),
         actual: readers::ActualReader::Flashback,
-        schedule,
+        schedule: cuts.collect(),
     })
 }
 
@@ -150,4 +136,36 @@ pub(super) fn played_state(
         actual.extend(expected::state(encounter));
     }
     Ok((expected, actual))
+}
+
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn an_observed_actor_turn_survives_a_held_input_clock() {
+    let sources = super::played::tests::sources();
+    let lock = super::read_lock(&sources).unwrap();
+    let index = super::index::Index::parse(include_str!("../../../../scenarios/replay/index.toml"))
+        .unwrap();
+    let case = index
+        .cases
+        .iter()
+        .find(|case| case.id.0 == "flashback/zebes-encounter")
+        .unwrap();
+    let (mut rows, pending) = intro_sources::origin(case, &sources, &lock).unwrap();
+    let first_turn = pending.index.checked_add(1).unwrap();
+    let mut current = rows.record(first_turn).unwrap();
+    let clock = inputs::CINEMATIC_FRAME..inputs::CINEMATIC_FRAME + 2;
+    current.wram[clock.clone()].copy_from_slice(&pending.wram[clock]);
+    assert!(
+        !inputs::timing(&pending, &current, first_turn, false)
+            .unwrap()
+            .takes_turn()
+    );
+    let rom = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
+    let native = expected::Expectations::new(rom.lorom()).unwrap();
+    let receipt = native.read_record(&pending, &current, first_turn).unwrap();
+    assert!(
+        receipt
+            .fields
+            .contains(&Observation::quantity("flashback.turn", 1))
+    );
 }

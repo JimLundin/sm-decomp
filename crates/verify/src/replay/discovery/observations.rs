@@ -24,8 +24,7 @@ impl Native {
     }
 
     pub(super) fn at(&mut self, prev: &FrameRecord, r: &FrameRecord) -> Option<ExpectedCut> {
-        let completed = word(r, 0x05b6);
-        let finished = completed != word(prev, 0x05b6);
+        let finished = crate::replay::played::platform::finished(r);
         let offers = sounds(prev, r)?;
         let semantics = self.semantic(r, &offers)?;
         let mut fields = semantics.clone();

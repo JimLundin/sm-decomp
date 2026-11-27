@@ -38,7 +38,7 @@ pub(super) enum InputReader {
     IntroMissiles(super::intro_missiles::Inputs),
     ShaftEntry(Tape<game::production::shaft_entry::Opportunity>),
     JumpHistory(Tape<Option<samus_movement::JumpButton>>),
-    Discovery(super::discovery::Inputs),
+    Discovery(CutTape<game::production::played::discovery::Frame>),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
     LandingSite(CutTape<game::production::played::landing_site::Work>),
     Zebes(CutTape<screens_zebes::FrameAdvance>),
@@ -60,11 +60,9 @@ pub(super) enum ExpectedReader {
     Blackout(Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
     RecordedCuts(CutTape<ExpectedCut>),
-    Flashback(super::flashback::Expectations),
     SaveFiles(super::save_files::Expected),
     ShaftEntry(Tape<ExpectedCut>),
     JumpHistory(Tape<ExpectedCut>),
-    Discovery(super::discovery::Expectations),
     Departure(super::departure::Tape<ExpectedCut>),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Vec<super::health_tail::Expected>),
@@ -171,7 +169,9 @@ impl InputReader {
                 .advance(AdvanceInput::ShaftEntry(*samples.at(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
-            Self::Discovery(inputs) => inputs.advance(production, cut),
+            Self::Discovery(inputs) => production
+                .advance(AdvanceInput::Discovery(*inputs.at(cut)?))
+                .map_err(|fault| super::production_failure(cut, fault)),
             Self::Departure(tape) => production
                 .advance(AdvanceInput::Departure(*tape.get(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
@@ -462,10 +462,8 @@ impl ExpectedReader {
             Self::Blackout(tape) | Self::JumpHistory(tape) | Self::ShaftEntry(tape) => {
                 tape.at(cut).cloned()
             }
-            Self::Flashback(expected) => expected.at(cut),
             Self::RecordedCuts(expected) => expected.at(cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
-            Self::Discovery(expected) => expected.at(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),

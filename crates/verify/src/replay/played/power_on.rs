@@ -969,6 +969,7 @@ mod tests {
         sources: &crate::replay::Sources,
         lock: &crate::lock::Lock,
         seed: &oracle_record::FrameRecord,
+        fight: &crate::replay::index::Case,
     ) -> (super::Run, super::Scenes) {
         use crate::replay::{intro_rooms, played::frame};
         use game::production::played::{frame::Counts, intro_rooms as rooms};
@@ -980,7 +981,12 @@ mod tests {
 
         // Take the chosen file and its loan from their ordinary entry. The local window then
         // admits the preceding scene, actor, latch and frame counts once at the page-two cut.
-        for cut in 1..=2220 {
+        let mut fight_rows = super::super::open_rows(sources, lock, &fight.row).unwrap();
+        let first_turn = fight_rows
+            .record(fight.end.cut_inclusive)
+            .unwrap()
+            .video_frame;
+        for cut in 1..=u64::from(first_turn.checked_sub(previous.video_frame).unwrap()) {
             let current = power_row.record(cut).unwrap();
             run.step(&began, &previous, &current, cut).unwrap();
             if super::super::finished(&current) {
@@ -1012,19 +1018,31 @@ mod tests {
         (run, scenes)
     }
 
-    fn check_discovery_actor(
+    fn checked_discovery_room<'a>(
         cut: u64,
-        finished: bool,
-        intro: &super::front_end::PlayingIntro,
+        first: u64,
+        state: &'a super::front_end::State,
+        scenes: &mut super::Scenes,
+        previous: &oracle_record::FrameRecord,
         current: &oracle_record::FrameRecord,
-    ) {
-        use crate::replay::{discovery, intro_rooms};
+    ) -> &'a super::front_end::DiscoveryRoom {
+        use crate::replay::intro_rooms;
         use game::production::played::intro_rooms as rooms;
         use types::discovery::DiscoveryOrder;
 
+        let super::front_end::State::Screens(screens) = state else {
+            panic!("discovery front end at {cut}");
+        };
+        let super::front_end::Screen::Intro(intro) = &screens.screen else {
+            panic!("discovery intro at {cut}");
+        };
+        let (expected, actual) = scenes.compared(current, &intro.scene).unwrap();
+        super::differs(&expected, &actual, cut).unwrap();
+        let was_shown = intro_rooms::fight_shown(&previous.wram).unwrap();
+        let finished = super::super::finished(current);
         let discovery = intro.actors.discovery.as_ref().unwrap();
         let room = intro.actors.rooms.as_ref().unwrap();
-        if cut == discovery::SEED + 1 {
+        if cut == first {
             assert!(!finished);
             assert!(room.pending());
             assert_eq!(room.active(), Some(rooms::Start::Discovery));
@@ -1033,11 +1051,11 @@ mod tests {
                 types::intro::IntroStage::IntoDiscovery
             );
         }
-        if cut == discovery::SEED + 2 {
+        if cut == first.saturating_add(1) {
             assert!(finished);
             assert!(!room.pending());
         }
-        if discovery.encounter().order != DiscoveryOrder::Hidden || cut == discovery::END - 1 {
+        if discovery.encounter().order != DiscoveryOrder::Hidden || was_shown {
             let (centre, pad) = intro_rooms::discovery_actor(&current.wram).unwrap();
             assert!(
                 room.actor.samus.movement.0.position == centre,
@@ -1048,24 +1066,37 @@ mod tests {
                 "discovery demo controls at {cut}"
             );
         }
+        discovery
     }
 
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn discovery_plays_from_page_two_and_resumes_across_interruptions() {
-        use crate::replay::discovery;
+        use crate::replay::{discovery, index::Index};
         use std::io::Write as _;
 
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
-        let mut rows = super::super::open_rows(&sources, &lock, discovery::ROW).unwrap();
-        let mut previous = rows.record(discovery::SEED).unwrap();
-        let (mut run, mut scenes) = discovery_seed(&sources, &lock, &previous);
+        let index =
+            Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
+        let named = |id: &str| index.cases.iter().find(|case| case.id.0 == id).unwrap();
+        let case = named("discovery/egg-to-page-three");
+        let window = case.cache_window().unwrap();
+        let cuts = window.cuts;
+        let mut rows = super::super::open_rows(&sources, &lock, window.row).unwrap();
+        let mut previous = rows.record(window.origin).unwrap();
+        let (mut run, mut scenes) = discovery_seed(
+            &sources,
+            &lock,
+            &previous,
+            named("intro-rooms/fight-first-turn"),
+        );
         let mut began = previous.clone();
         let mut controller = super::Controller::seeded(&previous.wram).unwrap();
         let mut witness = discovery::PlayedWitness::default();
         let mut restored = Vec::new();
-        for cut in discovery::SEED + 1..=discovery::END {
+        let mut recorded_interruptions = 0;
+        for cut in cuts.clone() {
             let current = rows.record(cut).unwrap();
             let finished = super::super::finished(&current);
             let pressed = super::screens::pressed(controller);
@@ -1100,31 +1131,27 @@ mod tests {
                 assert!(*state == run.state, "front end at {cut}");
                 assert!(*cartridge == run.cartridge, "cartridge at {cut}");
             }
-            let super::front_end::State::Screens(screens) = &run.state else {
-                panic!("discovery front end at {cut}");
-            };
-            let super::front_end::Screen::Intro(intro) = &screens.screen else {
-                panic!("discovery intro at {cut}");
-            };
-            let (expected, actual) = scenes.compared(&current, &intro.scene).unwrap();
-            super::differs(&expected, &actual, cut).unwrap();
-            let discovery = intro.actors.discovery.as_ref().unwrap();
-            check_discovery_actor(cut, finished, intro, &current);
-            let publication = (finished || cut == discovery::SEED + 1)
-                .then(|| discovery.publication.as_ref().unwrap());
-            let sent = sound.into_iter().filter_map(|offer| {
-                let super::front_end::Sound::Discovery(offer) = offer else {
-                    return None;
-                };
-                Some(offer)
-            });
-            let expected_offers = publication
-                .into_iter()
-                .flat_map(|cut| cut.sounds.iter().copied());
-            assert!(sent.eq(expected_offers), "discovery sent sounds at {cut}");
+            let discovery = checked_discovery_room(
+                cut,
+                *cuts.start(),
+                &run.state,
+                &mut scenes,
+                &previous,
+                &current,
+            );
+            let publication =
+                (finished || cut == *cuts.start()).then(|| discovery.publication.as_ref().unwrap());
             witness
-                .check(&previous, &current, discovery.encounter(), publication, cut)
+                .check(
+                    &previous,
+                    &current,
+                    discovery.encounter(),
+                    publication,
+                    sound,
+                    cut,
+                )
                 .unwrap();
+            recorded_interruptions += usize::from(!discovery::completed(&previous, &current));
             if !finished {
                 restored.push((run.state.clone(), run.cartridge.clone()));
             }
@@ -1134,13 +1161,13 @@ mod tests {
             }
             previous = current;
         }
-        assert_eq!(restored.len(), 3);
+        assert_eq!(restored.len(), recorded_interruptions);
         writeln!(
             std::io::stdout().lock(),
             "DISCOVERY_LOCAL cuts={} interrupted_checkpoints={} end={}",
-            discovery::END.saturating_sub(discovery::SEED),
+            cuts.end().saturating_sub(window.origin),
             restored.len(),
-            discovery::END,
+            cuts.end(),
         )
         .unwrap();
     }

@@ -2,7 +2,7 @@
 //! still supplied as in-flight: its position comes from the preceding flight or ammo debit.
 
 use super::{data_failure, word};
-use crate::replay::result::Outcome;
+use crate::replay::{readers::CutTape, result::Outcome};
 use core::num::Wrapping;
 use game::production::{
     AdvanceInput, Production, ProductionOutputs,
@@ -13,7 +13,7 @@ use game::production::{
 use oracle_record::FrameRecord;
 use types::{Pair, Parity, Px};
 
-const CINEMATIC_FRAME: usize = 0x1a51;
+pub(super) const CINEMATIC_FRAME: usize = 0x1a51;
 const FRAME_COUNT: usize = 0x05b6;
 const RETURN_DISSOLVE: usize = 0x1a4b;
 const MISSILES: usize = 0x09c6;
@@ -45,18 +45,21 @@ impl Timing {
     pub(super) const fn takes_turn(self) -> bool {
         matches!(self.permission, Permission::Actor)
     }
-
-    pub(super) const fn starting(self) -> bool {
-        matches!(self.permission, Permission::Start)
-    }
 }
 
 pub(super) fn timing(
     previous: &FrameRecord,
     current: &FrameRecord,
     cut: u64,
+    starting: bool,
 ) -> Result<Timing, Outcome> {
-    if cut == 0 {
+    if starting {
+        if super::super::played::platform::finished(current)
+            || word(current, 0x1a57) == 0
+            || word(current, 0x1f51) != 0xb250
+        {
+            return Err(data_failure(Some(cut), "flashback interrupted setup"));
+        }
         return Ok(Timing {
             permission: Permission::Start,
             finished: false,
@@ -96,17 +99,26 @@ struct Input {
 
 pub(in crate::replay) struct Inputs {
     background_y: RoomBackgroundY,
-    tape: Vec<Input>,
+    tape: CutTape<Input>,
 }
 
 impl Inputs {
-    pub(super) fn new(handoff: &FrameRecord) -> Result<Self, Outcome> {
-        if word(handoff, 0x1f51) != 0xaeb8 || word(handoff, 0x008f) == 0 {
-            return Err(data_failure(Some(0), "flashback start press"));
+    pub(super) fn new(handoff: &FrameRecord, first: u64) -> Result<Self, Outcome> {
+        if handoff.wram.len() != 0x2_0000
+            || !super::super::played::intro::waiting_for_room(
+                &handoff.wram,
+                game::production::played::intro_rooms::Start::Fight,
+            )?
+            || word(handoff, 0x008f) == 0
+        {
+            return Err(data_failure(Some(first), "flashback start press"));
         }
         Ok(Self {
             background_y: RoomBackgroundY(word(handoff, 0x1997).cast_signed()),
-            tape: Vec::new(),
+            tape: CutTape {
+                first,
+                values: Vec::new(),
+            },
         })
     }
 
@@ -141,7 +153,7 @@ impl Inputs {
             x: Wrapping(word(current, 0x0911)),
             y: Wrapping(word(current, 0x0915)),
         });
-        self.tape.push(Input { work, camera });
+        self.tape.values.push(Input { work, camera });
         Ok(())
     }
 
@@ -150,10 +162,7 @@ impl Inputs {
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
-        let input = usize::try_from(cut)
-            .ok()
-            .and_then(|cut| self.tape.get(cut))
-            .ok_or_else(|| data_failure(Some(cut), "flashback input cut"))?;
+        let input = self.tape.at(cut)?;
         let phase = match &input.work {
             Work::Start(y) => Phase::Start(*y),
             Work::Held => Phase::Held,

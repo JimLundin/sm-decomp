@@ -41,11 +41,10 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             .into(),
     );
     let rules = ProductionRules::Playback;
-    let (mut rows, mut prior) = intro_sources::origin(case, sources, &lock)?;
-    let origin = prior.index;
-    let first = origin
-        .checked_add(1)
-        .ok_or_else(|| data_failure(Some(origin), "intro playback first cut"))?;
+    let (rows, prior) = intro_sources::origin(case, sources, &lock)?;
+    let window = case.cache_window()?;
+    let first = *window.cuts.start();
+    let origin = window.origin;
     if !super::played::intro::active(&prior.wram)?
         || Phase::native(&prior.wram)? != Phase::Off
         || Pad::retained(&prior.wram)? != Pad::NEUTRAL
@@ -65,26 +64,17 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let native = NativeTimelines::read(rom.lorom())?;
     let mut inputs = Vec::new();
     let mut expected = Vec::new();
-    let mut before = origin;
-    for segment in segments {
-        let start = before
-            .checked_add(1)
-            .ok_or_else(|| data_failure(Some(before), "intro playback successor"))?;
-        let last = segment.qualify(&mut rows, start)?;
-        for cut in start..=last {
-            let current = rows.record(cut)?;
-            if prior.video_frame.checked_add(1) != Some(current.video_frame) {
-                return Err(data_failure(
-                    Some(cut),
-                    "intro playback consecutive video cuts",
-                ));
-            }
+    intro_sources::visit(
+        rows,
+        prior,
+        segments,
+        window.cuts.clone(),
+        |_, prior, current| {
             inputs.push(stimulus(&prior.wram, &current.wram)?);
             expected.push(native.observe(&prior.wram, &current.wram)?);
-            prior = current;
-        }
-        before = last;
-    }
+            Ok(())
+        },
+    )?;
     Ok(AdmittedCase {
         production,
         content,
@@ -98,7 +88,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             values: expected,
         }),
         actual: ActualReader::Playback,
-        schedule: (first..=case.end.cut_inclusive).collect(),
+        schedule: window.cuts.collect(),
     })
 }
 

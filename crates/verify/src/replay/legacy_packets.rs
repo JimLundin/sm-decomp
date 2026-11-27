@@ -64,7 +64,11 @@ struct PublishedJoin {
 }
 
 pub(super) fn read_intro_join(case: &mut super::index::Case) -> Result<(), &'static str> {
-    case.inputs = if case.inputs == InputProvider::PublishedIntroRoomJoinInputs {
+    case.inputs = if case.inputs == InputProvider::PublishedDiscoveryInputs {
+        InputProvider::DiscoveryInputs
+    } else if case.inputs == InputProvider::PublishedFlashbackInputs {
+        InputProvider::FlashbackInputs
+    } else if case.inputs == InputProvider::PublishedIntroRoomJoinInputs {
         InputProvider::IntroRoomJoinInputs
     } else if case.inputs == InputProvider::PublishedCinematicActorOpportunities {
         InputProvider::CinematicActorOpportunities

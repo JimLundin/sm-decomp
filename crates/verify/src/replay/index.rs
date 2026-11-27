@@ -224,7 +224,11 @@ pub enum InputProvider {
     #[serde(rename = "intro-room-join-inputs")]
     PublishedIntroRoomJoinInputs,
     /// Locked encounter phase, after-motion room facts and presentation opportunities.
+    #[serde(rename = "flashback-segments")]
     FlashbackInputs,
+    /// Published encounter witness with implicit source coordinates.
+    #[serde(rename = "flashback-inputs")]
+    PublishedFlashbackInputs,
     /// Recorded scene setup and reached room actor opportunities.
     #[serde(rename = "cinematic-actor-segments")]
     CinematicActorOpportunities,
@@ -246,7 +250,11 @@ pub enum InputProvider {
     /// Scoped discovery and delivery inputs, including the interrupted start.
     ScopedIntroDeliveryInputs,
     /// The intro requests, completion and resulting actor position in the discovery room.
+    #[serde(rename = "discovery-segments")]
     DiscoveryInputs,
+    /// Published encounter witness with implicit source coordinates.
+    #[serde(rename = "discovery-inputs")]
+    PublishedDiscoveryInputs,
     /// Station, flight and direct transfer work from one elevator origin.
     Departure,
     /// Receiving T1 work opening and byte progress.
@@ -2579,9 +2587,7 @@ fn flashback_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
 
     recorded
-        && case.start == Start::CacheCut { frame: 0 }
-        && case.row == super::flashback::ROW
-        && case.end.cut_inclusive == super::flashback::END
+        && case.intro_join.is_some()
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::FlashbackInputs
         && case.expectations.output_cut.is_none()
@@ -2701,12 +2707,7 @@ fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId
 fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
     recorded
-        && case.row == super::discovery::ROW
-        && case.start
-            == Start::CacheCut {
-                frame: super::discovery::SEED,
-            }
-        && case.end.cut_inclusive == super::discovery::END
+        && case.intro_join.is_some()
         && case.inputs == InputProvider::DiscoveryInputs
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.output_cut.is_none()
@@ -3055,7 +3056,10 @@ fn start_valid(case: &Case) -> bool {
                         | InputProvider::PlayedShaftDust
                 )
         }
-        Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
+        Start::CacheCut { frame } => {
+            *frame < case.end.cut_inclusive
+                || (*frame == case.end.cut_inclusive && case.first_cut() == Some(*frame))
+        }
         Start::NativeRecord {
             path,
             sha256,
@@ -3226,15 +3230,13 @@ impl Case {
     /// First original comparison coordinate in this uninterrupted case.
     #[must_use]
     pub const fn first_cut(&self) -> Option<u64> {
-        if matches!(self.inputs, InputProvider::FlashbackInputs) {
-            // The lookup's anchor is the pending-start cut. Setup itself is an opportunity
-            // driven by the predecessor's press.
-            return Some(0);
-        }
         if let Start::CacheCut { frame } = self.start
-            && matches!(self.inputs, InputProvider::IntroMissileInputs)
+            && matches!(
+                self.inputs,
+                InputProvider::FlashbackInputs | InputProvider::IntroMissileInputs
+            )
         {
-            // Compare the admitted setup before the first actor turn.
+            // The selected setup cut is itself a comparison.
             return Some(frame);
         }
         if matches!(self.inputs, InputProvider::CeresShaftActors) {

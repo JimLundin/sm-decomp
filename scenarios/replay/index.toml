@@ -1517,7 +1517,8 @@ rules = ["screens-flashback/EncounterBeats", "screens-flashback/EncounterStarts"
 profile = "reference"
 responsibilities = ["flashback"]
 content = "player-rom-import"
-inputs = "flashback-inputs"
+inputs = "flashback-segments"
+intro_join = { kind = "flashback", handoff = { row = "any-intro-0568", cut = 1650 }, segments = [{ row = "any-intro-2219", first = 0, last = 650 }] }
 expectations = { provider = "pinned-record-cache", fields = ["flashback.pending-start", "flashback.background-y", "flashback.brain", "flashback.pair-schedule", "flashback.rings", "flashback.bursts"], outputs = ["flashback.turn", "flashback.missile-impact", "flashback.ring-knockback", "flashback.flash", "flashback.page-two", "flashback.hide", "flashback.palette-mirror", "flashback.cgram", "flashback.oam", "flashback.bg1-y"] }
 checkpoints = true
 limits = ["Room collision, demo, Samus, weapons and intro are external in this witness", "The missile result ends at the encounter's requested slot. Weapons carries the impact State and cinematic sound policy.", "OAM compares visible encounter pieces at finished cuts and omits absolute slot placement among other owners' sprites", "Flash cuts compare the encounter's flash row to the WRAM mirror and CGRAM. The dissolve, palette effects and upload sequence need their own producers.", "The cue and hide compare to the observed intro stage and draw gate transition. Integrated scheduling requires the live consumers."]
@@ -1954,7 +1955,8 @@ rules = ["screens-discovery/EggHatches", "screens-discovery/ShellScatters", "scr
 profile = "reference"
 responsibilities = ["discovery"]
 content = "player-rom-import"
-inputs = "discovery-inputs"
+inputs = "discovery-segments"
+intro_join = { kind = "discovery", segments = [{ row = "any-intro-2219", first = 1298, last = 2103 }, { row = "any-intro-4323", first = 0, last = 129 }] }
 expectations = { provider = "pinned-record-cache", fields = ["discovery.egg", "discovery.baby", "discovery.pulse", "discovery.fragments", "discovery.droplets", "discovery.order"], outputs = ["discovery.sounds", "discovery.page-three", "discovery.room-turn", "discovery.oam"] }
 checkpoints = true
 limits = ["Run cut 2104 is any-intro-4323 cut 0. Both rows carry one encounter, from before setup through the return.", "OAM covers visible discovery pieces on finished cuts. An invented room piece exercises the production compositor against the native relative order. The caret, Samus and projectile art, tile graphics, palette installation and transfers belong to other owners.", "Sound queues witness the identity and order of the scene's offers. The allowance follows the observed call site; transport acceptance and playback are separate.", "The live intro, T1, demo, camera and Samus must supply the scoped dependencies for power-on play."]
