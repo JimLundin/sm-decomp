@@ -6,7 +6,10 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 pub use super::native_packets::NativePacket;
+use super::played::witnesses::Witnesses;
 pub use super::save_files::SaveSchedule;
+
+pub(super) const CURRENT_FORMAT: u16 = 2;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -1376,7 +1379,7 @@ pub struct Case {
     pub native_packet: Option<NativePacket>,
     /// Native trace coordinates for played comparisons.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub(super) played_witnesses: Option<super::played::witnesses::Witnesses>,
+    pub(super) played_witnesses: Option<Witnesses>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(super) ordinary_witness: Option<super::recorded::Witness>,
     /// Declared independent comparison observations.
@@ -1422,7 +1425,7 @@ struct IndexDocument {
     #[serde(default)]
     fixture: Vec<FixturePair>,
     #[serde(default)]
-    played_witnesses: Option<super::played::witnesses::Witnesses>,
+    played_witnesses: Option<Witnesses>,
     #[serde(default)]
     native_packet: Option<Vec<NativePacket>>,
     #[serde(rename = "case")]
@@ -1440,7 +1443,8 @@ impl TryFrom<IndexDocument> for Index {
             }
         }
         // Published format-1 documents predate both native packets and played windows.
-        let legacy = doc.native_packet.is_none()
+        let legacy = doc.format == 1
+            && doc.native_packet.is_none()
             && doc
                 .cases
                 .iter()
@@ -1452,13 +1456,10 @@ impl TryFrom<IndexDocument> for Index {
                 return Err("invalid or duplicate native packet");
             }
         }
-        if doc
+        let shared_witnesses = doc
             .played_witnesses
-            .as_ref()
-            .is_some_and(|data| !data.valid())
-        {
-            return Err("invalid played witnesses");
-        }
+            .map(|data| Witnesses::resolve(doc.format, Some(data)))
+            .transpose()?;
         for case in &mut doc.cases {
             if case.inputs == InputProvider::PublishedSaveFileBoundaries {
                 if case.save_steps.is_some() {
@@ -1468,8 +1469,12 @@ impl TryFrom<IndexDocument> for Index {
                 case.inputs = InputProvider::SaveFileBoundaries;
             }
             super::legacy_packets::read_intro_join(case)?;
-            if case.played_witnesses.is_none() && case.inputs.uses_played_witnesses() {
-                case.played_witnesses.clone_from(&doc.played_witnesses);
+            if case.inputs.uses_played_witnesses() {
+                case.played_witnesses =
+                    Some(match (case.played_witnesses.take(), &shared_witnesses) {
+                        (None, Some(shared)) => shared.clone(),
+                        (declared, _) => Witnesses::resolve(doc.format, declared)?,
+                    });
             }
             if case.native_packet.is_none() {
                 let shared = declarations.iter().find(|packet| packet.applies_to(case));
@@ -3153,10 +3158,11 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
-        if case
-            .played_witnesses
-            .as_ref()
-            .is_some_and(|data| !case.inputs.uses_played_witnesses() || !data.valid())
+        if case.inputs.uses_played_witnesses() != case.played_witnesses.is_some()
+            || case
+                .played_witnesses
+                .as_ref()
+                .is_some_and(|data| !data.valid())
         {
             return Err(IndexFault::InvalidCase(case.id.clone()));
         }
@@ -3290,7 +3296,7 @@ impl Index {
     /// # Errors
     /// Invalid schemas, empty or duplicate case collections and invalid cases are rejected.
     pub fn validate(&self) -> Result<(), IndexFault> {
-        if self.format != 1
+        if !matches!(self.format, 1 | CURRENT_FORMAT)
             || self.engine_api != "production-v1"
             || self.observation_schema != "semantic-v1"
         {
@@ -3587,7 +3593,7 @@ mod tests {
             Err(IndexFault::Syntax)
         ));
         assert!(matches!(
-            Index::parse(&INDEX.replace("format = 1", "format = 1\nextra = true")),
+            Index::parse(&format!("extra = true\n{INDEX}")),
             Err(IndexFault::Syntax)
         ));
         assert!(matches!(

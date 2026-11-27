@@ -1,4 +1,4 @@
-format = 1
+format = 2
 engine_api = "production-v1"
 observation_schema = "semantic-v1"
 lock = "scenarios/locks/lsnes.toml"
