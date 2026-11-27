@@ -422,8 +422,8 @@ records byte for byte, and `verify::cache::Cache::record` puts each frame's hits
 **Making the record cache.** `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW` plays
 the row's frame pads from its native seed and writes the lean tier with `lean.txt` last.
 `tools/oracle/record_caches.sh ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list of
-rows with eight lsnes processes by default. It builds the `tools` cache reader when using the
-default reader and skips a row when the reader accepts the existing cache. Set `WATCH_PCS`
+rows with eight lsnes processes by default. It requires Bash 5.1, `flock` and Python. The wrapper
+builds the default `tools` cache reader and skips a row when the reader accepts the existing cache. Set `WATCH_PCS`
 to record the `hits.txt` read by independent causal input providers. `ORACLE` names the oracle
 command, `SM_TOOLS` overrides the cache reader and `SM_LOCK` overrides the lock.
 

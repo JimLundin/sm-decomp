@@ -78,11 +78,8 @@ impl span::Frame for RecordFrame<'_> {
     }
 }
 
-/// The architectural PPU registers without the five lsnes doesn't expose
-/// (docs/ORACLE.md, MEASUREMENTS (o); `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` are not
-/// compared, RELOCK Q4), in declaration order.
 /// The `oam` stream; `None` for a record without the memories.
-pub(crate) fn oam_digest(record: &FrameRecord) -> Option<u64> {
+fn oam_digest(record: &FrameRecord) -> Option<u64> {
     let (low, high) = record.oam.split_at_checked(0x200)?;
     let words: Vec<u16> = low
         .as_chunks::<2>()
@@ -99,6 +96,9 @@ pub(crate) fn oam_digest(record: &FrameRecord) -> Option<u64> {
     Some(digest.finish())
 }
 
+/// The architectural PPU registers without the five lsnes doesn't expose
+/// (docs/ORACLE.md, MEASUREMENTS (o); `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` are not
+/// compared, RELOCK Q4), in declaration order.
 fn ppu_digest(ppu: &PpuRegisters) -> u64 {
     let PpuRegisters {
         inidisp,
