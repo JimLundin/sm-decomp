@@ -1,7 +1,7 @@
 //! Checks 1 to 3 over any text: addresses, names and (in Rust) shapes.
 
 use std::borrow::Cow;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use crate::lexicon::{self, Lexicon};
@@ -536,6 +536,36 @@ pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<F
     }
 }
 
+pub fn added(
+    lex: &Lexicon,
+    allow: &Allow,
+    path: &str,
+    start: Option<&str>,
+    head: &str,
+) -> Vec<Finding> {
+    let mut before = Vec::new();
+    if let Some(start) = start {
+        file(lex, allow, path, start, &mut before);
+    }
+    let mut seen: BTreeMap<(Class, String), usize> = BTreeMap::new();
+    for f in before {
+        let count = seen.entry((f.class, f.detail)).or_default();
+        *count = count.saturating_add(1);
+    }
+    let mut after = Vec::new();
+    file(lex, allow, path, head, &mut after);
+    after
+        .into_iter()
+        .filter(|f| match seen.get_mut(&(f.class, f.detail.clone())) {
+            Some(count) if *count > 0 => {
+                *count = count.saturating_sub(1);
+                false
+            }
+            _ => true,
+        })
+        .collect()
+}
+
 /// Where the original and the observer's notes are: text that points an implementer at them.
 const ROUTES: &[&str] = &[
     "patrickjohnston",
@@ -553,8 +583,23 @@ const ROUTES: &[&str] = &[
 
 #[cfg(test)]
 mod tests {
-    use super::{Allow, Class, file};
+    use super::{Allow, Class, added, file};
     use crate::{lexicon::Lexicon, text};
+
+    #[test]
+    fn only_a_hit_the_start_did_not_hold_is_added() {
+        let mut lex = Lexicon::default();
+        lex.names.insert(text::hash(&lex.salt, "u:ptr"));
+        let allow = Allow::parse("");
+        let start = "fn a() {}\nptr\n";
+        assert!(added(&lex, &allow, "x.rs", Some(start), "fn b() {}\n\nptr\n").is_empty());
+        let grown = added(&lex, &allow, "x.rs", Some(start), "ptr\nptr\n");
+        assert_eq!(
+            grown.iter().map(|f| f.class).collect::<Vec<_>>(),
+            [Class::Name]
+        );
+        assert_eq!(added(&lex, &allow, "x.rs", None, "ptr\n").len(), 1);
+    }
 
     #[test]
     fn identity_exception_preserves_known_addresses_and_shapes() {

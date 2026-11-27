@@ -12,6 +12,7 @@
 //! written out unhashed.
 
 mod export;
+mod import;
 mod lexicon;
 mod mirror;
 mod process;
@@ -29,6 +30,7 @@ use lexicon::{Lexicon, Plain};
 use scan::{Allow, Class, Finding};
 
 const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN BRIEF\n       \
+                     cleanroom import NAME\n       \
                      cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
@@ -254,12 +256,17 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
     Ok((plain.write(Path::new(out_dir), salt)?, false))
 }
 
-fn scan_text(repo: &Path, name: &str, text: &str) -> Result<String, String> {
-    let lex = Lexicon::load(&repo.join(DEFAULT_LEXICON))?;
-    let allow_path = repo.join(DEFAULT_ALLOW);
+fn vocabulary(root: &Path) -> Result<(Lexicon, Allow), String> {
+    let lex = Lexicon::load(&root.join(DEFAULT_LEXICON))?;
+    let allow_path = root.join(DEFAULT_ALLOW);
     let allow = Allow::parse(
         &fs::read_to_string(&allow_path).map_err(|e| format!("{}: {e}", allow_path.display()))?,
     );
+    Ok((lex, allow))
+}
+
+fn scan_text(repo: &Path, name: &str, text: &str) -> Result<String, String> {
+    let (lex, allow) = vocabulary(repo)?;
     let mut findings = Vec::new();
     scan::file(&lex, &allow, name, text, &mut findings);
     let mut out = String::new();
@@ -317,6 +324,7 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.as_slice() {
         [command, rest @ ..] if command == "export" => run_export(rest),
+        [command, name] if command == "import" => import::run(name),
         [command, rest @ ..] if command == "check" => run_check(rest),
         [command, rest @ ..] if command == "scan" => run_scan(rest),
         [command, rest @ ..] if command == "mirror" => run_mirror(rest),
