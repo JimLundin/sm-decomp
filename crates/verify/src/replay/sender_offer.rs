@@ -169,27 +169,38 @@ impl NativeOffer {
         Ok(permission)
     }
 
-    fn valid_bracket(&self, after: &Fifo) -> bool {
+    fn valid_seed(&self) -> bool {
         let seed = &self.seed;
-        let starts_at_origin = seed.boundary == StartBoundary::LockedLoad;
+        let at_cut = match seed.boundary {
+            StartBoundary::LockedLoad => {
+                self.source_id == 0
+                    && seed.now_master_ticks == 0
+                    && self.cut == 0
+                    && seed.cut.is_none()
+            }
+            StartBoundary::PrecedingCut => {
+                self.source_id != 0 && seed.cut.and_then(|cut| cut.checked_add(1)) == Some(self.cut)
+            }
+        };
+        at_cut
+            && !seed.service_pending
+            && seed.now_master_ticks < self.prefetch_master_ticks
+            && self.prefetch_master_ticks.checked_add(2) == Some(self.exec_master_ticks)
+    }
+
+    fn valid_bracket(&self, after: &Fifo) -> bool {
         let prior_service = match (
             self.previous_group_service_id,
             self.previous_group_service_end_master_ticks,
         ) {
-            (Some(id), Some(time)) => id < after.group_service_id && time <= seed.now_master_ticks,
+            (Some(id), Some(time)) => {
+                id < after.group_service_id && time <= self.seed.now_master_ticks
+            }
             (None, None) => true,
             _ => false,
         };
-        let seed_cut = if starts_at_origin {
-            self.source_id == 0 && seed.now_master_ticks == 0 && self.cut == 0 && seed.cut.is_none()
-        } else {
-            self.source_id != 0 && seed.cut.and_then(|cut| cut.checked_add(1)) == Some(self.cut)
-        };
-        prior_service
-            && seed_cut
-            && !seed.service_pending
-            && seed.now_master_ticks < self.prefetch_master_ticks
-            && self.prefetch_master_ticks.checked_add(2) == Some(self.exec_master_ticks)
+        self.valid_seed()
+            && prior_service
             && self.exec_master_ticks < after.master_ticks
             && after.boundary == "NextSelectedGroupServiceEntry"
     }
@@ -352,36 +363,34 @@ impl Seed {
 
 pub(super) struct ContactIngress {
     pub seed: SenderState,
-    /// The recorded CPU time of the seed, cross-checked against the touchdown's own record.
-    pub seed_master_ticks: u64,
+    pub source_id: usize,
     pub current: game::production::sender::OfferCurrent,
 }
 
 pub(super) fn contact_ingress(
     path: &Path,
-    source_id: usize,
     cut: u64,
+    seed_master_ticks: u64,
 ) -> Result<ContactIngress, Outcome> {
     use game::production::sender::{Demo, OfferCurrent, PowerBomb, Sounds};
     let inputs: Inputs = read_pinned(&path.join("sender-offers-v1/inputs.toml"), INPUTS)?;
     if !inputs.header.valid() || inputs.offer.len() != NATIVE_WINDOWS {
         return Err(data_failure(None, "native Contact ingress header"));
     }
-    let offer = inputs
-        .offer
-        .into_iter()
-        .nth(source_id)
-        .filter(|offer| {
-            offer.source_id == source_id
-                && offer.cut == cut
-                && offer.group == SoundGroup::Contact
-                && offer.seed.boundary == StartBoundary::PrecedingCut
-                && offer.seed.cut.and_then(|prior| prior.checked_add(1)) == Some(cut)
-                && !offer.seed.service_pending
-                && offer.seed.now_master_ticks < offer.prefetch_master_ticks
-                && offer.prefetch_master_ticks.checked_add(2) == Some(offer.exec_master_ticks)
-        })
-        .ok_or_else(|| data_failure(Some(cut), "native Contact ingress bracket"))?;
+    let mut matching = inputs.offer.into_iter().enumerate().filter(|(_, offer)| {
+        offer.group == SoundGroup::Contact
+            && offer.cut == cut
+            && offer.seed.now_master_ticks == seed_master_ticks
+    });
+    let (Some((id, offer)), None) = (matching.next(), matching.next()) else {
+        return Err(data_failure(Some(cut), "native Contact ingress identity"));
+    };
+    if id != offer.source_id
+        || offer.seed.boundary != StartBoundary::PrecedingCut
+        || !offer.valid_seed()
+    {
+        return Err(data_failure(Some(cut), "native Contact ingress bracket"));
+    }
     offer.permission()?;
     let current = OfferCurrent {
         sounds: if offer.disabled {
@@ -400,10 +409,9 @@ pub(super) fn contact_ingress(
             PowerBomb::Inactive
         },
     };
-    let seed_master_ticks = offer.seed.now_master_ticks;
     Ok(ContactIngress {
         seed: offer.seed.decode(cut)?,
-        seed_master_ticks,
+        source_id: offer.source_id,
         current,
     })
 }
