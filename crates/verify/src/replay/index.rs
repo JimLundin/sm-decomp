@@ -1102,6 +1102,40 @@ pub struct Borrowed {
     pub claim: String,
 }
 
+/// Authenticated input packet and its reviewed comparison interval.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConnectedPacket {
+    /// Directory beneath the supplied native fixtures.
+    pub directory: String,
+    /// SHA-256 of the complete packet manifest.
+    pub sha256: String,
+    /// Oracle row covered by this packet.
+    pub row: String,
+    /// Cache cut at which the production owners are seeded.
+    pub initial_cut: u64,
+    /// Earliest reviewed comparison horizon.
+    pub first_end: u64,
+    /// Last cut supplied by the packet.
+    pub last_cut: u64,
+}
+
+impl ConnectedPacket {
+    fn admits(&self, case: &Case) -> bool {
+        let mut parts = Path::new(&self.directory).components();
+        matches!(parts.next(), Some(std::path::Component::Normal(_)))
+            && parts.next().is_none()
+            && valid_hash(&self.sha256)
+            && self.row == case.row
+            && case.start
+                == (Start::CacheCut {
+                    frame: self.initial_cut,
+                })
+            && self.initial_cut < self.first_end
+            && (self.first_end..=self.last_cut).contains(&case.end.cut_inclusive)
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// One witness replayed continuously from its admitted start.
@@ -1126,6 +1160,9 @@ pub struct Case {
     pub content: ContentProvider,
     /// Independent causal stimulus provider.
     pub inputs: InputProvider,
+    /// Reviewed fixture for connected ordinary inputs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connected_packet: Option<ConnectedPacket>,
     /// Declared independent comparison observations.
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
@@ -2139,18 +2176,9 @@ fn ordinary_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) 
 
     case.kind == CaseKind::Integrated
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && match case.id.0.as_str() {
-            "connected-ordinary/carried-running-camera" => {
-                matches!(case.start, Start::CacheCut { frame: 6 })
-                    && (10..=15).contains(&case.end.cut_inclusive)
-            }
-            "connected-ordinary/run-release-floor-aim" => {
-                matches!(case.start, Start::CacheCut { frame: 126 })
-                    && case.end.cut_inclusive == 142
-            }
-            _ => false,
-        }
-        && case.row == "chain-any-0003-DFD7"
+        && case
+            .connected_packet()
+            .is_some_and(|packet| packet.admits(case))
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::ConnectedOrdinaryInputs
         && observations.len() == 21
@@ -2825,6 +2853,21 @@ fn start_valid(case: &Case) -> bool {
 }
 
 impl Case {
+    pub(super) fn connected_packet(&self) -> Option<&ConnectedPacket> {
+        // Earlier format-1 indexes identify the two original packets by the case ID alone.
+        static LEGACY: std::sync::LazyLock<
+            Option<std::collections::BTreeMap<String, ConnectedPacket>>,
+        > = std::sync::LazyLock::new(|| {
+            toml::from_str(include_str!(
+                "../../../../scenarios/replay/legacy-connected-packets.toml"
+            ))
+            .ok()
+        });
+        self.connected_packet
+            .as_ref()
+            .or_else(|| LEGACY.as_ref()?.get(&self.id.0))
+    }
+
     /// Validate the complete public execution recipe before source admission.
     ///
     /// # Errors
@@ -2843,7 +2886,9 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
-        if case.id.0.is_empty()
+        if (case.connected_packet.is_some()
+            && case.inputs != InputProvider::ConnectedOrdinaryInputs)
+            || case.id.0.is_empty()
             || case.row.is_empty()
             || (case.rules.is_empty() && case.inputs != InputProvider::Unavailable)
             || case.profile != "reference"
@@ -3013,6 +3058,61 @@ mod tests {
             Err(IndexFault::UnknownCase(_))
         ));
     }
+    #[test]
+    fn connected_packets_bind_the_reviewed_scope_independently_of_the_case_name() {
+        let index = Index::parse(INDEX).unwrap();
+        let mut case = index
+            .cases
+            .iter()
+            .find(|case| case.connected_packet.is_some())
+            .unwrap()
+            .clone();
+        case.id = CaseId("connected-ordinary/another-prefix".to_owned());
+        case.end.cut_inclusive = case.connected_packet().unwrap().first_end;
+        assert!(case.validate().is_ok());
+        case.row = "another-row".to_owned();
+        assert!(case.validate().is_err());
+        case.row = case.connected_packet().unwrap().row.clone();
+        case.connected_packet.as_mut().unwrap().directory = "../outside".to_owned();
+        assert!(case.validate().is_err());
+        case.connected_packet = None;
+        assert!(case.validate().is_err());
+    }
+
+    #[test]
+    fn earlier_connected_cases_keep_their_published_packet_and_horizons() {
+        let index = Index::parse(INDEX).unwrap();
+        for (name, directory, start, end) in [
+            (
+                "connected-ordinary/carried-running-camera",
+                "connected-ordinary-v1",
+                6,
+                15,
+            ),
+            (
+                "connected-ordinary/run-release-floor-aim",
+                "connected-run-slope-v1",
+                126,
+                142,
+            ),
+        ] {
+            let mut case = index
+                .cases
+                .iter()
+                .find(|case| case.id.0 == name)
+                .unwrap()
+                .clone();
+            case.connected_packet = None;
+            case.row = "chain-any-0003-DFD7".to_owned();
+            case.start = super::Start::CacheCut { frame: start };
+            case.end.cut_inclusive = end;
+            assert_eq!(case.connected_packet().unwrap().directory, directory);
+            assert!(case.validate().is_ok());
+            case.end.cut_inclusive = end.saturating_add(1);
+            assert!(case.validate().is_err());
+        }
+    }
+
     #[test]
     fn malformed_fields_unknown_keys_and_fictitious_rules_are_rejected() {
         assert!(matches!(
