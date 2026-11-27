@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use oracle_record::lsnes::executable;
+use oracle::lsnes::{executable, executable_sha256};
 
 use verify::cache::Cache;
 use verify::lock::{Lock, RowId, Sha256, Start};
@@ -65,10 +65,8 @@ pub fn run(args: &[String]) -> Result<String, String> {
     }
     let invalid = |error| format!("{id}: {error}");
     let cache = Cache::open(root, row).map_err(invalid)?;
-    let lsnes = executable();
-    let lsnes = std::fs::read(&lsnes)
-        .map(|bytes| Sha256::of(&bytes))
-        .map_err(|error| format!("{}: {error}", lsnes.display()))?;
+    let lsnes =
+        executable_sha256().map_err(|error| format!("{}: {error}", executable().display()))?;
     if cache.recorder().lsnes != lsnes {
         return Err(format!("{id}: recorded by another lsnes"));
     }

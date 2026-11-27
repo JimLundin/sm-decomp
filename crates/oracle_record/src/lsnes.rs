@@ -1,32 +1,14 @@
 //! The lsnes server's raw record (`OHR1`, `tools/oracle/lsnes_server.lua`): the bytes
 //! `oracle::lsnes` reads after each step and the seed cutter keeps beside a native seed
-//! (`seeds/<capture>/NNNN.record`), and the lsnes executable the oracle runs.
+//! (`seeds/<capture>/NNNN.record`).
 //!
 //! Its own module, outside the emulator crate, so `verify` and `tools` read a bundle's seed
-//! records and find the oracle's lsnes without linking an emulator.
+//! records without linking an emulator.
 
 use crate::{
     ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters,
 };
 use core::fmt;
-use std::path::PathBuf;
-
-/// The `SM_LSNES` executable, or the first `lsnes` on PATH.
-#[must_use]
-pub fn executable() -> PathBuf {
-    std::env::var_os("SM_LSNES").map_or_else(
-        || {
-            std::env::var_os("PATH")
-                .and_then(|paths| {
-                    std::env::split_paths(&paths)
-                        .map(|directory| directory.join("lsnes"))
-                        .find(|path| path.is_file())
-                })
-                .unwrap_or_else(|| PathBuf::from("lsnes"))
-        },
-        PathBuf::from,
-    )
-}
 
 /// The record header: magic through the memory flag.
 const HEADER: usize = 43;
