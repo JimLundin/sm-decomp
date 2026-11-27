@@ -32,7 +32,10 @@ jobs:
           fetch-depth: 0
       - name: Type-check the Python tooling
         # pyproject.toml's [tool.mypy] sets strict mode and the files.
-        run: pipx run --spec mypy==2.4.1 mypy
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fault-tools"
+          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: mypy==2.4.1 -r tools/fault-requirements.txt
+          "$RUNNER_TEMP/fault-tools/bin/mypy"
       - name: Install the repository toolchain
         run: rustup toolchain install
       # Main pushes restore recent compatible builds and publish this clean revision.
@@ -99,7 +102,7 @@ jobs:
       - name: Test exact historical replay claim accounting
         run: python3 tools/check_replay_transition_test.py
       - name: Test the planted-fault runner
-        run: python3 -m unittest discover -s tools -p test_check_mutants.py
+        run: '"$RUNNER_TEMP/fault-tools/bin/python" -m unittest discover -s tools -p "test_*mutants.py"'
       - name: Test movie input qualification and publication
         run: python3 -m unittest discover -s tools -p test_movie_inputs.py
       - name: Test native fixture qualification and publication
