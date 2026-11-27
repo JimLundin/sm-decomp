@@ -28,9 +28,7 @@ pub(super) fn valid(case: &Case) -> bool {
     use ObservationId as O;
     use Responsibility as R;
     case.kind == CaseKind::Integrated
-        && case.row == "chain-any-0011-DF45"
-        && matches!(case.start,Start::PlayedContinuation{seed:239 | 241,frame} if (242..2124).contains(&frame))
-        && case.end.cut_inclusive <= 2124
+        && matches!(case.start, Start::PlayedContinuation { .. })
         && case.responsibilities
             == [
                 R::StationExplosion,
@@ -86,6 +84,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         if now.video_frame != previous.video_frame.wrapping_add(1) {
             return Err(data_failure(Some(cut), "departure cache join"));
         }
+        if cut > frame && production.departure().is_none() {
+            return Err(data_failure(
+                Some(frame),
+                "departure comparison before station dispatch",
+            ));
+        }
         let cadence = explosion::timing(&now)?;
         // The receiving capture records the external bus working on the ROM sprite
         // transfer. It supplies the T1 receipt, independently of the expected room.
@@ -95,6 +99,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
                 >= assets.landing.sprite_source.offset
             && now.cpu.k == 0x82
             && now.cpu.pc == 0x8327;
+        if receiving && cut < case.end.cut_inclusive {
+            return Err(data_failure(
+                Some(cut.saturating_add(1)),
+                "departure beyond the first loader transfer",
+            ));
+        }
         let input = if production.departure().is_none() {
             Input::Shaft {
                 work: super::blackout::work(&previous, &now, false)?,
@@ -135,13 +145,22 @@ fn admit_origin(
     record: &FrameRecord,
     path: &Path,
 ) -> Result<(Production, ProductionContent, ProductionRules), Outcome> {
-    match seed {
-        239 if joined::shaft_starts(record)? => joined::admit_shaft(path, record),
-        241 if explosion::pending(record)? && explosion::enters_from(&rows.record(240)?)? => {
-            joined::admit_seed(path, record)
+    if super::blackout::elevator_room(record)? {
+        if joined::shaft_interrupted(record)? && joined::shaft_starts(record)? {
+            return joined::admit_shaft(path, record);
         }
-        _ => Err(data_failure(Some(seed), "departure elevator origin")),
+        if explosion::pending(record)?
+            && let Some(prior) = seed.checked_sub(1)
+        {
+            let before = rows.record(prior)?;
+            if before.video_frame.wrapping_add(1) == record.video_frame
+                && explosion::enters_from(&before)?
+            {
+                return joined::admit_seed(path, record);
+            }
+        }
     }
+    Err(data_failure(Some(seed), "departure elevator origin"))
 }
 
 pub(super) const fn valid_counts(counts: &super::result::Counts) -> bool {

@@ -234,7 +234,9 @@ const SHAFT_SEED: &[&str] = &[
     "shaft awaiting vblank end, including the queued picture, cartridge before the write, room and live video",
 ];
 
-pub(in crate::replay) use shaft::{admit as admit_shaft, starts as shaft_starts};
+pub(in crate::replay) use shaft::{
+    admit as admit_shaft, interrupted as shaft_interrupted, starts as shaft_starts,
+};
 
 // The external T1 receipt measures source-bus work. No destination memory or game
 // state from the receiving record is supplied to the simulation.

@@ -21,7 +21,7 @@ pub(in crate::replay) fn starts(record: &FrameRecord) -> Result<bool, Outcome> {
     Ok(explosion::word(record, 0x93f)? & 0x8000 != 0 && (locked || interrupted(record)?))
 }
 
-pub(super) fn interrupted(record: &FrameRecord) -> Result<bool, Outcome> {
+pub(in crate::replay) fn interrupted(record: &FrameRecord) -> Result<bool, Outcome> {
     Ok(explosion::word(record, 0x998)? == 33
         && matches!(record.cut,
             Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Overrun

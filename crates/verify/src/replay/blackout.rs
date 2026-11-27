@@ -21,7 +21,6 @@ use game::production::{
 };
 pub(super) use observe::actual;
 use oracle_record::{Cut, NmiKind};
-const ROW: &str = "chain-any-0011-DF45";
 
 pub(super) fn witnessed_fields(rule: &str) -> Option<&'static [O]> {
     match rule {
@@ -47,49 +46,37 @@ fn shaft_hud(case: &Case) -> bool {
 }
 
 pub(super) fn valid(case: &Case) -> bool {
+    if case.kind != CaseKind::Scoped
+        || !matches!(case.start, Start::CacheCut { .. })
+        || !case.checkpoints
+        || case.content != ContentProvider::PlayerRomImport
+        || case.expectations.provider != ExpectedProvider::PinnedRecordCache
+        || case.expectations.output_cut.is_some()
+    {
+        return false;
+    }
     if standing_body(case) {
         let (fields, outputs) = standing::partition();
-        return case.kind == CaseKind::Scoped
-            && case.row == ROW
-            && matches!(case.start, Start::CacheCut { frame: 164 | 239 })
-            && case.end.cut_inclusive == 241
-            && case.checkpoints
-            && case.content == ContentProvider::PlayerRomImport
-            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-            && case.responsibilities == [Responsibility::Appearance]
+        return case.responsibilities == [Responsibility::Appearance]
             && case.expectations.fields == fields
             && case.expectations.outputs == outputs;
     }
     if shaft_hud(case) {
-        return case.kind == CaseKind::Scoped
-            && case.row == ROW
-            && matches!(case.start, Start::CacheCut { frame: 164 })
-            && case.end.cut_inclusive == 241
-            && case.checkpoints
-            && case.content == ContentProvider::PlayerRomImport
-            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-            && case.expectations.fields == hud::FIELDS
+        return case.expectations.fields == hud::FIELDS
             && case.expectations.outputs == hud::OUTPUTS;
     }
-    let late = matches!(case.start, Start::CacheCut { frame: 239 });
-    let mut outputs = vec![
-        O::BlackoutTimerDrawing,
-        O::BlackoutBattery,
-        O::BlackoutRequests,
-    ];
-    if late {
-        outputs.push(O::BlackoutMemory);
-    }
-    case.kind == CaseKind::Scoped
-        && case.row == ROW
-        && (late || matches!(case.start, Start::CacheCut { frame: 163 }))
-        && case.end.cut_inclusive == 242
-        && case.checkpoints
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.responsibilities == [Responsibility::Blackout]
+    let outputs = &case.expectations.outputs;
+    let common = outputs
+        .strip_suffix(&[O::BlackoutMemory])
+        .unwrap_or(outputs);
+    case.responsibilities == [Responsibility::Blackout]
         && case.expectations.fields == [O::BlackoutScene, O::BlackoutRoom]
-        && case.expectations.outputs == outputs
+        && common
+            == [
+                O::BlackoutTimerDrawing,
+                O::BlackoutBattery,
+                O::BlackoutRequests,
+            ]
 }
 
 impl Tape<blackout::Cut> {
@@ -104,11 +91,7 @@ impl Tape<blackout::Cut> {
     }
 }
 
-pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let Start::CacheCut { frame } = case.start else {
-        return Err(data_failure(None, "blackout seed"));
-    };
-    let late = frame == 239;
+fn cache(case: &Case, sources: &Sources) -> Result<Cache, Outcome> {
     let lock = Lock::parse(
         &std::fs::read_to_string(&sources.lock).map_err(|_| data_failure(None, "blackout lock"))?,
     )
@@ -116,8 +99,43 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "blackout row"))?;
-    let cache = Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "blackout pinned cache"))?;
+    if case.end.cut_inclusive >= row.frames.0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "blackout cached window",
+        ));
+    }
+    Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "blackout pinned cache"))
+}
+
+fn suspended_origin(
+    case: &Case,
+    record: &oracle_record::FrameRecord,
+    reach_at_intake: bool,
+) -> Result<bool, Outcome> {
+    let memory = case.expectations.outputs.contains(&O::BlackoutMemory);
+    let late = super::played::explosion::shaft_interrupted(record)?;
+    let supported = if reach_at_intake {
+        !standing_body(case)
+            && !shaft_hud(case)
+            && !memory
+            && word(&record.wram, 0x998)? == 8
+            && word(&record.wram, 0x93f)? & 0x8000 != 0
+            && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
+    } else {
+        super::played::explosion::shaft_starts(record)? && (standing_body(case) || memory == late)
+    };
+    if !elevator_room(record)? || !supported {
+        return Err(data_failure(Some(record.index), "blackout elevator origin"));
+    }
+    Ok(late)
+}
+
+pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    let Start::CacheCut { frame } = case.start else {
+        return Err(data_failure(None, "blackout seed"));
+    };
+    let cache = cache(case, sources)?;
     let rom =
         Rom::new(std::fs::read(&sources.rom).map_err(|_| data_failure(None, "blackout ROM file"))?)
             .map_err(|_| data_failure(None, "blackout ROM pin"))?;
@@ -126,9 +144,14 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let figures =
         import::countdown::import(rom.lorom()).map_err(|_| data_failure(None, "timer art"))?;
     let mut previous = record(&cache, frame)?;
-    let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
     let body = standing_body(case);
     let hud = shaft_hud(case);
+    let reach_at_intake = case
+        .borrowed
+        .iter()
+        .any(|input| input.dependency == "shaft.elevator");
+    let late = suspended_origin(case, &previous, reach_at_intake)?;
+    let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
     let hud_assets = hud
         .then(|| hud::admit(&previous, rom.lorom(), &mut state))
         .transpose()?;
@@ -162,7 +185,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         let mut input = work(
             &previous,
             &current,
-            !body && !hud && !late && cut == frame.saturating_add(1),
+            reach_at_intake && cut == frame.saturating_add(1),
         )?;
         if matches!(input.work, blackout::Work::Fresh { .. })
             && let Some(look) = &locked_look
@@ -195,6 +218,11 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             ActualReader::Blackout(late)
         },
     })
+}
+
+pub(super) fn elevator_room(record: &oracle_record::FrameRecord) -> Result<bool, Outcome> {
+    let room = data::room::RoomKey::from_room_pointer(word(&record.wram, 0x079b)?);
+    Ok(import::world::id(room) == Some(data::assets::world::rooms::CERES_ELEVATOR_ROOM))
 }
 
 const FINAL_ROOM_WAIT: u32 = 0x0080_82ce;
