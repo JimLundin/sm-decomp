@@ -452,7 +452,7 @@ impl<'a> Run<'a> {
         path: &'a Path,
         row: &'a str,
     ) -> Result<Self, Outcome> {
-        Self::from_record(seed, content, path, row, witnesses::published()?)
+        Self::from_record(seed, content, path, row, witnesses::indexed()?)
     }
 
     fn from_record(

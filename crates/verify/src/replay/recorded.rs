@@ -237,7 +237,8 @@ fn ordinary_recipe(
     });
     let inputs = Arc::new(super::connected::Inputs::load(
         &sources.native,
-        case.connected_packet()
+        case.connected_packet
+            .as_ref()
             .ok_or_else(|| data_failure(None, "connected packet declaration"))?,
         &content,
     )?);

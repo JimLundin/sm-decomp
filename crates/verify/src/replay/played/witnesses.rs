@@ -105,30 +105,10 @@ impl BodyTrace {
 }
 
 impl Witnesses {
-    /// Expand omissions only for published format-1 indexes. Selected cases carry the result.
-    pub(in crate::replay) fn resolve(
-        format: u16,
-        declared: Option<Self>,
-    ) -> Result<Self, &'static str> {
-        let data = match format {
-            1 => {
-                let legacy = crate::replay::legacy_packets::played_witnesses()
-                    .ok_or("missing historical played witnesses")?;
-                if let Some(mut data) = declared {
-                    data.room_video = data.room_video.or_else(|| legacy.room_video.clone());
-                    data.shaft = data.shaft.or_else(|| legacy.shaft.clone());
-                    data.front_end = data.front_end.or_else(|| legacy.front_end.clone());
-                    data
-                } else {
-                    legacy.clone()
-                }
-            }
-            crate::replay::index::CURRENT_FORMAT => declared.ok_or("missing played witnesses")?,
-            _ => return Err("unknown replay index format"),
-        };
-        data.valid()
-            .then_some(data)
-            .ok_or("invalid played witnesses")
+    pub(in crate::replay) fn resolve(declared: Option<Self>) -> Result<Self, &'static str> {
+        declared
+            .filter(Self::valid)
+            .ok_or("missing or invalid played witnesses")
     }
 
     pub(in crate::replay) fn valid(&self) -> bool {
@@ -184,25 +164,28 @@ struct Catalogue {
     played_witnesses: Option<Witnesses>,
 }
 
-pub(super) fn read(root: &std::path::Path) -> Result<Witnesses, Outcome> {
+fn parse(text: &str) -> Result<Witnesses, Outcome> {
     let bad = || data_failure(None, "played witness catalogue");
-    let path = root.join("scenarios/replay/index.toml");
-    match std::fs::read_to_string(path) {
-        Ok(text) => {
-            let index: Catalogue = toml::from_str(&text).map_err(|_| bad())?;
-            Witnesses::resolve(index.format, index.played_witnesses).map_err(|_| bad())
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            Witnesses::resolve(1, None).map_err(|_| bad())
-        }
-        Err(_) => Err(bad()),
+    let index: Catalogue = toml::from_str(text).map_err(|_| bad())?;
+    if index.format != crate::replay::index::CURRENT_FORMAT {
+        return Err(bad());
     }
+    Witnesses::resolve(index.played_witnesses).map_err(|_| bad())
+}
+
+pub(super) fn read(root: &std::path::Path) -> Result<Witnesses, Outcome> {
+    let text = std::fs::read_to_string(root.join("scenarios/replay/index.toml"))
+        .map_err(|_| data_failure(None, "played witness catalogue"))?;
+    parse(&text)
 }
 
 #[cfg(test)]
-pub(super) fn published() -> Result<&'static Witnesses, Outcome> {
-    crate::replay::legacy_packets::played_witnesses()
-        .ok_or_else(|| data_failure(None, "historical played witnesses"))
+pub(super) fn indexed() -> Result<&'static Witnesses, Outcome> {
+    static INDEXED: std::sync::LazyLock<Result<Witnesses, Outcome>> =
+        std::sync::LazyLock::new(|| {
+            parse(include_str!("../../../../../scenarios/replay/index.toml"))
+        });
+    INDEXED.as_ref().map_err(Clone::clone)
 }
 
 pub(in crate::replay) fn selected(
@@ -220,12 +203,7 @@ mod tests {
     const INDEX: &str = include_str!("../../../../../scenarios/replay/index.toml");
 
     #[test]
-    fn only_historical_indices_and_lock_only_trees_supply_missing_played_witnesses() {
-        let root = std::env::temp_dir().join(format!("played-witnesses-{}", std::process::id()));
-        let directory = root.join("scenarios/replay");
-        std::fs::create_dir_all(&directory).unwrap();
-        assert!(super::read(&root).unwrap().valid());
-
+    fn indexes_declare_every_played_witness_table() {
         let mut document: toml::Table = toml::from_str(INDEX).unwrap();
         document["case"]
             .as_array_mut()
@@ -242,40 +220,24 @@ mod tests {
                     .remove(omitted)
                     .unwrap();
             }
-            for (format, accepted) in [(1, true), (2, false)] {
-                partial.insert("format".to_owned(), format.into());
-                let text = toml::to_string(&partial).unwrap();
-                std::fs::write(directory.join("index.toml"), &text).unwrap();
-                assert_eq!(
-                    Index::parse(&text).is_ok(),
-                    accepted,
-                    "{omitted} in format {format}"
-                );
-                assert_eq!(
-                    super::read(&root).is_ok(),
-                    accepted,
-                    "{omitted} in format {format}"
-                );
-            }
+            let text = toml::to_string(&partial).unwrap();
+            assert!(Index::parse(&text).is_err(), "{omitted}");
+            assert!(super::parse(&text).is_err(), "{omitted}");
         }
 
         let mut local = document["played_witnesses"].clone();
-        local.as_table_mut().unwrap().remove("shaft").unwrap();
+        local["room_video"]["overlay_pieces"] = 10.into();
         document["case"][0]
             .as_table_mut()
             .unwrap()
             .insert("played_witnesses".into(), local);
-        assert!(Index::parse(&toml::to_string(&document).unwrap()).is_err());
-        document["format"] = 1.into();
-        document["case"][0]["played_witnesses"]["room_video"]["overlay_pieces"] = 10.into();
-        let old = Index::parse(&toml::to_string(&document).unwrap()).unwrap();
-        let resolved = super::selected(&old.cases[0]).unwrap();
+        let index = Index::parse(&toml::to_string(&document).unwrap()).unwrap();
+        let resolved = super::selected(&index.cases[0]).unwrap();
         assert_eq!(resolved.room_video().unwrap().overlay_pieces, 10);
-        assert!(resolved.shaft().is_ok());
 
-        document["case"][0]["played_witnesses"]["room_video"]["overlay_pieces"] = 0.into();
+        document["format"] = 1.into();
         assert!(Index::parse(&toml::to_string(&document).unwrap()).is_err());
-        std::fs::remove_dir_all(root).unwrap();
+        assert!(super::parse(&toml::to_string(&document).unwrap()).is_err());
     }
 
     #[test]

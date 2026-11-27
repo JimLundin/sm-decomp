@@ -335,7 +335,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let current = inputs(
         files.inputs.read(&sources.native)?,
         &window,
-        files.repository(),
+        files.repository.as_deref(),
         &origin.wram,
         &content,
         pads,

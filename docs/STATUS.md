@@ -32,8 +32,7 @@ automatic reseed after a failure.
 
 The format-2 index declares the played witnesses used by its providers. A case can carry its
 own declaration or inherit the shared table. Standalone played runs read the shared table
-from `scenarios/replay/index.toml` in the lock tree. Format-1 indexes and standalone lock trees without an index can use the
-published witness catalogue.
+from `scenarios/replay/index.toml` in the lock tree. The runner reads no other index format.
 
 The shared replay runner opens each saved checkpoint. When a restored run reaches the next
 checkpoint at the same cut, it can use one continuation for both saves if the complete

@@ -49,11 +49,7 @@ impl<'a> Packet<'a> {
     pub fn for_case(case: &'a super::index::Case) -> Option<Self> {
         use super::index::{fixture_component, pinned_directory};
         let (path, sha256, coordinates) = case.start.native_opportunity()?;
-        let projection = case
-            .expectations
-            .projection
-            .as_ref()
-            .or_else(|| super::legacy_packets::projection(sha256, coordinates))?;
+        let projection = case.expectations.projection.as_ref()?;
         (pinned_directory(&projection.directory, &projection.sha256)
             && fixture_component(&projection.member))
         .then_some(Self {
@@ -283,26 +279,12 @@ mod tests {
         named_case(packet, "movement-native-occupied-first-search")
     }
     #[test]
-    fn native_projection_uses_the_index_and_preserves_published_packet_pairs() {
-        let packet = Path::new("input");
-        let mut case = native_case(packet);
-        let projection = case.expectations.projection.take().unwrap();
-        assert_eq!(
-            Packet::for_case(&case).unwrap().projection.member,
-            projection.member
-        );
-        let Start::NativeOpportunity {
-            source_completion_index,
-            ..
-        } = &mut case.start
-        else {
-            panic!()
-        };
-        *source_completion_index = source_completion_index.saturating_sub(1);
-        assert!(case.validate().is_err());
-
-        case.expectations.projection = Some(projection);
+    fn native_projection_comes_from_the_case_alone() {
+        let mut case = native_case(Path::new("input"));
         assert!(case.validate().is_ok());
+        let projection = case.expectations.projection.take().unwrap();
+        assert!(Packet::for_case(&case).is_none());
+        case.expectations.projection = Some(projection);
         case.expectations.projection.as_mut().unwrap().member = "../inputs/world.bin".to_owned();
         assert!(case.validate().is_err());
     }

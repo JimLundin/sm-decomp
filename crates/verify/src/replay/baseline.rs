@@ -583,7 +583,7 @@ mod tests {
     #[test]
     fn loaded_declarations_keep_their_identity_after_file_replacement() {
         let text_a = r#"
-format = 1
+format = 2
 engine_api = "production-v1"
 observation_schema = "semantic-v1"
 lock = "invented-lock.toml"

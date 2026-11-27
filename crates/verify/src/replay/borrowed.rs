@@ -83,7 +83,7 @@ impl Packet {
     fn selected<'a>(&self, case: &'a Case) -> Option<&'a str> {
         match self {
             Self::SenderInputs => Some(case.sender_packet().ok()?.input_path()),
-            Self::ConnectedDirectory => Some(&case.connected_packet()?.directory),
+            Self::ConnectedDirectory => Some(&case.connected_packet.as_ref()?.directory),
             Self::FixtureInputs => Some(&case.fixture_pair().ok()?.inputs.path),
             Self::FixtureDirectory => {
                 Some(case.fixture_pair().ok()?.inputs.path.split_once('/')?.0)
@@ -129,22 +129,6 @@ pub(super) fn resolve(
     })
 }
 
-pub(super) fn published_operation(
-    case: &Case,
-    name: &str,
-) -> Result<Option<Borrowed>, &'static str> {
-    let operation = OPERATIONS
-        .as_ref()
-        .and_then(|sources| sources.get(name))
-        .ok_or("unknown published source operation")?;
-    if operation.selection.applies(case, None) {
-        return resolve(name, None, String::new())
-            .map(Some)
-            .ok_or("invalid published source operation");
-    }
-    Ok(None)
-}
-
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum Declaration {
@@ -152,7 +136,7 @@ enum Declaration {
     Published(Borrowed),
 }
 
-/// Keep the expanded source visible in replay map, including for published format-1 indices.
+/// Keep the expanded source visible in replay map.
 pub(super) fn read<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Borrowed>, D::Error> {
     Vec::<Declaration>::deserialize(deserializer)?
         .into_iter()
@@ -222,7 +206,7 @@ fn valid_for(case: &Case, origin: Option<escape::Origin>) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::super::index::{Index, InputProvider, Qualification};
+    use super::super::index::{Index, InputProvider};
 
     #[test]
     fn hud_qualifications_can_change_without_supplying_a_frame() {
@@ -235,8 +219,8 @@ mod tests {
         case.qualifications.clear();
         case.borrowed[0].claim.clear();
         assert!(case.validate().is_ok());
-        case.qualifications
-            .push(Qualification::Published(case.borrowed.pop().unwrap()));
+        case.qualifications.push("moved".to_owned());
+        case.borrowed.pop();
         assert!(case.validate().is_err());
     }
 }

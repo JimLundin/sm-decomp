@@ -120,7 +120,6 @@ pub enum Start {
     /// One independent constructed sender control.
     ConstructedSenderOffer {
         /// Starting queue and ordered offers.
-        #[serde(deserialize_with = "super::legacy_packets::sender_control")]
         control: SenderOfferControl,
     },
     /// One independently pinned native record supplies the sole scoped origin.
@@ -223,27 +222,15 @@ pub enum InputProvider {
     /// A causal intro start and the borrowed work-completion boundaries.
     #[serde(rename = "intro-room-join")]
     IntroRoomJoinInputs,
-    /// Published witness with implicit recorded successors.
-    #[serde(rename = "intro-room-join-inputs")]
-    PublishedIntroRoomJoinInputs,
     /// Locked encounter phase, after-motion room facts and presentation opportunities.
     #[serde(rename = "flashback-segments")]
     FlashbackInputs,
-    /// Published encounter witness with implicit source coordinates.
-    #[serde(rename = "flashback-inputs")]
-    PublishedFlashbackInputs,
     /// Recorded scene setup and reached room actor opportunities.
     #[serde(rename = "cinematic-actor-segments")]
     CinematicActorOpportunities,
-    /// Published witness with implicit recorded successors.
-    #[serde(rename = "cinematic-actor-opportunities")]
-    PublishedCinematicActorOpportunities,
     /// Ordered startup and save boundaries from pinned preceding cuts.
     #[serde(rename = "save-file-schedule")]
     SaveFileBoundaries,
-    /// The published format-1 spelling for the original save witness.
-    #[serde(rename = "save-file-boundaries")]
-    PublishedSaveFileBoundaries,
     /// Authored demo controls and borrowed cinematic weapon opportunities.
     IntroMissileInputs,
     /// Passage contents and block-script opportunities.
@@ -255,9 +242,6 @@ pub enum InputProvider {
     /// The intro requests, completion and resulting actor position in the discovery room.
     #[serde(rename = "discovery-segments")]
     DiscoveryInputs,
-    /// Published encounter witness with implicit source coordinates.
-    #[serde(rename = "discovery-inputs")]
-    PublishedDiscoveryInputs,
     /// Station, flight and direct transfer work from one elevator origin.
     Departure,
     /// Receiving T1 work opening and byte progress.
@@ -1190,16 +1174,6 @@ pub struct Borrowed {
     pub claim: String,
 }
 
-/// A scope or provenance explanation carried in the replay map.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum Qualification {
-    /// Free-form explanation from the case author.
-    Text(String),
-    /// Source description from a published index.
-    Published(Borrowed),
-}
-
 /// Authenticated input packet and its reviewed comparison interval.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -1285,25 +1259,14 @@ pub struct FixturePair {
 }
 
 impl FixturePair {
-    pub(super) fn repository(&self) -> Option<&str> {
-        self.repository.as_deref().or_else(|| {
-            super::legacy_packets::fixture(self.provider)?
-                .repository
-                .as_deref()
-        })
-    }
-
     pub(super) fn door_slots(&self) -> Option<&[u8]> {
-        self.door_slots.as_deref().or_else(|| {
-            super::legacy_packets::fixture(self.provider)?
-                .door_slots
-                .as_deref()
-        })
+        self.door_slots.as_deref()
     }
 
     fn valid(&self) -> bool {
         let revision_valid = if self.provider == InputProvider::EarlyMapInputs {
-            self.repository()
+            self.repository
+                .as_deref()
                 .is_some_and(|revision| valid_hex(revision, 40))
         } else {
             self.repository.is_none()
@@ -1399,7 +1362,7 @@ pub struct Case {
     pub limits: Vec<String>,
     /// Scope and provenance explanations accompanying this case.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub qualifications: Vec<Qualification>,
+    pub qualifications: Vec<String>,
     #[serde(default, deserialize_with = "super::borrowed::read")]
     /// Explicit external dependency declarations.
     pub borrowed: Vec<Borrowed>,
@@ -1456,13 +1419,6 @@ impl TryFrom<IndexDocument> for Index {
                 return Err("invalid or duplicate provider fixture");
             }
         }
-        // Published format-1 documents predate both native packets and played windows.
-        let legacy = doc.format == 1
-            && doc.native_packet.is_none()
-            && doc
-                .cases
-                .iter()
-                .all(|case| case.native_packet.is_none() && case.expectations.played.is_none());
         let declarations = doc.native_packet.unwrap_or_default();
         let mut kinds = std::collections::HashSet::new();
         for packet in &declarations {
@@ -1472,35 +1428,21 @@ impl TryFrom<IndexDocument> for Index {
         }
         let shared_witnesses = doc
             .played_witnesses
-            .map(|data| Witnesses::resolve(doc.format, Some(data)))
+            .map(|data| Witnesses::resolve(Some(data)))
             .transpose()?;
         for case in &mut doc.cases {
-            if case.inputs == InputProvider::PublishedSaveFileBoundaries {
-                if case.save_steps.is_some() {
-                    return Err("published save witness already has a schedule");
-                }
-                case.save_steps = super::legacy_packets::save_schedule(&case.id.0).cloned();
-                case.inputs = InputProvider::SaveFileBoundaries;
-            }
-            super::legacy_packets::read_intro_join(case)?;
-            super::legacy_packets::read_sources(case)?;
             if case.inputs.uses_played_witnesses() {
                 case.played_witnesses =
                     Some(match (case.played_witnesses.take(), &shared_witnesses) {
                         (None, Some(shared)) => shared.clone(),
-                        (declared, _) => Witnesses::resolve(doc.format, declared)?,
+                        (declared, _) => Witnesses::resolve(declared)?,
                     });
             }
             if case.native_packet.is_none() {
-                let shared = declarations.iter().find(|packet| packet.applies_to(case));
-                let published = super::legacy_packets::native(case);
-                if !legacy && shared.is_none() && published.is_some() {
-                    return Err("missing native provider packet");
-                }
-                case.native_packet = shared.or(if legacy { published } else { None }).cloned();
-            }
-            if legacy && case.expectations.played.is_none() {
-                case.expectations.played = super::legacy_packets::played(&case.id.0).cloned();
+                case.native_packet = declarations
+                    .iter()
+                    .find(|packet| packet.applies_to(case))
+                    .cloned();
             }
             if case.fixture.is_none() {
                 case.fixture = by_provider.get(&case.inputs).cloned();
@@ -2464,7 +2406,8 @@ fn ordinary_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) 
     case.kind == CaseKind::Integrated
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && case
-            .connected_packet()
+            .connected_packet
+            .as_ref()
             .is_some_and(|packet| packet.admits(case))
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::ConnectedOrdinaryInputs
@@ -3132,10 +3075,6 @@ impl Case {
     pub(super) fn ordinary_witness(&self) -> Option<&super::recorded::Witness> {
         if self.expectations.provider == ExpectedProvider::WitnessedRecordCache {
             self.ordinary_witness.as_ref()
-        } else if self.expectations.provider == ExpectedProvider::PinnedRecordCache
-            && super::recorded::Witness::required(self)
-        {
-            super::legacy_packets::ordinary_witness(&self.id.0)
         } else {
             None
         }
@@ -3144,15 +3083,8 @@ impl Case {
     pub(super) fn fixture_pair(&self) -> Result<&FixturePair, super::result::Outcome> {
         self.fixture
             .as_ref()
-            .or_else(|| super::legacy_packets::fixture(self.inputs))
             .filter(|pair| pair.provider == self.inputs && pair.valid())
             .ok_or_else(|| super::data_failure(None, "scoped provider fixture"))
-    }
-
-    pub(super) fn connected_packet(&self) -> Option<&ConnectedPacket> {
-        self.connected_packet
-            .as_ref()
-            .or_else(|| super::legacy_packets::connected(&self.id.0))
     }
 
     /// Validate the complete public execution recipe before source admission.
@@ -3225,7 +3157,6 @@ impl Case {
             || (case.connected_packet.is_some()
                 && case.inputs != InputProvider::ConnectedOrdinaryInputs)
             || (case.save_steps.is_some() && case.inputs != InputProvider::SaveFileBoundaries)
-            || case.inputs == InputProvider::PublishedSaveFileBoundaries
             || case.id.0.is_empty()
             || case.row.is_empty()
             || (case.rules.is_empty() && case.inputs != InputProvider::Unavailable)
@@ -3310,7 +3241,7 @@ impl Index {
     /// # Errors
     /// Invalid schemas, empty or duplicate case collections and invalid cases are rejected.
     pub fn validate(&self) -> Result<(), IndexFault> {
-        if !matches!(self.format, 1 | CURRENT_FORMAT)
+        if self.format != CURRENT_FORMAT
             || self.engine_api != "production-v1"
             || self.observation_schema != "semantic-v1"
         {
@@ -3471,7 +3402,7 @@ mod tests {
                         | ("audio", super::NativePacket::Audio(_))
                 )
             });
-            assert!(Index::try_from(doc).is_err());
+            assert!(!Index::try_from(doc).is_ok_and(|index| index.validate().is_ok()));
         }
     }
 
@@ -3555,49 +3486,15 @@ mod tests {
             .unwrap()
             .clone();
         case.id = CaseId("connected-ordinary/another-prefix".to_owned());
-        case.end.cut_inclusive = case.connected_packet().unwrap().first_end;
+        case.end.cut_inclusive = case.connected_packet.as_ref().unwrap().first_end;
         assert!(case.validate().is_ok());
         case.row = "another-row".to_owned();
         assert!(case.validate().is_err());
-        case.row = case.connected_packet().unwrap().row.clone();
+        case.row = case.connected_packet.as_ref().unwrap().row.clone();
         case.connected_packet.as_mut().unwrap().directory = "../outside".to_owned();
         assert!(case.validate().is_err());
         case.connected_packet = None;
         assert!(case.validate().is_err());
-    }
-
-    #[test]
-    fn earlier_connected_cases_keep_their_published_packet_and_horizons() {
-        let index = Index::parse(INDEX).unwrap();
-        for (name, directory, start, end) in [
-            (
-                "connected-ordinary/carried-running-camera",
-                "connected-ordinary-v1",
-                6,
-                15,
-            ),
-            (
-                "connected-ordinary/run-release-floor-aim",
-                "connected-run-slope-v1",
-                126,
-                142,
-            ),
-        ] {
-            let mut case = index
-                .cases
-                .iter()
-                .find(|case| case.id.0 == name)
-                .unwrap()
-                .clone();
-            case.connected_packet = None;
-            case.row = "chain-any-0003-DFD7".to_owned();
-            case.start = super::Start::CacheCut { frame: start };
-            case.end.cut_inclusive = end;
-            assert_eq!(case.connected_packet().unwrap().directory, directory);
-            assert!(case.validate().is_ok());
-            case.end.cut_inclusive = end.saturating_add(1);
-            assert!(case.validate().is_err());
-        }
     }
 
     #[test]

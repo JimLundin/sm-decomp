@@ -44,7 +44,6 @@ impl Case {
     fn native_packet(&self) -> Result<&NativePacket, Outcome> {
         self.native_packet
             .as_ref()
-            .or_else(|| super::legacy_packets::native(self))
             .filter(|packet| packet.applies_to(self) && packet.valid())
             .ok_or_else(|| super::data_failure(None, "native packet declaration"))
     }
