@@ -716,7 +716,7 @@ fn expected_field(
         ));
     }
     if field == O::DrawnJumpHeld {
-        return Ok(super::jump_history::jump_part(jump_held(wram)?));
+        return Ok(jump_part(jump_held(wram)?));
     }
     if field == O::LandingFloor {
         let response = crate::source::WramWord {
@@ -733,6 +733,16 @@ fn expected_field(
 
 pub(super) fn landing_pose(pose: Pose) -> Observation {
     pose_observation("movement.landing.pose", pose)
+}
+
+/// The held jump count and whether the frame before landed or ended a jump.
+pub(super) fn jump_part(held: JumpHeld) -> Observation {
+    let mut bytes = held.frames.0.to_le_bytes().to_vec();
+    bytes.push(u8::from(held.before == FrameBefore::LandedOrEnded));
+    Observation {
+        field: "movement.drawn-jump-held".to_owned(),
+        bytes,
+    }
 }
 
 pub(super) fn movement_pose(pose: Pose) -> Observation {

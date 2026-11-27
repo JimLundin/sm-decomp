@@ -35011,3 +35011,39 @@ witness_case_ids = []
 test_ids = []
 reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 682 to 704, the run compares every piece of her body in the prepared and physical OAM at the slots the native trace attributes to it, and its piece count, which is what the case compared as samus-oam.visible, piece-count, prepared and physical. The scoped case only repeated that comparison."
 lost_observations = ["samus-appearance/fight-protection-hold: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "room-loading/escape-shaft-entry"
+before_values = [57, 342, 0, 0, 0, 55, 335, 57, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0010-DF8D from cut 0 holds every cut through 518, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 222 to 278, it compares the shaft's view, affine registers, rotation, cells, placement and haze under the same names and from the same record values. The shaft door fault now stops that run. The scoped case only repeated that comparison."
+lost_observations = ["room-loading/escape-shaft-entry: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "appearance/shaft-wall-jump-dust"
+before_values = [240, 240, 481, 62, 0, 172, 172, 6, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0010-DF8D from cut 0 holds every cut through 518, and the power-on run holds the same cuts. At each of this case's compared cuts, 279 to 518, it compares the dust's state, its prepared and published pictures and the following vent entry under the same names and from the same record values. Both dust faults now stop that run. The scoped case only repeated that comparison."
+lost_observations = ["appearance/shaft-wall-jump-dust: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's restorations of the carried dust while it showed are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "movement/passage-jump-history"
+before_values = [160, 320, 0, 0, 0, 146, 305, 160, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0009-DFD7 from cut 0 holds every cut through 330, and the power-on run holds the same cuts. At each of this case's compared cuts, 171 to 330, it compares movement.last-draw-jump under the same name and value, and movement.jump-held, which carries the same held count and the same landed or ended flag from the same record words that movement.drawn-jump-held packed. The held count fault now stops that run. The scoped case only repeated that comparison."
+lost_observations = ["movement/passage-jump-history: its compared cuts and fields are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The scoped jump history owner and its per-cut restorations are gone."]

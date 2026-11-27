@@ -1578,25 +1578,6 @@ operation = "recorded-movement-frame"
 claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
 
 [[case]]
-id = "movement/passage-jump-history"
-kind = "scoped"
-row = "chain-any-0009-DFD7"
-start = { source = "cache-cut", frame = 170 }
-end = { cut_inclusive = 330 }
-rules = ["samus-movement/Jumping"]
-profile = "reference"
-responsibilities = ["movement"]
-content = "passage-jump"
-inputs = "passage-jump-draws"
-expectations = { provider = "pinned-record-cache", fields = ["movement.drawn-jump-held", "movement.last-draw-jump"], outputs = [] }
-checkpoints = true
-limits = ["The comparison covers the carried count, pending movement check and draw sample during the passage.", "The played run separately exercises passage scheduling. This scope borrows draw opportunities."]
-
-[[case.borrowed]]
-operation = "passage-jump-sample"
-claim = "Advance a single admitted jump history from cut 170. The expected count and previous draw sample never supply live input."
-
-[[case]]
 id = "movement/escape-leap-landing"
 kind = "scoped"
 row = "chain-any-0010-DF8D"
@@ -2085,25 +2066,6 @@ operation = "warning-boundaries"
 claim = "The seed admits the room; platform opportunities have no warning phase or countdown-start authority."
 
 [[case]]
-id = "room-loading/escape-shaft-entry"
-kind = "scoped"
-row = "chain-any-0010-DF8D"
-start = { source = "cache-cut", frame = 221 }
-end = { cut_inclusive = 278 }
-rules = ["world-shaft-entry/ShaftViewStarts", "world-shaft-entry/ShaftDoorSeals"]
-profile = "reference"
-responsibilities = ["room-loading"]
-content = "player-rom-import"
-inputs = "shaft-setup-turns"
-expectations = { provider = "pinned-record-cache", fields = ["shaft-entry.view", "shaft-entry.affine-registers", "shaft-entry.rotation", "shaft-entry.cells", "shaft-entry.placement", "shaft-entry.haze"], outputs = [] }
-checkpoints = true
-limits = ["The installed mode split and affine registers are compared. The scanout scheduler, physical PPU background mode, actor population, subsequent haze intensity and shaft rotation are outside this static setup."]
-
-[[case.borrowed]]
-operation = "shaft-fetch-and-block-work"
-claim = "The scoped entry borrows passage timing and begins with its built grid. The played passage selects and builds its own destination."
-
-[[case]]
 id = "appearance/elevator-standing-picture"
 kind = "scoped"
 row = "chain-any-0011-DF45"
@@ -2209,22 +2171,3 @@ limits = ["Advance from the return-hall origin through shaft cut 239 without res
 [[case.borrowed]]
 operation = "shaft-picture-scheduling"
 claim = "The sole hall origin admits the room and controller. Later records supply pad and platform timing. The played path owns actor participation, drawing and publication."
-
-[[case]]
-id = "appearance/shaft-wall-jump-dust"
-kind = "integrated"
-row = "chain-any-0010-DF8D"
-start = { source = "played-continuation", seed = 0, frame = 278 }
-end = { cut_inclusive = 518 }
-rules = ["samus-appearance/WallJumpDust", "samus-appearance/WallJumpDustPicture"]
-profile = "reference"
-responsibilities = ["appearance", "movement", "camera", "ceres"]
-content = "player-rom-import"
-inputs = "played-shaft-dust"
-expectations = { provider = "pinned-record-cache", fields = ["shaft-dust.state"], outputs = ["shaft-dust.prepared", "shaft-dust.published", "shaft-dust.following-vent"] }
-checkpoints = true
-limits = ["The return hall supplies the sole seed. Dust comparison begins with the shaft row and includes its six native puffs.", "The OAM observations compare each visible dust entry and the last shifted vent entry on shaft cut 17 in both buffers. The indexed window ends with the last live room work before the save scheduler takes over.", "Constructed checks cover clipping because the native puff stays inside the view.", "Continuations canonically restore the complete Appearance owner and the pending and physical room picture within the carried room."]
-
-[[case.borrowed]]
-operation = "shaft-dust-scheduling"
-claim = "The ordinary played runner observes scheduler opportunities. Movement, view, actor sprites, the dust clock and the two OAM lanes advance through production."

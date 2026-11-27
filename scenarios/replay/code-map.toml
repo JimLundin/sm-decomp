@@ -811,16 +811,6 @@ targets = [
 ]
 
 [[rule]]
-id = "samus-movement/Jumping"
-targets = [
-  { role = "model", path = "crates/clean/samus_movement/src/jump_held.rs" },
-  { role = "adapter", path = "crates/game/src/production/jump_history.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/jump_history.rs" },
-  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
-]
-
-[[rule]]
 id = "samus-movement/BackwardLeap"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/chart/table.rs" },
@@ -1312,22 +1302,6 @@ targets = [
 ]
 
 [[rule]]
-id = "world-shaft-entry/ShaftViewStarts"
-targets = [
-  { role = "model", path = "crates/game/src/production/shaft_entry.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/shaft_entry.rs" },
-]
-
-[[rule]]
-id = "world-shaft-entry/ShaftDoorSeals"
-targets = [
-  { role = "model", path = "crates/game/src/production/shaft_entry.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/shaft_entry.rs" },
-]
-
-[[rule]]
 id = "samus-appearance/ElevatorStandingPicture"
 targets = [
   { role = "model", path = "crates/clean/samus_appearance/src/elevator.rs" },
@@ -1365,25 +1339,5 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/ridley_picture.rs" },
   { role = "adapter", path = "crates/game/src/exact/ridley_picture.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/fight_picture.rs" },
-]
-
-[[rule]]
-id = "samus-appearance/WallJumpDust"
-targets = [
-  { role = "model", path = "crates/clean/samus_appearance/src/dust.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/shaft/dust.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/shaft/composition.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
-]
-
-[[rule]]
-id = "samus-appearance/WallJumpDustPicture"
-targets = [
-  { role = "model", path = "crates/clean/samus_appearance/src/dust.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
-  { role = "adapter", path = "crates/game/src/exact/oam.rs" },
-  { role = "navigation", path = "crates/import/src/samus/dust.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
 ]
 

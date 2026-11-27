@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "587caa6f4dfceda048a4805a6fd34b3ff0454354949fc47792675517605da5b6"
+index_sha256 = "d6b1047f1cf5cd6a7a264be222fb388751f9adf9fac7cd80ceac4f05249e37c0"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -952,24 +952,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "movement/passage-jump-history"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "3fe5394e5c92af0959e8d0e85e8b747dabe3c709205593c821a50fcaeb6ad80c"
-
-[case.counts]
-cuts = 160
-fields = 320
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 146
-null_fields = 305
-restorations = 160
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "intro-rooms/discovery-first-turn"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1456,24 +1438,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "room-loading/escape-shaft-entry"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "895db69227834a7467fcda4bed5bd64e05ec9ee10a35709917948594137a394c"
-
-[case.counts]
-cuts = 57
-fields = 342
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 55
-null_fields = 335
-restorations = 57
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "appearance/elevator-standing-picture"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1562,21 +1526,3 @@ null_fields = 7261
 restorations = 294
 pending_boundaries = 1
 pending_restorations = 1
-
-[[case]]
-id = "appearance/shaft-wall-jump-dust"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "f03af4e3d6c870b5f32530607a6b6621c24e0fa03620216bd3514d31b233c994"
-
-[case.counts]
-cuts = 240
-fields = 240
-outputs = 481
-publications = 62
-replies = 0
-null_cuts = 172
-null_fields = 172
-restorations = 6
-pending_boundaries = 0
-pending_restorations = 0

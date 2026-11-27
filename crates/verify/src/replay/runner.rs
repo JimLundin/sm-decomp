@@ -374,10 +374,7 @@ fn origin_checkpoint(
     if matches!(actual, ActualReader::StandingBody | ActualReader::ShaftHud)
         || matches!(
             inputs,
-            InputReader::MovementTouchdown(_)
-                | InputReader::ShaftEntry(_)
-                | InputReader::Zebes(_)
-                | InputReader::Explosion(_)
+            InputReader::MovementTouchdown(_) | InputReader::Zebes(_) | InputReader::Explosion(_)
         )
         || (case.inputs == InputProvider::PrecedingCutMovementInputs
             && frame.checked_add(1) == Some(case.end.cut_inclusive)
@@ -406,70 +403,6 @@ mod tests {
     use crate::replay::{
         Sources, admission, index::Index, readers::ExpectedReader, result::Outcome,
     };
-
-    #[test]
-    fn the_null_holds_the_last_draw_through_new_and_missing_samples() {
-        use crate::replay::{
-            compare::Observation,
-            readers::{ActualReader, AdmittedCase, ExpectedCut, InputReader, Tape},
-        };
-        use JumpButton::{Held, Up};
-        use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
-        use samus_movement::{DrawnJumpHistory, JumpButton, JumpHeld};
-
-        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        let mut case = index
-            .cases
-            .into_iter()
-            .find(|case| case.id.0 == "movement/passage-jump-history")
-            .unwrap();
-        let draws = [Some(Held), Some(Held), None, None, Some(Up)];
-        let expected = [(0_u8, 1), (1, 1), (1, 1), (1, 1), (0, 0)].map(|(count, pad)| {
-            let fields = vec![
-                Observation {
-                    field: "movement.drawn-jump-held".into(),
-                    bytes: vec![count, 0, 0],
-                },
-                Observation::quantity("movement.last-draw-jump", pad),
-            ];
-            ExpectedCut {
-                semantic_count: fields.len(),
-                semantics: fields.clone(),
-                fields,
-                output_count: 0,
-                replies: 0,
-            }
-        });
-        let window = case.cache_window().unwrap();
-        let start = window.origin;
-        let first = *window.cuts.start();
-        case.end.cut_inclusive = start + 5;
-        case.checkpoints = false;
-        let content = ProductionContent::JumpHistory;
-        let rules = ProductionRules::JumpHistory;
-        let production = Production::admit(
-            ProductionSeed::JumpHistory(DrawnJumpHistory {
-                jump_held: JumpHeld::NONE,
-                last_draw: Up,
-            }),
-            content.clone(),
-            rules.clone(),
-        )
-        .unwrap();
-        let admitted = AdmittedCase {
-            production,
-            rules,
-            content,
-            inputs: InputReader::JumpHistory(Tape::new(first, draws.to_vec())),
-            expected: ExpectedReader::JumpHistory(Tape::new(first, expected.to_vec())),
-            actual: ActualReader::JumpHistory,
-            schedule: ((start + 1)..=case.end.cut_inclusive).collect(),
-        };
-        let mut result = super::Receipt::default();
-        super::run(&case, admitted, &mut result).unwrap();
-        assert_eq!((result.counts.cuts, result.counts.fields), (5, 10));
-        assert_eq!((result.counts.null_cuts, result.counts.null_fields), (2, 6));
-    }
 
     #[test]
     #[ignore = "uses the pinned landing row and ROM"]
