@@ -25,10 +25,10 @@ on:
 permissions:
   contents: read
 
-# A new commit replaces its branch's run; nightly and dispatched runs finish.
+# A new commit replaces its pull request's run; every other run finishes, so main keeps its cache saves.
 concurrency:
   group: ci-${{ github.ref }}-${{ github.event_name }}-${{ inputs.target && github.run_id || 'full' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -49,9 +49,11 @@ jobs:
       SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
 
   retain-caches:
-    # Only main runs receive cache deletion permission, after all proof passes.
+    # Only main runs receive cache deletion permission, after all proof passes. A failure here
+    # leaves old caches in place and does not fail the run.
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.verify.result) }}
     needs: [quality, verify]
+    continue-on-error: true
     runs-on: ubuntu-24.04
     permissions:
       contents: read
