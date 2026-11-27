@@ -91,7 +91,7 @@ CI runs on Ubuntu 24.04. The following setup also supports local builds and repl
 
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
-(`build-essential`), git, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
+(`build-essential`), git, `jq`, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
 `SM_PY` overrides it), the [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
 `claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally
 `shellcheck` and `cargo-deny` 0.22.0, which the gate runs where it is installed.
