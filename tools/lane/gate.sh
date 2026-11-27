@@ -143,9 +143,10 @@ CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh "$BASE"
 start doc-links sh tools/check_doc_links.sh
 # What verify's lib tests read: the README and the report it measures (the crates, the specs and
 # their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
+# The tools crate's tests run with them, since its replay code map must name the index's rules.
 if changed_since "$BASE" crates scenarios docs/behaviours docs/architecture/domains.toml README.md Cargo.toml \
   Cargo.lock rust-toolchain.toml; then
-  PATH="$R:$PATH" start verify-lib bash tools/lane/run_tests.sh --suite lib verify
+  PATH="$R:$PATH" start verify-lib sh -c 'bash tools/lane/run_tests.sh --suite lib verify && bash tools/lane/run_tests.sh tools'
 else skip verify-lib; fi
 # The planted faults' manifest and runner, the sources check_mutants.py lets a fault patch, and the
 # replay cases whose responsibilities each fault witnesses.
