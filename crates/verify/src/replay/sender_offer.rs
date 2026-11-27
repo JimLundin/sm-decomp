@@ -49,6 +49,10 @@ struct OfferOrder {
 }
 
 impl SenderPacket {
+    pub(super) fn input_path(&self) -> &str {
+        &self.inputs.path
+    }
+
     pub(super) fn valid(&self) -> bool {
         !self.row.is_empty()
             && valid_hash(&self.capture_sha256)

@@ -6,6 +6,7 @@ mod audio;
 mod audio_projection;
 pub mod baseline;
 mod blackout;
+mod borrowed;
 mod camera;
 mod ceres;
 mod compare;

@@ -1383,7 +1383,7 @@ pub struct Case {
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
     pub limits: Vec<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "super::borrowed::read")]
     /// Explicit external dependency declarations.
     pub borrowed: Vec<Borrowed>,
     #[serde(default)]
@@ -3214,6 +3214,7 @@ impl Case {
             || unique.len() != observations.len()
             || !start_valid(case)
             || !scope_valid(case)
+            || !super::borrowed::valid(case)
             || case.borrowed.iter().any(|borrowed| {
                 borrowed.dependency.is_empty()
                     || borrowed.provider.is_empty()

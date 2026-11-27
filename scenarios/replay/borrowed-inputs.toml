@@ -1,0 +1,97 @@
+# Input adapters consume these dependencies, fields and phases as one operation.
+# Packet-backed operations take the source from the case and verify it against the selected packet.
+
+[native-audio-frame]
+readers = ["native-frame-inputs"]
+dependency = "audio.offers-and-cadence"
+provider = "pinned-native-capture"
+fields = ["frame.offers", "frame.cadence"]
+phase = "per frame"
+
+[preceding-ceres-neighbours]
+readers = ["preceding-cut-ceres-inputs"]
+dependency = "ceres.samus-and-stage"
+provider = "preceding-cut-independent-observations"
+fields = ["samus.position", "station.stage"]
+phase = "preceding-record-cut"
+
+[observed-ceres-actor-turn]
+readers = ["preceding-cut-ceres-inputs"]
+dependency = "ceres.actor-run"
+provider = "adjacent-cut-framework-counter-and-identity"
+fields = ["actor.identity", "actor.position", "actor.framework_counter"]
+phase = "current-record-cut"
+
+[unchanged-camera-neighbours]
+readers = ["preceding-cut-camera-inputs"]
+dependency = "camera.movement-and-room"
+provider = "preceding-cut-unchanged-producer-facts"
+fields = ["movement.physical-centre", "movement.facing", "movement.backwards", "movement.rising", "movement.no-placement", "room.screens", "room.heights", "room.lead", "clock.time-stopped"]
+phase = "preceding-record-cut"
+
+[watched-progress-reports]
+readers = ["observed-fixed-progress-events"]
+dependency = "progress.event-reports"
+provider = "pinned-record-executed-fixed-event-setter-visits"
+fields = ["progress.reports.identity", "progress.reports.order", "progress.reports.count"]
+phase = "observed-interval-execution"
+
+[connected-ordinary-opportunity]
+readers = ["connected-ordinary-inputs"]
+provider = { packet = "connected-directory" }
+dependency = "unselected current ordinary stimuli"
+fields = ["controls", "items", "parity", "energy", "queue occupancy", "the owners active at her stride and her shot's charge", "geometry and current actors", "camera room settings"]
+phase = "actual current source opportunity"
+
+[native-sender-ingress]
+readers = ["sender-offers"]
+selection = "native-offer"
+provider = { packet = "sender-inputs" }
+dependency = "sender.offer"
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+phase = "seed bracket and observed ingress"
+
+[constructed-sender-ingress]
+readers = ["sender-offers"]
+selection = "constructed-offer"
+dependency = "sender.offer"
+provider = "constructed-sender-queue"
+fields = ["seed.queue", "offer.group", "offer.cue", "offer.allowance", "offer.permission"]
+phase = "immediately before selected offer"
+
+[played-boundaries]
+readers = ["played-ceres-inputs", "played-samus-picture"]
+selection = "ordinary-room"
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+
+[fight-picture-boundaries]
+readers = ["scoped-ceres-fight-picture"]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "requested publication", "audio readiness"]
+phase = "frame boundary"
+
+[flyby-boundaries]
+readers = ["scoped-ceres-flyby"]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial flyby display memory"]
+phase = "frame boundary"
+
+[warning-boundaries]
+readers = ["scoped-ceres-warning"]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial room memory"]
+phase = "frame boundary"
+
+[ribs-boundaries]
+readers = ["played-ceres-inputs"]
+selection = "ribs"
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
