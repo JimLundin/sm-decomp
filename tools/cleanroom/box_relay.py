@@ -15,7 +15,8 @@ a document, a file, a container upload or an image by URL or file id is refused.
 runs nothing and fetches nothing for the box. The request goes to the configured host with
 its own Host header and only the headers a client of the API sends (content type, accept,
 user agent, anthropic-*, x-stainless-*, x-claude-*, x-app), and anthropic-beta keeps only the
-values in BETAS.
+values in BETAS. A body whose object repeats a member and a folded header are refused, since
+the API could read either otherwise than the relay does.
 
   serve SOCKET AUTH [PARENT] [--scan SCANNER REPO]
                               outside: AUTH (a file, or - for stdin, so it touches no disk) is an
@@ -168,10 +169,25 @@ def blocks_refusal(blocks: object, allowed: frozenset[str]) -> str | None:
     return None
 
 
+class Repeated(ValueError):
+    """A JSON object names a member twice."""
+
+
+def unique(pairs: list[tuple[str, object]]) -> dict:
+    """A JSON object, refused when a member repeats: the relay checks the last value and the
+    API might read the first."""
+    keys = [k for k, _ in pairs]
+    if len(set(keys)) != len(keys):
+        raise Repeated(next(k for k in keys if keys.count(k) > 1))
+    return dict(pairs)
+
+
 def refusal(body: bytes) -> str | None:
     """Why the request body may not go to the API, or None."""
     try:
-        request = json.loads(body)
+        request = json.loads(body, object_pairs_hook=unique)
+    except Repeated as e:
+        return f"the repeated member {e.args[0]!r}"
     except ValueError:
         return "a body that is not JSON"
     if not isinstance(request, dict):
@@ -312,6 +328,10 @@ def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str] |
 
         def relay(self) -> None:
             self.close_connection = True
+            if any("\r" in v or "\n" in v for v in self.headers.values()):
+                # A folded value reads as one header here and maybe as two upstream.
+                self.send_error(400, "a folded header")
+                return
             if scanner and self.path == SCAN_TARGET:
                 self.scan()
                 return

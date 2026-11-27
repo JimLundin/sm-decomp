@@ -65,6 +65,12 @@ class Body(unittest.TestCase):
             with self.subTest(body=body):
                 self.assertIsNotNone(box_relay.refusal(body))
 
+    def test_a_repeated_member_is_refused(self):
+        for body in [b'{"model": "m", "tools": [{"type": "web_search_20250305"}], "tools": []}',
+                     b'{"model": "m", "messages": [{"role": "user", "content": "x", "content": "y"}]}']:
+            with self.subTest(body=body):
+                self.assertIn("repeated member", box_relay.refusal(body) or "")
+
     def test_every_server_tool_is_refused(self):
         for kind in ["web_search_20250305", "web_fetch_20250910", "code_execution_20250825",
                      "bash_20250124", "text_editor_20250728", "computer_20250124", "memory_20250818",
@@ -236,7 +242,9 @@ class Relay(unittest.TestCase):
                     b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 8\r\n\r\nnot json",
                     b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 45\r\n\r\n"
                     b'{"tools": [{"type": "web_fetch_20250910"}]}  ',
-                    b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"]:
+                    b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n",
+                    b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 2\r\n"
+                    b"Anthropic-Beta: claude-code-20250219\r\n files-api-2025-04-14\r\n\r\n{}"]:
             with self.subTest(raw=raw[:40]):
                 self.assertIn(self.send(raw), (400, 403, 405))
         self.assertEqual(self.seen, [])
