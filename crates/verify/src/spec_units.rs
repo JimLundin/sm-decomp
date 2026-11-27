@@ -54,10 +54,9 @@
 //!
 //! **Areas.** A line `Area <name> (old <tokens>): <item>, <item>, ...`, as a paragraph or a
 //! bullet, in the decode notes' Budget section or in the `--areas` file, which replaces the
-//! notes' areas. A spec that still states k or an area is a finding: `tools/cleanroom/
-//! move_budget.sh` moves them to the notes. An item names
-//! an entry (`SlopesCarry`) or any other heading, by its whole text or its leading number (`1.2`
-//! for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, shown for
+//! notes' areas. A spec that still states k or an area is a finding: they belong in the notes.
+//! An item names an entry (`SlopesCarry`) or any other heading, by its whole text or its
+//! leading number (`1.2` for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, shown for
 //! reference beside the budget; a line `Old code (old N): ...` gives it for the whole domain
 //! instead, where the old code isn't split by area. A heading no area names, holding units, is
 //! reported unassigned.
@@ -1113,7 +1112,7 @@ impl Count {
         }
         if self.spec_states_budget {
             out.push_str(
-                "  the spec states k or an area: they go in the decode notes' Budget section (tools/cleanroom/move_budget.sh)\n",
+                "  the spec states k or an area: they go in the decode notes' Budget section\n",
             );
         }
         for arm in &self.arms {

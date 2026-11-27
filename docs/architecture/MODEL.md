@@ -86,7 +86,6 @@ Jim's decisions, 2026-11-07:
     vectors and every brief) states coding standards only: the lints and ceilings (L1, L2,
     G5 to G7), never measures. Independent reviewers receive the evidence their role needs,
     with size material withheld ([PROCESS](../cleanroom/PROCESS.md#who-sees-what)).
-    `tools/cleanroom/move_budget.sh` moves a spec header's budget into the decode notes, and
     `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
     (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
     (`check_crate_rules.sh`) that mentions any of it.
