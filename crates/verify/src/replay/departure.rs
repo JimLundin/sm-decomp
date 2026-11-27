@@ -123,7 +123,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             inputs.insert(cut, input);
             expected.insert(
                 cut,
-                observations::native(&previous, &now, &assets.landing, input)?,
+                observations::native(&previous, &now, &assets.landing, &mut rows, cut)?,
             );
         }
         previous = now;
@@ -179,12 +179,12 @@ pub(super) fn check_receiving(
     previous: &oracle_record::FrameRecord,
     current: &oracle_record::FrameRecord,
     graphics: &data::assets::landing_site::Graphics,
-    input: Input,
+    rows: &mut Rows<'_>,
     cut: u64,
 ) -> Result<(), Outcome> {
     super::compared(
         cut,
-        &observations::native(previous, current, graphics, input)?.fields,
+        &observations::native(previous, current, graphics, rows, cut)?.fields,
         &actual(production, cut)?,
     )
 }

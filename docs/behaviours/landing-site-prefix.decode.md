@@ -59,6 +59,12 @@ in asset and previous VRAM is not evidence that it has transferred. In this witn
 6,619 bytes differ across BG3 and the sprite prefix, but the complete transfer extent
 is larger. The held model misses those differences.
 
+The joined departure comparison reads the sprite destination before the transfer, at the
+receiving cut and at the next native cut. The last changed byte in the first interval lies
+immediately before the first changed byte in the second. This fixes the committed length
+and identifies the pending byte by the value subsequently written at that location. The
+successor supplies expectation data only. The source address register records read selection.
+
 For a restoration check, save during the split word and advance the original state
 and its restored copy under the same following transfer opportunities. Compare
 pending identity, committed count, byte parity, retained bytes and phase before and

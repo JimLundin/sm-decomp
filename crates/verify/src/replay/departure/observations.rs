@@ -1,7 +1,11 @@
 //! Independent record projections of the continuing game and its physical drawing state.
 use crate::replay::compare::Observation;
 use crate::replay::{
-    data_failure, explosion::word, landing_site, played::explosion as joined, readers::ExpectedCut,
+    data_failure,
+    explosion::word,
+    landing_site,
+    played::{explosion as joined, rows::Rows},
+    readers::ExpectedCut,
     result::Outcome,
 };
 use data::assets::landing_site::Graphics;
@@ -10,9 +14,9 @@ use game::production::{
     Production,
     health_tail::HealthPin,
     played::{
-        departure::{Input, Remembered, Room, Scene},
+        departure::{Remembered, Room, Scene},
         explosion,
-        landing_site::{Area, AreaMaps, Entrance, Phase, ShadowTilemaps, Work},
+        landing_site::{Area, AreaMaps, Entrance, Phase, ShadowTilemaps},
         zebes,
     },
 };
@@ -86,16 +90,96 @@ fn payload(fields: Vec<Observation>, outputs: Vec<Observation>) -> ExpectedCut {
     }
 }
 
+const SPRITE_DESTINATION: VramWord = VramWord(0x6000);
+
+fn sprite_bytes(vram: &[u16], length: u16) -> Option<Vec<u8>> {
+    let start = usize::from(SPRITE_DESTINATION.0);
+    let size = usize::from(length);
+    Some(
+        vram.get(start..start.checked_add(size.div_ceil(2))?)?
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .take(size)
+            .collect(),
+    )
+}
+
+// In an increasing transfer the last visible change bounds the committed prefix below.
+// The first byte still to change bounds it above. Equal bounds identify the pending byte
+// without reading the borrowed DMA count or the sprite bytes used by production.
+fn pending_write(before: &[u8], during: &[u8], after: &[u8]) -> Option<PendingWrite> {
+    let last_changed = before.iter().zip(during).rposition(|(a, b)| a != b)?;
+    let first_remaining = during.iter().zip(after).position(|(a, b)| a != b)?;
+    if last_changed.checked_add(1)? != first_remaining {
+        return None;
+    }
+    Some(PendingWrite {
+        offset: u16::try_from(first_remaining).ok()?,
+        value: *after.get(first_remaining)?,
+    })
+}
+
+fn observed_sprite_transfer(
+    previous: &FrameRecord,
+    current: &FrameRecord,
+    successor: &FrameRecord,
+    graphics: &Graphics,
+) -> Result<Transfer, Outcome> {
+    let bad = || {
+        data_failure(
+            Some(current.index),
+            "visible landing sprite transfer frontier",
+        )
+    };
+    if successor.video_frame != current.video_frame.wrapping_add(1) {
+        return Err(bad());
+    }
+    let span =
+        |record: &FrameRecord| sprite_bytes(&record.vram, graphics.sprite_length).ok_or_else(bad);
+    let following = span(successor)?;
+    let pending = pending_write(&span(previous)?, &span(current)?, &following).ok_or_else(bad)?;
+    let accepted = pending.offset.checked_add(1).ok_or_else(bad)?;
+    let prefix = ..usize::from(accepted);
+    if graphics.sprites.get(prefix) != following.get(prefix) {
+        return Err(bad());
+    }
+    let address = graphics.sprite_source.advanced(accepted);
+    let channel = landing_site::channel(current.ppu.dma[1]);
+    // The architectural source register records selection. Neither record exposes the
+    // internal read latch or its sub-byte timing.
+    let selected = if channel.source == address.advanced(1).offset {
+        Some(address)
+    } else if channel.source == address.offset {
+        None
+    } else {
+        return Err(bad());
+    };
+    if channel.source_bank != address.bank {
+        return Err(bad());
+    }
+    Ok(Transfer {
+        source: graphics.sprite_source,
+        destination: SPRITE_DESTINATION,
+        length: graphics.sprite_length,
+        accepted,
+        committed: pending.offset,
+        pending: Some(pending),
+        selected,
+    })
+}
+
 pub(super) fn native(
     previous: &FrameRecord,
     record: &FrameRecord,
     graphics: &Graphics,
-    input: Input,
+    rows: &mut Rows<'_>,
+    cut: u64,
 ) -> Result<ExpectedCut, Outcome> {
     let w = |at| word(record, at);
     let (placement, area, maps, shadow) = joined::carry::room(record)?;
     let loading = w(0x0998)? == 6;
-    let receiving = matches!(input, Input::Loader(_));
+    // The receiving loader installs mode 1 in the physical PPU before its sprite DMA.
+    let receiving = loading && previous.ppu.bgmode & 7 != 1 && record.ppu.bgmode & 7 == 1;
     let phase = if receiving {
         4
     } else if loading {
@@ -123,31 +207,22 @@ pub(super) fn native(
         room(placement, area, &maps, &shadow, Entrance::Carried)?,
     ];
     let mut outputs = Vec::new();
-    let transfer = if let Input::Loader(Work::Open { accepted, selected }) = input {
-        let offset = accepted
-            .checked_sub(1)
-            .ok_or_else(|| data_failure(Some(record.index), "pending sprite byte"))?;
-        let value = graphics
-            .sprites
-            .get(usize::from(offset))
-            .copied()
-            .ok_or_else(|| data_failure(Some(record.index), "sprite source byte"))?;
-        Some(Transfer {
-            source: graphics.sprite_source,
-            destination: VramWord(0x6000),
-            length: graphics.sprite_length,
-            accepted,
-            committed: offset,
-            pending: Some(PendingWrite { offset, value }),
-            selected: selected.then(|| graphics.sprite_source.advanced(accepted)),
-        })
+    let transfer = if receiving {
+        let successor = cut
+            .checked_add(1)
+            .ok_or_else(|| data_failure(Some(cut), "landing successor"))?;
+        Some(observed_sprite_transfer(
+            previous,
+            record,
+            &rows.record(successor)?,
+            graphics,
+        )?)
     } else {
         None
     };
     outputs.push(bytes("pipeline", canonical::to_bytes(&transfer)));
     if receiving
-        || matches!(input, Input::Scene(explosion::Cut::Finished { .. }))
-            && !matches!(w(0x1f51)?, 0xc11b)
+        || crate::replay::played::platform::finished(record) && !matches!(w(0x1f51)?, 0xc11b)
     {
         outputs.extend([
             words("vram", record.vram.iter().copied()),
@@ -257,4 +332,23 @@ pub(in crate::replay) fn actual(
         channels(video.dma),
     ];
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{PendingWrite, pending_write};
+
+    #[test]
+    fn the_pending_byte_needs_a_unique_visible_write_frontier() {
+        let prior = [0, 0, 0, 0];
+        let received = [1, 2, 0, 0];
+        assert_eq!(
+            pending_write(&prior, &received, &[1, 2, 3, 4]),
+            Some(PendingWrite {
+                offset: 2,
+                value: 3
+            })
+        );
+        assert_eq!(pending_write(&prior, &received, &[1, 2, 0, 4]), None);
+    }
 }

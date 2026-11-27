@@ -146,7 +146,7 @@ fn through(
             cut,
             [&previous, &current],
             &assets.landing,
-            input,
+            rows,
             &mut observer,
         )
         .and_then(|()| {
@@ -201,7 +201,7 @@ fn check_outputs(
     cut: u64,
     [previous, current]: [&FrameRecord; 2],
     graphics: &data::assets::landing_site::Graphics,
-    input: Input,
+    rows: &mut Rows<'_>,
     observer: &mut explosion::Observed,
 ) -> Result<(), Outcome> {
     if let ProductionOutputs::Blackout(output) = output {
@@ -220,7 +220,7 @@ fn check_outputs(
         )
     } else if matches!(output, ProductionOutputs::LandingSite) {
         crate::replay::departure::check_receiving(
-            production, previous, current, graphics, input, cut,
+            production, previous, current, graphics, rows, cut,
         )
     } else {
         Err(data_failure(Some(cut), "departure output scope"))
