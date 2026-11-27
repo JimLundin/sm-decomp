@@ -1186,7 +1186,18 @@ pub struct Borrowed {
     /// Named causal capture phase.
     pub phase: String,
     /// Limit imposed by an external producer.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub claim: String,
+}
+
+/// A scope or provenance explanation carried in the replay map.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Qualification {
+    /// Free-form explanation from the case author.
+    Text(String),
+    /// Source description from a published index.
+    Published(Borrowed),
 }
 
 /// Authenticated input packet and its reviewed comparison interval.
@@ -1386,6 +1397,9 @@ pub struct Case {
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
     pub limits: Vec<String>,
+    /// Scope and provenance explanations accompanying this case.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub qualifications: Vec<Qualification>,
     #[serde(default, deserialize_with = "super::borrowed::read")]
     /// Explicit external dependency declarations.
     pub borrowed: Vec<Borrowed>,
@@ -3226,7 +3240,6 @@ impl Case {
                     || borrowed.provider.is_empty()
                     || borrowed.fields.is_empty()
                     || borrowed.phase.is_empty()
-                    || borrowed.claim.is_empty()
             })
         {
             return Err(IndexFault::InvalidCase(case.id.clone()));

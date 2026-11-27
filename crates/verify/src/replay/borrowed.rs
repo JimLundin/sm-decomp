@@ -65,25 +65,29 @@ static OPERATIONS: LazyLock<Option<BTreeMap<String, Operation>>> = LazyLock::new
 struct Reference {
     operation: String,
     provider: Option<String>,
+    #[serde(default)]
     claim: String,
 }
 
-impl Reference {
-    fn resolve(self) -> Option<Borrowed> {
-        let source = OPERATIONS.as_ref()?.get(&self.operation)?;
-        let provider = match (&source.provider, self.provider) {
-            (Provider::Fixed(fixed), None) => fixed.clone(),
-            (Provider::Selected { .. }, Some(packet)) => packet,
-            _ => return None,
-        };
-        Some(Borrowed {
-            dependency: source.dependency.clone(),
-            fields: source.fields.clone(),
-            phase: source.phase.clone(),
-            provider,
-            claim: self.claim,
-        })
-    }
+/// Expand the selected adapter operation into its public source declaration.
+pub(super) fn resolve(
+    operation: &str,
+    provider: Option<String>,
+    claim: String,
+) -> Option<Borrowed> {
+    let source = OPERATIONS.as_ref()?.get(operation)?;
+    let provider = match (&source.provider, provider) {
+        (Provider::Fixed(fixed), None) => fixed.clone(),
+        (Provider::Selected { .. }, Some(packet)) => packet,
+        _ => return None,
+    };
+    Some(Borrowed {
+        dependency: source.dependency.clone(),
+        fields: source.fields.clone(),
+        phase: source.phase.clone(),
+        provider,
+        claim,
+    })
 }
 
 #[derive(Deserialize)]
@@ -99,9 +103,10 @@ pub(super) fn read<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<Bor
         .into_iter()
         .map(|entry| match entry {
             Declaration::Published(input) => Ok(input),
-            Declaration::Operation(binding) => binding
-                .resolve()
-                .ok_or_else(|| serde::de::Error::custom("invalid borrowed input operation")),
+            Declaration::Operation(binding) => {
+                resolve(&binding.operation, binding.provider, binding.claim)
+                    .ok_or_else(|| serde::de::Error::custom("invalid borrowed input operation"))
+            }
         })
         .collect()
 }
