@@ -114,9 +114,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # Pull requests and pushes run it only when one of its inputs changed since main: the specs,
-      # the vectors, the rule owners, the prover and its fixtures, the clean crates it builds and
-      # their build inputs. A main push's head passed it as a pull request.
+      # Pull requests and pushes run it only when one of its inputs changed since main. The inputs
+      # are the specs, the vectors, the rule owners, the prover and its fixtures, the clean crates
+      # it builds and their build inputs, and the workflows that run it. A main push's head passed it as a pull request.
       - name: Find whether an input of the adjusted vectors changed
         id: inputs
         if: github.event_name == 'pull_request' || github.event_name == 'push'
@@ -124,7 +124,7 @@ jobs:
           . tools/lane/changes.sh
           if ! changed_since origin/main docs/behaviours scenarios/vectors crates/clean Cargo.toml Cargo.lock \
             rust-toolchain.toml 'tools/cleanroom/adjusted_*' tools/cleanroom/test_adjusted_vectors_run.py \
-            tools/lane/changes.sh .github/workflows/quality.yml; then
+            tools/lane/changes.sh .github/workflows/quality.yml .github/workflows/ci.yml; then
             echo unchanged=true >>"$GITHUB_OUTPUT"
           fi
       - name: Install the repository toolchain
