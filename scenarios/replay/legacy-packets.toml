@@ -29,3 +29,12 @@ expected = { path = "movement-touchdown-v1/expected.toml", sha256 = "8b1dfa66303
 provider = "scoped-shot-drawing-inputs"
 inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 expected = { path = "shot-contact-v1/expected.toml", sha256 = "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1" }
+
+[sender_control]
+ordered-pair = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Land", "Door"], allowance = "Six", permission = "Enabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"] }
+repeat-at-five = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"], cues = ["Land"], allowance = "Six", permission = "Enabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Land"] }
+deny-at-six = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"], cues = ["Land"], allowance = "Six", permission = "Enabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"] }
+deny-smaller-limit = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"], cues = ["Door"], allowance = "Three", permission = "Enabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"] }
+deny-disabled = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Disabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
+deny-demo = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Demo", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
+deny-explosion = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Explosion", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }

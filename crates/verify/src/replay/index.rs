@@ -114,6 +114,7 @@ pub enum Start {
     /// One independent constructed sender control.
     ConstructedSenderOffer {
         /// Starting queue and ordered offers.
+        #[serde(deserialize_with = "super::legacy_packets::sender_control")]
         control: SenderOfferControl,
     },
     /// One independently pinned native record supplies the sole scoped origin.
@@ -141,24 +142,38 @@ pub enum Start {
     PowerOn,
 }
 
-/// Constructed controls for queue behavior absent from the recording.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum SenderOfferControl {
-    /// Two different cues append in offer order.
-    OrderedPair,
-    /// A second offer of an already pending cue can enter.
-    RepeatAtFive,
-    /// Occupancy equal to the allowance denies the offer.
-    DenyAtSix,
-    /// A reduced allowance preserves the existing queue.
-    DenySmallerLimit,
-    /// Disabled sound denies the offer.
-    DenyDisabled,
-    /// Demo playback denies the offer.
-    DenyDemo,
-    /// Explosion suppression denies the offer.
-    DenyExplosion,
+/// A constructed offer window over one sender queue before its next service.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SenderOfferControl {
+    pub(super) group: audio_transport::SoundGroup,
+    pub(super) seed: audio_transport::CueQueue,
+    pub(super) cues: Vec<audio_transport::CueId>,
+    pub(super) allowance: audio_transport::QueueAllowance,
+    #[serde(with = "Permission")]
+    pub(super) permission: audio_transport::OfferPermission,
+    pub(super) expected: audio_transport::CueQueue,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(remote = "audio_transport::OfferPermission")]
+pub(super) enum Permission {
+    Enabled,
+    Disabled,
+    Demo,
+    Explosion,
+}
+
+impl SenderOfferControl {
+    fn valid(&self) -> bool {
+        !self.cues.is_empty()
+            && self
+                .cues
+                .iter()
+                .chain(self.seed.cues())
+                .chain(self.expected.cues())
+                .all(|cue| cue.group() == self.group)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -2948,8 +2963,8 @@ fn start_valid(case: &Case) -> bool {
             *source_id < super::sender_offer::NATIVE_WINDOWS
                 && case.row == super::sender_offer::SOURCE_ROW
         }
-        Start::ConstructedSenderOffer { .. } => {
-            case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
+        Start::ConstructedSenderOffer { control } => {
+            control.valid() && case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
         }
         Start::PowerOn => case.kind == CaseKind::Movie && case.borrowed.is_empty(),
     }
@@ -3167,6 +3182,33 @@ mod tests {
             Err(IndexFault::UnknownCase(_))
         ));
     }
+    #[test]
+    fn constructed_sender_queues_and_offers_belong_to_the_selected_group() {
+        let index = Index::parse(INDEX).unwrap();
+        let case = index
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "sender-offer/ordered-pair")
+            .unwrap();
+        let super::Start::ConstructedSenderOffer { control } = &case.start else {
+            panic!()
+        };
+        let mut invalid = control.clone();
+        invalid.cues.clear();
+        assert!(!invalid.valid());
+        invalid.cues.push(audio_transport::CueId::Beam);
+        assert!(!invalid.valid());
+        for expected in [false, true] {
+            let mut invalid = control.clone();
+            if expected {
+                invalid.expected.push(audio_transport::CueId::Beam);
+            } else {
+                invalid.seed.push(audio_transport::CueId::Beam);
+            }
+            assert!(!invalid.valid());
+        }
+    }
+
     #[test]
     fn shared_fixture_pairs_travel_with_selected_cases() {
         let index = Index::parse(INDEX).unwrap();

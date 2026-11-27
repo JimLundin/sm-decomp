@@ -1,6 +1,8 @@
 //! Packet identities for format-1 cases written before the index declared their fixtures.
 
-use super::index::{ConnectedPacket, FixturePair, InputProvider, NativeProjection};
+use super::index::{
+    ConnectedPacket, FixturePair, InputProvider, NativeProjection, SenderOfferControl,
+};
 use super::native_search::Coordinates;
 use serde::Deserialize;
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -14,6 +16,7 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    sender_control: BTreeMap<String, SenderOfferControl>,
     fixture: Vec<FixturePair>,
     connected: BTreeMap<String, ConnectedPacket>,
     native_search: BTreeMap<String, Search>,
@@ -41,4 +44,24 @@ pub(super) fn fixture(provider: InputProvider) -> Option<&'static FixturePair> {
         .fixture
         .iter()
         .find(|pair| pair.provider == provider)
+}
+
+pub(super) fn sender_control<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<SenderOfferControl, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Control {
+        Window(SenderOfferControl),
+        Published(String),
+    }
+
+    match Control::deserialize(deserializer)? {
+        Control::Window(window) => Ok(window),
+        Control::Published(id) => PACKETS
+            .as_ref()
+            .and_then(|packets| packets.sender_control.get(&id))
+            .cloned()
+            .ok_or_else(|| serde::de::Error::custom("unknown sender offer control")),
+    }
 }
