@@ -84,7 +84,9 @@ fn ordinary_recipe(
         appearance: appearance::Content::load(&sources.rom)?,
     });
     let inputs = Arc::new(super::connected::Inputs::load(
-        &sources.native.join(super::connected::fixture(case)?),
+        &sources.native,
+        case.connected_packet()
+            .ok_or_else(|| data_failure(None, "connected packet declaration"))?,
         &content,
     )?);
     if let Start::CacheCut { frame } = case.start {

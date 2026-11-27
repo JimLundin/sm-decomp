@@ -9,9 +9,6 @@ use game::production::connected::{
 use serde::Deserialize;
 use std::{collections::BTreeMap, path::Path};
 
-pub(super) const MANIFEST: &str =
-    "df96f1be4f5a8e54802d6b55e8e9c05f9ab3cf37aeed04a27d9d8b6f3efdda4c";
-
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct File {
@@ -40,23 +37,17 @@ struct Manifest {
     row: String,
     initial_cut: u64,
     last_cut: u64,
-    source_v1: String,
-    source_v2: String,
-    source_v3: String,
-    extension: String,
+    // The manifest hash authenticates these provenance fields along with all member pins.
+    #[serde(rename = "source_v1")]
+    _source_v1: String,
+    #[serde(rename = "source_v2")]
+    _source_v2: String,
+    #[serde(rename = "source_v3")]
+    _source_v3: String,
+    #[serde(rename = "extension")]
+    _extension: String,
     opportunity: Vec<Opportunity>,
     file: Vec<File>,
-}
-
-pub(super) const RUN_SLOPE_MANIFEST: &str =
-    "f6440b4daf6ddf75fa62172108d706fa33e8b462c4429358082c100924e70e4d";
-
-pub(super) fn fixture(case: &super::index::Case) -> Result<&'static str, Outcome> {
-    match case.id.0.as_str() {
-        "connected-ordinary/carried-running-camera" => Ok("connected-ordinary-v1"),
-        "connected-ordinary/run-release-floor-aim" => Ok("connected-run-slope-v1"),
-        _ => Err(data_failure(None, "connected reviewed case")),
-    }
 }
 
 pub(super) struct Content {
@@ -284,47 +275,25 @@ impl AppearanceInputs {
 }
 
 impl Inputs {
-    pub fn load(root: &Path, content: &Content) -> Result<Self, Outcome> {
+    pub fn load(
+        native: &Path,
+        packet: &super::index::ConnectedPacket,
+        content: &Content,
+    ) -> Result<Self, Outcome> {
+        let root = native.join(&packet.directory);
         let raw = std::fs::read(root.join("manifest.toml"))
             .map_err(|_| data_failure(None, "connected input manifest"))?;
-        let pin = Sha256::of(&raw).to_string();
-        if pin != MANIFEST && pin != RUN_SLOPE_MANIFEST {
+        if Sha256::try_from(packet.sha256.as_str()).ok() != Some(Sha256::of(&raw)) {
             return Err(data_failure(None, "connected input pin"));
         }
         let manifest: Manifest = toml::from_str(
             std::str::from_utf8(&raw).map_err(|_| data_failure(None, "connected input text"))?,
         )
         .map_err(|_| data_failure(None, "connected input schema"))?;
-        let reviewed = match pin.as_str() {
-            MANIFEST => {
-                manifest.initial_cut == 6
-                    && manifest.last_cut == 15
-                    && manifest.source_v1
-                        == "e37b5523e368d84c00a0b9625d9ea13f0e88ba553d74839e95f97f9e910f442d"
-                    && manifest.source_v2
-                        == "9904841986a89999ab1a2f5f6c2601c5551b1609b1c584c3e4c4dc2eb0bbed5f"
-                    && manifest.source_v3
-                        == "0f5926a507f54c85dfe36e2fcbc05187d919d857c929128b501d7dd253e7c727"
-                    && manifest.extension
-                        == "0556ce279ca4375be03e5060bc665598645c76fa9e7f1cf16def69667cb79d00"
-            }
-            RUN_SLOPE_MANIFEST => {
-                manifest.initial_cut == 126
-                    && manifest.last_cut == 142
-                    && manifest.source_v1
-                        == "514ca9649b265dbcca139fc1f7607415ea236f1b76df2aef0710ec9d976276f3"
-                    && manifest.source_v2
-                        == "ba6dd5da351381c431badca440fc3f253e45b131bb685674223d7fcf13399e58"
-                    && manifest.source_v3
-                        == "87e42123a8e2f269e8c0d8b3527dc2b6fab4b7dbb603b00b5eab00df619a1ece"
-                    && manifest.extension
-                        == "4d769f8f398f1d8dfba35c21082c953d238bb02879ee369bcc4b2cbb979cdcc3"
-            }
-            _ => false,
-        };
         if manifest.format != "connected-ordinary-inputs-v1"
-            || manifest.row != "chain-any-0003-DFD7"
-            || !reviewed
+            || manifest.row != packet.row
+            || manifest.initial_cut != packet.initial_cut
+            || manifest.last_cut != packet.last_cut
         {
             return Err(data_failure(None, "connected reviewed scope"));
         }
