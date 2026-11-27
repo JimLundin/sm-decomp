@@ -687,8 +687,9 @@ adds no played-alone frames.
 
 ## Scoped sender offers
 
-Install the encrypted [sender offer fixture](../tools/ci/fetch_sender_offers.sh)
-with `bash tools/ci/fetch_sender_offers.sh "$ROM" "$NATIVE"`, then select
+Install the encrypted [sender offer fixture](../tools/ci/replay_fixtures.toml)
+into an existing native source directory with
+`bash tools/ci/fetch_replay_fixtures.sh "$ROM" "$NATIVE" sender-offers-v1`, then select
 `--rule audio-transport/OfferAcceptance --native "$NATIVE"` in the shared replay command.
 
 The index's sender `[[native_packet]]` pins the ingress and FIFO files, their source capture
@@ -743,10 +744,10 @@ and no service, and the next native service-entry snapshot independently corrobo
 The pinned bracket contains no intervening Contact offer or service. The offer and clear
 command count as two scoped outputs.
 
-Install the [touchdown fixture](../tools/ci/fetch_movement_touchdown.sh) and the sender-offer
-fixture under the same native source directory. Use the common replay command with
-`--case movement/soft-touchdown-57 --case movement/soft-touchdown-124`. The checkpoints
-restore each disjoint window from its own starting owners.
+Install the [touchdown fixture](../tools/ci/replay_fixtures.toml),
+`movement-touchdown-v1`, and `sender-offers-v1` under the same native source directory.
+Use the common replay command with `--case movement/soft-touchdown-57 --case movement/soft-touchdown-124`.
+The checkpoints restore each disjoint window from its own starting owners.
 
 ## Finding the code for a replay segment
 
@@ -820,17 +821,17 @@ indexed case checks each cut's continuation from a checkpoint.
 
 Controls, equipment, liquid, energy, occupancy, the owners active at her stride, the charge,
 current terrain and actors, and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
-health arithmetic and played-alone production remain outside this witness. Its package is
-fetched by [the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
-reviewed outcome and code navigation are in the existing replay index, baseline and mapping.
+health arithmetic and played-alone production remain outside this witness. The
+[fixture manifest](../tools/ci/replay_fixtures.toml) pins `connected-ordinary-v1`. The replay index, baseline and mapping hold the declaration,
+reviewed outcome and code navigation.
 
 The second ordinary witness admits once at cut126 and carries the same selected owners through
 cut142. It exercises current Run release and resumed growth, alternating Forward/DownForward
 aim selection and its extra horizontal move, and reached non-square Floor/Surface terrain.
 Its floor factors, vertical surface responses and unseated support checks are bounded witnesses;
 stepped and ceiling terrain remain unsupported. The stale-Run fault is caught at cut141's complete movement State.
-The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
-identity separate from the first witness. The same borrowed producers and omitted consumers apply.
+The [fixture manifest](../tools/ci/replay_fixtures.toml) pins the second fixture,
+`connected-run-slope-v1`. The same borrowed producers and omitted consumers apply.
 
 The scoped early mini-map witness starts once at cut 78 of the room-seeded Ceres row.
 At 79 and 80 the HUD plays its whole frame, its mini-map read at movement's position after her
@@ -841,7 +842,8 @@ appearance State is carried and not compared. Cut 80 plays its whole frame, into
 the later spinning pose, and compares only the map. The ordinary and restored executions
 compare both frames, and a frame without the map's inputs is rejected before any change.
 
-The [early mini-map fixture](../tools/ci/fetch_movement_early_map.sh) supplies the independently
+The pinned [early mini-map fixture](../tools/ci/replay_fixtures.toml),
+`movement-early-map-v1`, supplies the independently
 qualified current collision roster, control, room, clock and other borrowed inputs; the record
 pairs supply her stock as the frame begins and the values the status bar draws, which are not
 compared. VRAM and audio delivery are outside this scope.
@@ -857,8 +859,8 @@ the absence of pictures at the other cuts. The pre-draw cursor, camera and phase
 from the independent watched fixture. The earlier drawing producers, full OAM contents
 and hardware service are outside the scope.
 
-The [drawing fixture installer](../tools/ci/fetch_shot_contact.sh) installs its hash-pinned
-files.
+The [fixture manifest](../tools/ci/replay_fixtures.toml) pins the files in
+`shot-contact-v1`.
 
 
 ## Discovery in the intro
