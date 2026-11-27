@@ -290,12 +290,6 @@ pub(in crate::replay) fn run(
     }
     let state = intro::admit(Language::English, seed, shown(&previous.wram)?)
         .map_err(|_| data_failure(Some(start), "delivery admission"))?;
-    let mut null = observations(&View {
-        part: Part::Delivery,
-        state: &state.intro,
-        colours: &state.colours,
-    });
-    null.extend(publications(&[], None));
     let mut runner = SceneRun::Ready(state);
     let mut controller = Controller::seeded(&previous.wram)?;
     let mut began = previous.clone();
@@ -309,6 +303,12 @@ pub(in crate::replay) fn run(
             }
             let partial = cut == first;
             let resumed = matches!(runner, SceneRun::Pending(_));
+            let mut null = observations(&View {
+                part: Part::Delivery,
+                state: &runner.state().intro,
+                colours: &runner.state().colours,
+            });
+            null.extend(publications(&[], None));
             let (next, output) = runner
                 .advance(&content, &began, &previous, &current, controller, partial)
                 .map_err(|outcome| crate::replay::played::at(cut, outcome))?;

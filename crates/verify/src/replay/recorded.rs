@@ -502,8 +502,9 @@ impl Actual {
                 Ok(super::connected::actual(state, &content.appearance, None))
             }
             (Self::Ceres, OwnedState::Ceres(state)) => Ok(ceres::initial(state)),
-            (Self::Weapons | Self::ShotDrawing, OwnedState::WeaponsContact(state)) => {
-                Ok(weapons::initial(&state.0))
+            (Self::Weapons, OwnedState::WeaponsContact(state)) => Ok(weapons::initial(&state.0)),
+            (Self::ShotDrawing, OwnedState::WeaponsContact(state)) => {
+                Ok(super::shot_drawing::held(&state.0))
             }
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
             (Self::Hud(content), OwnedState::Hud(state)) => hud::initial(state, content),

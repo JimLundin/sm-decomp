@@ -191,7 +191,7 @@ pub(in crate::replay) fn run(
     let mut run = Run::admit(&previous, &content, &sources.rom, ROW)?;
     let count = native_count(start)
         .ok_or_else(|| data_failure(Some(start), "ordinary body origin count"))?;
-    let null = native_picture(&previous, count)?;
+    let mut null = native_picture(&previous, count)?;
     let mut digest = Vec::new();
     let mut continuations = Vec::new();
     for cut in start.saturating_add(1)..=case.end.cut_inclusive {
@@ -202,7 +202,8 @@ pub(in crate::replay) fn run(
             saved_cut,
             restore(&run).ok_or(Outcome::CheckpointFailure { cut: saved_cut })?,
         ));
-        let mut fields = run.step(controller, &previous, &current, cut, (&row, local))?;
+        let (mut fields, outputs) =
+            run.step_with_outputs(controller, &previous, &current, cut, (&row, local))?;
         for (saved_cut, restored) in &mut continuations {
             let replayed = restored.step(controller, &previous, &current, cut, (&row, local));
             if replayed.as_ref() != Ok(&fields) || restored.state != run.state {
@@ -224,6 +225,16 @@ pub(in crate::replay) fn run(
             replies: 0,
         };
         runner::record_cut(result, &mut digest, &observed, &null, cut)?;
+        let span = outputs
+            .samus_body
+            .ok_or_else(|| data_failure(Some(cut), "ordinary body span"))?;
+        let video = &run.state.room_video.video;
+        null = picture(span, |slot| {
+            (
+                piece(&video.batch.oam, slot),
+                piece(&video.memory.oam, slot),
+            )
+        });
         controller = controller.read(current.pad.0, super::polled(&current));
         previous = current;
     }

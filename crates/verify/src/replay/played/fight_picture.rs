@@ -133,12 +133,6 @@ pub(super) fn run(
     admit(&mut run.state.room_video.video, &previous)?;
     let mut digest = Vec::new();
     let mut continuation = None;
-    let video = &run.state.room_video.video;
-    let frozen = [
-        Observation::quantity(DOOR_CURSOR, -1),
-        image(PREPARED, packed(&video.batch.oam)),
-        image(PHYSICAL, packed(&video.memory.oam)),
-    ];
     for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
@@ -149,6 +143,14 @@ pub(super) fn run(
             });
             run.step(controller, &previous, &current, cut, (&row, local))
         };
+        let held = append.map(|_| {
+            let video = &run.state.room_video.video;
+            [
+                Observation::quantity(DOOR_CURSOR, -1),
+                image(PREPARED, packed(&video.batch.oam)),
+                image(PHYSICAL, packed(&video.memory.oam)),
+            ]
+        });
         let mut fields = frame(run)?;
         if let Some(checkpoint) = &mut continuation {
             let rerun = frame(checkpoint).map_err(|_| Outcome::CheckpointFailure { cut })?;
@@ -159,7 +161,7 @@ pub(super) fn run(
         if appends.first().is_some_and(|first| first.cut == cut) {
             continuation = Some(restored(run, cut)?);
         }
-        if append.is_some() {
+        if let Some(held) = held {
             fields
                 .retain(|field| matches!(field.field.as_str(), DOOR_CURSOR | PREPARED | PHYSICAL));
             let semantics: Vec<_> = fields
@@ -177,7 +179,7 @@ pub(super) fn run(
                 fields,
                 replies: 0,
             };
-            runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
+            runner::record_cut(result, &mut digest, &observed, &held, cut)?;
         }
         controller = controller.read(current.pad.0, super::polled(&current));
         previous = current;

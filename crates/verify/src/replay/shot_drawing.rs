@@ -283,6 +283,20 @@ const fn slot(slot: beam::ShotSlot) -> u8 {
     }
 }
 
+pub(super) fn held(state: &beam::State) -> Vec<Observation> {
+    let mut observations = weapons::initial(state);
+    observations.extend(
+        [
+            "weapons.update-events",
+            "contact.receivers",
+            "weapons.flying-pictures",
+            "weapons.oam-insertion",
+        ]
+        .map(|name| field(name, Vec::new())),
+    );
+    observations
+}
+
 pub(super) fn actual(
     state: &beam::State,
     output: &ShotDrawingOutputs,

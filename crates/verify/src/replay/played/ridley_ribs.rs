@@ -258,11 +258,6 @@ pub(super) fn run(
     case: &Case,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    let frozen = observations(
-        clock(carried(run, previous.index)?),
-        &[],
-        &run.state.room_video.video.memory.vram,
-    )?;
     let mut digest = Vec::new();
     let mut execute = || -> Result<(), Outcome> {
         for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
@@ -273,8 +268,13 @@ pub(super) fn run(
             let held = matches!(case.expectations.played,
                 Some(PlayedWindow::RibsReveal { cut: reveal }) if reveal == cut)
             .then(|| run.clone());
+            let null = observations(
+                clock(carried(run, previous.index)?),
+                &[],
+                &run.state.room_video.video.memory.vram,
+            )?;
             let fields = run.step(controller, &previous, &current, cut, (FIGHT, cut))?;
-            record_fields(fields, cut, result, &mut digest, &frozen)?;
+            record_fields(fields, cut, result, &mut digest, &null)?;
             if let Some(origin) = held {
                 pending_control(
                     origin,
@@ -307,7 +307,7 @@ fn record_fields(
     cut: u64,
     result: &mut CaseResult,
     digest: &mut Vec<u8>,
-    frozen: &[Observation],
+    null: &[Observation],
 ) -> Result<(), Outcome> {
     fields.retain(|field| field.field.starts_with("ridley.ribs."));
     let [beat, wait, uploads, _, _] = fields.as_slice() else {
@@ -323,7 +323,7 @@ fn record_fields(
         fields,
         replies: 0,
     };
-    runner::record_cut(result, digest, &observed, frozen, cut)
+    runner::record_cut(result, digest, &observed, null, cut)
 }
 
 fn carried(run: &Run<'_>, cut: u64) -> Result<FightRibs, Outcome> {
@@ -523,10 +523,6 @@ mod tests {
         ));
     }
 
-    fn frozen(record: &FrameRecord) -> Result<[Observation; 5], Outcome> {
-        observations(clock(decode_clock(&record.wram)?), &[], &record.vram)
-    }
-
     fn selected_art(art: &Art, native: &[Receipt]) -> Option<Strips> {
         [art.closed, art.partly_open, art.wide]
             .into_iter()
@@ -550,7 +546,7 @@ mod tests {
             video.memory.vram[span(start)].copy_from_slice(&strip.words);
         }
 
-        let frozen = frozen(&rows.record(0).unwrap()).unwrap();
+        let mut held = None;
         let mut null_cuts = 0_usize;
         let mut null_fields = 0_usize;
         let mut reveals = 0;
@@ -569,17 +565,18 @@ mod tests {
                 assert_eq!(clock, (Beat::Wide, 20), "ribs clock at fight cut {cut}");
             }
             let native = receipts(&record).unwrap();
-            if cut > 0 {
+            if let Some(previous) = &held {
                 let expected = observations(clock, &native, &record.vram).unwrap();
-                null_cuts = null_cuts.saturating_add(usize::from(expected == frozen));
+                null_cuts = null_cuts.saturating_add(usize::from(&expected == previous));
                 null_fields = null_fields.saturating_add(
                     expected[..2]
                         .iter()
-                        .zip(&frozen)
+                        .zip(previous)
                         .filter(|(a, b)| a == b)
                         .count(),
                 );
             }
+            held = Some(observations(clock, &[], &record.vram).unwrap());
             if !native.is_empty() {
                 assert_eq!(
                     native.len(),
@@ -621,7 +618,7 @@ mod tests {
             }
         }
         assert_eq!(reveals, 30);
-        assert_eq!((null_cuts, null_fields), (576, 1321));
+        assert_eq!((null_cuts, null_fields), (1033, 2617));
         assert_eq!(first_held_clock_difference, Some(FIRST_REVEAL));
         assert_eq!(first_omitted_difference, Some(597));
         tests::diagnostic(format_args!(

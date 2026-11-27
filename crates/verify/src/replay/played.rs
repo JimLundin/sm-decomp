@@ -1133,7 +1133,7 @@ impl<'a> Run<'a> {
         self.population_fields(frame, retiring_return, &mut expected, &mut actual)?;
         if shaft_native::compared(frame) {
             expected.extend(shaft_native::expected(frame)?);
-            actual.extend(shaft_native::actual(&self.state, outputs));
+            actual.extend(shaft_native::actual(&self.state, Some(outputs)));
         }
         // A frame of play answers the escape's scene whether its time has run out.
         if let Some(hud) = &outputs.hud {
