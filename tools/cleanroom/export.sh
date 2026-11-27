@@ -39,6 +39,12 @@ dest=${2:-${CLEANROOM_ROOT:-/cleanroom}/$domain}
 src=$(git rev-parse --show-toplevel)
 sha=$(git rev-parse --verify "$commit^{commit}")
 
+# Older workspaces patched registry sources with local files. Only their exporter knows
+# which copies to carry alongside their lock.
+if git grep -qE '^[[:space:]]*\[patch\.crates-io\][[:space:]]*(#.*)?$' "$sha" -- Cargo.toml; then
+  die "$sha patches crates.io; run tools/cleanroom/export.sh from a worktree checked out at $sha"
+fi
+
 # DEST is outside every worktree of this repository and outside the project's directories
 # (the checkouts beside the main one, named sm-decomp*).
 mkdir -p "$dest"

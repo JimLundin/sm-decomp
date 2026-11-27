@@ -65,7 +65,7 @@ deny = [
   { crate = "save_files", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
 ]
 
-# Only these locked registry releases need a build script. This also checks workspace crates.
+# Only these versions may run a build script. check_crate_rules.sh requires a crates.io source.
 [bans.build]
-allow-build-scripts = ["proc-macro2@=1.0.107", "quote@=1.0.47", "serde@=1.0.229", "serde_core@=1.0.229"]
+allow-build-scripts = ["proc-macro2@1.0.107", "quote@1.0.47", "serde@1.0.229", "serde_core@1.0.229"]
 include-workspace = true

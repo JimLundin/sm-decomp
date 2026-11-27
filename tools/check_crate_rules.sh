@@ -5,10 +5,20 @@
 # `cargo deny check bans` (deny.toml); `#![feature]`, `allow`, `cfg(verify)` and the clean room's
 # capability rule are the workspace's forbidden lints (Cargo.toml, tools/cleanroom/clippy.toml).
 # Run from the repository root.
-set -u
+set -uo pipefail
 engine="data game runtime app"
 bad=0
 fail() { echo "$1"; bad=1; }
+
+# cargo-deny's build-script exceptions match package names and versions. A path or Git copy
+# can have the same identity, so check Cargo's resolved source before accepting its script.
+if ! non_registry_scripts=$(cargo metadata --locked --all-features --format-version 1 | jq -r '
+  .packages[] | select(.source != "registry+https://github.com/rust-lang/crates.io-index")
+  | select(any(.targets[].kind[]; . == "custom-build")) | .id'); then
+  fail "could not inspect Cargo build-script sources"
+elif [ -n "$non_registry_scripts" ]; then
+  fail "build scripts outside crates.io: $non_registry_scripts"
+fi
 
 # Rust source lines matching an extended regex, outside line comments. $1 names the check.
 scan() {
