@@ -429,8 +429,9 @@ shares one object store and every ref, so a sparse checkout is not enough. So:
 - **The session runs in a box.** `cleanroom run` starts the agent in a container with no
   network whose file system is the export, the toolchain and the tool, so nothing else is
   there to read. The model's API is the one way out, through a relay that holds the
-  credential and refuses a request that asks the API itself to reach the web. A Rust test
-  proves the box reads its export and nothing beside it.
+  credential and refuses a request that asks the API itself to reach the web. The CLI runs
+  with `--bare`, no setting sources, an empty MCP configuration and no slash commands. A Rust
+  test proves the box reads its export and nothing beside it.
 - **Scans run on everything that enters the export or the clean crates**, briefs included
   (`cleanroom scan`; `cleanroom export` and `run` scan the brief, and `cleanroom test` and the
   import scan what the implementer changed, `cleanroom test` through the relay, since the

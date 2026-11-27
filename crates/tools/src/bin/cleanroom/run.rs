@@ -290,33 +290,22 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
     )?;
     cell.mount(&lane.dir.join("api.sock"), Path::new(SOCKET), true)?;
     let model = std::env::var("CLEANROOM_MODEL").unwrap_or_else(|_| "opus".to_owned());
+    let mut argv = vec![
+        "/usr/bin/python3".to_owned(),
+        "-I".to_owned(),
+        format!("{TOOLS}/box_relay.py"),
+        "box".to_owned(),
+        PORT.to_owned(),
+        SOCKET.to_owned(),
+        SESSION_SECONDS.to_owned(),
+        "--".to_owned(),
+    ];
+    argv.extend(session_argv(&model));
+    let argv: Vec<&str> = argv.iter().map(String::as_str).collect();
     let transcript = lane.dir.join("transcript.jsonl");
     let container = format!("cleanroom-{name}-{}", std::process::id());
     let status = cell
-        .command(
-            &container,
-            &[
-                "/usr/bin/python3",
-                "-I",
-                &format!("{TOOLS}/box_relay.py"),
-                "box",
-                PORT,
-                SOCKET,
-                SESSION_SECONDS,
-                "--",
-                &format!("{TOOLS}/claude"),
-                "-p",
-                "--verbose",
-                "--output-format",
-                "stream-json",
-                "--model",
-                &model,
-                "--tools",
-                "Read,Edit,Write,Bash,Glob,Grep",
-                "--permission-mode",
-                "bypassPermissions",
-            ],
-        )
+        .command(&container, &argv)
         .stdin(File::open(lane.brief()).map_err(|e| e.to_string())?)
         .stdout(File::create(&transcript).map_err(|e| e.to_string())?)
         .stderr(File::create(lane.dir.join("stderr.txt")).map_err(|e| e.to_string())?)
@@ -345,6 +334,33 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
         );
         Ok((out, true))
     }
+}
+
+/// The CLI's command line. Besides the box, the CLI loads no settings file, MCP server, skill,
+/// command, hook, plugin sync or CLAUDE.md of its own accord.
+fn session_argv(model: &str) -> Vec<String> {
+    [
+        &format!("{TOOLS}/claude"),
+        "-p",
+        "--verbose",
+        "--output-format",
+        "stream-json",
+        "--model",
+        model,
+        "--bare",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--mcp-config",
+        r#"{"mcpServers":{}}"#,
+        "--disable-slash-commands",
+        "--tools",
+        "Read,Edit,Write,Bash,Glob,Grep",
+        "--permission-mode",
+        "bypassPermissions",
+    ]
+    .map(str::to_owned)
+    .to_vec()
 }
 
 pub fn test() -> Result<(String, bool), String> {
@@ -525,9 +541,26 @@ mod tests {
     use std::os::unix::net::UnixListener;
     use std::path::Path;
 
-    use super::{Sandbox, ScanFile, image, names_in, scan_remote};
+    use super::{Sandbox, ScanFile, image, names_in, scan_remote, session_argv};
     use crate::lexicon::Lexicon;
     use crate::scan::Allow;
+
+    #[test]
+    fn the_cli_loads_no_settings_mcp_servers_or_commands_of_its_own() {
+        let argv = session_argv("opus");
+        let after = |flag: &str| {
+            let at = argv.iter().position(|a| a == flag);
+            at.and_then(|i| argv.get(i.saturating_add(1))).cloned()
+        };
+        for flag in ["--bare", "--strict-mcp-config", "--disable-slash-commands"] {
+            assert!(argv.iter().any(|a| a == flag), "{flag}");
+        }
+        assert_eq!(after("--setting-sources").as_deref(), Some(""));
+        assert_eq!(
+            after("--mcp-config").as_deref(),
+            Some(r#"{"mcpServers":{}}"#)
+        );
+    }
 
     #[test]
     fn the_name_scan_answers_counts_and_lines_and_never_the_words() {

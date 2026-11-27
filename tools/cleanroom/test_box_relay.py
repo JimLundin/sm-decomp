@@ -138,7 +138,7 @@ class Env(unittest.TestCase):
             "ANTHROPIC_BASE_URL": "https://gw.example/lms/proxy/anthropic", "ANTHROPIC_AUTH_TOKEN": "tok-secret",
             "ANTHROPIC_CUSTOM_HEADERS": "X-Gateway-Key: gw-secret", "ANTHROPIC_FOUNDRY_API_KEY": "fk-secret",
             "ANTHROPIC_MODEL": "opus", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
-        self.assertEqual(env, {"ANTHROPIC_AUTH_TOKEN": "cleanroom-relay",
+        self.assertEqual(env, {"ANTHROPIC_API_KEY": "cleanroom-relay",
                                "ANTHROPIC_BASE_URL": "http://127.0.0.1:8765/lms/proxy/anthropic",
                                "ANTHROPIC_MODEL": "opus", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
         self.assertIn("ANTHROPIC_CUSTOM_HEADERS", err)

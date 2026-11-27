@@ -228,12 +228,11 @@ def box_env(auth: str, port: int) -> dict[str, str]:
     if kept:
         print(f"box_relay: kept outside the box: {', '.join(kept)}", file=sys.stderr)
     out["ANTHROPIC_BASE_URL"] = f"http://127.0.0.1:{port}{base.path.rstrip('/')}"
-    # The CLI sends what it holds the way the real one goes: a token as a bearer, a key or a
-    # helper's output as x-api-key. The relay replaces either.
-    kind = "ANTHROPIC_AUTH_TOKEN" if "ANTHROPIC_AUTH_TOKEN" in env and not helper else "ANTHROPIC_API_KEY"
+    # The CLI runs with --bare, which takes ANTHROPIC_API_KEY alone, so the placeholder is a key
+    # whatever the relay holds; the relay replaces it with the real credential.
     if not (helper or any(k in env for k in CREDENTIALS)):
         sys.exit("box_relay: no credential: no apiKeyHelper, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN")
-    out[kind] = PLACEHOLDER
+    out["ANTHROPIC_API_KEY"] = PLACEHOLDER
     return out
 
 
