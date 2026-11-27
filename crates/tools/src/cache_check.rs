@@ -27,7 +27,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     let [lock_path, bundle, root, id, options @ ..] = args else {
         return Err(USAGE.to_owned());
     };
-    let (watches, carry_watches) = match options {
+    let (requested, carry_watches) = match options {
         [] => ("", false),
         [list] => (list.as_str(), false),
         [option, list] if option == "--carry-watches" => (list.as_str(), true),
@@ -65,19 +65,19 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if cache.pictures() {
         return Err(format!("{id}: expected a lean cache"));
     }
-    let mut watched = cache.watched().to_vec();
-    if !watches.is_empty() {
-        for address in watches.split(',') {
+    let mut captured = cache.watched().to_vec();
+    if !requested.is_empty() {
+        for address in requested.split(',') {
             let pc = u32::from_str_radix(
                 address.trim_start_matches('$').replace(':', "").as_str(),
                 16,
             )
             .map_err(|_| format!("invalid watch address: {address}"))?;
-            if !watched.contains(&pc) {
+            if !captured.contains(&pc) {
                 if !carry_watches {
                     return Err(format!("{id}: cache did not watch {pc:06x}"));
                 }
-                watched.push(pc);
+                captured.push(pc);
             }
         }
     }
@@ -99,7 +99,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
         record.map_err(invalid)?;
     }
     if carry_watches {
-        let addresses: Vec<_> = watched.iter().map(|pc| format!("{pc:06x}")).collect();
+        let addresses: Vec<_> = captured.iter().map(|pc| format!("{pc:06x}")).collect();
         return Ok(format!("{}\n", addresses.join(",")));
     }
     Ok(format!("{}\n", row.frames.0))
