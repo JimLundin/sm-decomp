@@ -161,3 +161,63 @@ fn a_test_that_includes_the_spec_reads_docs() {
         "const V: &str = include_str!(\"../../../../scenarios/vectors/demo.toml\"); // docs/"
     ));
 }
+
+/// What clippy reports on SOURCE, a crate of its own built under the clean crates'
+/// `.clippy.toml`, with the capability lints the workspace forbids.
+fn capability(name: &str, source: &str) -> String {
+    let dir = std::env::temp_dir().join(format!(
+        "cleanroom-capability-{}-{name}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(dir.join("src")).unwrap();
+    fs::write(
+        dir.join("Cargo.toml"),
+        "[package]\nname = \"probe\"\nversion = \"0.0.0\"\nedition = \"2024\"\n\n[workspace]\n",
+    )
+    .unwrap();
+    fs::write(dir.join("src/text.rs"), "\"text\"\n").unwrap();
+    fs::write(
+        dir.join("src/lib.rs"),
+        format!(
+            "#![forbid(clippy::disallowed_macros, clippy::disallowed_methods, clippy::disallowed_types)]\n{source}"
+        ),
+    )
+    .unwrap();
+    let out = std::process::Command::new("cargo")
+        .current_dir(&dir)
+        .env("CLIPPY_CONF_DIR", repo().join("crates/clean"))
+        .env("CARGO_TARGET_DIR", dir.join("target"))
+        .args(["clippy", "--offline", "-q"])
+        .output()
+        .unwrap();
+    let _ = fs::remove_dir_all(&dir);
+    String::from_utf8_lossy(&out.stderr).into_owned()
+}
+
+#[test]
+fn the_capability_rule_refuses_unix_sockets_symlinks_and_raw_descriptors() {
+    let found = capability(
+        "sockets",
+        "pub fn reach() {\n\
+         let _ = std::os::unix::net::UnixStream::connect(\"/var/run/docker.sock\");\n\
+         let _ = std::os::unix::net::UnixListener::bind(\"/tmp/a\");\n\
+         let _ = std::os::unix::net::UnixDatagram::unbound();\n\
+         let _ = std::os::unix::fs::symlink(\"/\", \"/tmp/b\");\n\
+         let _ = std::fs::soft_link(\"/\", \"/tmp/c\");\n\
+         }\n\
+         pub fn adopt<T: std::os::fd::FromRawFd>() -> T {\n\
+         unsafe { T::from_raw_fd(3) }\n\
+         }\n",
+    );
+    for path in [
+        "type `std::os::unix::net::UnixStream`",
+        "type `std::os::unix::net::UnixListener`",
+        "type `std::os::unix::net::UnixDatagram`",
+        "method `std::os::unix::fs::symlink`",
+        "method `std::fs::soft_link`",
+        "type `std::os::fd::FromRawFd`",
+    ] {
+        assert!(found.contains(&format!("disallowed {path}")), "{path}: {found}");
+    }
+}
