@@ -1,15 +1,14 @@
 //! Indexed shaft actors from the carried Ceres return.
 
 use super::{
-    Case, CaseKind, CaseResult, ContentProvider, ExpectedCut, ExpectedProvider, ObservationId,
-    Outcome, Responsibility, Run, Start, data_failure, runner,
+    Case, CaseKind, ContentProvider, ExpectedCut, ExpectedProvider, ObservationId, Outcome,
+    Responsibility, Start, data_failure, runner,
 };
 use crate::replay::{
-    compare::Observation,
-    played::{Controller, at, frame, polled, rows::Rows, shaft_restore::Checkpoint},
+    played::{at, frame, shaft_restore::Checkpoint},
+    readers::FieldRole,
     result::Counts,
 };
-use oracle_record::FrameRecord;
 
 use crate::replay::index::PlayedWindow;
 const SEMANTICS: usize = 5;
@@ -71,28 +70,17 @@ fn event(field: &str) -> bool {
 }
 
 pub(super) fn run(
-    run: &mut Run<'_>,
-    rows: &mut Rows<'_>,
-    mut previous: FrameRecord,
-    mut controller: Controller,
+    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     let first = case
         .first_cut()
         .ok_or_else(|| data_failure(None, "shaft actor comparison window"))?;
-    let mut digest = Vec::new();
-    for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
-        let current = rows.record(cut)?;
-        if current.video_frame != previous.video_frame.wrapping_add(1) {
-            return Err(data_failure(Some(cut), "played rows join"));
-        }
-        let (row, local) = rows.place(cut)?;
-        let place = (row.as_str(), local);
-        let step =
-            |run: &mut Run<'_>| run.step_with_outputs(controller, &previous, &current, cut, place);
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
         if cut < first {
-            step(run).map_err(|outcome| at(cut, outcome))?;
+            turn.advance(run).map_err(|outcome| at(cut, outcome))?;
         } else {
             let mut frozen = super::super::shaft_native::actual(&run.state, None);
             frozen.push(frame::random_observation(run.state.frame.random));
@@ -105,54 +93,41 @@ pub(super) fn run(
             let mut restored = Checkpoint::capture(run)
                 .and_then(|saved| saved.restore(run))
                 .map_err(|_| Outcome::CheckpointFailure { cut })?;
-            let (mut fields, outputs) = step(run).map_err(|outcome| at(cut, outcome))?;
-            let (replayed, effects) = step(&mut restored).map_err(|outcome| at(cut, outcome))?;
-            if replayed != fields
-                || effects != outputs
-                || restored.state != run.state
-                || restored.return_timing != run.return_timing
-                || restored.warning_picture != run.warning_picture
-            {
-                return Err(Outcome::CheckpointFailure { cut });
-            }
-            fields.retain(|field| {
-                semantic(&field.field)
-                    || event(&field.field)
-                    || field.field.starts_with("room-video.shaft-")
+            let direct = turn.advance(run).map_err(|outcome| at(cut, outcome))?;
+            turn.check_continuation(&mut restored, run, &direct)
+                .map_err(|outcome| at(cut, outcome))?;
+            let (fields, _) = direct;
+            let observed = ExpectedCut::select(fields, |field| {
+                if semantic(field) {
+                    Some(FieldRole::Semantic)
+                } else {
+                    (event(field) || field.starts_with("room-video.shaft-"))
+                        .then_some(FieldRole::Output)
+                }
             });
-            let semantics: Vec<Observation> = fields
-                .iter()
-                .filter(|field| semantic(&field.field))
-                .cloned()
-                .collect();
-            if semantics.len() != SEMANTICS
-                || fields.iter().filter(|field| event(&field.field)).count() != EVENTS
+            if observed.semantic_count != SEMANTICS
+                || observed
+                    .fields
+                    .iter()
+                    .filter(|field| event(&field.field))
+                    .count()
+                    != EVENTS
             {
                 return Err(data_failure(
                     Some(cut),
                     "shaft actor comparison opportunity",
                 ));
             }
-            let observed = ExpectedCut {
-                semantic_count: semantics.len(),
-                output_count: fields.len().saturating_sub(semantics.len()),
-                semantics,
-                fields,
-                replies: 0,
-            };
-            runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
-            result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-            result.counts.restorations = result.counts.restorations.saturating_add(1);
+            result.record(&observed, &frozen, cut)?;
+
+            result.restored(1)?;
             if pending {
-                result.counts.pending_boundaries =
-                    result.counts.pending_boundaries.saturating_add(1);
-                result.counts.pending_restorations =
-                    result.counts.pending_restorations.saturating_add(1);
+                result.pending()?;
+                result.resumed()?;
             }
         }
-        controller = controller.read(current.pad.0, polled(&current));
-        previous = current;
-    }
+        Ok(())
+    })?;
     if !valid_counts(case, &result.counts) {
         return Err(data_failure(
             Some(case.end.cut_inclusive),

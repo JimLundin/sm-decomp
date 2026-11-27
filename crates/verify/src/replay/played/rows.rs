@@ -66,7 +66,104 @@ pub(in crate::replay) struct Rows<'a> {
     pub(super) clock_cuts: Vec<u64>,
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct Turn<'a> {
+    pub(super) controller: super::Controller,
+    pub(super) previous: &'a FrameRecord,
+    pub(super) current: &'a FrameRecord,
+    pub(super) cut: u64,
+    pub(super) place: (&'a str, u64),
+}
+
+impl Turn<'_> {
+    pub(super) fn advance(
+        &self,
+        run: &mut super::Run<'_>,
+    ) -> Result<
+        (
+            Vec<crate::replay::compare::Observation>,
+            game::production::played::Outputs,
+        ),
+        Outcome,
+    > {
+        run.step_with_outputs(
+            self.controller,
+            self.previous,
+            self.current,
+            self.cut,
+            self.place,
+        )
+    }
+
+    pub(super) fn check_continuation(
+        &self,
+        restored: &mut super::Run<'_>,
+        live: &super::Run<'_>,
+        direct: &(
+            Vec<crate::replay::compare::Observation>,
+            game::production::played::Outputs,
+        ),
+    ) -> Result<(), Outcome> {
+        let replayed = self.advance(restored)?;
+        if replayed == *direct && Self::same_room(restored, live) {
+            Ok(())
+        } else {
+            Err(Outcome::CheckpointFailure { cut: self.cut })
+        }
+    }
+
+    pub(super) fn same_room(restored: &super::Run<'_>, live: &super::Run<'_>) -> bool {
+        restored.state == live.state
+            && restored.return_timing == live.return_timing
+            && restored.warning_picture == live.warning_picture
+    }
+
+    pub(super) fn fields(
+        &self,
+        run: &mut super::Run<'_>,
+    ) -> Result<Vec<crate::replay::compare::Observation>, Outcome> {
+        run.step(
+            self.controller,
+            self.previous,
+            self.current,
+            self.cut,
+            self.place,
+        )
+    }
+}
+
 impl<'a> Rows<'a> {
+    pub(super) fn replay<S>(
+        &mut self,
+        mut previous: FrameRecord,
+        mut controller: super::Controller,
+        cuts: std::ops::RangeInclusive<u64>,
+        mut state: S,
+        mut step: impl FnMut(S, Turn<'_>, &mut Self) -> Result<S, Outcome>,
+    ) -> Result<S, Outcome> {
+        for cut in cuts {
+            let current = self.record(cut)?;
+            if current.video_frame != previous.video_frame.wrapping_add(1) {
+                return Err(data_failure(Some(cut), "played rows join"));
+            }
+            let (row, local) = self.place(cut)?;
+            state = step(
+                state,
+                Turn {
+                    controller,
+                    previous: &previous,
+                    current: &current,
+                    cut,
+                    place: (&row, local),
+                },
+                self,
+            )?;
+            controller = controller.read(current.pad.0, super::polled(&current));
+            previous = current;
+        }
+        Ok(state)
+    }
+
     /// The rows from `row` on, their records in `cache` and their seeds' movie frames in the
     /// tables of `root`.
     pub(in crate::replay) fn open(

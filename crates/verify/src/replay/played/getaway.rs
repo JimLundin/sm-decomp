@@ -11,7 +11,7 @@ use crate::replay::{
     },
     movement,
     readers::ExpectedCut,
-    result::{CaseResult, Outcome},
+    result::Outcome,
     runner,
 };
 use crate::source::WramWord;
@@ -241,7 +241,7 @@ fn advance(
 pub(in crate::replay) fn run(
     case: &Case,
     sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     let Start::CacheCut { frame: start } = case.start else {
         return Err(data_failure(None, "scoped getaway start"));
@@ -273,29 +273,33 @@ pub(in crate::replay) fn run(
             .radius(state.movement.0.pose)
             .ok_or_else(|| data_failure(None, "getaway pose body"))
     };
-    let mut digest = Vec::new();
-    let mut restored = Vec::new();
-    for cut in start.saturating_add(1)..=case.end.cut_inclusive {
-        let prior = cut.saturating_sub(1);
-        let saved = canonical::to_bytes(&state);
-        restored.push(
-            canonical::from_bytes(&saved).map_err(|_| Outcome::CheckpointFailure { cut: prior })?,
-        );
-        let input = input(&inputs.record(prior)?.wram, &movement)?;
-        let body = radius(&state)?;
-        let null = actual(&state, &appearance, body);
-        let publication = advance(&mut state, &input, content, cut)?;
-        let expected = expected(&records.record(cut)?.wram, &appearance)?;
-        compared(cut, &expected.fields, &actual(&state, &appearance, body))?;
-        runner::record_cut(result, &mut digest, &expected, &null, cut)?;
-        for continuation in &mut restored {
-            let output = advance(continuation, &input, content, cut)?;
-            if *continuation != state || output != publication {
-                return Err(Outcome::CheckpointFailure { cut });
-            }
-        }
-    }
-    result.counts.restorations = restored.len();
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    Ok(())
+    let mut restored = runner::Continuations::new();
+    let controller = super::Controller::seeded(&seed.wram)?;
+    inputs.replay(
+        seed,
+        controller,
+        start.saturating_add(1)..=case.end.cut_inclusive,
+        (),
+        |(), turn, _| {
+            let cut = turn.cut;
+            let prior = cut.saturating_sub(1);
+            let saved = canonical::from_bytes(&canonical::to_bytes(&state))
+                .map_err(|_| Outcome::CheckpointFailure { cut: prior })?;
+            let input = input(&turn.previous.wram, &movement)?;
+            let body = radius(&state)?;
+            let null = actual(&state, &appearance, body);
+            let publication = advance(&mut state, &input, content, cut)?;
+            let expected = expected(&records.record(cut)?.wram, &appearance)?;
+            compared(cut, &expected.fields, &actual(&state, &appearance, body))?;
+            result.record(&expected, &null, cut)?;
+            restored.check(prior, saved, |_, continuation| {
+                let output = advance(continuation, &input, content, cut)?;
+                if *continuation != state || output != publication {
+                    return Err(Outcome::CheckpointFailure { cut });
+                }
+                Ok(())
+            })
+        },
+    )?;
+    restored.finish(result)
 }

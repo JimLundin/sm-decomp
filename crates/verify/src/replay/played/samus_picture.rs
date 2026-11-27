@@ -4,17 +4,14 @@ use core::ops::Range;
 
 use game::state::video::{OAM_SPRITES, Oam, Video};
 
-use super::{Frame, Outcome, Run, open_rows, read_lock, seed_controller, witnesses};
+use super::{Frame, Outcome, Run, witnesses};
 use crate::replay::{
-    Sources, appearance,
     compare::Observation,
-    connected, data_failure,
+    data_failure,
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
     },
-    movement,
-    readers::ExpectedCut,
-    result::CaseResult,
+    readers::{ExpectedCut, FieldRole},
     runner,
 };
 use oracle_record::FrameRecord;
@@ -171,66 +168,47 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
         && case.checkpoints
 }
 
-pub(in crate::replay) fn run(
+pub(in crate::replay::played) fn run(
+    mut room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let Start::CacheCut { frame: start } = case.start else {
-        return Err(data_failure(None, "ordinary body origin"));
-    };
-    let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(start)?;
-    let mut controller = seed_controller(&previous)?;
-    let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
-    };
-    let mut run = Run::for_case(&previous, &content, sources, case)?;
-    let (row, local) = rows.place(start)?;
-    let slots = run
+    let start = room.seed.index;
+    let (row, local) = room.rows.place(start)?;
+    let slots = room
+        .run
         .witnesses
         .body(&row, local, local)
         .and_then(|trace| trace.slots(local))
         .ok_or_else(|| data_failure(Some(start), "ordinary body origin count"))?;
-    let mut null = native_picture(&previous, slots)?;
-    let mut digest = Vec::new();
-    let mut continuations = Vec::new();
-    for cut in start.saturating_add(1)..=case.end.cut_inclusive {
-        let current = rows.record(cut)?;
-        let (row, local) = rows.place(cut)?;
+    let mut null = native_picture(&room.seed, slots)?;
+    let mut continuations = runner::Continuations::new();
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
+        let (row, local) = turn.place;
+        let previous = turn.previous;
         if row != case.row || local != cut {
             return Err(data_failure(Some(cut), "ordinary body trace row"));
         }
         let saved_cut = previous.index;
-        continuations.push((
-            saved_cut,
-            restore(&run).ok_or(Outcome::CheckpointFailure { cut: saved_cut })?,
-        ));
-        let (mut fields, outputs) =
-            run.step_with_outputs(controller, &previous, &current, cut, (&row, local))?;
-        for (saved_cut, restored) in &mut continuations {
-            let replayed = restored.step(controller, &previous, &current, cut, (&row, local));
-            if replayed.as_ref() != Ok(&fields) || restored.state != run.state {
-                return Err(Outcome::CheckpointFailure { cut: *saved_cut });
+        let saved = restore(run).ok_or(Outcome::CheckpointFailure { cut: saved_cut })?;
+        let (fields, outputs) = turn.advance(run)?;
+        continuations.check(saved_cut, saved, |origin, restored| {
+            if turn.fields(restored).as_ref() != Ok(&fields) || restored.state != run.state {
+                return Err(Outcome::CheckpointFailure { cut: origin });
             }
-        }
-        fields.retain(|field| field.field.starts_with("samus-oam."));
-        if fields.len() != OUTPUTS.len() {
+            Ok(())
+        })?;
+        let observed = ExpectedCut::select(fields, |field| {
+            field.starts_with("samus-oam.").then_some(FieldRole::Output)
+        });
+        if observed.output_count != OUTPUTS.len() {
             return Err(data_failure(
                 Some(cut),
                 "ordinary body comparison opportunity",
             ));
         }
-        let observed = ExpectedCut {
-            semantic_count: 0,
-            output_count: fields.len(),
-            semantics: Vec::new(),
-            fields,
-            replies: 0,
-        };
-        runner::record_cut(result, &mut digest, &observed, &null, cut)?;
+        result.record(&observed, &null, cut)?;
         let span = outputs
             .samus_body
             .ok_or_else(|| data_failure(Some(cut), "ordinary body span"))?;
@@ -241,12 +219,9 @@ pub(in crate::replay) fn run(
                 piece(&video.memory.oam, slot),
             )
         });
-        controller = controller.read(current.pad.0, super::polled(&current));
-        previous = current;
-    }
-    result.counts.restorations = continuations.len();
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    Ok(())
+        Ok(())
+    })?;
+    continuations.finish(result)
 }
 
 // The room supplies context. Resume the existing canonical owners that carry

@@ -1,6 +1,6 @@
 //! Native receipts for the ordinary fight's object-strip transfers.
 
-use super::{Controller, Frame, Run, hud, movement, parity, rows::Rows};
+use super::{Controller, Frame, Run, hud, movement, parity};
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
 use crate::replay::{
     index::{
@@ -8,7 +8,6 @@ use crate::replay::{
         PlayedWindow, Responsibility, Start,
     },
     readers::ExpectedCut,
-    result::CaseResult,
     runner,
 };
 use crate::source::{VRAM_WRITE_QUEUE, WramWord};
@@ -243,72 +242,60 @@ pub(super) fn valid(case: &Case) -> bool {
 }
 
 pub(super) fn run(
-    run: &mut Run<'_>,
-    rows: &mut Rows<'_>,
-    mut previous: FrameRecord,
-    mut controller: Controller,
+    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let mut digest = Vec::new();
-    let mut execute = || -> Result<(), Outcome> {
-        for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
-            let current = rows.record(cut)?;
-            if current.video_frame != previous.video_frame.wrapping_add(1) {
-                return Err(data_failure(Some(cut), "played rows join"));
-            }
-            let held = matches!(case.expectations.played,
+    room.replay(case, |run, turn, rows| {
+        let cut = turn.cut;
+        let (row, local) = turn.place;
+        let previous = turn.previous;
+        let current = turn.current;
+        let controller = turn.controller;
+        let held = matches!(case.expectations.played,
                 Some(PlayedWindow::RibsReveal { cut: reveal }) if reveal == cut)
-            .then(|| run.clone());
-            let null = observations(
-                clock(carried(run, previous.index)?),
-                &[],
-                &run.state.room_video.video.memory.vram,
-            )?;
-            let (row, local) = rows.place(cut)?;
-            if row != case.row || local != cut {
-                return Err(data_failure(Some(cut), "ribs trace row"));
-            }
-            let fields = run.step(controller, &previous, &current, cut, (&row, local))?;
-            record_fields(fields, cut, result, &mut digest, &null)?;
-            if let Some(origin) = held {
-                pending_control(
-                    origin,
-                    controller,
-                    &previous,
-                    &current,
-                    &rows.record(
-                        cut.checked_add(1)
-                            .ok_or_else(|| data_failure(Some(cut), "ribs release cut"))?,
-                    )?,
-                )?;
-                result.counts.restorations = 1;
-                result.counts.pending_boundaries = 1;
-                result.counts.pending_restorations = 1;
-            }
-            controller = controller.read(current.pad.0, super::polled(&current));
-            previous = current;
+        .then(|| run.clone());
+        let null = observations(
+            clock(carried(run, previous.index)?),
+            &[],
+            &run.state.room_video.video.memory.vram,
+        )?;
+
+        if row != case.row || local != cut {
+            return Err(data_failure(Some(cut), "ribs trace row"));
         }
-        if result.counts.publications == 0 {
-            return Err(data_failure(
-                Some(case.end.cut_inclusive),
-                "ribs publication opportunity",
-            ));
+        let fields = turn.fields(run)?;
+        record_fields(fields, cut, result, &null)?;
+        if let Some(origin) = held {
+            pending_control(
+                origin,
+                controller,
+                previous,
+                current,
+                &rows.record(
+                    cut.checked_add(1)
+                        .ok_or_else(|| data_failure(Some(cut), "ribs release cut"))?,
+                )?,
+            )?;
+            result.restored(1)?;
+            result.pending()?;
+            result.resumed()?;
         }
         Ok(())
-    };
-    let outcome = execute();
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    })?;
+    if result.counts.publications == 0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "ribs publication opportunity",
+        ));
     }
-    outcome
+    Ok(())
 }
 
 fn record_fields(
     mut fields: Vec<Observation>,
     cut: u64,
-    result: &mut CaseResult,
-    digest: &mut Vec<u8>,
+    result: &mut runner::Receipt,
     null: &[Observation],
 ) -> Result<(), Outcome> {
     fields.retain(|field| field.field.starts_with("ridley.ribs."));
@@ -316,7 +303,7 @@ fn record_fields(
         return Err(data_failure(Some(cut), "ribs replay observations"));
     };
     if !uploads.bytes.is_empty() {
-        result.counts.publications = result.counts.publications.saturating_add(1);
+        result.published()?;
     }
     let observed = ExpectedCut {
         semantic_count: 2,
@@ -325,7 +312,7 @@ fn record_fields(
         fields,
         replies: 0,
     };
-    runner::record_cut(result, digest, &observed, null, cut)
+    result.record(&observed, null, cut)
 }
 
 fn carried(run: &Run<'_>, cut: u64) -> Result<FightRibs, Outcome> {

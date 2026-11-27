@@ -115,14 +115,14 @@ pub(super) fn baby(
 
 use super::{
     Controller, FrameEnd, Part, Scenes, View, brightness, brightness_of, event_observation,
-    finished, frame_input, intro, observations, polled, published_palette, shown,
+    finished, frame_input, intro, observations, published_palette, shown,
 };
 use crate::replay::compare::Observation;
 use crate::replay::index::{Case, Start};
 use crate::replay::played::{open_rows, read_lock};
 use crate::replay::readers::ExpectedCut;
-use crate::replay::result::{CaseResult, Counts};
-use crate::replay::{Sources, compared, runner::record_cut};
+use crate::replay::result::Counts;
+use crate::replay::{Sources, compared, runner};
 use game::production::played::intro::{EncounterReplies, FightInput};
 use oracle_record::FrameRecord;
 use screens_intro::{
@@ -286,14 +286,14 @@ pub(in crate::replay) fn valid_count_shape(counts: &Counts) -> bool {
 pub(in crate::replay) fn run(
     case: &Case,
     sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     let Start::CacheCut { frame: start } = case.start else {
         return Err(data_failure(None, "delivery seed"));
     };
     let lock = read_lock(sources)?;
     let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(start)?;
+    let previous = rows.record(start)?;
     let Scenes {
         content,
         mut reading,
@@ -301,17 +301,19 @@ pub(in crate::replay) fn run(
     let state = reading
         .page_seed(&previous, IntroStage::PageTwoWaits)
         .map_err(|outcome| crate::replay::played::at(start, outcome))?;
-    let mut runner = SceneRun::Opening(state);
-    let mut controller = Controller::seeded(&previous.wram)?;
+    let runner = SceneRun::Opening(state);
+    let controller = Controller::seeded(&previous.wram)?;
     let mut began = previous.clone();
-    let mut digest = Vec::new();
-    let first = start.saturating_add(1);
-    let outcome = (|| {
-        for cut in first..=case.end.cut_inclusive {
-            let current = rows.record(cut)?;
-            if current.video_frame != previous.video_frame.wrapping_add(1) {
-                return Err(data_failure(Some(cut), "delivery row join"));
-            }
+    rows.replay(
+        previous,
+        controller,
+        start.saturating_add(1)..=case.end.cut_inclusive,
+        runner,
+        |runner, turn, _| {
+            let cut = turn.cut;
+            let current = turn.current;
+            let previous = turn.previous;
+            let controller = turn.controller;
             let partial = matches!(runner, SceneRun::Opening(_));
             let resumed = matches!(runner, SceneRun::Pending(..));
             let mut null = observations(&View {
@@ -321,41 +323,35 @@ pub(in crate::replay) fn run(
             });
             null.extend(publications(&[], None));
             let (next, output) = runner
-                .advance(&content, &began, &previous, &current, controller, cut)
+                .advance(&content, &began, previous, current, controller, cut)
                 .map_err(|outcome| crate::replay::played::at(cut, outcome))?;
-            runner = next;
+
             let (expected, actual) = project(
                 &mut reading,
                 &began,
-                &current,
-                runner.state(),
+                current,
+                next.state(),
                 output.as_ref(),
                 partial,
                 resumed,
             )
             .map_err(|outcome| crate::replay::played::at(cut, outcome))?;
             compared(cut, &expected.fields, &actual)?;
-            record_cut(result, &mut digest, &expected, &null, cut)?;
-            result.counts.pending_boundaries = result
-                .counts
-                .pending_boundaries
-                .saturating_add(usize::from(partial));
-            result.counts.pending_restorations = result
-                .counts
-                .pending_restorations
-                .saturating_add(usize::from(resumed));
-            controller = controller.read(current.pad.0, polled(&current));
-            if finished(&current) {
+            result.record(&expected, &null, cut)?;
+            if partial {
+                result.pending()?;
+            }
+            if resumed {
+                result.resumed()?;
+            }
+
+            if finished(current) {
                 began = current.clone();
             }
-            previous = current;
-        }
-        Ok(())
-    })();
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    }
-    outcome
+            Ok(next)
+        },
+    )
+    .map(|_| ())
 }
 
 enum SceneRun {

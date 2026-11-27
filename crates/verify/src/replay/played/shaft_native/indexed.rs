@@ -3,17 +3,15 @@
 use super::word;
 use crate::replay::played::room_video::{Lane, Picture};
 use crate::replay::{
-    Sources, appearance,
     blackout::{observe::oam_bytes, standing::packed_oam},
     compare::Observation,
-    connected, data_failure,
+    data_failure,
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
     },
-    movement,
-    played::{PictureScope, Run, open_rows, polled, read_lock, seed_controller},
+    played::{PictureScope, Run},
     readers::ExpectedCut,
-    result::{CaseResult, Outcome},
+    result::Outcome,
     runner,
 };
 use game::production::played::{room_video::RoomVideo, shaft::ShaftEffects};
@@ -301,97 +299,77 @@ fn check_hall_publication(
     Ok(())
 }
 
-pub(in crate::replay) fn run(
+pub(in crate::replay::played) fn run(
+    mut room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, &case.row)?;
-    let Start::PlayedContinuation { seed, frame } = case.start else {
+    let Start::PlayedContinuation { frame, .. } = case.start else {
         return Err(data_failure(None, "shaft picture continuation start"));
     };
-    let mut previous = rows.record(seed)?;
-    let mut controller = seed_controller(&previous)?;
-    let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
-    };
-    let mut run = Run::for_case(&previous, &content, sources, case)?;
-    run.picture_scope = PictureScope::ShaftActors;
-    let mut retained = usize::from(run.witnesses.shaft()?.locked_prefix);
-    let mut digest = Vec::new();
-    let proof = (|| -> Result<(), Outcome> {
-        for cut in seed.saturating_add(1)..=case.end.cut_inclusive {
-            let current = rows.record(cut)?;
-            if current.video_frame != previous.video_frame.wrapping_add(1) {
-                return Err(data_failure(Some(cut), "played rows join"));
+    room.run.picture_scope = PictureScope::ShaftActors;
+    let mut retained = usize::from(room.run.witnesses.shaft()?.locked_prefix);
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
+        let current = turn.current;
+        let previous = turn.previous;
+        let place = turn.place;
+        let prior = cut.saturating_sub(1);
+        let mut checkpoint = (cut > frame).then(|| restore(run, prior)).transpose()?;
+        let matched = turn.fields(run)?;
+        if let Some(restored) = &mut checkpoint {
+            let selected = Selection::at(run.witnesses, place, previous, current, cut)?;
+            check_hall_publication(restored, run, cut, selected.writer)?;
+            if selected.locked {
+                let art = run
+                    .played
+                    .shaft_vent_art
+                    .as_ref()
+                    .ok_or_else(|| data_failure(Some(cut), "mounted vent art"))?;
+                retained = retained.max(super::super::steam::mounted_picture::live_end(
+                    previous, current, art,
+                )?);
             }
-            let (row, local) = rows.place(cut)?;
-            let place = (row.as_str(), local);
-            let prior = cut.saturating_sub(1);
-            let mut checkpoint = (cut > frame).then(|| restore(&run, prior)).transpose()?;
-            let matched = run.step(controller, &previous, &current, cut, place)?;
-            if let Some(restored) = &mut checkpoint {
-                let selected = Selection::at(run.witnesses, place, &previous, &current, cut)?;
-                check_hall_publication(restored, &run, cut, selected.writer)?;
-                if selected.locked {
-                    let art = run
-                        .played
-                        .shaft_vent_art
-                        .as_ref()
-                        .ok_or_else(|| data_failure(Some(cut), "mounted vent art"))?;
-                    retained = retained.max(super::super::steam::mounted_picture::live_end(
-                        &previous, &current, art,
-                    )?);
-                }
-                let cuts = &mut result.counts;
-                let mut frozen = super::actual(&restored.state, None);
-                let (outputs, held_picture) = picture(
-                    &run.state.room_video,
-                    &restored.state.room_video,
-                    &current,
-                    cut,
-                    &selected,
-                    retained,
-                )?;
-                frozen.extend(held_picture);
-                let replayed = restored.step(controller, &previous, &current, cut, place);
-                if replayed.as_ref() != Ok(&matched)
-                    || restored.state.room_video != run.state.room_video
-                    || restored.state.station.escape_shaft != run.state.station.escape_shaft
-                {
-                    return Err(Outcome::CheckpointFailure { cut: prior });
-                }
-                let semantics: Vec<_> = matched.into_iter().filter(c1_field).collect();
-                let observed = ExpectedCut {
-                    semantic_count: semantics.len(),
-                    output_count: outputs.len(),
-                    fields: semantics.iter().cloned().chain(outputs).collect(),
-                    semantics,
-                    replies: 0,
-                };
-                cuts.restorations = cuts.restorations.saturating_add(1);
-                if matches!(selected.writer, Some(Picture::Publish)) {
-                    cuts.publications = cuts.publications.saturating_add(1);
-                    cuts.pending_boundaries = cuts.pending_boundaries.saturating_add(1);
-                    cuts.pending_restorations = cuts.pending_restorations.saturating_add(1);
-                }
-                runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
+            let mut frozen = super::actual(&restored.state, None);
+            let (outputs, held_picture) = picture(
+                &run.state.room_video,
+                &restored.state.room_video,
+                current,
+                cut,
+                &selected,
+                retained,
+            )?;
+            frozen.extend(held_picture);
+            let replayed = turn.fields(restored);
+            if replayed.as_ref() != Ok(&matched)
+                || restored.state.room_video != run.state.room_video
+                || restored.state.station.escape_shaft != run.state.station.escape_shaft
+            {
+                return Err(Outcome::CheckpointFailure { cut: prior });
             }
-            controller = controller.read(current.pad.0, polled(&current));
-            previous = current;
-        }
-        if result.counts.publications != 1 || result.counts.outputs == 0 {
-            return Err(data_failure(
-                Some(case.end.cut_inclusive),
-                "shaft picture publication witness",
-            ));
+            let semantics: Vec<_> = matched.into_iter().filter(c1_field).collect();
+            let observed = ExpectedCut {
+                semantic_count: semantics.len(),
+                output_count: outputs.len(),
+                fields: semantics.iter().cloned().chain(outputs).collect(),
+                semantics,
+                replies: 0,
+            };
+            result.restored(1)?;
+            if matches!(selected.writer, Some(Picture::Publish)) {
+                result.published()?;
+                result.pending()?;
+                result.resumed()?;
+            }
+            result.record(&observed, &frozen, cut)?;
         }
         Ok(())
-    })();
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    })?;
+    if result.counts.publications != 1 || result.counts.outputs == 0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "shaft picture publication witness",
+        ));
     }
-    proof
+    Ok(())
 }

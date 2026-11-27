@@ -118,30 +118,25 @@ fn restored<'a>(run: &super::Run<'a>, cut: u64) -> Result<super::Run<'a>, Outcom
 }
 
 pub(super) fn run(
-    run: &mut super::Run<'_>,
-    rows: &mut super::rows::Rows<'_>,
-    mut previous: FrameRecord,
-    mut controller: super::Controller,
+    mut room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &crate::replay::index::Case,
-    result: &mut crate::replay::result::CaseResult,
+    result: &mut crate::replay::runner::Receipt,
 ) -> Result<(), Outcome> {
-    use crate::replay::{readers::ExpectedCut, runner};
+    use crate::replay::readers::{ExpectedCut, FieldRole};
 
     let Some(PlayedWindow::FightPicture { appends }) = &case.expectations.played else {
         return Err(data_failure(None, "ordinary fight picture witnesses"));
     };
-    admit(&mut run.state.room_video.video, &previous)?;
-    let mut digest = Vec::new();
+    admit(&mut room.run.state.room_video.video, &room.seed)?;
     let mut continuation = None;
-    for cut in previous.index.saturating_add(1)..=case.end.cut_inclusive {
-        let current = rows.record(cut)?;
-        let (row, local) = rows.place(cut)?;
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
         let append = appends.iter().find(|append| append.cut == cut);
         let frame = |run: &mut super::Run<'_>| {
             run.picture_scope = append.map_or(super::PictureScope::Room, |point| {
                 super::PictureScope::Fight(point.cursor)
             });
-            run.step(controller, &previous, &current, cut, (&row, local))
+            turn.fields(run)
         };
         let held = append.map(|_| {
             let video = &run.state.room_video.video;
@@ -151,7 +146,7 @@ pub(super) fn run(
                 image(PHYSICAL, packed(&video.memory.oam)),
             ]
         });
-        let mut fields = frame(run)?;
+        let fields = frame(run)?;
         if let Some(checkpoint) = &mut continuation {
             let rerun = frame(checkpoint).map_err(|_| Outcome::CheckpointFailure { cut })?;
             if rerun != fields || checkpoint.state != run.state {
@@ -162,36 +157,26 @@ pub(super) fn run(
             continuation = Some(restored(run, cut)?);
         }
         if let Some(held) = held {
-            fields
-                .retain(|field| matches!(field.field.as_str(), DOOR_CURSOR | PREPARED | PHYSICAL));
-            let semantics: Vec<_> = fields
-                .iter()
-                .filter(|field| field.field == DOOR_CURSOR)
-                .cloned()
-                .collect();
-            if semantics.len() != 1 || fields.len() != 3 {
+            let observed = ExpectedCut::select(fields, |field| match field {
+                DOOR_CURSOR => Some(FieldRole::Semantic),
+                PREPARED | PHYSICAL => Some(FieldRole::Output),
+                _ => None,
+            });
+            if observed.semantic_count != 1 || observed.output_count != 2 {
                 return Err(data_failure(Some(cut), "ordinary fight picture comparison"));
             }
-            let observed = ExpectedCut {
-                semantic_count: 1,
-                output_count: 2,
-                semantics,
-                fields,
-                replies: 0,
-            };
-            runner::record_cut(result, &mut digest, &observed, &held, cut)?;
+            result.record(&observed, &held, cut)?;
         }
-        controller = controller.read(current.pad.0, super::polled(&current));
-        previous = current;
-    }
+        Ok(())
+    })?;
     if continuation.is_none() {
         return Err(data_failure(
             Some(case.end.cut_inclusive),
             "ordinary fight picture checkpoint",
         ));
     }
-    result.counts.restorations = result.counts.restorations.saturating_add(1);
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    result.restored(1)?;
+
     Ok(())
 }
 

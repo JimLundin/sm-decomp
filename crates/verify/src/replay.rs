@@ -77,7 +77,29 @@ fn read_lock(sources: &Sources) -> Result<crate::lock::Lock, Outcome> {
 /// Admit and replay one case through production with carried selected state.
 #[must_use]
 pub fn run(case: &Case, sources: &Sources) -> CaseResult {
-    let mut result = CaseResult {
+    let mut receipt = runner::Receipt::default();
+    let outcome = case
+        .validate()
+        .map_err(|_| data_failure(None, "case execution recipe"))
+        .and_then(|()| {
+            if let Some(outcome) = played::indexed::run_selected(case, sources, &mut receipt) {
+                outcome
+            } else if case.inputs == index::InputProvider::ScopedGetawayInputs {
+                played::getaway::run(case, sources, &mut receipt)
+            } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {
+                played::intro::delivery::run(case, sources, &mut receipt)
+            } else {
+                let admitted = admission::admit(case, sources)?;
+                runner::run(case, admitted, &mut receipt)
+            }
+        });
+    let outcome = match outcome {
+        Err(outcome) => outcome,
+        Ok(()) if receipt.counts.cuts == 0 => data_failure(None, "empty comparison schedule"),
+        Ok(()) => Outcome::Pass,
+    };
+    let observation_sha256 = receipt.digest();
+    CaseResult {
         id: case.id.clone(),
         kind: case.kind,
         row: case.row.clone(),
@@ -92,48 +114,11 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
             | Start::PowerOn => None,
         },
         end_cut: case.end.cut_inclusive,
-        counts: Counts::default(),
-        outcome: Outcome::Pass,
-        observation_sha256: String::new(),
+        counts: receipt.counts,
+        outcome,
+        observation_sha256,
         limits: case.limits.clone(),
-    };
-    let outcome = case
-        .validate()
-        .map_err(|_| data_failure(None, "case execution recipe"))
-        .and_then(|()| {
-            if matches!(
-                case.inputs,
-                index::InputProvider::PlayedCeresInputs
-                    | index::InputProvider::ScopedCeresFlyby
-                    | index::InputProvider::ScopedCeresWarning
-                    | index::InputProvider::CeresShaftActors
-                    | index::InputProvider::ScopedCeresFightPicture
-            ) {
-                played::indexed::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::PlayedShaftSound {
-                played::shaft_sound::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::PlayedSamusPicture {
-                played::samus_picture::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::ShaftPictures {
-                played::shaft_native::indexed::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::PlayedShaftDust {
-                played::shaft_dust::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::ScopedGetawayInputs {
-                played::getaway::run(case, sources, &mut result)
-            } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {
-                played::intro::delivery::run(case, sources, &mut result)
-            } else {
-                let admitted = admission::admit(case, sources)?;
-                runner::run(case, admitted, &mut result)
-            }
-        });
-    if let Err(outcome) = outcome {
-        result.outcome = outcome;
     }
-    if result.passed() && result.counts.cuts == 0 {
-        result.outcome = data_failure(None, "empty comparison schedule");
-    }
-    result
 }
 
 fn data_failure(cut: Option<u64>, source: &str) -> Outcome {
@@ -248,7 +233,7 @@ mod tests {
                 source: "case execution recipe".to_owned()
             }
         );
-        assert_eq!(result.counts, super::Counts::default());
+        assert_eq!(result.counts, super::result::Counts::default());
     }
     #[test]
     #[ignore = "private pinned native capture"]
