@@ -137,6 +137,6 @@ fn outcome(outcome: &Outcome) -> String {
     }
 }
 
-fn cell(text: &str) -> String {
+pub(super) fn cell(text: &str) -> String {
     text.replace('|', "&#124;").replace(['\r', '\n'], " ")
 }

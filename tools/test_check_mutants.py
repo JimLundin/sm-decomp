@@ -26,6 +26,26 @@ def pass_receipt() -> dict[str, Any]:
     return observed
 
 class MutantCheck(unittest.TestCase):
+    def test_rule_inventory_includes_entries_without_a_fault_or_case(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            specs = root / "docs/behaviours"
+            specs.mkdir(parents=True)
+            (root / "docs/architecture").mkdir()
+            (root / "docs/architecture/domains.toml").write_text(
+                '[[model]]\nname = "world-blocks"\n', encoding="utf-8")
+            for domain in ("world-intro-rooms", "world-shaft-entry"):
+                (specs / f"{domain}.md").touch()
+            (specs / "uncatalogued.md").write_text("### FutureRule\n", encoding="utf-8")
+            (specs / "world-blocks.md").write_text(
+                "### Closure\n### 2.1 A heading\n```\n### Example\n```\n### Untested\n", encoding="utf-8")
+            (specs / "world-blocks.decode.md").write_text("### Notes\n", encoding="utf-8")
+            self.assertEqual(check_mutants.catalogue_rules(root), ["world-blocks/Closure", "world-blocks/Untested"])
+            with (specs / "world-blocks.md").open("a", encoding="utf-8") as spec:
+                spec.write("### Untested\n")
+            with self.assertRaises(ValueError):
+                check_mutants.catalogue_rules(root)
+
     def test_rule_credit_requires_its_assigned_fault_and_complete_receipt(self) -> None:
         fault = Fault("contact", "played", PLAYED_RUNNER, "old", "new",
                       "played steam 0 200", 137, "steam.hit", "PuffTouches")
@@ -336,7 +356,9 @@ field = "audio.reply0"
             with self.assertRaises(ValueError):
                 validate_coverage(root, [fault for fault in faults if fault.responsibility != owner])
         for changed in [replace(faults[0], responsibility="contact"),
-                        replace(faults[0], case="blocks/missing-requests")]:
+                        replace(faults[0], case="blocks/missing-requests"),
+                        replace(faults[0], rule="samus-movement/DoesNotExist"),
+                        replace(faults[0], rule="game-random/AdvanceRandom")]:
             with self.assertRaises(ValueError):
                 validate_coverage(root, [changed, *faults[1:]])
 

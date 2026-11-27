@@ -306,6 +306,58 @@ impl Drop for Fixture {
 }
 
 #[test]
+fn fault_report_credits_only_named_detections_from_the_same_manifest() {
+    let fixture = Fixture::new("fault-receipt");
+    let source = r#"[[fault]]
+name = "room-start"
+rule = "world-intro-rooms/ShowIntroRoom"
+
+[[fault]]
+name = "other-start"
+rule = "world-intro-rooms/ShowIntroRoom"
+
+[[fault]]
+name = "no-rule"
+"#;
+    fs::create_dir(fixture.root.join("tools")).unwrap();
+    fixture.write("tools/mutants.toml", source);
+    let digest = crate::lock::Sha256::of(source.as_bytes()).to_string();
+    let render = |evidence: Option<&Path>| {
+        let mut out = String::new();
+        super::faults::section(&mut out, &fixture.root, &[], evidence)?;
+        Ok::<_, String>(out)
+    };
+    let prefix = "| world-intro-rooms/ShowIntroRoom | room-start, other-start |";
+    assert!(
+        render(None)
+            .unwrap()
+            .contains(&format!("{prefix} unknown |"))
+    );
+    let receipt = fixture.root.join("receipt.toml");
+    let contents =
+        |names: &str| format!("format = 1\nmanifest_sha256 = '{digest}'\ndetected = [{names}]\n");
+    for (names, expected) in [("", "unknown"), ("'other-start'", "other-start")] {
+        fixture.write("receipt.toml", &contents(names));
+        assert!(
+            render(Some(&receipt))
+                .unwrap()
+                .contains(&format!("{prefix} {expected} |"))
+        );
+    }
+    for invalid in [
+        "incomplete".to_owned(),
+        contents("").replace(&digest, "stale"),
+        contents("").replace("format = 1", "format = 2"),
+        contents("'room-start', 'room-start'"),
+        contents("'no-rule'"),
+        contents("'absent'"),
+    ] {
+        fixture.write("receipt.toml", &invalid);
+        assert!(render(Some(&receipt)).is_err());
+    }
+}
+
+#[test]
 fn a_use_of_a_domain_not_read_is_found() {
     let fixture = Fixture::new("uses");
     let reads = "reads = [\"S1\"]
