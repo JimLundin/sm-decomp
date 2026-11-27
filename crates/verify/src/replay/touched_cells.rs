@@ -1,11 +1,13 @@
 //! The touched-cells receipt codec: the cells her moves reached, in order, and the cells she
 //! started inside. It performs no movement decisions.
-use super::{compare::Observation, data_failure, native_search::Kind, result::Outcome};
+use super::{
+    compare::Observation, data_failure, index::NativeProjection, native_search::Coordinates,
+    result::Outcome,
+};
 use serde::de::IgnoredAny;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use types::Direction;
-pub(super) const PIN: &str = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443";
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Xy<T> {
@@ -111,10 +113,16 @@ pub(super) fn initial() -> Result<Vec<Observation>, Outcome> {
     }
     .observations()
 }
-pub(super) fn expected(root: &Path, kind: Kind) -> Result<Vec<Observation>, Outcome> {
+pub(super) fn expected(
+    root: &Path,
+    projection: &NativeProjection,
+    coordinates: Coordinates,
+) -> Result<Vec<Observation>, Outcome> {
     let pins = std::fs::read(root.join("packet-pins.txt"))
         .map_err(|_| data_failure(None, "touched cells expectation manifest"))?;
-    if crate::lock::Sha256::try_from(PIN).ok() != Some(crate::lock::Sha256::of(&pins)) {
+    if crate::lock::Sha256::try_from(projection.sha256.as_str()).ok()
+        != Some(crate::lock::Sha256::of(&pins))
+    {
         return Err(data_failure(
             None,
             "touched cells expectation admission pin",
@@ -122,20 +130,16 @@ pub(super) fn expected(root: &Path, kind: Kind) -> Result<Vec<Observation>, Outc
     }
     let pins = String::from_utf8(pins)
         .map_err(|_| data_failure(None, "touched cells manifest encoding"))?;
-    let (name, completion) = match kind {
-        Kind::Miss => ("baseline-expected.toml", 4283),
-        Kind::Touch => ("intervention-expected.toml", 4052),
-    };
-    let bytes = super::native_search::pinned(root, &pins, name)?;
+    let bytes = super::native_search::pinned(root, &pins, &projection.member)?;
     let text = String::from_utf8(bytes)
         .map_err(|_| data_failure(None, "touched cells expectation encoding"))?;
     let receipt: Receipt = toml::from_str(&text)
         .map_err(|_| data_failure(None, "touched cells expectation schema"))?;
     if receipt.format != 1
         || receipt.id.is_empty()
-        || receipt.source_start != 424
-        || receipt.source_completion != completion
-        || receipt.video_frame != 9233
+        || receipt.source_start != coordinates.source_start_index
+        || receipt.source_completion != coordinates.source_completion_index
+        || receipt.video_frame != coordinates.video_frame
         || receipt.movement_skip_present != receipt.movement_skip.is_some()
     {
         return Err(data_failure(None, "touched cells expectation coordinates"));

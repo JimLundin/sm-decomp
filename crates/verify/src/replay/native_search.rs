@@ -10,35 +10,73 @@ use std::{
 };
 use types::{Block, Cell, Hitbox, Way, World};
 
-pub(super) const COMPLETION: u64 = 9233;
-pub(super) const PACKET_PIN: &str =
-    "2adee318fb765d39da0fcb85a16a326de3c84522946df2b37811fe52782a880c";
-pub(super) const TOUCH_PACKET_PIN: &str =
-    "e6e41959d1d4ee9b9f8c811642849a18bc23a6a1df91f0acbedda613d2b1de73";
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Kind {
-    Miss,
-    Touch,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub(super) struct Coordinates {
+    pub video_frame: u64,
+    pub source_start_index: u64,
+    pub source_completion_index: u64,
 }
-impl Kind {
-    pub const fn pin(self) -> &'static str {
-        match self {
-            Self::Miss => PACKET_PIN,
-            Self::Touch => TOUCH_PACKET_PIN,
-        }
+
+pub(super) struct Packet<'a> {
+    path: &'a Path,
+    sha256: &'a str,
+    coordinates: Coordinates,
+    projection: &'a super::index::NativeProjection,
+}
+
+impl<'a> Packet<'a> {
+    pub fn for_case(case: &'a super::index::Case) -> Option<Self> {
+        use super::index::{Start, fixture_component, pinned_directory};
+        let Start::NativeOpportunity {
+            path,
+            sha256,
+            video_frame,
+            source_start_index,
+            source_completion_index,
+        } = &case.start
+        else {
+            return None;
+        };
+        let coordinates = Coordinates {
+            video_frame: *video_frame,
+            source_start_index: *source_start_index,
+            source_completion_index: *source_completion_index,
+        };
+        let projection = case
+            .expectations
+            .projection
+            .as_ref()
+            .or_else(|| super::legacy_packets::projection(sha256, coordinates))?;
+        (pinned_directory(&projection.directory, &projection.sha256)
+            && fixture_component(&projection.member))
+        .then_some(Self {
+            path,
+            sha256,
+            coordinates,
+            projection,
+        })
     }
 }
+
+#[derive(serde::Deserialize)]
+struct Inventory {
+    source_start_index: u64,
+    source_completion_index: u64,
+}
+
 pub(super) struct Inputs {
     pub seed: samus_movement::Samus,
     pub content: movement::Content,
     input: movement::Input,
+    video_frame: u64,
     width: u16,
     height: u16,
 }
 
 pub(super) struct Expected {
-    kind: Kind,
-    pub work_root: PathBuf,
+    coordinates: Coordinates,
+    projection: super::index::NativeProjection,
+    work_root: PathBuf,
 }
 
 pub(super) fn pinned(root: &Path, pins: &str, name: &str) -> Result<Vec<u8>, Outcome> {
@@ -55,14 +93,36 @@ pub(super) fn pinned(root: &Path, pins: &str, name: &str) -> Result<Vec<u8>, Out
     Ok(bytes)
 }
 
-pub(super) fn load(root: &Path, rom: &Path, kind: Kind) -> Result<(Inputs, Expected), Outcome> {
+pub(super) fn load(
+    case: &super::index::Case,
+    sources: &super::Sources,
+) -> Result<(Inputs, Expected), Outcome> {
+    let packet = Packet::for_case(case)
+        .ok_or_else(|| data_failure(None, "native search packet declaration"))?;
+    let input_root = sources.native.join(packet.path);
+    let root = input_root.as_path();
+    let projection_root = if sources.native.as_os_str().is_empty() {
+        root.parent().unwrap_or(root)
+    } else {
+        sources.native.as_path()
+    };
     let pins = std::fs::read(root.join("packet-pins.txt"))
         .map_err(|_| data_failure(None, "native search packet manifest"))?;
-    if Sha256::try_from(kind.pin()).ok() != Some(Sha256::of(&pins)) {
+    if Sha256::try_from(packet.sha256).ok() != Some(Sha256::of(&pins)) {
         return Err(data_failure(None, "native search admission pin"));
     }
     let pins = String::from_utf8(pins)
         .map_err(|_| data_failure(None, "native search manifest encoding"))?;
+    let inventory = pinned(root, &pins, "input-inventory.toml")?;
+    let inventory: Inventory = std::str::from_utf8(&inventory)
+        .ok()
+        .and_then(|s| toml::from_str(s).ok())
+        .ok_or_else(|| data_failure(None, "native search input inventory"))?;
+    if inventory.source_start_index != packet.coordinates.source_start_index
+        || inventory.source_completion_index != packet.coordinates.source_completion_index
+    {
+        return Err(data_failure(None, "native search input coordinates"));
+    }
     // These exact images have independent full-snapshot association and writer closure.
     // Expected files are deliberately unopened until after production has advanced.
     let frame = pinned(root, &pins, "inputs/frame.bin")?;
@@ -77,7 +137,7 @@ pub(super) fn load(root: &Path, rom: &Path, kind: Kind) -> Result<(Inputs, Expec
     let height = source::ROOM_HEIGHT_IN_BLOCKS
         .read(&world)
         .map_err(|_| data_failure(None, "native search height"))?;
-    let content = movement::Content::load(rom)?;
+    let content = movement::Content::load(&sources.rom)?;
     let seed = movement::seed(&seed_bytes)?;
     // Reject unavailable typed dependencies at admission without executing gameplay.
     let input = movement::input_at(&frame, &world, seed.pose, &content)?;
@@ -86,12 +146,14 @@ pub(super) fn load(root: &Path, rom: &Path, kind: Kind) -> Result<(Inputs, Expec
             seed,
             content,
             input,
+            video_frame: packet.coordinates.video_frame,
             width,
             height,
         },
         Expected {
-            kind,
-            work_root: root.parent().unwrap_or(root).join("native-search-work-v2"),
+            coordinates: packet.coordinates,
+            projection: packet.projection.clone(),
+            work_root: projection_root.join(&packet.projection.directory),
         },
     ))
 }
@@ -129,7 +191,7 @@ impl Inputs {
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
-        if cut != COMPLETION {
+        if cut != self.video_frame {
             return Err(data_failure(
                 Some(cut),
                 "native search opportunity schedule",
@@ -170,13 +232,13 @@ impl Inputs {
 
 impl Expected {
     pub fn read(&self, cut: u64) -> Result<Vec<Observation>, Outcome> {
-        if cut != COMPLETION {
+        if cut != self.coordinates.video_frame {
             return Err(data_failure(
                 Some(cut),
                 "native search expectation opportunity",
             ));
         }
-        super::touched_cells::expected(&self.work_root, self.kind)
+        super::touched_cells::expected(&self.work_root, &self.projection, self.coordinates)
     }
 }
 
@@ -213,6 +275,31 @@ mod tests {
     fn native_case(packet: &Path) -> crate::replay::index::Case {
         named_case(packet, "movement-native-occupied-first-search")
     }
+    #[test]
+    fn native_projection_uses_the_index_and_preserves_published_packet_pairs() {
+        let packet = Path::new("input");
+        let mut case = native_case(packet);
+        let projection = case.expectations.projection.take().unwrap();
+        assert_eq!(
+            Packet::for_case(&case).unwrap().projection.member,
+            projection.member
+        );
+        let Start::NativeOpportunity {
+            source_completion_index,
+            ..
+        } = &mut case.start
+        else {
+            panic!()
+        };
+        *source_completion_index = source_completion_index.saturating_sub(1);
+        assert!(case.validate().is_err());
+
+        case.expectations.projection = Some(projection);
+        assert!(case.validate().is_ok());
+        case.expectations.projection.as_mut().unwrap().member = "../inputs/world.bin".to_owned();
+        assert!(case.validate().is_err());
+    }
+
     fn retained(actual: &ActualReader) -> Option<&samus_movement::Outcome> {
         if let ActualReader::NativeSearch(Some(output)) = actual {
             Some(output)
@@ -227,6 +314,7 @@ mod tests {
         std::fs::create_dir_all(root.join("expectations")).unwrap();
         for file in [
             "packet-pins.txt",
+            "input-inventory.toml",
             "inputs/seed.bin",
             "inputs/frame.bin",
             "inputs/world.bin",
@@ -278,7 +366,7 @@ mod tests {
             &baseline.expected,
             &mut baseline.production,
             &mut baseline.actual,
-            COMPLETION,
+            case.end.cut_inclusive,
         )
         .unwrap();
         for (id, remove) in [("complete-missing", true), ("complete-altered", false)] {
@@ -316,16 +404,16 @@ mod tests {
                 &admitted.expected,
                 &mut admitted.production,
                 &mut admitted.actual,
-                COMPLETION,
+                case.end.cut_inclusive,
             )
             .err()
             .unwrap();
             assert!(matches!(
                 failure,
                 Outcome::DataFailure {
-                    cut: Some(COMPLETION),
+                    cut: Some(cut),
                     ..
-                }
+                } if cut == case.end.cut_inclusive
             ));
             assert!(
                 admitted.production == baseline.production,
@@ -379,7 +467,13 @@ mod tests {
                 std::fs::write(root.join("packet-pins.txt"), "invalid\n").unwrap();
             }
             assert!(matches!(
-                load(&root, &rom, Kind::Miss),
+                load(
+                    &native_case(&root),
+                    &Sources {
+                        rom: rom.clone(),
+                        ..Sources::default()
+                    }
+                ),
                 Err(Outcome::DataFailure { cut: None, .. })
             ));
             std::fs::remove_dir_all(root).unwrap();
@@ -389,29 +483,39 @@ mod tests {
     #[ignore = "private independently pinned native search packet"]
     fn native_search_actual_query_refusal_retains_complete_state_and_output() {
         let (packet, rom) = source();
-        let (mut inputs, _) = load(&packet, &rom, Kind::Miss).unwrap();
+        let case = native_case(&packet);
+        let (mut inputs, _) = load(
+            &case,
+            &Sources {
+                rom,
+                ..Sources::default()
+            },
+        )
+        .unwrap();
         let mut production = Production::admit(
             ProductionSeed::Movement(inputs.seed),
             ProductionContent::Movement(inputs.content.movement.clone()),
             ProductionRules::Movement(samus_movement::Rules::default()),
         )
         .unwrap();
-        let output = inputs.advance(&mut production, COMPLETION).unwrap();
+        let output = inputs
+            .advance(&mut production, case.end.cut_inclusive)
+            .unwrap();
         let before = production.clone();
         let mut retained = Some(output.clone());
         // This narrows only the qualification envelope: the real step still queries the
         // complete converted world and must refuse before its candidate is retained.
         inputs.width = 0;
-        let failure = inputs.advance(&mut production, COMPLETION);
+        let failure = inputs.advance(&mut production, case.end.cut_inclusive);
         if let Ok(output) = &failure {
             retained = Some(output.clone());
         }
         assert!(matches!(
             failure,
             Err(Outcome::Unsupported {
-                cut: Some(COMPLETION),
+                cut: Some(cut),
                 ..
-            })
+            }) if cut == case.end.cut_inclusive
         ));
         assert!(
             production == before,
@@ -441,10 +545,14 @@ mod tests {
             &admitted.expected,
             &mut admitted.production,
             &mut admitted.actual,
-            COMPLETION,
+            case.end.cut_inclusive,
         )
         .unwrap();
-        let expected = admitted.expected.read(&case, COMPLETION).unwrap().fields;
+        let expected = admitted
+            .expected
+            .read(&case, case.end.cut_inclusive)
+            .unwrap()
+            .fields;
         assert!(compare::compare(&expected, &touched_cells::initial().unwrap()).is_err());
         let vanilla = retained(&admitted.actual).unwrap();
         let mut omitted = vanilla.clone();
@@ -482,9 +590,9 @@ mod tests {
             assert!(matches!(
                 result.outcome,
                 Outcome::Difference {
-                    cut: COMPLETION,
+                    cut,
                     ..
-                }
+                } if cut == case.end.cut_inclusive
             ));
         } else {
             assert_eq!(result.outcome, Outcome::Pass);

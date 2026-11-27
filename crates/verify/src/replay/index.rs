@@ -1071,12 +1071,37 @@ pub enum ObservationId {
     ProgressZebetites,
 }
 
+/// Authenticated source of independent, post-execution observations.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeProjection {
+    /// Directory containing the projection's manifest.
+    pub directory: String,
+    /// SHA-256 of the complete member manifest.
+    pub sha256: String,
+    /// Reviewed member containing the expected observations.
+    pub member: String,
+}
+
+pub(super) fn fixture_component(name: &str) -> bool {
+    Path::new(name)
+        .file_name()
+        .is_some_and(|part| part == std::ffi::OsStr::new(name))
+}
+
+pub(super) fn pinned_directory(directory: &str, sha256: &str) -> bool {
+    fixture_component(directory) && valid_hash(sha256)
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// Declared observations and their comparison schedule.
 pub struct Expectations {
     /// Independent capture or import source.
     pub provider: ExpectedProvider,
+    /// Packet and member used by the native movement-work comparison.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub projection: Option<NativeProjection>,
     /// Compared semantic field identities or quantities.
     pub fields: Vec<ObservationId>,
     /// Compared output identities or occurrences.
@@ -1122,10 +1147,7 @@ pub struct ConnectedPacket {
 
 impl ConnectedPacket {
     fn admits(&self, case: &Case) -> bool {
-        let mut parts = Path::new(&self.directory).components();
-        matches!(parts.next(), Some(std::path::Component::Normal(_)))
-            && parts.next().is_none()
-            && valid_hash(&self.sha256)
+        pinned_directory(&self.directory, &self.sha256)
             && self.row == case.row
             && case.start
                 == (Start::CacheCut {
@@ -2105,39 +2127,11 @@ fn cinematic_witnesses(rule: &str, provider: InputProvider) -> Option<&'static [
 
 fn native_search_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
-    let source = match &case.start {
-        Start::NativeOpportunity {
-            sha256,
-            video_frame: 9233,
-            source_start_index: 424,
-            source_completion_index: 4283,
-            ..
-        } if sha256 == super::native_search::PACKET_PIN => {
-            *observations == BTreeSet::from([O::CompleteReached, O::Inside])
-        }
-        Start::NativeOpportunity {
-            sha256,
-            video_frame: 9233,
-            source_start_index: 424,
-            source_completion_index: 4052,
-            ..
-        } if sha256 == super::native_search::TOUCH_PACKET_PIN => {
-            *observations == BTreeSet::from([O::CompleteReached, O::Inside])
-        }
-        Start::NativeOpportunity { .. }
-        | Start::NativeSeed { .. }
-        | Start::NativeRecord { .. }
-        | Start::PlayedContinuation { .. }
-        | Start::CacheCut { .. }
-        | Start::NativeSenderOffer { .. }
-        | Start::ConstructedSenderOffer { .. }
-        | Start::PowerOn => false,
-    };
-    source
+    super::native_search::Packet::for_case(case).is_some()
+        && *observations == BTreeSet::from([O::CompleteReached, O::Inside])
         && case.kind == CaseKind::Scoped
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::NativeCompleteMovementWork
-        && case.end.cut_inclusive == super::native_search::COMPLETION
         && !case.limits.is_empty()
         && !case.borrowed.is_empty()
 }
@@ -2854,18 +2848,9 @@ fn start_valid(case: &Case) -> bool {
 
 impl Case {
     pub(super) fn connected_packet(&self) -> Option<&ConnectedPacket> {
-        // Earlier format-1 indexes identify the two original packets by the case ID alone.
-        static LEGACY: std::sync::LazyLock<
-            Option<std::collections::BTreeMap<String, ConnectedPacket>>,
-        > = std::sync::LazyLock::new(|| {
-            toml::from_str(include_str!(
-                "../../../../scenarios/replay/legacy-connected-packets.toml"
-            ))
-            .ok()
-        });
         self.connected_packet
             .as_ref()
-            .or_else(|| LEGACY.as_ref()?.get(&self.id.0))
+            .or_else(|| super::legacy_packets::connected(&self.id.0))
     }
 
     /// Validate the complete public execution recipe before source admission.
@@ -2886,8 +2871,10 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
-        if (case.connected_packet.is_some()
-            && case.inputs != InputProvider::ConnectedOrdinaryInputs)
+        if (case.expectations.projection.is_some()
+            && case.inputs != InputProvider::NativeSearchInputs)
+            || (case.connected_packet.is_some()
+                && case.inputs != InputProvider::ConnectedOrdinaryInputs)
             || case.id.0.is_empty()
             || case.row.is_empty()
             || (case.rules.is_empty() && case.inputs != InputProvider::Unavailable)

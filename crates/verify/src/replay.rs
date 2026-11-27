@@ -22,6 +22,7 @@ mod intro_missiles;
 mod intro_rooms;
 mod jump_history;
 mod landing_site;
+mod legacy_packets;
 mod movement;
 mod movement_touchdown;
 mod native_search;

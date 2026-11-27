@@ -1,3 +1,0 @@
-# Packet declarations for format-1 indexes published before connected_packet was recorded on the case.
-"connected-ordinary/carried-running-camera" = { directory = "connected-ordinary-v1", sha256 = "df96f1be4f5a8e54802d6b55e8e9c05f9ab3cf37aeed04a27d9d8b6f3efdda4c", row = "chain-any-0003-DFD7", initial_cut = 6, first_end = 10, last_cut = 15 }
-"connected-ordinary/run-release-floor-aim" = { directory = "connected-run-slope-v1", sha256 = "f6440b4daf6ddf75fa62172108d706fa33e8b462c4429358082c100924e70e4d", row = "chain-any-0003-DFD7", initial_cut = 126, first_end = 142, last_cut = 142 }
