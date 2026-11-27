@@ -2,11 +2,11 @@
 
 pub(in crate::replay) mod shaft;
 
-use super::{
-    Run, Stop, actual, contact, fight_picture, open_rows, read_lock, ridley, seed_controller,
-};
+use super::{Run, Stop, contact, fight_picture, open_rows, read_lock, ridley, seed_controller};
 use crate::replay::{
-    Sources, appearance, connected, data_failure,
+    Sources, appearance,
+    compare::Observation,
+    connected, data_failure,
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
         Responsibility, Start,
@@ -182,35 +182,15 @@ pub(in crate::replay) fn run(
     if case.expectations.fields == FLYBY_STATE {
         return flyby(&mut run, &mut rows, seed, case, result);
     }
-    let mut frozen = actual(
-        &run.state,
-        &content.appearance,
-        &run.hud,
-        true,
-        false,
-        false,
-    )?;
-    frozen.push(contact::actual("ridley.tail.hit", None));
-    frozen.push(ridley::swish(false));
-    if let Some(tail) = run
-        .state
-        .station
-        .ridley
-        .and_then(|ridley| ridley.flight_tail)
-    {
-        frozen.extend(ridley::places(&tail.places()));
-    }
     let retreat = case.expectations.fields == RETREAT_STATE;
-    if retreat {
-        frozen.extend(ridley::retreat::actual(&run.state, None));
-    }
+    let mut held = tail_held(&run, retreat);
     let mut digest = Vec::new();
     let played = run.witness_through(
         &mut rows,
         seed,
         controller,
         start.saturating_add(1)..=case.end.cut_inclusive,
-        |cut, mut fields| {
+        |run, cut, mut fields| {
             if !fields.iter().any(|field| field.field == "ridley.tail.pace") {
                 return Err(data_failure(
                     Some(cut),
@@ -230,7 +210,9 @@ pub(in crate::replay) fn run(
                 fields,
                 replies: 0,
             };
-            runner::record_cut(result, &mut digest, &observed, &frozen, cut)
+            runner::record_cut(result, &mut digest, &observed, &held, cut)?;
+            held = tail_held(run, retreat);
+            Ok(())
         },
     );
     if !digest.is_empty() {
@@ -240,6 +222,26 @@ pub(in crate::replay) fn run(
         Stop::End => Ok(()),
         Stop::At(outcome) => Err(outcome),
     }
+}
+
+fn tail_held(run: &Run<'_>, retreat: bool) -> Vec<Observation> {
+    let mut held = super::samus::actual(&run.state.samus, &run.content.appearance);
+    held.extend(super::health::parts(&run.state.health.0));
+    held.extend(ridley::actual(&run.state.station));
+    held.push(contact::actual("ridley.tail.hit", None));
+    held.push(ridley::swish(false));
+    if let Some(tail) = run
+        .state
+        .station
+        .ridley
+        .and_then(|ridley| ridley.flight_tail)
+    {
+        held.extend(ridley::places(&tail.places()));
+    }
+    if retreat {
+        held.extend(ridley::retreat::actual(&run.state, None));
+    }
+    held
 }
 
 fn flyby(
@@ -257,13 +259,12 @@ fn flyby(
         return Err(data_failure(None, "flyby comparison window"));
     };
     let mut digest = Vec::new();
-    let frozen = ridley::flyby::frozen();
     run.flyby_scope(
         rows,
         seed,
         first,
         case.end.cut_inclusive,
-        |cut, mut fields| {
+        |cut, mut fields, held| {
             fields.retain(|field| flyby_selection(&field.field).is_some());
             let semantics: Vec<_> = fields
                 .iter()
@@ -277,7 +278,7 @@ fn flyby(
                 fields,
                 replies: 0,
             };
-            runner::record_cut(result, &mut digest, &observed, &frozen, cut)
+            runner::record_cut(result, &mut digest, &observed, held, cut)
         },
     )?;
     result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
@@ -313,23 +314,16 @@ fn warning(
     case: &Case,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    use crate::replay::{compare::Observation, ridley_warning_native as native};
+    use crate::replay::ridley_warning_native as native;
     let start = previous.index;
     if !matches!(native::state(&previous)?.phase, native::Phase::Ready) {
         return Err(data_failure(Some(start), "warning-ready origin"));
     }
-    let frozen = [
-        Observation {
-            field: "ridley.warning.phase".into(),
-            bytes: vec![0; 8],
-        },
-        Observation::quantity("ridley.warning.glow", 0),
-        Observation::quantity("ridley.warning.stage", 1),
-    ];
     let mut digest = Vec::new();
     for cut in start.saturating_add(1)..=case.end.cut_inclusive {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
+        let held = run.warning_picture.held(&run.state)?;
         let mut restored = run.clone();
         let mut fields = run.step(controller, &previous, &current, cut, (&row, local))?;
         let replayed = restored.step(controller, &previous, &current, cut, (&row, local));
@@ -360,7 +354,7 @@ fn warning(
             fields,
             replies: 0,
         };
-        runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
+        runner::record_cut(result, &mut digest, &observed, &held, cut)?;
         controller = controller.read(current.pad.0, super::polled(&current));
         previous = current;
     }

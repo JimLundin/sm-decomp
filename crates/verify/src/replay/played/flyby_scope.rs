@@ -14,7 +14,7 @@ impl Run<'_> {
         mut previous: FrameRecord,
         first: u64,
         end: u64,
-        mut record: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
+        mut record: impl FnMut(u64, Vec<Observation>, &[Observation]) -> Result<(), Outcome>,
     ) -> Result<(), Outcome> {
         let start = previous.index;
         let ready = first
@@ -32,6 +32,11 @@ impl Run<'_> {
             }
             previous = rows.record(ready)?;
         }
+        let mut held = self.drawing.origin(&self.state)?;
+        held.extend(ceres_doors::actual(&self.state.station));
+        held.extend(ridley::actual(&self.state.station));
+        held.extend(frame::actual(self.state.frame));
+        hold_flyby_outputs(&self.state, &mut held);
         for cut in first..=end {
             let current = rows.record(cut)?;
             if !finished(&previous)
@@ -40,8 +45,10 @@ impl Run<'_> {
             {
                 return Err(data_failure(Some(cut), "complete flyby turn"));
             }
-            let expected = self.flyby_scoped_turn(&previous, &current, cut)?;
-            record(cut, expected)?;
+            let (expected, actual) = self.flyby_scoped_turn(&previous, &current, cut)?;
+            record(cut, expected, &held)?;
+            held = actual;
+            hold_flyby_outputs(&self.state, &mut held);
             previous = current;
         }
         Ok(())
@@ -52,7 +59,7 @@ impl Run<'_> {
         previous: &FrameRecord,
         current: &FrameRecord,
         cut: u64,
-    ) -> Result<Vec<Observation>, Outcome> {
+    ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let passing = played::passage::Passing {
             work_begun: true,
             work_done: true,
@@ -89,8 +96,24 @@ impl Run<'_> {
         actual.extend(quake::actual(&self.state, Some(effects.quake)));
         actual.extend(frame::actual(self.state.frame));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
-        Ok(expected)
+        Ok((expected, actual))
     }
+}
+
+// The displayed picture and registers stay on the bus. A turn which did not run
+// emits no sound, push or quake update.
+fn hold_flyby_outputs(room: &played::State, fields: &mut Vec<Observation>) {
+    fields.retain(|field| {
+        !matches!(
+            field.field.as_str(),
+            "ridley.flyby.sound" | "ridley.flyby.push"
+        ) && !field.field.starts_with("quake.")
+    });
+    fields.extend([
+        Observation::quantity("ridley.flyby.sound", 0),
+        Observation::quantity("ridley.flyby.push", 0),
+    ]);
+    fields.extend(quake::actual(room, None));
 }
 
 #[cfg(test)]
@@ -112,8 +135,30 @@ mod tests {
             let mut rows = super::super::open_rows(&sources, &lock, row).unwrap();
             let seed = rows.record(1156).unwrap();
             let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
-            run.flyby_scope(&mut rows, seed, 1158, 1270, |_, _| Ok(()))
-                .unwrap();
+            let mut previous_tile = None;
+            let mut previous_turn = None;
+            let mut turns_changed = 0;
+            run.flyby_scope(&mut rows, seed, 1158, 1270, |_, fields, held| {
+                let find = |name| {
+                    fields
+                        .iter()
+                        .find(|item| item.field == name)
+                        .unwrap()
+                        .clone()
+                };
+                if let (Some(tile), Some(turn)) = (&previous_tile, &previous_turn) {
+                    assert!(held.contains(tile));
+                    assert!(held.contains(turn));
+                    turns_changed += usize::from(*turn != find("ridley.flyby.turn"));
+                }
+                assert!(held.contains(&Observation::quantity("ridley.flyby.sound", 0)));
+                assert!(held.contains(&Observation::quantity("ridley.flyby.push", 0)));
+                previous_tile = Some(find("ridley.flyby.tiles.0"));
+                previous_turn = Some(find("ridley.flyby.turn"));
+                Ok(())
+            })
+            .unwrap();
+            assert!(turns_changed > 0);
             let settled = run.state.clone();
             let settled_drawing = run.drawing.retained().unwrap();
             assert_eq!(
@@ -125,11 +170,11 @@ mod tests {
                 let seed = rows.record(1156).unwrap();
                 let mut resumed = Run::admit(&seed, &content, &sources.rom, row).unwrap();
                 resumed
-                    .flyby_scope(&mut rows, seed, 1158, cut, |_, _| Ok(()))
+                    .flyby_scope(&mut rows, seed, 1158, cut, |_, _, _| Ok(()))
                     .unwrap();
                 resumed.restore_flyby(&record).unwrap();
                 resumed
-                    .flyby_scope(&mut rows, record, cut + 1, 1270, |_, _| Ok(()))
+                    .flyby_scope(&mut rows, record, cut + 1, 1270, |_, _, _| Ok(()))
                     .unwrap();
                 assert!(
                     resumed.state == settled,

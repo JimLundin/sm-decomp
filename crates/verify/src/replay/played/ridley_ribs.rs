@@ -481,7 +481,7 @@ mod tests {
                 seed,
                 controller,
                 1..=LAST_FIGHT_CUT,
-                |_, fields| {
+                |_, _, fields| {
                     if fields
                         .iter()
                         .any(|field| field.field == UPLOADS_FIELD && !field.bytes.is_empty())

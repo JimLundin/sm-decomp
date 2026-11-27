@@ -638,7 +638,7 @@ impl<'a> Run<'a> {
         controller: Controller,
         cuts: core::ops::RangeInclusive<u64>,
     ) -> Result<(u64, Stop), Outcome> {
-        self.witness_through(rows, previous, controller, cuts, |_, _| Ok(()))
+        self.witness_through(rows, previous, controller, cuts, |_, _, _| Ok(()))
     }
 
     fn through_observing(
@@ -649,7 +649,7 @@ impl<'a> Run<'a> {
         cuts: core::ops::RangeInclusive<u64>,
         observe: impl FnMut(&FrameRecord, u64) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
-        self.through_with(rows, previous, controller, cuts, observe, |_, _| Ok(()))
+        self.through_with(rows, previous, controller, cuts, observe, |_, _, _| Ok(()))
     }
 
     fn witness_through(
@@ -658,7 +658,7 @@ impl<'a> Run<'a> {
         previous: FrameRecord,
         controller: Controller,
         cuts: core::ops::RangeInclusive<u64>,
-        matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
+        matched: impl FnMut(&Self, u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
         self.through_with(rows, previous, controller, cuts, |_, _| Ok(()), matched)
     }
@@ -670,7 +670,7 @@ impl<'a> Run<'a> {
         mut controller: Controller,
         cuts: core::ops::RangeInclusive<u64>,
         mut observe: impl FnMut(&FrameRecord, u64) -> Result<(), Outcome>,
-        mut matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
+        mut matched: impl FnMut(&Self, u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
         let mut held: u64 = 0;
         let end = *cuts.end();
@@ -702,7 +702,7 @@ impl<'a> Run<'a> {
                     {
                         return Ok((held, Stop::At(at(cut, outcome))));
                     }
-                    matched(cut, fields)?;
+                    matched(self, cut, fields)?;
                 }
                 Err(outcome) => return Ok((held, Stop::At(at(cut, outcome)))),
             }

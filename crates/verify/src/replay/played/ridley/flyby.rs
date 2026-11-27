@@ -112,13 +112,7 @@ impl Drawing {
             scroll,
             packed(matrix, pivot),
         ));
-        fields.extend(native::physical(
-            9,
-            self.plane.transform.select.0,
-            [self.plane.scroll.x, self.plane.scroll.y],
-            packed(self.plane.transform.matrix, self.plane.transform.centre),
-        ));
-        fields.extend(native::tile_fields(&self.vram)?);
+        fields.extend(self.published()?);
         fields.push(Observation::quantity(
             "ridley.flyby.sound",
             i64::from(effects.sound.is_some()),
@@ -129,10 +123,27 @@ impl Drawing {
         ));
         Ok(fields)
     }
-}
+    fn published(&self) -> Result<Vec<Observation>, Outcome> {
+        let mut fields = Vec::from(native::physical(
+            9,
+            self.plane.transform.select.0,
+            [self.plane.scroll.x, self.plane.scroll.y],
+            packed(self.plane.transform.matrix, self.plane.transform.centre),
+        ));
+        fields.extend(native::tile_fields(&self.vram)?);
+        Ok(fields)
+    }
 
-pub(in crate::replay::played) fn frozen() -> Vec<Observation> {
-    native::owned(native::State::Ready { baby: 0, wings: 0 })
+    pub(in crate::replay::played) fn origin(
+        &self,
+        room: &played::State,
+    ) -> Result<Vec<Observation>, Outcome> {
+        let mut fields = self.published()?;
+        if let Some(RidleyPhase::Getaway(state)) = room.station.ridley.map(|ridley| ridley.phase) {
+            fields.extend(native::owned(owned(state)));
+        }
+        Ok(fields)
+    }
 }
 
 const fn packed([aa, bb, cc, dd]: [i16; 4], [pivot_x, pivot_y]: [i16; 2]) -> [i16; 6] {
