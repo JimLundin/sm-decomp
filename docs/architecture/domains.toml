@@ -1,10 +1,10 @@
-# The whole-game plan of domains.md (§3 the domains, §4 the waves) as data, for `verify::report`:
-# its domain graph, the milestone the README counts frames over, and the rungs toward it. The root
+# The whole-game plan of domains.md (§3 the domains, §4 the waves) as data: its domain graph, the
+# milestone the README counts frames over (`verify::report`), and the rungs toward it. The root
 # changes a domain's `status` in the commit that lands a round when its work starts or its queue
 # empties.
 #
 # [[model]]: a clean-room model crate, `crates/clean/<crate>` (its name with dashes as
-# underscores). Every model of `verify::report::DOMAINS` has one, and only those.
+# underscores).
 #
 # [[domain]]: a clean-room domain of the plan. `area` is the part of the game it belongs to:
 # samus, weapons, world, enemy, boss, interface, run, game, screens or audio, and the first word of
@@ -12,15 +12,12 @@
 # that hold it; `status` is "not-started" (the default), "in-progress" or "done", and
 # a domain past "not-started" names at least one model.
 #
-# A domain's `reads` are the ids of the domains whose exports it reads: the domain graph, which
-# `tools report` draws with an arrow from each exporter to its reader. Most are
+# A domain's `reads` are the ids of the domains whose exports it reads: the domain graph. Most are
 # stated in domains.md §3 (its Reads / exports column, a scope that names the other domain's
 # output, or the bosses' paragraph); a read the plan only implies, by a scope that needs the
 # other domain's output or a Depends entry, has an `# Inferred:` comment above it saying why.
 # Audio is one convention, not edges: any domain may send U1 a sound request, so none reads U1
-# for one and U1 reads none for them; U1 reads R1 for the room's track. The report's tests hold
-# the code to the graph: a clean crate and its registered engine adapters
-# uses only `types` and the clean crates of its own domains and of the domains they read.
+# for one and U1 reads none for them; U1 reads R1 for the room's track.
 #
 # A rung's order of work comes from these edges, within its needs: an item waits on the
 # platform work whose `before` names it and on the domains it `reads`, while they have not started.

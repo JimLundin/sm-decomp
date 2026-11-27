@@ -34,17 +34,7 @@ Jim's decisions, 2026-11-07:
    importer may read that operand after checking the instruction around it, and refuses any
    other code: that is extracting content, not running the game's code (2026-11-24). The format
    and its importer: [assets.md](assets.md).
-5. **Size is counted in logical tokens, on one weighted score of the model's logic** (a
-   guideline, decision 19). The game's data (the values of constants and statics, and imported
-   assets) and type declarations are reported beside the logic, not counted against it:
-   defining shapes is to be promoted, not taxed. The score weighs each logic token by what the
-   code's priorities make of it, so that a lower score means better code, not churn: forms that
-   hold no behaviour are free, a function signature is half, a `true` or `false` is double. An
-   exhaustive lookup, a table the compiler checks, is data like a constant's rows (Jim,
-   2026-11-11). Two quality terms compose with those weights: depth (Q1), so nested decisions
-   cost more than a flat dispatch, and duplication, so a decision written twice costs more than
-   one shared step (Jim, 2026-11-11). Hard lints refuse what no weight can price (G5 to G7). The
-   integrator's bridge is reported apart and not counted against the model. The rules are §4's.
+5. *Retired.*
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
    state machines whose moves are table rows, input as actions, tilemap collision with per-tile
@@ -52,25 +42,7 @@ Jim's decisions, 2026-11-07:
    Where the original's exact behaviour departs from those shapes, the shape stays and the
    departure is a named quirk. The clean room's version is in
    [DESIGN](../cleanroom/DESIGN.md).
-7. **The budget comes from the spec's units.** A domain's size budget is k weighted tokens per
-   spec unit, in every area: k × its units. k was computed once, on the first domain, as the old
-   code's score per unit times 0.55 with the official counters (`tools spec-units`, `tools
-   size`), then frozen (§4). The old code no longer bounds a budget; it stays beside it for
-   reference. A spec unit is one condition→outcome rule ("arm"), plus a third for each term a
-   data table makes the code interpret and a third for each operator in an exact formula; table
-   rows, parameters, enum values, prose and vectors don't count ([size-budget](size-budget.md)).
-   The budget moves by k per unit when the spec gains or loses behaviour, and is frozen at each
-   implementer export. The spec never states it: k, the areas, their old code and its commit are
-   in the `## Budget` section of the domain's decode notes, which `tools spec-units` and `tools
-   report` read (decision 10). The budget is an indicator, not a wall (Jim, 2026-11-08): the fit
-   is score ÷ budget, by area and in total, and above 1 the excess costs in proportion to how
-   far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for a
-   reasonable optimum of logic against specification, and stop compacting when a round's gain
-   in fit is small beside its cost and risk; a form that is worse only to get under the line is
-   not wanted. Code in no area (state types, inputs, the frame's order, the catalogue) has no
-   units of its own, so it is held by the same k (Jim, 2026-11-11): `tools report` shows each
-   domain's area fit and its shared share (the code in no area ÷ the model) apart, and a shared
-   share over 25 % is a finding.
+7. *Retired.*
 8. **The repository shows only the current state** (Jim, 2026-11-08). Code or docs kept only
    for comparison are deleted; a comparison uses git history (the commit before a deletion).
    When a clean model replaces engine code, the integrator deletes the old code in the same
@@ -79,21 +51,8 @@ Jim's decisions, 2026-11-07:
 9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08). The CPU side (which sound plays when)
    is modelled with the domains that trigger it; decisions 23 and 37 settle how audio is built
    and verified. The plan of domains is [domains.md](domains.md).
-10. **Implementers and independent reviewers are blind to size** (Jim, 2026-11-14).
-    Scores, k, budgets, fit, old-code baselines and size verdicts cloud judgement of the model.
-    The root counts after independent review; observers maintain the decode notes' Budget
-    section. Implementer-facing material (the export, its design note and skill, the spec,
-    vectors and every brief) states coding standards only: the lints and ceilings (L1, L2,
-    G5 to G7), never measures. Independent reviewers receive the evidence their role needs,
-    with size material withheld ([PROCESS](../cleanroom/PROCESS.md#who-sees-what)).
-    `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
-    (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
-    (`check_crate_rules.sh`) that mentions any of it.
-11. **Feedback carries independent review findings, not size verdicts** (Jim, 2026-11-14).
-    The implementer receives concrete shape findings: duplication, a decision that could be
-    a table row, a function doing two jobs, or a misleading name. A coarse size verdict is
-    withheld along with the numbers. A cut brief asks for clearer modelling of the behaviour,
-    with each rule stated once; the root records the cut's rationale separately (decision 19).
+10. *Retired.*
+11. *Retired.*
 
 Jim's decisions, 2026-11-09:
 
@@ -144,18 +103,9 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     the work a number that moves. A session's planning picks work for the lowest rung not yet
     reached ([domains.md §4](domains.md#4-order)). Lag modelled rather than recorded (T1) is
     needed only by the milestone itself.
-19. **Size is counted as a guideline, and reviewed after independent judgement** (Jim,
-    2026-11-14). Its weights, rules and k stay frozen (§4); changing them needs a measured
-    case where the score ranks a worse form above a better one, and a decision here. The old
-    code's size is a guideline rather than a cap. Every round still reports its score, fit
-    and delta. After independent review, the root counts and records whether a cut would
-    improve the model's fit to its behaviour scope, code quality and review findings, or
-    whether to proceed. Proceeding above the guideline needs a recorded reason. Size alone
-    neither holds a round nor starts a cut. The root decides cuts from independent findings
-    and records why the expected improvement warrants the cost and risk; a cut brief carries
-    concrete shape outcomes, not numeric shaving. A scope change goes to Jim with the numbers,
-    and the lane stops until he answers.
-    Exactness, the clean-room barrier, Quality and every non-size gate remain mandatory.
+19. **The root decides cuts from independent findings** (Jim, 2026-11-14). The root records
+    why the expected improvement warrants the cost and risk; a cut brief carries concrete shape
+    outcomes. A scope change goes to Jim, and the lane stops until he answers.
 20. **A round's fixed cost is cut where automation already holds the barrier.** The export,
     the scans, the canaries and `code_check.sh` hold the clean room on every round. The
     adversary gates a domain's first spec, and later a spec delta that adds a mechanism (a
@@ -367,40 +317,26 @@ every `BehaviourId` is exercised by at least one vector or recorded frame. Addin
 means adding a catalogue entry, a rule value and its model code (a table row, a variant, an
 encoder rule).
 
-## 4. Size: the score, its gates and its lints
+## 4. Gates and lints
 
-The score and k are frozen (decision 19). `tools size PATH...` (`verify::size`) and
-`tools/cleanroom/code_check.sh` apply these rules; after independent review the root records cut
-or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
+`tools/cleanroom/code_check.sh` applies the gates and lints to the clean crates. Test code is
+`#[cfg(test)]` items, `tests` directories and `tests.rs` files.
 
-- Size is measured **like for like**: the same counter on the old code and the new model. The
-  bridge that wires the model into the engine is the integrator's, reported apart and kept small
-  by review, not counted against the model.
-- Size is counted in **logical tokens**: every identifier, keyword, literal, lifetime and
-  operator is one, and so is each bracket pair. Comments, doc comments, layout and tests
-  (`#[cfg(test)]` items, `tests` directories and `tests.rs` files) are free. Lines would reward
-  cramming and punish types and tables laid out one field to a line; tokens count what the code
-  says.
-- **The rule is held on logic; data is reported beside it.** The values of `const` and `static`
-  items count as data: the game's tables and parameters, such as the pose chart's rows and which
-  sprite shows a pose. Loading them is part of rebuilding the game, so stating them is not extra
-  logic. A data row must state the game's data. A row that encodes a decision the code would
-  otherwise make is logic, and a review moves it back.
-- **A value that holds behaviour is logic** (rule L3 in the counter). A constant's or static's
+- **A value that holds behaviour is logic** (rule L3). A constant's or static's
   value is data when it is built only from literals (a minus on a literal included), other
   constants' names, paths to enum variants or unit structs, references to data, struct and
   tuple-struct literals (with a `..BASE`), arrays (`[a, b]`, `[a; N]`) and tuples, calls of a
   function or associated function whose every argument is itself data by this rule, and ranges
   whose two ends are literals or paths (`0x280..0x500`, `A..=B`). So a typed table is data:
   `Picture::new(0x009)`, `Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)`,
-  `Count::new(99)`, `Held(Key::Jump)`, `Some(Fixed(3))`; the constructor's body is counted as
-  logic where it is defined. Anything else makes the whole value logic: control flow (`if`,
+  `Count::new(99)`, `Held(Key::Jump)`, `Some(Fixed(3))`; the constructor's body is logic where
+  it is defined. Anything else makes the whole value logic: control flow (`if`,
   `match`, loops, `?`), a block, a closure, a macro, a method call on a value
   (`Divisor::new(100).expect(..)`, `.unwrap()`, `.map(..)`), a field or an index (`A.0`,
   `T[2]`), a turbofish, a cast, a range with an operator or a call at either end (`0..A + 1`,
   `..16`), and every other operator but a minus on a literal (`A | B << 4`, `-A`). Chart rows
-  are data while they state the spec's chart; L3 and review guard the line. `tools size` and
-  `code_check.sh` apply the same rule, so the import check and the counter agree.
+  are data while they state the spec's chart; L3 and review guard the line. `code_check.sh`
+  applies the same rule.
 - **An exhaustive lookup is data.** A table the compiler checks for a missing or repeated member
   is data as a constant's rows are: the arms of a `match` of two or more arms with no guard,
   whose every pattern is `_` or keys joined by `|` (a path to a variant or a constant, a
@@ -409,65 +345,15 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
   names no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and the rows of `enum_map!` on
   the same test (`K::A => Speed(2)`). The `match`, its scrutinee and its braces, and the macro's
   name and brackets, stay logic. A guard, a block arm, a binding, a local, a field, a method
-  call or an operator in any arm keeps a decision there, and the whole `match` stays logic. The
-  rule sits beside L3 in `verify::size` (`lookups`), and `code_check.sh`'s L2 exempts the same
-  values.
-- **Declarations are not counted against the rule:** `tools size` reports the tokens of
-  item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as types, on
-  both sides. A declaration holds no behaviour; anything that does (an `impl`'s body, a
-  function, a `match` that decides) is logic. A constant's head (`const NAME: T =` and its `;`)
-  is a declaration too.
-- **The rule is held on one weighted score.** `tools size` prints it per file and in total, with
-  the plain logic, types and data columns beside it. Weights, on both sides:
-  - **0** for forms that hold no behaviour: `use` items, `mod` declarations, visibility (`pub`,
-    `pub(crate)`, `pub(super)`: narrowing or widening it changes no behaviour, and
-    `redundant_pub_crate` keeps it plain), an `impl` header up to its body's `{` (an `impl
-    Trait` in a type is the signature's), a trailing comma before a closing bracket (rustfmt
-    places it), and the `const` of a `const fn` (`missing_const_for_fn` forces it).
-  - **0.5** for a function signature, from `fn` to its body's `{` (or its `;`), so a named step
-    costs less than its body inlined twice. `too_many_arguments` and the bool-parameter lints
-    keep signatures honest.
-  - **2** for `true` and `false` in logic, so a typed state beats a flag; `bool_comparison`,
-    `needless_bool` and `nonminimal_bool` stop the swap to `!x` forms.
-  - **1** for every other logic token.
-
-  A target is set under the same weights as the baseline it is compared with; a reweighted model
-  against an old-weight target would be a rule change hidden in a tool change.
-- **Two quality terms compose with the weights.** Size-like metrics (Halstead, ABC, cyclomatic,
-  fan-out) track the token count and would count size twice; these two measure what tokens
-  miss. `tools size` prints each term's part of the score in its own column.
-  - **Q1, depth.** A logic token weighs `1 + 0.25 × d` times its weight, `d` the number of blocks
-    around it inside a function body that nest: the block of an `if`, an `else`, a loop or a
-    let-else, a closure's body (a block or an expression) and a `match` arm written as a block
-    (`=> {`). A `match`'s own braces, its expression arms and a guard's `if` don't nest, so a flat
-    dispatch stays at depth 0. Helpers, early returns and let-else are the cheaper forms, and they
-    are the better ones.
-  - **Duplication.** A run of 12 logic tokens inside a function body that repeats a run seen
-    before, anywhere in the files measured together, pays each of its tokens again, at one token
-    and at its depth. The run counts what holds behaviour at full weight (no signature, no free
-    form, no data, no closing bracket). Local names are one name (a lowercase word that no `.`
-    or `::` qualifies and no `(`, `::` or `!` follows), so renaming a copy's locals doesn't hide
-    it; fields, methods, paths and literals keep their names. A run that overlaps the first one
-    it repeats is part of it. Twelve is the shortest run that two calls of one helper with the
-    same arguments don't reach. So a decision written twice costs more than one shared step,
-    whose signature weighs half.
-  - **Clumps (Q2) are a diagnostic, outside the score.** `tools size` reports what they would
-    add: a pair of parameter types other than `bool` in three or more signatures (a type is the
-    first name it holds, primitives included), and a pair of argument expressions (call
-    arguments or a struct literal's field values, an expression holding a call, a literal and
-    `..base` left out) at three or more sites. Weighed, they would reward a bag of references
-    and tax a shared helper; reported, they point a gate at values that travel together.
-  - **The parameter count is not a term.** A struct of the arguments would game any count, and
-    the call sites already price an interface's width.
-- **Gates refuse what no weight can price:** hard lints on the clean crates, ceilings that yield
-  no score, so nothing is counted twice.
+  call or an operator in any arm keeps a decision there, and the whole `match` stays logic.
+  `code_check.sh`'s L2 exempts the same values.
+- **Gates** are hard ceilings on the clean crates.
   - **G5, the clean room's clippy configuration** (`crates/clean/.clippy.toml`, which
     `export.sh` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
     clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
     deep (`excessive_nesting`, denied in `[workspace.lints]` and off wherever no threshold is
     set), cognitive complexity at most 15. `too-many-arguments-threshold` stays at 7: a lower
-    one would make a struct of the arguments a compliance tool. Q1 gives the gradient below
-    the nesting ceiling.
+    one would make a struct of the arguments a compliance tool.
   - **G6, `argument-object`** (`tools/cleanroom/code_check.sh`, through `shape_scan.awk` over a
     crate's library sources together): a struct taken by exactly one signature and built only in
     the argument lists of calls to that function, with no `impl` (no methods, no trait), and not
@@ -479,13 +365,7 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
     `self::` or a child module's name, `use` groups included, and any cycle among them is
     refused, a child naming its parent while the parent reads the child included. It stops
     passing a whole owner (`&Samus`) down to a helper module to shorten its signatures.
-- **k is computed under this score** (decision 7): the old samus-movement code's score
-  (13,169.75 at `c7f927ab6`, of which depth is 828.5 and duplication 1,220.75) per unit of the
-  official `tools spec-units` count (193.3), times 0.55, is 37.47, and k is 37.5, to one
-  decimal. Every domain's budget uses it, stated in its decode notes' Budget section with its
-  inputs (decision 10).
-- **Three lints close what no weight can**, as `tools/cleanroom/code_check.sh` tags on the clean
-  crates:
+- **Three lints**, as `tools/cleanroom/code_check.sh` tags them on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
     `#[expect]` carries a `reason = "..."` (`allow_attributes_without_reason` is denied too).
     Outside test code, no attribute may expect, allow or warn a lint that `[workspace.lints]`
@@ -497,7 +377,7 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
     lint, with a reason, as `clippy.toml` already loosens them.
   - **L2, `magic-literal`.** A number other than 0 or 1 in logic is refused, in any spelling
     (`15_i16`, `0x7FFF`, `0b10`, `0.5`, the `15` of `0..=15`). Allowed in a constant's or
-    static's value while L3 counts it as data (`Picture::new(0x009)` is; a `.expect(..)` on it
+    static's value while L3 makes it data (`Picture::new(0x009)` is; a `.expect(..)` on it
     is not), in the value of an exhaustive lookup's arm or an `enum_map!` row (`K::A => 3`;
     a key's own number is still refused, so `7 => ..` names its 7), in declarations (enum
     discriminants, array lengths in types), in an array length `[x; N]`, as a tuple field
@@ -506,10 +386,6 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
   - **L4, `variant-import`.** No `use` of an enum's variants outside test code (`use
     Kind::{A, B}`, `use Kind::*`, at any depth of a use tree): a variant is named through its
     enum, so a reader sees which enum a bare name belongs to.
-- **The budget beside the score** (decision 19). The decode notes' Budget section holds the
-  baseline (the old code's tokens, by area, at a commit) and the budget. The budget is k ×
-  units even where it exceeds the baseline: behaviour beyond the old code's scope grows its
-  budget.
 
 ## 5. How the work is planned
 
@@ -601,16 +477,10 @@ a spec shaped like them.
 
 **The spec template.**
 - **Header:** the domain's scope, what it reads from other domains and what it leaves to them,
-  and its notation. No size: the baseline in tokens, the areas and the budget go in the
-  `## Budget` section of the decode notes (decisions 7 and 10). The budget line there is the
-  tool's, from the spec's units, with its split by area.
-- **Rules are arms** (decision 7). Each rule is one bullet of the form
-  `<conditions> → <outcome> [vectors]`; only bullets with `→` count, so explanation, rewording or
-  splitting a rule doesn't move the count. Two arms of one entry with the same outcome are one
-  arm. An arm counts only if the vectors or recorded frames it cites exist. Each data table has a
-  `Cells:` line naming the terms its cells use. Exact formulas are in backticks. `checked` is its
-  own bullet. A cross-reference to another entry's rule counts nothing. The adversary gate
-  samples arms against the original: a padded arm stops the spec as a leak does.
+  and its notation.
+- **Rules are arms.** Each rule is one bullet of the form `<conditions> → <outcome> [vectors]`,
+  citing vectors or recorded frames that exist. Exact formulas are in backticks. `checked` is
+  its own bullet.
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
   means it isn't State, so it is not decoded or compared (decision 3). A quantity that is State
@@ -624,8 +494,7 @@ a spec shaped like them.
   visible at a cut.
 
 **A brief names behaviours and the mechanism** by spec entry IDs (for example: "`BallAtRest`
-coasts like standing; add its row"). It carries no bank-log excerpt and no address, and no score,
-budget or size target (decision 10): a size review's findings go in as shapes to change. A new
+coasts like standing; add its row"). It carries no bank-log excerpt and no address. A new
 free function named after a routine is a review stop.
 
 ## 6. How progress is measured

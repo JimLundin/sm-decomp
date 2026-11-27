@@ -41,8 +41,8 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
    [transition](cleanroom/PROCESS.md#replay-transition)).
 5. Every indexed case holds its reviewed outcome, observation digest and counts; an expected
    Unsupported boundary remains Unsupported ([STATUS](STATUS.md)).
-6. Size is counted as a guideline; the root records cut or proceed after review (decision 19,
-   the score: [MODEL §4](architecture/MODEL.md#4-size-the-score-its-gates-and-its-lints)).
+6. The clean crates are held to the gates and lints of
+   [MODEL §4](architecture/MODEL.md#4-gates-and-lints).
 6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
     planted fault, in production or verify's played runner and never a clean crate, makes it fail
@@ -84,7 +84,7 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
     ([MODEL §5](architecture/MODEL.md#5-how-the-work-is-planned)). A domain is verifiable on
     its own and planned by mechanism (MODEL §5).
 14. Structure leaks, perceivable quantities don't (MODEL §5, "What counts as a leak").
-15. Implementers and independent reviewers are blind to size (decisions 10 and 11).
+15. *Retired.*
 16. Vectors hold RAM observations and invented content only (decision 13).
 
 ## The round and the day
@@ -98,7 +98,7 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
 19. Shift end stops new scope; active work finishes. New rounds start nightly; off-hours
     structural tasks may run in parallel
     ([PROCESS](cleanroom/PROCESS.md#working-hours)).
-20. The root decides a cut from independent findings and the size guideline (decision 19,
+20. The root decides a cut from independent findings (decision 19,
     [PROCESS](cleanroom/PROCESS.md#the-loop)).
 20a. Close each delivered feature with its [feature architecture review](cleanroom/PROCESS.md#feature-architecture-review).
 22. Commits: one change, a title naming its area that says what is true afterwards, its kind

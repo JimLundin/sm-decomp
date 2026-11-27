@@ -7,9 +7,8 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
 - [MODEL §5](../architecture/MODEL.md#5-how-the-work-is-planned): what a leak is, and the spec
   template;
 - [DESIGN](DESIGN.md): the coding standards;
-- [MODEL §4](../architecture/MODEL.md#4-size-the-score-its-gates-and-its-lints) and §1
-  decisions 7 and 19: the score and the budget, a guideline;
-  [size-budget](../architecture/size-budget.md), how spec units are counted.
+- [MODEL §4](../architecture/MODEL.md#4-gates-and-lints): the gates and
+  lints the clean crates are held to.
 
 ## Replay transition
 
@@ -70,17 +69,10 @@ repository.
 | the original (bank logs, ROM, records, decode notes, `verify`'s addresses) | yes | yes | - | - | yes | yes |
 | the spec and its vectors | yes | yes | yes | vectors only | yes | yes |
 | the clean model's code and tests | after import | yes | writes it | yes | yes | yes |
-| the score, budget, k, fit, old-code baselines and size verdicts | yes | - | - | - | yes | after review |
 | the old engine code | yes | yes | - | - | deletes it | yes |
 
-Independent review judges behaviour and code before the root counts size (MODEL §1 decisions
-10 and 11). The root provides adversaries with review copies of decode notes and evidence that
-preserve source citations and harness notes, and omit size material wherever it appears,
-including Budget sections, reports and size verdicts; their briefs assign no size assessment.
-Blind reviewers receive their code-only export. Reviewers return their independent findings
-without receiving size material or assessments. The implementer's material states coding standards only;
-feedback carries concrete shape findings from review, with size numbers and coarse verdicts
-withheld. The root keeps the subsequent assessment in the coordination log and landing report.
+Blind reviewers receive their code-only export. The implementer's material states coding
+standards only, and feedback carries concrete shape findings from review.
 
 ## A round
 
@@ -99,8 +91,7 @@ Each step names its owner, what it waits for, and its done-condition.
      vector's `rules` table), so adjusting the behaviour is proven, not assumed.
      `tools/cleanroom/adjusted_vectors.sh --gate <domain>` passes. A domain specced before this
      rule meets it at its next spec round; until then the script's listing is advisory;
-   - `docs/behaviours/<domain>.decode.md` holds the sources, the harness note and the Budget
-     section;
+   - `docs/behaviours/<domain>.decode.md` holds the sources and the harness note;
    - the observer's reference model agrees with every vector;
    - `tools/cleanroom/scan.sh` finds 0 on the spec and vectors;
    - the doc links pass.
@@ -175,9 +166,7 @@ Each step names its owner, what it waits for, and its done-condition.
     when step 3 didn't gate it, replay provider independence, carried production State, case
     outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
-    or into the next round's queue (model shape, spec gaps). Independent review excludes size
-    measurements. After the reports, the root completes the [coordinator size assessment](#coordinator-size-assessment).
-    Size does not change the adversary's verdict; every non-size gate remains mandatory.
+    or into the next round's queue (model shape, spec gaps).
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together. On the round's branch the root moves a plan domain's `status` in
     [`docs/architecture/domains.toml`](../architecture/domains.toml) when its work starts or
@@ -196,20 +185,6 @@ Each step names its owner, what it waits for, and its done-condition.
     unreachable arm) included.
     The domain is done when its required indexed witnesses reach their declared ends, its
     required integration is proven, and the queue holds nothing that changes behaviour.
-
-## Coordinator size assessment
-
-After independent review (step 10), and before landing, the root runs the official counters
-(`tools spec-units`, `tools size`) and checks the decode notes' Budget section. It records the
-score, budget, fit and old-code baseline, and the round's delta for model, bridge and code moved
-into test support separately. The counters, weights and k are unchanged (MODEL §1 decision 19).
-
-The root records **cut** or **proceed**, with a rationale relating the behaviour scope, code
-quality and independent findings to whether a cut would improve the model's fit, considering
-its cost and risk. Exceeding the old-code guideline alone fails no gate and starts no cut.
-Proceeding above it needs an explicit reason in the coordination log and landing report.
-A cut uses concrete review findings under "The loop"; its brief carries those shapes, with all
-size material withheld. It aims to improve the model, rather than shave a number.
 
 ## What can run at once
 
@@ -367,8 +342,8 @@ both passes recommend keeping the existing design, record the reasoning and clos
 Work is scheduled in one session a night, from 20:00 to 08:00 local time, with its planning and
 review included. Each session has three parts:
 
-1. **Planning.** The root reads the last session's review, `tools report` and the queue, chooses
-   the session's rounds and lanes within the limits above, and writes the plan down before any lane
+1. **Planning.** The root reads the last session's review, the README's progress and the queue,
+   chooses the session's rounds and lanes within the limits above, and writes the plan down before any lane
    starts, as a session issue selecting the bounded [work items](#work-items) (MODEL §1
    decisions 27 and 31). Work goes only to the lowest rung of the ladder
    not yet reached (decisions 18 and 24): the items it still needs, then the indexed replay cases' first
@@ -406,7 +381,7 @@ batch with other reviewed changes ([landing](../../.agents/skills/root/SKILL.md#
 
 - **Cut rounds.** The root applies MODEL §1 decision 19 after independent review and records
   whether the expected improvement warrants a round with no new behaviour. The brief carries
-  concrete shape findings, without size numbers or targets. Findings that do not justify a cut
+  concrete shape findings. Findings that do not justify a cut
   accompany the domain's next behaviour round.
 
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer

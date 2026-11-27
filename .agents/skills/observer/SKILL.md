@@ -43,11 +43,9 @@ engine's current code for your domain.
    - the sources, by entry;
    - the RAM mapping;
    - the harness note: what is compared, what is skipped and why, and each mask with its named
-     writer;
-   - the **Budget** section: the old code's `tools size` by area at a named commit, the units
-     from `tools spec-units`, and the budget.
+     writer.
 
-   Everything about addresses and size lives here, and nowhere in the spec. Done when an
+   Everything about addresses lives here, and nowhere in the spec. Done when an
    integrator could locate the records and wire the declared replay comparisons from the note.
 7. **Read it as the adversary will.** Look for routine-named headings, a step list that follows
    a routine, an enum ordered like a RAM code, and a word the lexicon flags. Run

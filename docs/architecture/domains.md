@@ -1,7 +1,6 @@
 # Domain plan: the rest of Super Metroid as clean-room domains
 
-The plan of the clean-room domains toward the milestone. Sizes are `tools size` weighted scores
-measured at `e458a3d5d`, when the earlier engine code they cite still ran.
+The plan of the clean-room domains toward the milestone.
 
 ## 0. The answer in three lines
 
@@ -17,36 +16,30 @@ measured at `e458a3d5d`, when the earlier engine code they cite still ran.
 
 Current production owns complete clean model State and advances selected responsibilities
 through `game::production::Production`, which `verify::replay` invokes. The application refuses
-unsupported power-on. Required missing history, lifecycle, room loading or timing is unsupported. Actual adapter and retained service
-inventory is in the Engine services section that `tools report` prints, and indexed acceptance is
-in its replay evidence ([BUILDING](../BUILDING.md#the-readme-and-the-report)).
+unsupported power-on. Required missing history, lifecycle, room loading or timing is unsupported.
+Indexed acceptance is in the [replay index](../../scenarios/replay/index.toml) and
+[STATUS](../STATUS.md).
 
 ## 2. What the real game has that the engine lacks
 
-Sized by the earlier whole-game port (`crates/sm_game` in git history, 1.04 M weighted, verbose and
-partly transpiled; it is an upper bound). Calibration: samus-movement's clean model is about 0.13
-of that port's player movement, collision and transitions (57k), the camera 0.19 of its room
-scrolls (7.8k). So **clean ≈ 0.12-0.2 × old port**. Banks from the bank-log index.
+Banks from the bank-log index.
 
-| System | Banks | Old port | Clean estimate |
-| --- | --- | ---: | ---: |
-| Bosses (Spore Spawn, Torizos, Kraid, Crocomire, Phantoon, Botwoon, Draygon, Ridley x2, Mother Brain, baby metroid, zebetites, statues) | A4-A7, A9, AA, B3, AD | ~175k | 25-35k |
-| Enemy projectiles (most belong to bosses) | 86, 8D | 65k | 8-13k |
-| Enemy species (~170) and the framework (spawn, process, contact, vulnerability, freeze, death, drops, corpses) | A0-A3, A8, B2-B4 | ~150k + 35k | 25-35k |
-| Front end and menus (boot, title, intro, file select, options, pause map and equipment, game over, demos) | 81, 82, 8B, 8C, 8E, B5, B6 | ~110k (menus 49k, scene part) | 15-22k |
-| Cinematics (Ceres, the escape, gunship, ending, credits, Mode 7) | 8B, 8C, 95-99 | ~50k | 8-10k |
-| Doors, elevators and room loading | 82, 83, 8F | ~40k | 5-8k |
-| Block reactions and PLMs | 84, 94 | ~30k | 5-6k |
-| Samus's beams and weapons, power bomb | 90, 93, 94, 88 | ~37k | 5-7k |
-| Room FX (liquids' levels, rain, fog, heat, animated tiles, palette FX, HDMA objects, x-ray cone, sky scroll) | 87, 88, 89, 8A, 8D | ~48k | 7-9k |
-| Samus remaining (liquids, booster, shinespark, grapple, knockback, damage, death, palette, look) | 90, 91, 94, 9B | ~30k | 5-7k |
-| HUD, message boxes, dialogue | 80, 85 | ~15k | 2-3k |
-| Saves, progress, inventory | 81, 82 | ~9k | 1.5k |
-| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver | 3k CPU side | CPU 1k; the sequencer clean room (U2) |
-| Slowdown and loading time (the cost model, D9) | all | n/a | table-driven |
-
-Infrastructure in the old port (encoding, checkpoints, owners, RAM views, ~110k) is not
-behaviour and has no counterpart here.
+| System | Banks |
+| --- | --- |
+| Bosses (Spore Spawn, Torizos, Kraid, Crocomire, Phantoon, Botwoon, Draygon, Ridley x2, Mother Brain, baby metroid, zebetites, statues) | A4-A7, A9, AA, B3, AD |
+| Enemy projectiles (most belong to bosses) | 86, 8D |
+| Enemy species (~170) and the framework (spawn, process, contact, vulnerability, freeze, death, drops, corpses) | A0-A3, A8, B2-B4 |
+| Front end and menus (boot, title, intro, file select, options, pause map and equipment, game over, demos) | 81, 82, 8B, 8C, 8E, B5, B6 |
+| Cinematics (Ceres, the escape, gunship, ending, credits, Mode 7) | 8B, 8C, 95-99 |
+| Doors, elevators and room loading | 82, 83, 8F |
+| Block reactions and PLMs | 84, 94 |
+| Samus's beams and weapons, power bomb | 90, 93, 94, 88 |
+| Room FX (liquids' levels, rain, fog, heat, animated tiles, palette FX, HDMA objects, x-ray cone, sky scroll) | 87, 88, 89, 8A, 8D |
+| Samus remaining (liquids, booster, shinespark, grapple, knockback, damage, death, palette, look) | 90, 91, 94, 9B |
+| HUD, message boxes, dialogue | 80, 85 |
+| Saves, progress, inventory | 81, 82 |
+| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver |
+| Slowdown and loading time (the cost model, D9) | all |
 
 ## 3. The domains
 
@@ -67,40 +60,40 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 
 ### Samus
 
-| # | Domain (player terms) | Scope | Reads / exports | Old code, baseline | Rows | Depends | Rounds |
-| --- | --- | --- | --- | --- | --- | --- | ---: |
-| S1 | **Samus's motion: follow-ups** | export `rising`; C2 (`camera_from` under a block-inside push); C3 (chain-0059-A293 400) | exports `rising` to the camera | none (fixes) | cached | none | 1 |
-| S2 | **Samus in water, lava and sand; pushes** (samus-movement rounds) | other speeds and gravity in liquids, the speed booster's dash cap and higher jump (the booster's stages are S5's), quicksand, conveyors, Ceres pushes, the steep blocks' corners | reads the liquid's level (R3) as an input; same speed quantities, so it extends samus-movement | in `samus_movement_bridge`/model already; old port movement | cached (chain-0220/0224/0232, area-maridia, terrain-quicksand, samus-ceres-push) | S1 | 4 |
-| S3 | **The shinespark and echoes** (samus-movement rounds) | charge store, the spark's directions, its end, the echoes' positions | exports the echoes to S5 | none | cached (samus-shinespark-*) | S2 | 2 |
-| S4 | **Hurt and knockback; bomb jumps** (samus-movement rounds) | knockback motion and its turn of the camera lead (camera C4), bomb-jump launch | reads a hit event (C1) and a bomb blast (W1) | none | cached (chain-0106, samus-bomb-jump-vertical) | S2 | 2 |
-| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose and current item controls (H2); exports `SpriteDraw`, palette intents; samus-movement reads its "animation ended" | `animation` 1,246, `samus_drawing` 605, `samus_palette` 183, `atmospheric` 1,082 (3,116) | cached, OAM and CGRAM streams | E1 | 3 |
-| S6 | **The grapple beam** | aim, fire, latch, swing (angle, length), release hand-off, grapple blocks | owns her position on attached frames; reads grapple block kinds; exports release speeds | none (old port 11k) | cached (samus-grapple-*); boss-draygon-grapple-* | S2, W2 | 3 |
-| S7 | **The x-ray scope** | the cone, its sweep, time stopped (camera's `TimeStopped`), revealed blocks | exports time-stopped and the cone to R4 | none | cache `xray-scan-*` (4 rows) | E2 | 2 |
+| # | Domain (player terms) | Scope | Reads / exports | Rows | Depends | Rounds |
+| --- | --- | --- | --- | --- | --- | ---: |
+| S1 | **Samus's motion: follow-ups** | export `rising`; C2 (`camera_from` under a block-inside push); C3 (chain-0059-A293 400) | exports `rising` to the camera | cached | none | 1 |
+| S2 | **Samus in water, lava and sand; pushes** (samus-movement rounds) | other speeds and gravity in liquids, the speed booster's dash cap and higher jump (the booster's stages are S5's), quicksand, conveyors, Ceres pushes, the steep blocks' corners | reads the liquid's level (R3) as an input; same speed quantities, so it extends samus-movement | cached (chain-0220/0224/0232, area-maridia, terrain-quicksand, samus-ceres-push) | S1 | 4 |
+| S3 | **The shinespark and echoes** (samus-movement rounds) | charge store, the spark's directions, its end, the echoes' positions | exports the echoes to S5 | cached (samus-shinespark-*) | S2 | 2 |
+| S4 | **Hurt and knockback; bomb jumps** (samus-movement rounds) | knockback motion and its turn of the camera lead (camera C4), bomb-jump launch | reads a hit event (C1) and a bomb blast (W1) | cached (chain-0106, samus-bomb-jump-vertical) | S2 | 2 |
+| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose and current item controls (H2); exports `SpriteDraw`, palette intents; samus-movement reads its "animation ended" | cached, OAM and CGRAM streams | E1 | 3 |
+| S6 | **The grapple beam** | aim, fire, latch, swing (angle, length), release hand-off, grapple blocks | owns her position on attached frames; reads grapple block kinds; exports release speeds | cached (samus-grapple-*); boss-draygon-grapple-* | S2, W2 | 3 |
+| S7 | **The x-ray scope** | the cone, its sweep, time stopped (camera's `TimeStopped`), revealed blocks | exports time-stopped and the cone to R4 | cache `xray-scan-*` (4 rows) | E2 | 2 |
 
 ### Her weapons and the world she touches
 
-| # | Domain | Scope | Reads / exports | Old code, baseline | Rows | Depends | Rounds |
-| --- | --- | --- | --- | --- | --- | --- | ---: |
-| W1 | **Beams, missiles and bombs** | beam combinations, charge, cooldowns, flight shapes (wave, spazer, plasma, ice), missiles, supers, bombs and their blasts, power bombs and their expanding window, crystal flash | reads equipment, her pose; exports projectile hits on blocks (W2) and enemies (C1), blasts (S4) | `projectile` 2,551 | cache `special-beam-*`, `beam-reflect`, `power-bomb-*`, `samus-crystal-flash`; chains | E1 | 5 |
-| W2 | **Blocks that react** | shot, bomb, power bomb, super and speed blocks, crumble, respawn, grapple blocks, spikes (as a hurt event), the scroll cells that open and close screens (camera round 2), door caps as blocks | reads her touched cells (samus-movement `TouchedCells`) and W1's hits; writes the level's blocks; needs D13's `Program<F>` with PLM lists as imported assets | `plm` 4,705 (part), `collision/inside` | cached chains (crumble, scroll PLMs); more chain rows | A1 | 5 |
-| W3 | **Items to pick up** | item blocks, chozo balls, hidden items, the collected bit, what each item gives, reserve tanks' auto refill | reads W2's reach; exports the message (H2) and equipment | `plm` item path, `ItemStep` | cached (item-morph-ball); cache `item-wave`, chain rows with items | W2 | 2 |
+| # | Domain | Scope | Reads / exports | Rows | Depends | Rounds |
+| --- | --- | --- | --- | --- | --- | ---: |
+| W1 | **Beams, missiles and bombs** | beam combinations, charge, cooldowns, flight shapes (wave, spazer, plasma, ice), missiles, supers, bombs and their blasts, power bombs and their expanding window, crystal flash | reads equipment, her pose; exports projectile hits on blocks (W2) and enemies (C1), blasts (S4) | cache `special-beam-*`, `beam-reflect`, `power-bomb-*`, `samus-crystal-flash`; chains | E1 | 5 |
+| W2 | **Blocks that react** | shot, bomb, power bomb, super and speed blocks, crumble, respawn, grapple blocks, spikes (as a hurt event), the scroll cells that open and close screens (camera round 2), door caps as blocks | reads her touched cells (samus-movement `TouchedCells`) and W1's hits; writes the level's blocks; needs D13's `Program<F>` with PLM lists as imported assets | cached chains (crumble, scroll PLMs); more chain rows | A1 | 5 |
+| W3 | **Items to pick up** | item blocks, chozo balls, hidden items, the collected bit, what each item gives, reserve tanks' auto refill | reads W2's reach; exports the message (H2) and equipment | cached (item-morph-ball); cache `item-wave`, chain rows with items | W2 | 2 |
 
 ### Rooms
 
-| # | Domain | Scope | Reads / exports | Old code | Rows | Depends | Rounds |
-| --- | --- | --- | --- | --- | --- | --- | ---: |
-| R1 | **Doors and elevators between rooms** | the door's passage (the screen scrolling over, the fade, the new room's placement of Samus and the view, the camera's `ScreensRunOn`), elevators between areas, the room state chosen by events (P1), loading time as a Timing behaviour | reads the door it entered; exports the new room, her and the view's placement, the spawn calls to each family | none in the clean sense; `state/room` reset | cached chains (each crosses a door), `door-transition`, `door-loading-lag-nmi`, `elevator-traversal` | E2, P1 | 6 |
-| R2 | **Room loading** (platform, not clean-room) | the load sequence over AF1's rooms and AF2's tilesets: the VRAM and CGRAM uploads, the work RAM image of the level, each record's load cost | reads our room and tileset formats; outputs video writes | `data::room`, `level`, `compression` (their decoding moves to AF1 and AF2) | as R1 | E2, AF1, AF2 | 2 lanes |
-| R3 | **Liquids and room weather** | the liquid's level, its rise and fall (Tourian acid, lava quakes), rain, fog, heat, the room's quakes and the room code that moves the view (camera's "room rules") | exports the liquid level (S2), the view's shake | `world-quake` holds the quiet phase and Drawing displacement; `world-haze` holds the Ceres backdrop | cache `area-maridia`, `volcano-room-lavaquake`, `terrain-*-hand`, chains | R1 | 4 |
-| R4 | **Room ambience** | animated tiles, palette cycles (palette FX objects), the sky's scroll, layer 2's own motion, HDMA visuals | output only (tile, palette, line intents) | `scrolling` 252, `bg_graphics` (part) | chains | E2, E3 | 3 |
+| # | Domain | Scope | Reads / exports | Rows | Depends | Rounds |
+| --- | --- | --- | --- | --- | --- | ---: |
+| R1 | **Doors and elevators between rooms** | the door's passage (the screen scrolling over, the fade, the new room's placement of Samus and the view, the camera's `ScreensRunOn`), elevators between areas, the room state chosen by events (P1), loading time as a Timing behaviour | reads the door it entered; exports the new room, her and the view's placement, the spawn calls to each family | cached chains (each crosses a door), `door-transition`, `door-loading-lag-nmi`, `elevator-traversal` | E2, P1 | 6 |
+| R2 | **Room loading** (platform, not clean-room) | the load sequence over AF1's rooms and AF2's tilesets: the VRAM and CGRAM uploads, the work RAM image of the level, each record's load cost | reads our room and tileset formats; outputs video writes | as R1 | E2, AF1, AF2 | 2 lanes |
+| R3 | **Liquids and room weather** | the liquid's level, its rise and fall (Tourian acid, lava quakes), rain, fog, heat, the room's quakes and the room code that moves the view (camera's "room rules") | exports the liquid level (S2), the view's shake | cache `area-maridia`, `volcano-room-lavaquake`, `terrain-*-hand`, chains | R1 | 4 |
+| R4 | **Room ambience** | animated tiles, palette cycles (palette FX objects), the sky's scroll, layer 2's own motion, HDMA visuals | output only (tile, palette, line intents) | chains | E2, E3 | 3 |
 
 ### Combat and enemies
 
-| # | Domain | Scope | Reads / exports | Old code | Rows | Depends | Rounds |
-| --- | --- | --- | --- | --- | --- | --- | ---: |
-| C1 | **Fighting enemies** (the framework) | which enemies run (the window), contact with her (hurt, solid), with her projectiles (hit, vulnerability table, freeze with ice, frozen as platform), death explosion, drops (drop chance and RNG), corpses, respawn | reads enemy hitboxes and positions (species), W1's projectiles; exports hits to H1 and S4 and species | `enemy` 4,567 (part), `collision/solid_enemy` | cached chains (zoomers, wavers, fish); cache `enemy-*` (19 rows) | W1, A1, AF3 | 6 |
-| H1 | **Energy, reserves and death** | energy, tanks, reserves (auto and manual), suit damage reduction, i-frames, low-energy alarm, death and its sequence, game over hand-off | reads hits (C1, W2 spikes, R3 lava); exports current energy to H2 and G1, the death to F3 | `samus-health` owns periodic loss and low-energy warning | cached (chain-0106 hits); cache `death`, `samus-square-slope-reserve` | C1 | 2 |
-| C2-C11 | **Enemy families**, about 10 domains by movement shape: crawlers (zoomer, geemer, wall crawlers), hoppers (sidehopper, dessgeega), fliers (waver, skree, mellow, fireflea), swimmers (Maridia fish, skultera, choot), turrets and spawners (pipes, rinka, cannons), space pirates and ki-hunters, metroids (latch, drain, ice shatter), friendly animals (etecoons, dachora), Wrecked Ship robots and shutters, room hazards (boulders, magdollite, lava-dwellers) | each its AI and its own projectiles; reads her position, the level | species `eye`, `face_block` | cache `enemy-*`, `coverage-metroid-*`, chain rows per area | C1, A1 | 25-30 total |
+| # | Domain | Scope | Reads / exports | Rows | Depends | Rounds |
+| --- | --- | --- | --- | --- | --- | ---: |
+| C1 | **Fighting enemies** (the framework) | which enemies run (the window), contact with her (hurt, solid), with her projectiles (hit, vulnerability table, freeze with ice, frozen as platform), death explosion, drops (drop chance and RNG), corpses, respawn | reads enemy hitboxes and positions (species), W1's projectiles; exports hits to H1 and S4 and species | cached chains (zoomers, wavers, fish); cache `enemy-*` (19 rows) | W1, A1, AF3 | 6 |
+| H1 | **Energy, reserves and death** | energy, tanks, reserves (auto and manual), suit damage reduction, i-frames, low-energy alarm, death and its sequence, game over hand-off | reads hits (C1, W2 spikes, R3 lava); exports current energy to H2 and G1, the death to F3 | cached (chain-0106 hits); cache `death`, `samus-square-slope-reserve` | C1 | 2 |
+| C2-C11 | **Enemy families**, about 10 domains by movement shape: crawlers (zoomer, geemer, wall crawlers), hoppers (sidehopper, dessgeega), fliers (waver, skree, mellow, fireflea), swimmers (Maridia fish, skultera, choot), turrets and spawners (pipes, rinka, cannons), space pirates and ki-hunters, metroids (latch, drain, ice shatter), friendly animals (etecoons, dachora), Wrecked Ship robots and shutters, room hazards (boulders, magdollite, lava-dwellers) | each its AI and its own projectiles | reads her position, the level | cache `enemy-*`, `coverage-metroid-*`, chain rows per area | C1, A1 | 25-30 total |
 
 ### Bosses (D14 phase tables)
 
@@ -123,18 +116,18 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 
 ### HUD, menus, saves, progress
 
-| # | Domain | Scope | Old code | Rows | Depends | Rounds |
-| --- | --- | --- | --- | --- | --- | ---: |
-| H2 | **The HUD and the mini-map** | what the HUD shows (values from H1, item selection and its cycling, auto reserve sign), the mini-map and exploration from S1's current position and action | `hud` 1,058, `mini_map` 1,146 | cached | E2 | 2 |
-| G1 | **Play time** | advances the carried hours, minutes, seconds and frames during eligible play | `game-time` reads current whole energy from H1 at the ordinary frame opportunity | retained native frame | H1 | 1 |
-| G2 | **Shared random sequence** | advances the current shared number once per completed draw | `game-random` | consecutive Ceres gameplay draws | — | 1 |
-| H3 | **Message boxes** | item texts, the save prompt's yes and no, their lag waits (C5's waits) | `message_box` 1,925 | cached (item-morph-ball, samus-square-slope-reserve) | E2 | 2 |
-| P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | none | chains | none | 1 |
-| P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums (its encoder, `exact::sram`, is a lane of P2's: [assets.md §3.8](assets.md#38-saves)), the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
-| F1 | **The pause screen** | map screen (scrolling, areas, explored), equipment screen (toggles), its fades and the unpause | none (old 49k with file select) | **new recording** (no `pause-menu-tour` in the lock; the 100% chains may pause for toggles: check) | P1, E2 | 5 |
-| F2 | **Title, intro and file select; options** | boot, title, the intro's text and pages, file select (copy, clear), options and controls, demos (a recorded input source) | none | `options-menu-tour`, `file-copy-clear`, `any-power-on`, the intro's `any-intro-*` (four rows); **new** for the attract demos | E2, E4 | 8 |
-| F3 | **Game over** | death's screen, continue | none | `death` | H1 | 1 |
-| F4 | **Cinematics and credits** | the gunship's landing and take-off, Samus's arrival, the planet's explosion, the ending, credits | none | `gunship-bobbing-cycle`, `credits*` (14 rows, 67k frames), `any-fly-to-ceres`, `chain-any-0011-DF45` (the explosion and the flight to Zebes) | E4 | 5 |
+| # | Domain | Scope | Rows | Depends | Rounds |
+| --- | --- | --- | --- | --- | ---: |
+| H2 | **The HUD and the mini-map** | what the HUD shows (values from H1, item selection and its cycling, auto reserve sign), the mini-map and exploration from S1's current position and action | cached | E2 | 2 |
+| G1 | **Play time** | `game-time` advances the carried hours, minutes, seconds and frames during eligible play, reading current whole energy from H1 at the ordinary frame opportunity | retained native frame | H1 | 1 |
+| G2 | **Shared random sequence** | `game-random` advances the current shared number once per completed draw | consecutive Ceres gameplay draws | — | 1 |
+| H3 | **Message boxes** | item texts, the save prompt's yes and no, their lag waits (C5's waits) | cached (item-morph-ball, samus-square-slope-reserve) | E2 | 2 |
+| P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | chains | none | 1 |
+| P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums (its encoder, `exact::sram`, is a lane of P2's: [assets.md §3.8](assets.md#38-saves)), the load flow, energy and missile refill stations, map stations | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
+| F1 | **The pause screen** | map screen (scrolling, areas, explored), equipment screen (toggles), its fades and the unpause | **new recording** (no `pause-menu-tour` in the lock; the 100% chains may pause for toggles: check) | P1, E2 | 5 |
+| F2 | **Title, intro and file select; options** | boot, title, the intro's text and pages, file select (copy, clear), options and controls, demos (a recorded input source) | `options-menu-tour`, `file-copy-clear`, `any-power-on`, the intro's `any-intro-*` (four rows); **new** for the attract demos | E2, E4 | 8 |
+| F3 | **Game over** | death's screen, continue | `death` | H1 | 1 |
+| F4 | **Cinematics and credits** | the gunship's landing and take-off, Samus's arrival, the planet's explosion, the ending, credits | `gunship-bobbing-cycle`, `credits*` (14 rows, 67k frames), `any-fly-to-ceres`, `chain-any-0011-DF45` (the explosion and the flight to Zebes) | E4 | 5 |
 
 ### Platform and tracks (not clean-room; hardware formats or the original's timing)
 
@@ -352,7 +345,7 @@ plan declares required fields and outputs, including video or APU observations w
 The milestone needs every compared cut and output byte. Current reporting separates scoped,
 integrated and whole-movie evidence and keeps expected Unsupported boundaries distinct from
 completed behaviour. Borrowed sources, excluded consumers and lost historical claims remain
-visible in the replay evidence `tools report` prints and the
+visible in the [replay index](../../scenarios/replay/index.toml) and the
 [transition ledger](../../scenarios/replay/transition.toml).
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
@@ -423,8 +416,7 @@ doesn't fall, root integration and review, not implementation, set the pace.
    stream of those events; the sequencer's spec must name what it does with a song (tempo,
    notes, envelopes, effects), never the driver's command bytes or routines.
 3. **Bosses and scripted behaviour.** Long instruction lists with many custom steps, multipart
-   enemies, rare branches (Mother Brain's phases) and 65k of enemy-projectile code in the old
-   port. Records reach few branches. *Proposal:* B1+B2 first to fix the phase table; record
+   enemies, rare branches (Mother Brain's phases) and much enemy-projectile code. Records reach few branches. *Proposal:* B1+B2 first to fix the phase table; record
    short segment rows per phase (D26 ladders) before each boss's spec; projectiles belong to
    their owner's domain, the slot and contact rules to C1.
 4. **Tables of thousands of entries as assets (decision 4).** Instruction lists (PLMs,
@@ -454,5 +446,5 @@ doesn't fall, root integration and review, not implementation, set the pace.
    chains may cover pausing (check before recording). Rare boss phases need segment rows.
 
 The plan's domains, their waves and their progress are data in [domains.toml](domains.toml),
-from which `verify::report` draws the domain graph `tools report` prints and the README's
-milestone; the README's stretches come from [stretches.toml](../../scenarios/replay/stretches.toml).
+from which `verify::report` draws the README's milestone; the README's stretches come from
+[stretches.toml](../../scenarios/replay/stretches.toml).

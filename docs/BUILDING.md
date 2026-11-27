@@ -222,7 +222,7 @@ first clean-room lane on a machine, and after a new CLI version:
    every CHECK refused and every TASK done (TASK 7's runner ends `vector_runner: all targets
    passed`), and the canary check prints `CANARY CLEAN`.
 
-## The README and the report
+## The README
 
 The README is generated from the tree:
 
@@ -242,30 +242,7 @@ moves a played run, its own commits change the run there and regenerate the READ
 reviews the figures at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to
 the file.
 Quality runs `cargo run --locked -q -p tools --bin tools -- report --check`. The local source gate
-also checks the generated README through verify's library tests when the report inputs change.
-
-The report is printed, not committed:
-
-```sh
-cargo run -p tools --bin tools -- report
-```
-
-prints the current clean models' size, budget and fit by domain and area, their lines, the
-bridges, replay providers and engine services, the indexed replay evidence, the domain graph and
-each model's structure. Its replay results separate scoped, integrated and whole-movie witnesses
-and distinguish supported behaviour from expected unsupported boundaries.
-
-The planted fault table lists every catalogue rule and its assigned faults. To include
-detections, read the saved logs from reviewed runs of the fault definitions in your checkout.
-
-```sh
-python3 tools/check_mutants.py rule-coverage --write /tmp/fault-evidence.toml faults.log
-cargo run -p tools --bin tools -- report --fault-evidence /tmp/fault-evidence.toml
-```
-
-The receipt records the names with a verified kill and restoration. Its SHA-256 identifies
-the manifest used to interpret the logs. Check the logs’ source revision when reusing them.
-Omitting the receipt leaves all detections unknown.
+also checks the generated README through verify's library tests when its inputs change.
 
 ## Credits and licence
 

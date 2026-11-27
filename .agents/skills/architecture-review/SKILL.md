@@ -3,7 +3,7 @@ name: architecture-review
 description: Review a named repository engineering interface or ownership question when assigned to investigate structural friction in sm-decomp.
 ---
 
-Start with the decision the owner needs and the revision under review. Use the task's permitted material. For engine interfaces, follow the [architecture references](../../../AGENTS.md#task-references) to the applicable layer, decision and crate owner. Independent reviewers use the root's size-redacted materials.
+Start with the decision the owner needs and the revision under review. Use the task's permitted material. For engine interfaces, follow the [architecture references](../../../AGENTS.md#task-references) to the applicable layer, decision and crate owner.
 
 Follow a real caller through the interface to the owner, then follow the test or production path that exercises it. Identify the knowledge the caller must supply, such as operation ordering, a repeated conversion or an invariant enforced in several places. Name the files and items where that cost is observable.
 

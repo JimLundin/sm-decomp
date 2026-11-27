@@ -4,9 +4,8 @@ Acceptance is indexed production replay (MODEL §1 decisions 32 and 33). The com
 [index](../scenarios/replay/index.toml), [baseline](../scenarios/replay/baseline.toml) and
 [transition ledger](../scenarios/replay/transition.toml) define witnesses, exact obligations and
 reviewed replacement/loss dispositions. What counts as progress toward the headline milestone is
-[MODEL §6](architecture/MODEL.md#6-how-progress-is-measured). `tools report` prints the generated
-numbers, and the README shows the progress; [BUILDING](BUILDING.md#the-readme-and-the-report)
-describes both. The record cache the cases read is made as [ORACLE §6](ORACLE.md#6-commands)
+[MODEL §6](architecture/MODEL.md#6-how-progress-is-measured). The README shows the progress;
+[BUILDING](BUILDING.md#the-readme) describes how it is generated. The record cache the cases read is made as [ORACLE §6](ORACLE.md#6-commands)
 shows.
 
 ## Running indexed replay
@@ -665,7 +664,6 @@ reviewed run detected. The report reads the entry IDs in the behaviour specs. Ea
 rule names the fault whose log records its expected cut and field and a restored pass. Rules
 without that evidence appear as `unknown`. Omitting the logs lists the whole catalogue with
 unknown coverage. A fault without a rule assignment contributes only to the unassigned count.
-The [generated project report](BUILDING.md#the-readme-and-the-report) accepts the same evidence.
 
 ## Scoped Ceres tail contact
 

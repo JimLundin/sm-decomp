@@ -22,8 +22,7 @@ barrier; every other role does one step.
    relay comes from output you saw.
 5. **Relay** to Jim: what the step found, what you decided, and what comes next. Lead with the
    ladder (the lowest rung's integrated proof and what it still needs) and the indexed cases'
-   results, with scoped and whole-movie claims kept separate; give size as one line of the round's delta, a diagnostic (MODEL §1
-   decision 19), and cite `tools report` at the landed head once a change lands.
+   results, with scoped and whole-movie claims kept separate.
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
    verdicts, and the queue so a fresh root can resume from the log alone. When another root takes over, point its [handoff](../handoff/SKILL.md)
    to that record and the first open action.
@@ -58,13 +57,8 @@ For the two confined roles, the brief is also part of the barrier:
   gate names the way out of a trap ("constant rows, each naming its member"), the brief carries
   that shape; a release alone ("need not be a constant") leaves the costly encoding open. Before
   launch, the brief's gate works through each item under the checks.
-- **Coding standards and shape outcomes.** The brief follows MODEL §1 decisions 10 and 11:
-  implementation and independent review stay blind to size measurements and verdicts.
 - **Decide cuts after independent review** (PROCESS, "Cut rounds"; MODEL §1 decision 19).
-  Keep size reports and decode Budget sections out of reviewer material. Count size after the
-  reports and complete
-  [the coordinator size assessment](../../../docs/cleanroom/PROCESS.md#coordinator-size-assessment)
-  before landing; send shape outcomes only.
+  Send shape outcomes only.
 - **A cut round asks for the outcome.** Each shape finding says what the code should have less of
   ("one decision per thing she meets", "the air's case decided once"), never the device that
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named

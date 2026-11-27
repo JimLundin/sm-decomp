@@ -3,7 +3,7 @@ name: handoff
 description: Transfer or resume an sm-decomp repository lane at an ownership or context change, or prepare its final handoff to the root.
 ---
 
-Write the repository-side handoff for the next owner's task. Save it at `$TEMP/collab/<lane>/HANDOFF.md` in at most 60 lines. For a final report, send the path with the result. Check that the recipient can read both the note and every linked artifact under the [role visibility rules](../../../docs/cleanroom/PROCESS.md#who-sees-what). A confined recipient receives the root's approved brief through the export procedure. Route independent review material through the root's size-redacted review preparation.
+Write the repository-side handoff for the next owner's task. Save it at `$TEMP/collab/<lane>/HANDOFF.md` in at most 60 lines. For a final report, send the path with the result. Check that the recipient can read both the note and every linked artifact under the [role visibility rules](../../../docs/cleanroom/PROCESS.md#who-sees-what). A confined recipient receives the root's approved brief through the export procedure.
 
 - **State** — Give the issue, stage, worktree, branch, fixed base and observed tip. Identify any uncommitted files and where they live. Link the receipt for each material claim to the revision it checked. Describe remaining proof and the reason it is pending.
 - **Next** — Name the next owner and first concrete action. Carry forward user decisions that affect this assignment, including their scope. Give the root the tracker update it needs.

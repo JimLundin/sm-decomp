@@ -54,7 +54,7 @@ A scoped entry does not imply boot, general actor dispatch, room loading or CPU 
 | D21 | One decoder, one projection per stream, compared at quiescent cuts | P6, P7 | 11 |
 | D22 | Green = every compared stream matches, plus facts; locks keyed by (row, oracle) | P10, P11, P13 | 11 |
 | D23 | Speed targets | P14 | 12 |
-| D24 | Size, trait and behaviour-catalogue budgets, reported on every landing | P16, P20 | 13 |
+| D24 | Trait and behaviour-catalogue budgets, reported on every landing | P16, P20 | 13 |
 | D25 | Each stream's lock comes from the most accurate oracle producing it | P10, P12 | 11 |
 | D26 | Short trick movies from seeds; full TAS movies checked by hand, in no workflow | P10, P11 | 11 |
 
@@ -231,13 +231,10 @@ Replay benchmarks use the same selected cases and production runner as acceptanc
 result names its scope and comparison plan; unavailable whole-engine execution supplies no
 whole-engine throughput claim.
 
-## 13. Size, trait and behaviour budgets
+## 13. Trait and behaviour budgets
 
-**D24.** Every landing reports its size with `tools size` (MODEL §4), per crate and per MODEL
-layer so the routine-port share is visible and falls; the trait budget (§4.3); and the
-behaviour catalogue (MODEL §3): behaviours catalogued, proven exact and switchable (P20). A
-rebuilt domain's budget comes from its spec (MODEL §1 decision 7); after independent review the
-root uses it to decide whether a cut is worthwhile (decision 19).
+**D24.** Every landing reports the trait budget (§4.3) and the behaviour catalogue (MODEL §3):
+behaviours catalogued, proven exact and switchable (P20).
 
 ## 14. Checkpoints and starts
 

@@ -32,13 +32,12 @@ findings it resolves. For a re-gate, review the delta, and check each earlier fi
    flags and modes, enum orders that follow RAM codes, table indexing (the rule is in
    [MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned)). Review every phrase
    the observer added to the scan's allow list. Done when every entry has been read for structure.
-4. **Form and coverage.** Every rule is an arm citing vectors that exist, with no padding.
-   Use size-redacted decode notes; the root checks the unit count and budget after your report.
+4. **Form and coverage.** Every rule is an arm citing vectors that exist.
    Every `Parameter` entry has a vector at a value other than the reference one
    (`tools/cleanroom/adjusted_vectors.sh --gate <domain>`); re-derive a sample of those values
    as you would a constructed vector's. A missing one stops the spec.
 5. **The brief** asks for what the spec supports and nothing more. It names spec entries and
-   shape, and holds no score or measure. Done when each brief item is checked against the spec.
+   shape. Done when each brief item is checked against the spec.
 6. **Verdict:** LAUNCH, LAUNCH AFTER FIXES, or REWORK.
 
 ## Gate a round
@@ -61,10 +60,9 @@ Your brief names the import and integration branches, the blind review, and the 
    null evidence and continuations with `main`. A supported case becoming Unsupported or an
    earlier divergence is a regression. Review any explicit transition atom by atom; a held
    Unsupported boundary never earns behaviour acceptance.
-6. **Shape, independently of size** (MODEL §1 decision 19). Review without size scores,
-   budgets or old-code baselines. Give concrete findings such as duplication or a function
-   doing two jobs. The root measures size and decides whether a cut is worthwhile after your
-   report; your verdict covers the behavioural, barrier and engineering requirements.
+6. **Shape** (MODEL §1 decision 19). Give concrete findings such as duplication or a function
+   doing two jobs. The root decides whether a cut is worthwhile after your report; your verdict
+   covers the behavioural, barrier and engineering requirements.
 7. **The blind review**, when it ran. Compare the reviewer's "what the code does" with the spec,
    and turn each misreading into a finding about a name, a doc or a shape. Say whether the next
    round needs a blind review: the code changed shape enough that a cold read would find new

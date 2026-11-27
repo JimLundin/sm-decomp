@@ -42,4 +42,4 @@ model needs a change, report it as a finding for the next round.
    change. Done when Quality and every required case hold.
 7. **Report.** Give the production interface, per-case outcomes and compared observations, null
    evidence, continuations, first divergences, fault proof, explicit coverage losses and missing
-   dependencies, removed owners and exact head. The root assesses size after independent review.
+   dependencies, removed owners and exact head.
