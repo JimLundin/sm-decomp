@@ -57,10 +57,9 @@ jobs:
           crlf=$(git ls-files --eol | awk '$1 == "i/crlf" || $1 == "i/mixed" { print $NF }')
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
       - name: Lint the rebuild's crates
-        # Check mode covers oracle without linking its native emulator archive.
         run: cargo clippy --locked --workspace --all-targets --no-deps
       - name: Test the rebuild's crates
-        run: cargo test --locked --workspace --exclude oracle --no-fail-fast
+        run: cargo test --locked --workspace --no-fail-fast
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
