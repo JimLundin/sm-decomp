@@ -37,21 +37,18 @@ impl Run<'_> {
         held.extend(ridley::actual(&self.state.station));
         held.extend(frame::actual(self.state.frame));
         hold_flyby_outputs(&self.state, &mut held);
-        for cut in first..=end {
-            let current = rows.record(cut)?;
-            if !finished(&previous)
-                || !finished(&current)
-                || current.video_frame != previous.video_frame.wrapping_add(1)
-            {
-                return Err(data_failure(Some(cut), "complete flyby turn"));
+        let controller = super::Controller::seeded(&previous.wram)?;
+        rows.replay(previous, controller, first..=end, (), |(), turn, _| {
+            if !finished(turn.previous) || !finished(turn.current) {
+                return Err(data_failure(Some(turn.cut), "complete flyby turn"));
             }
-            let (expected, actual) = self.flyby_scoped_turn(&previous, &current, cut)?;
-            record(cut, expected, &held)?;
+            let (expected, actual) =
+                self.flyby_scoped_turn(turn.previous, turn.current, turn.cut)?;
+            record(turn.cut, expected, &held)?;
             held = actual;
             hold_flyby_outputs(&self.state, &mut held);
-            previous = current;
-        }
-        Ok(())
+            Ok(())
+        })
     }
 
     fn flyby_scoped_turn(

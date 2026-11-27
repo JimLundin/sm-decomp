@@ -1,17 +1,15 @@
 //! Native CPU-side Ambient sender comparisons. Reply reads are borrowed at the service boundary.
 
-use super::{Run, open_rows, polled, read_lock, seed_controller, word};
+use super::{Run, word};
 use crate::replay::{
-    Sources, appearance,
     compare::Observation,
-    compared, connected, data_failure,
+    compared, data_failure,
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility,
         Start,
     },
-    movement,
     readers::ExpectedCut,
-    result::{CaseResult, Outcome},
+    result::Outcome,
     runner, sender_offer,
 };
 use crate::source::WramWord;
@@ -239,114 +237,51 @@ fn restore<'a>(run: &Run<'a>, cut: u64) -> Result<Run<'a>, Outcome> {
     Ok(restored)
 }
 
-pub(in crate::replay) fn run(
+pub(in crate::replay::played) fn run(
+    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(SEED)?;
-    let mut controller = seed_controller(&previous)?;
-    let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
-    };
-    let mut live = Run::for_case(&previous, &content, sources, case)?;
     let mut pending = None;
     compared(
         SEED,
-        &expected(&previous.wram, (ORIGIN, SEED), SEED)?.fields,
-        &actual(&live, None).fields,
+        &expected(&room.seed.wram, (ORIGIN, SEED), SEED)?.fields,
+        &actual(&room.run, None).fields,
     )?;
-    let mut digest = Vec::new();
-    let replayed = (|| {
-        for cut in SEED.saturating_add(1)..=LAST {
-            let current = rows.record(cut)?;
-            if current.video_frame != previous.video_frame.wrapping_add(1) {
-                return Err(data_failure(Some(cut), "played rows join"));
-            }
-            let (row, local) = rows.place(cut)?;
-            let place = (row.as_str(), local);
-            let step = Step {
-                controller,
-                previous: &previous,
-                current: &current,
+    room.replay(case, |live, turn, _| {
+        let cut = turn.cut;
+        let current = turn.current;
+        let place = turn.place;
+        let mut restored = (cut > START).then(|| restore(live, cut)).transpose()?;
+        let null = actual(live, None);
+        let outputs = turn.advance(live)?;
+        if let Some(restored) = restored.as_mut() {
+            let observed = expected(&current.wram, place, cut)?;
+            compared(
                 cut,
-                place,
-            };
-            let mut restored = (cut > START).then(|| restore(&live, cut)).transpose()?;
-            let null = actual(&live, None);
-            let outputs = step.advance(&mut live)?;
-            if let Some(restored) = restored.as_mut() {
-                let observed = expected(&current.wram, place, cut)?;
-                compared(
-                    cut,
-                    &observed.fields,
-                    &actual(&live, outputs.1.shaft_sound_offer).fields,
-                )?;
-                step.check_continuation(restored, &live, &outputs)?;
-                result.counts.restorations = result.counts.restorations.saturating_add(1);
-                runner::record_cut(result, &mut digest, &observed, &null.fields, cut)?;
+                &observed.fields,
+                &actual(live, outputs.1.shaft_sound_offer).fields,
+            )?;
+            turn.check_continuation(restored, live, &outputs)
+                .map_err(|_| Outcome::CheckpointFailure { cut })?;
+            result.restored(1)?;
+            result.record(&observed, &null.fields, cut)?;
+        }
+        if let Some(restored) = pending.as_mut() {
+            turn.check_continuation(restored, live, &outputs)
+                .map_err(|_| Outcome::CheckpointFailure { cut })?;
+            if cut == LAST {
+                result.resumed()?;
             }
-            if let Some(restored) = pending.as_mut() {
-                step.check_continuation(restored, &live, &outputs)?;
-                if cut == LAST {
-                    result.counts.pending_restorations = 1;
-                }
-            }
-            // The cut leaves two cues queued while the sender waits for a clear reply.
-            // Resume across both queued presentations and the final clear.
-            if place == (SHAFT, 31) {
-                pending = Some(restore(&live, cut)?);
-                result.counts.pending_boundaries = 1;
-            }
-            controller = controller.read(current.pad.0, polled(&current));
-            previous = current;
+        }
+        // The cut leaves two cues queued while the sender waits for a clear reply.
+        // Resume across both queued presentations and the final clear.
+        if place == (SHAFT, 31) {
+            pending = Some(restore(live, cut)?);
+            result.pending()?;
         }
         Ok(())
-    })();
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    }
-    replayed
-}
-
-struct Step<'a> {
-    controller: super::Controller,
-    previous: &'a oracle_record::FrameRecord,
-    current: &'a oracle_record::FrameRecord,
-    cut: u64,
-    place: (&'a str, u64),
-}
-
-impl Step<'_> {
-    fn advance(&self, run: &mut Run<'_>) -> Result<(Vec<Observation>, played::Outputs), Outcome> {
-        run.step_with_outputs(
-            self.controller,
-            self.previous,
-            self.current,
-            self.cut,
-            self.place,
-        )
-    }
-
-    fn check_continuation(
-        &self,
-        restored: &mut Run<'_>,
-        live: &Run<'_>,
-        outputs: &(Vec<Observation>, played::Outputs),
-    ) -> Result<(), Outcome> {
-        if self.advance(restored).as_ref() == Ok(outputs)
-            && restored.state == live.state
-            && restored.return_timing == live.return_timing
-            && restored.warning_picture == live.warning_picture
-        {
-            Ok(())
-        } else {
-            Err(Outcome::CheckpointFailure { cut: self.cut })
-        }
-    }
+    })
 }
 
 #[cfg(test)]

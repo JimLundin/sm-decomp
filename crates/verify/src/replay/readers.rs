@@ -120,6 +120,35 @@ pub(super) struct ExpectedCut {
     pub replies: usize,
 }
 
+pub(super) enum FieldRole {
+    Semantic,
+    Output,
+}
+
+impl ExpectedCut {
+    pub(super) fn select(
+        mut fields: Vec<Observation>,
+        role: impl Fn(&str) -> Option<FieldRole>,
+    ) -> Self {
+        let mut semantics = Vec::new();
+        fields.retain(|field| match role(&field.field) {
+            Some(FieldRole::Semantic) => {
+                semantics.push(field.clone());
+                true
+            }
+            Some(FieldRole::Output) => true,
+            None => false,
+        });
+        Self {
+            semantic_count: semantics.len(),
+            output_count: fields.len().saturating_sub(semantics.len()),
+            semantics,
+            fields,
+            replies: 0,
+        }
+    }
+}
+
 pub(super) struct CutTape<T> {
     pub first: u64,
     pub values: Vec<T>,

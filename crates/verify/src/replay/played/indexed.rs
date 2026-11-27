@@ -12,8 +12,8 @@ use crate::replay::{
         Responsibility, Start,
     },
     movement,
-    readers::ExpectedCut,
-    result::{CaseResult, Outcome},
+    readers::{ExpectedCut, FieldRole},
+    result::Outcome,
     runner,
 };
 
@@ -118,26 +118,30 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
 }
 
 /// Comparison fields for the indexed claim. Other played fields still gate every turn.
-fn flyby_selection(field: &str) -> Option<bool> {
+fn flyby_selection(field: &str) -> Option<FieldRole> {
     if field.starts_with("ceres.") || field.starts_with("quake.") || field == "finished-frames" {
-        return Some(true);
+        return Some(FieldRole::Output);
     }
     field.strip_prefix("ridley.flyby.").map(|suffix| {
-        !matches!(
+        if matches!(
             suffix,
             "phase" | "shown" | "position" | "turn" | "baby" | "wings"
-        )
+        ) {
+            FieldRole::Semantic
+        } else {
+            FieldRole::Output
+        }
     })
 }
 
-fn selection(field: &str, retreat: bool) -> Option<bool> {
+fn selection(field: &str, retreat: bool) -> Option<FieldRole> {
     if retreat && (field == "ridley.retreat.bound" || field.starts_with("ridley.backdrop.")) {
-        return Some(true);
+        return Some(FieldRole::Output);
     }
     if matches!(field, "ridley.tail.hit" | "ridley.tail.swish-request")
         || field.starts_with("ridley.tail.place.")
     {
-        return Some(true);
+        return Some(FieldRole::Output);
     }
     if field.starts_with("ridley.tail.")
         || field.starts_with("health.")
@@ -145,18 +149,79 @@ fn selection(field: &str, retreat: bool) -> Option<bool> {
         || field == "movement.knockback"
         || (retreat && field.starts_with("ridley.") && !field.starts_with("ridley.ribs."))
     {
-        return Some(false);
+        return Some(FieldRole::Semantic);
     }
     None
 }
 
-pub(in crate::replay) fn run(
+pub(super) struct AdmittedRoom<'content, 'sources> {
+    pub(super) run: Run<'content>,
+    pub(super) rows: super::rows::Rows<'sources>,
+    pub(super) seed: oracle_record::FrameRecord,
+    controller: super::Controller,
+    origin: u64,
+}
+
+impl<'content> AdmittedRoom<'content, '_> {
+    pub(super) fn replay(
+        mut self,
+        case: &Case,
+        mut step: impl FnMut(
+            &mut Run<'content>,
+            super::rows::Turn<'_>,
+            &mut super::rows::Rows<'_>,
+        ) -> Result<(), Outcome>,
+    ) -> Result<(), Outcome> {
+        self.rows.replay(
+            self.seed,
+            self.controller,
+            self.origin.saturating_add(1)..=case.end.cut_inclusive,
+            (),
+            |(), turn, rows| step(&mut self.run, turn, rows),
+        )
+    }
+}
+
+type RoomAdapter = fn(AdmittedRoom<'_, '_>, &Case, &mut runner::Receipt) -> Result<(), Outcome>;
+
+pub(in crate::replay) fn run_selected(
     case: &Case,
     sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
+) -> Option<Result<(), Outcome>> {
+    const ADAPTERS: &[(InputProvider, RoomAdapter)] = &[
+        (InputProvider::CeresShaftActors, shaft::run),
+        (InputProvider::ScopedCeresFightPicture, fight_picture::run),
+        (InputProvider::ScopedCeresWarning, warning),
+        (InputProvider::ScopedCeresFlyby, flyby),
+        (InputProvider::PlayedCeresInputs, tail),
+        (InputProvider::PlayedSamusPicture, super::samus_picture::run),
+        (InputProvider::PlayedShaftSound, super::shaft_sound::run),
+        (
+            InputProvider::ShaftPictures,
+            super::shaft_native::indexed::run,
+        ),
+        (InputProvider::PlayedShaftDust, super::shaft_dust::run),
+    ];
+    let &(_, mut adapter) = ADAPTERS
+        .iter()
+        .find(|(provider, _)| *provider == case.inputs)?;
+    if case.inputs == InputProvider::PlayedCeresInputs && super::ridley_ribs::is_case(case) {
+        adapter = super::ridley_ribs::run;
+    }
+    Some(run(adapter, case, sources, result))
+}
+
+fn run(
+    adapter: RoomAdapter,
+    case: &Case,
+    sources: &Sources,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let Start::CacheCut { frame: start } = case.start else {
-        return Err(data_failure(None, "Ceres tail start"));
+    let (Start::CacheCut { frame: start } | Start::PlayedContinuation { seed: start, .. }) =
+        case.start
+    else {
+        return Err(data_failure(None, "played room origin"));
     };
     let lock = read_lock(sources)?;
     let mut rows = open_rows(sources, &lock, &case.row)?;
@@ -166,58 +231,47 @@ pub(in crate::replay) fn run(
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::for_case(&seed, &content, sources, case)?;
-    if case.inputs == InputProvider::CeresShaftActors {
-        return shaft::run(&mut run, &mut rows, seed, controller, case, result);
-    }
-    if case.inputs == InputProvider::ScopedCeresFightPicture {
-        return fight_picture::run(&mut run, &mut rows, seed, controller, case, result);
-    }
-    if case.inputs == InputProvider::ScopedCeresWarning {
-        return warning(&mut run, &mut rows, seed, controller, case, result);
-    }
-    if super::ridley_ribs::is_case(case) {
-        return super::ridley_ribs::run(&mut run, &mut rows, seed, controller, case, result);
-    }
-    if case.expectations.fields == FLYBY_STATE {
-        return flyby(&mut run, &mut rows, seed, case, result);
-    }
+    let run = Run::for_case(&seed, &content, sources, case)?;
+    adapter(
+        AdmittedRoom {
+            run,
+            rows,
+            seed,
+            controller,
+            origin: start,
+        },
+        case,
+        result,
+    )
+}
+
+fn tail(
+    mut room: AdmittedRoom<'_, '_>,
+    case: &Case,
+    result: &mut runner::Receipt,
+) -> Result<(), Outcome> {
+    let start = room.origin;
     let retreat = case.expectations.fields == RETREAT_STATE;
-    let mut held = tail_held(&run, retreat);
-    let mut digest = Vec::new();
-    let played = run.witness_through(
-        &mut rows,
-        seed,
-        controller,
+    let mut held = tail_held(&room.run, retreat);
+    let played = room.run.witness_through(
+        &mut room.rows,
+        room.seed,
+        room.controller,
         start.saturating_add(1)..=case.end.cut_inclusive,
-        |run, cut, mut fields| {
+        |run, cut, fields| {
             if !fields.iter().any(|field| field.field == "ridley.tail.pace") {
                 return Err(data_failure(
                     Some(cut),
                     "flight tail comparison opportunity",
                 ));
             }
-            fields.retain(|field| selection(&field.field, retreat).is_some());
-            let semantics: Vec<_> = fields
-                .iter()
-                .filter(|field| selection(&field.field, retreat) == Some(false))
-                .cloned()
-                .collect();
-            let observed = ExpectedCut {
-                semantic_count: semantics.len(),
-                output_count: fields.len().saturating_sub(semantics.len()),
-                semantics,
-                fields,
-                replies: 0,
-            };
-            runner::record_cut(result, &mut digest, &observed, &held, cut)?;
+            let observed = ExpectedCut::select(fields, |field| selection(field, retreat));
+            result.record(&observed, &held, cut)?;
             held = tail_held(run, retreat);
             Ok(())
         },
     );
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    }
+
     match played?.1 {
         Stop::End => Ok(()),
         Stop::At(outcome) => Err(outcome),
@@ -245,11 +299,9 @@ fn tail_held(run: &Run<'_>, retreat: bool) -> Vec<Observation> {
 }
 
 fn flyby(
-    run: &mut Run<'_>,
-    rows: &mut super::rows::Rows<'_>,
-    seed: oracle_record::FrameRecord,
+    mut room: AdmittedRoom<'_, '_>,
     case: &Case,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     let Some(crate::replay::index::PlayedWindow::Flyby {
         first,
@@ -258,30 +310,17 @@ fn flyby(
     else {
         return Err(data_failure(None, "flyby comparison window"));
     };
-    let mut digest = Vec::new();
-    run.flyby_scope(
-        rows,
-        seed,
+    room.run.flyby_scope(
+        &mut room.rows,
+        room.seed,
         first,
         case.end.cut_inclusive,
-        |cut, mut fields, held| {
-            fields.retain(|field| flyby_selection(&field.field).is_some());
-            let semantics: Vec<_> = fields
-                .iter()
-                .filter(|field| flyby_selection(&field.field) == Some(false))
-                .cloned()
-                .collect();
-            let observed = ExpectedCut {
-                semantic_count: semantics.len(),
-                output_count: fields.len().saturating_sub(semantics.len()),
-                semantics,
-                fields,
-                replies: 0,
-            };
-            runner::record_cut(result, &mut digest, &observed, held, cut)
+        |cut, fields, held| {
+            let observed = ExpectedCut::select(fields, flyby_selection);
+            result.record(&observed, held, cut)
         },
     )?;
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+
     if result.counts.outputs != output_fields {
         return Err(data_failure(
             Some(case.end.cut_inclusive),
@@ -307,58 +346,42 @@ fn warning_field(field: &str) -> bool {
 }
 
 fn warning(
-    run: &mut Run<'_>,
-    rows: &mut super::rows::Rows<'_>,
-    mut previous: oracle_record::FrameRecord,
-    mut controller: super::Controller,
+    room: AdmittedRoom<'_, '_>,
     case: &Case,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     use crate::replay::ridley_warning_native as native;
-    let start = previous.index;
-    if !matches!(native::state(&previous)?.phase, native::Phase::Ready) {
+    let start = room.seed.index;
+    if !matches!(native::state(&room.seed)?.phase, native::Phase::Ready) {
         return Err(data_failure(Some(start), "warning-ready origin"));
     }
-    let mut digest = Vec::new();
-    for cut in start.saturating_add(1)..=case.end.cut_inclusive {
-        let current = rows.record(cut)?;
-        let (row, local) = rows.place(cut)?;
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
         let held = run.warning_picture.held(&run.state)?;
         let mut restored = run.clone();
-        let mut fields = run.step(controller, &previous, &current, cut, (&row, local))?;
-        let replayed = restored.step(controller, &previous, &current, cut, (&row, local));
-        if replayed.as_ref() != Ok(&fields)
-            || restored.state != run.state
-            || restored.warning_picture != run.warning_picture
-            || restored.return_timing != run.return_timing
-        {
+        let fields = turn.fields(run)?;
+        let replayed = turn.fields(&mut restored);
+        if replayed.as_ref() != Ok(&fields) || !super::rows::Turn::same_room(&restored, run) {
             return Err(Outcome::CheckpointFailure { cut });
         }
-        result.counts.restorations = result.counts.restorations.saturating_add(1);
+        result.restored(1)?;
         if !fields
             .iter()
             .any(|field| field.field == "ridley.warning.phase")
         {
             return Err(data_failure(Some(cut), "warning comparison opportunity"));
         }
-        fields.retain(|field| warning_field(&field.field));
-        let semantics: Vec<_> = fields
-            .iter()
-            .filter(|field| warning_semantic(&field.field))
-            .cloned()
-            .collect();
-        let observed = ExpectedCut {
-            semantic_count: semantics.len(),
-            output_count: fields.len().saturating_sub(semantics.len()),
-            semantics,
-            fields,
-            replies: 0,
-        };
-        runner::record_cut(result, &mut digest, &observed, &held, cut)?;
-        controller = controller.read(current.pad.0, super::polled(&current));
-        previous = current;
-    }
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+        let observed = ExpectedCut::select(fields, |field| {
+            if warning_semantic(field) {
+                Some(FieldRole::Semantic)
+            } else {
+                warning_field(field).then_some(FieldRole::Output)
+            }
+        });
+        result.record(&observed, &held, cut)?;
+        Ok(())
+    })?;
+
     Ok(())
 }
 

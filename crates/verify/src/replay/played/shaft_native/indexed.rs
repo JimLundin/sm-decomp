@@ -2,17 +2,15 @@
 
 use super::{HALL, SHAFT, word};
 use crate::replay::{
-    Sources, appearance,
     blackout::{observe::oam_bytes, standing::packed_oam},
     compare::Observation,
-    connected, data_failure,
+    data_failure,
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
     },
-    movement,
-    played::{PictureScope, Run, open_rows, polled, read_lock, seed_controller},
+    played::{PictureScope, Run},
     readers::ExpectedCut,
-    result::{CaseResult, Outcome},
+    result::Outcome,
     runner,
 };
 use game::production::played::{room_video::RoomVideo, shaft::ShaftEffects};
@@ -255,87 +253,67 @@ fn check_hall_publication(before: &Run<'_>, after: &Run<'_>, cut: u64) -> Result
     Ok(())
 }
 
-pub(in crate::replay) fn run(
+pub(in crate::replay::played) fn run(
+    mut room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(0)?;
-    let mut controller = seed_controller(&previous)?;
-    let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
-    };
-    let mut run = Run::for_case(&previous, &content, sources, case)?;
-    run.picture_scope = PictureScope::ShaftActors;
+    room.run.picture_scope = PictureScope::ShaftActors;
     let mut retained = LOCKED_PREFIX;
-    let mut digest = Vec::new();
-    let proof = (|| -> Result<(), Outcome> {
-        for cut in 1..=LAST {
-            let current = rows.record(cut)?;
-            if current.video_frame != previous.video_frame.wrapping_add(1) {
-                return Err(data_failure(Some(cut), "played rows join"));
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
+        let current = turn.current;
+        let previous = turn.previous;
+        let place = turn.place;
+        let local = place.1;
+        let prior = cut.saturating_sub(1);
+        let mut checkpoint = (cut >= FIRST).then(|| restore(run, prior)).transpose()?;
+        let matched = turn.fields(run)?;
+        if let Some(restored) = &mut checkpoint {
+            check_hall_publication(restored, run, cut)?;
+            if place.0 == SHAFT && (165..=239).contains(&local) {
+                let art = run
+                    .played
+                    .shaft_vent_art
+                    .as_ref()
+                    .ok_or_else(|| data_failure(Some(cut), "mounted vent art"))?;
+                retained = retained.max(super::super::steam::mounted_picture::live_end(
+                    previous, current, art,
+                )?);
             }
-            let (row, local) = rows.place(cut)?;
-            let place = (row.as_str(), local);
-            let prior = cut.saturating_sub(1);
-            let mut checkpoint = (cut >= FIRST).then(|| restore(&run, prior)).transpose()?;
-            let matched = run.step(controller, &previous, &current, cut, place)?;
-            if let Some(restored) = &mut checkpoint {
-                check_hall_publication(restored, &run, cut)?;
-                if place.0 == SHAFT && (165..=239).contains(&local) {
-                    let art = run
-                        .played
-                        .shaft_vent_art
-                        .as_ref()
-                        .ok_or_else(|| data_failure(Some(cut), "mounted vent art"))?;
-                    retained = retained.max(super::super::steam::mounted_picture::live_end(
-                        &previous, &current, art,
-                    )?);
-                }
-                let cuts = &mut result.counts;
-                let mut frozen = super::actual(&restored.state, None);
-                let (outputs, held_picture) = picture(
-                    &run.state.room_video,
-                    &restored.state.room_video,
-                    &current,
-                    cut,
-                    place,
-                    retained,
-                )?;
-                frozen.extend(held_picture);
-                let replayed = restored.step(controller, &previous, &current, cut, place);
-                if replayed.as_ref() != Ok(&matched)
-                    || restored.state.room_video != run.state.room_video
-                    || restored.state.station.escape_shaft != run.state.station.escape_shaft
-                {
-                    return Err(Outcome::CheckpointFailure { cut: prior });
-                }
-                let semantics: Vec<_> = matched.into_iter().filter(c1_field).collect();
-                let observed = ExpectedCut {
-                    semantic_count: semantics.len(),
-                    output_count: outputs.len(),
-                    fields: semantics.iter().cloned().chain(outputs).collect(),
-                    semantics,
-                    replies: 0,
-                };
-                cuts.restorations = cuts.restorations.saturating_add(1);
-                if cut == HALL_PUBLISHES {
-                    cuts.publications = cuts.publications.saturating_add(1);
-                    cuts.pending_boundaries = cuts.pending_boundaries.saturating_add(1);
-                    cuts.pending_restorations = cuts.pending_restorations.saturating_add(1);
-                }
-                runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
+            let mut frozen = super::actual(&restored.state, None);
+            let (outputs, held_picture) = picture(
+                &run.state.room_video,
+                &restored.state.room_video,
+                current,
+                cut,
+                place,
+                retained,
+            )?;
+            frozen.extend(held_picture);
+            let replayed = turn.fields(restored);
+            if replayed.as_ref() != Ok(&matched)
+                || restored.state.room_video != run.state.room_video
+                || restored.state.station.escape_shaft != run.state.station.escape_shaft
+            {
+                return Err(Outcome::CheckpointFailure { cut: prior });
             }
-            controller = controller.read(current.pad.0, polled(&current));
-            previous = current;
+            let semantics: Vec<_> = matched.into_iter().filter(c1_field).collect();
+            let observed = ExpectedCut {
+                semantic_count: semantics.len(),
+                output_count: outputs.len(),
+                fields: semantics.iter().cloned().chain(outputs).collect(),
+                semantics,
+                replies: 0,
+            };
+            result.restored(1)?;
+            if cut == HALL_PUBLISHES {
+                result.published()?;
+                result.pending()?;
+                result.resumed()?;
+            }
+            result.record(&observed, &frozen, cut)?;
         }
         Ok(())
-    })();
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
-    }
-    proof
+    })
 }

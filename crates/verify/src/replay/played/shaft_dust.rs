@@ -6,12 +6,8 @@ use enum_map::Enum;
 use game::state::video::{OAM_HIGH_BYTES, OAM_SPRITES};
 use oracle_record::FrameRecord;
 
-use super::{
-    PictureScope, Run, appearance, connected, movement, open_rows, platform, read_lock,
-    seed_controller,
-};
+use super::{PictureScope, Run};
 use crate::replay::{
-    Sources,
     blackout::observe::oam_bytes,
     compare::Observation,
     data_failure,
@@ -20,7 +16,7 @@ use crate::replay::{
         Responsibility, Start,
     },
     readers::ExpectedCut,
-    result::{CaseResult, Counts, Outcome},
+    result::{Counts, Outcome},
     runner,
 };
 
@@ -233,31 +229,21 @@ fn looks<'r>(run: &'r Run<'_>) -> Result<&'r [SpriteAttributes; 4], Outcome> {
         .ok_or_else(|| data_failure(None, "wall-jump dust art"))
 }
 
-pub(in crate::replay) fn run(
+pub(in crate::replay::played) fn run(
+    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
     case: &Case,
-    sources: &Sources,
-    result: &mut CaseResult,
+    result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
-    let lock = read_lock(sources)?;
-    let mut rows = open_rows(sources, &lock, &case.row)?;
-    let Start::PlayedContinuation { seed, frame } = case.start else {
+    let Start::PlayedContinuation { frame, .. } = case.start else {
         return Err(data_failure(None, "shaft dust continuation start"));
     };
-    let mut previous = rows.record(seed)?;
-    let mut controller = seed_controller(&previous)?;
-    let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
-    };
-    let mut run = Run::for_case(&previous, &content, sources, case)?;
     let mut witness = Witness::default();
-    for cut in seed.saturating_add(1)..=case.end.cut_inclusive {
-        let current = rows.record(cut)?;
-        let (row, local) = rows.place(cut)?;
-        let place = (row.as_str(), local);
+    room.replay(case, |run, turn, _| {
+        let cut = turn.cut;
+        let local = turn.place.1;
         let null = (cut > frame)
             .then(|| {
-                let mut fields = actual(&run, looks(&run)?)?.to_vec();
+                let mut fields = actual(run, looks(run)?)?.to_vec();
                 if local == 17 {
                     let video = &run.state.room_video.video;
                     fields.push(following_vent(
@@ -268,44 +254,23 @@ pub(in crate::replay) fn run(
                 Ok::<_, Outcome>(fields)
             })
             .transpose()?;
-        let fields = run.step(controller, &previous, &current, cut, place)?;
+        let fields = turn.fields(run)?;
         if let Some(null) = null {
-            witness.cut(
-                &run,
-                &Cut {
-                    previous: &previous,
-                    current: &current,
-                    number: cut,
-                    place,
-                },
-                controller,
-                fields,
-                result,
-                &null,
-            )?;
+            witness.cut(run, &turn, fields, result, &null)?;
         }
-        controller = controller.read(current.pad.0, platform::polled(&current));
-        previous = current;
-    }
+        Ok(())
+    })?;
     if witness.restored.is_some() {
         return Err(Outcome::CheckpointFailure {
             cut: case.end.cut_inclusive,
         });
     }
-    result.observation_sha256 = crate::lock::Sha256::of(&witness.digest).to_string();
-    Ok(())
-}
 
-struct Cut<'a> {
-    previous: &'a FrameRecord,
-    current: &'a FrameRecord,
-    number: u64,
-    place: (&'a str, u64),
+    Ok(())
 }
 
 #[derive(Default)]
 struct Witness<'a> {
-    digest: Vec<u8>,
     restored: Option<(u64, Run<'a>)>,
 }
 
@@ -313,10 +278,9 @@ impl<'a> Witness<'a> {
     fn cut(
         &mut self,
         run: &Run<'a>,
-        frame: &Cut<'_>,
-        controller: platform::Controller,
+        frame: &super::rows::Turn<'_>,
         mut fields: Vec<Observation>,
-        result: &mut CaseResult,
+        result: &mut runner::Receipt,
         null: &[Observation],
     ) -> Result<(), Outcome> {
         fields.retain(|field| {
@@ -328,7 +292,7 @@ impl<'a> Witness<'a> {
         let field_count = if frame.place.1 == 17 { 4 } else { 3 };
         if fields.len() != field_count {
             return Err(data_failure(
-                Some(frame.number),
+                Some(frame.cut),
                 "wall-jump dust comparison opportunity",
             ));
         }
@@ -348,30 +312,23 @@ impl<'a> Witness<'a> {
             output_count: field_count.saturating_sub(1),
             replies: 0,
         };
-        runner::record_cut(result, &mut self.digest, &expected, null, frame.number)?;
-        result.counts.publications = result
-            .counts
-            .publications
-            .saturating_add(usize::from(published));
+        result.record(&expected, null, frame.cut)?;
+        if published {
+            result.published()?;
+        }
         if let Some((origin, continuation)) = &mut self.restored {
-            continuation
-                .step(
-                    controller,
-                    frame.previous,
-                    frame.current,
-                    frame.number,
-                    frame.place,
-                )
+            frame
+                .fields(continuation)
                 .map_err(|_| Outcome::CheckpointFailure { cut: *origin })?;
             if continuation.state != run.state || continuation.blackout != run.blackout {
                 return Err(Outcome::CheckpointFailure { cut: *origin });
             }
             if !occupied {
-                result.counts.restorations = result.counts.restorations.saturating_add(1);
+                result.restored(1)?;
                 self.restored = None;
             }
         } else if occupied {
-            self.restored = Some((frame.number, restore(run, frame.number)?));
+            self.restored = Some((frame.cut, restore(run, frame.cut)?));
         }
         Ok(())
     }

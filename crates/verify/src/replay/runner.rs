@@ -3,7 +3,7 @@
 use super::compare::Observation;
 use super::index::Case;
 use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
-use super::result::{CaseResult, Outcome};
+use super::result::Outcome;
 use super::{append_digest, compared, data_failure};
 use game::production::{
     Production, ProductionContent, ProductionRules, SaveFault, SavedProduction,
@@ -85,36 +85,92 @@ fn at_cut(outcome: Outcome, current: u64) -> Outcome {
     }
 }
 
-pub(super) fn record_cut(
-    result: &mut CaseResult,
-    digest: &mut Vec<u8>,
-    expected: &ExpectedCut,
-    null: &[Observation],
-    cut: u64,
-) -> Result<(), Outcome> {
-    count(&mut result.counts.cuts, 1)?;
-    count(&mut result.counts.fields, expected.semantic_count)?;
-    count(&mut result.counts.outputs, expected.output_count)?;
-    count(&mut result.counts.replies, expected.replies)?;
-    count(
-        &mut result.counts.null_fields,
-        expected
-            .semantics
-            .iter()
-            .filter(|field| null.contains(field))
-            .count(),
-    )?;
-    if super::compare::compare(&expected.fields, null).is_ok() {
-        count(&mut result.counts.null_cuts, 1)?;
+#[derive(Default)]
+pub(super) struct Receipt {
+    pub(super) counts: super::result::Counts,
+    digest: Vec<u8>,
+}
+
+pub(super) struct Continuations<S>(Vec<(u64, S)>);
+
+impl<S> Continuations<S> {
+    pub(super) const fn new() -> Self {
+        Self(Vec::new())
     }
-    append_digest(digest, cut, &expected.fields);
-    Ok(())
+
+    pub(super) fn check(
+        &mut self,
+        origin: u64,
+        restored: S,
+        mut compare: impl FnMut(u64, &mut S) -> Result<(), Outcome>,
+    ) -> Result<(), Outcome> {
+        self.0.push((origin, restored));
+        for (saved_cut, continuation) in &mut self.0 {
+            compare(*saved_cut, continuation)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn finish(self, result: &mut Receipt) -> Result<(), Outcome> {
+        result.restored(self.0.len())
+    }
+}
+
+impl Receipt {
+    pub(super) fn restored(&mut self, amount: usize) -> Result<(), Outcome> {
+        count(&mut self.counts.restorations, amount)
+    }
+
+    pub(super) fn pending(&mut self) -> Result<(), Outcome> {
+        count(&mut self.counts.pending_boundaries, 1)
+    }
+
+    pub(super) fn resumed(&mut self) -> Result<(), Outcome> {
+        count(&mut self.counts.pending_restorations, 1)
+    }
+
+    pub(super) fn published(&mut self) -> Result<(), Outcome> {
+        count(&mut self.counts.publications, 1)
+    }
+
+    pub(super) fn digest(&self) -> String {
+        if self.digest.is_empty() {
+            String::new()
+        } else {
+            crate::lock::Sha256::of(&self.digest).to_string()
+        }
+    }
+
+    pub(super) fn record(
+        &mut self,
+        expected: &ExpectedCut,
+        null: &[Observation],
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        count(&mut self.counts.cuts, 1)?;
+        count(&mut self.counts.fields, expected.semantic_count)?;
+        count(&mut self.counts.outputs, expected.output_count)?;
+        count(&mut self.counts.replies, expected.replies)?;
+        count(
+            &mut self.counts.null_fields,
+            expected
+                .semantics
+                .iter()
+                .filter(|field| null.contains(field))
+                .count(),
+        )?;
+        if super::compare::compare(&expected.fields, null).is_ok() {
+            count(&mut self.counts.null_cuts, 1)?;
+        }
+        append_digest(&mut self.digest, cut, &expected.fields);
+        Ok(())
+    }
 }
 
 pub(super) fn run(
     case: &Case,
     admitted: AdmittedCase,
-    result: &mut CaseResult,
+    result: &mut Receipt,
 ) -> Result<(), Outcome> {
     if admitted.schedule.last() != Some(&case.end.cut_inclusive) {
         return Err(data_failure(None, "complete declared comparison schedule"));
@@ -139,42 +195,32 @@ pub(super) fn run(
         // Restore the admitted picture, then every nonterminal continuation.
         checkpoints.extend(origin.take());
     }
-    let mut digest = Vec::new();
     let mut stop = None;
-    let mut compare_cuts = || -> Result<(), Outcome> {
-        for cut in &schedule {
-            let null = actual.held(&production, *cut)?;
-            let expected = match reader.execute(&mut production, &mut actual, *cut) {
-                Ok(compared) => compared,
-                Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
-                    stop = Some((*cut, outcome));
-                    break;
-                }
-                Err(outcome) => return Err(outcome),
-            };
-            record_cut(result, &mut digest, &expected, &null, *cut)?;
-            if case.checkpoints {
-                if pending_write(&production) {
-                    count(&mut result.counts.pending_boundaries, 1)?;
-                }
-                if checkpoints.len() < schedule.len() {
-                    // A one-opportunity floor witness resumes across the actual advance.
-                    checkpoints.push(
-                        origin
-                            .take()
-                            .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
-                    );
-                }
+    for cut in &schedule {
+        let null = actual.held(&production, *cut)?;
+        let expected = match reader.execute(&mut production, &mut actual, *cut) {
+            Ok(compared) => compared,
+            Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
+                stop = Some((*cut, outcome));
+                break;
+            }
+            Err(outcome) => return Err(outcome),
+        };
+        result.record(&expected, &null, *cut)?;
+        if case.checkpoints {
+            if pending_write(&production) {
+                result.pending()?;
+            }
+            if checkpoints.len() < schedule.len() {
+                // A one-opportunity floor witness resumes across the actual advance.
+                checkpoints.push(
+                    origin
+                        .take()
+                        .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
+                );
             }
         }
-        Ok(())
-    };
-    let comparison = compare_cuts();
-    // The receipt covers the matching prefix even when a later cut stops the run.
-    if !digest.is_empty() {
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
     }
-    comparison?;
     verify_checkpoints(
         CheckpointProof {
             reader: &reader,
@@ -208,7 +254,7 @@ fn verify_checkpoints(
     proof: CheckpointProof<'_>,
     checkpoints: &[CutCheckpoint],
     stop: Option<&(u64, Outcome)>,
-    result: &mut CaseResult,
+    result: &mut Receipt,
 ) -> Result<(), Outcome> {
     let CheckpointProof {
         reader,
@@ -275,11 +321,11 @@ fn verify_checkpoints(
     Ok(())
 }
 
-fn credit_restoration(result: &mut CaseResult, pending: bool) -> Result<(), Outcome> {
+fn credit_restoration(result: &mut Receipt, pending: bool) -> Result<(), Outcome> {
     if pending {
-        count(&mut result.counts.pending_restorations, 1)?;
+        result.resumed()?;
     }
-    count(&mut result.counts.restorations, 1)
+    result.restored(1)
 }
 
 fn pending_write(production: &Production) -> bool {
@@ -366,7 +412,6 @@ mod tests {
         use crate::replay::{
             compare::Observation,
             readers::{ActualReader, AdmittedCase, ExpectedCut, InputReader, Tape},
-            result::{CaseResult, Counts},
         };
         use JumpButton::{Held, Up};
         use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
@@ -420,17 +465,7 @@ mod tests {
             actual: ActualReader::JumpHistory,
             schedule: ((start + 1)..=case.end.cut_inclusive).collect(),
         };
-        let mut result = CaseResult {
-            id: case.id.clone(),
-            kind: case.kind,
-            row: case.row.clone(),
-            start_cut: Some(start),
-            end_cut: case.end.cut_inclusive,
-            counts: Counts::default(),
-            outcome: Outcome::Pass,
-            observation_sha256: String::new(),
-            limits: Vec::new(),
-        };
+        let mut result = super::Receipt::default();
         super::run(&case, admitted, &mut result).unwrap();
         assert_eq!((result.counts.cuts, result.counts.fields), (5, 10));
         assert_eq!((result.counts.null_cuts, result.counts.null_fields), (2, 6));
@@ -496,10 +531,7 @@ mod tests {
             offer.allowance = types::audio::CueAllowance::Nine;
         }
         admitted.schedule.push(1);
-        let mut partial = complete.clone();
-        partial.end_cut = 1;
-        partial.counts = crate::replay::result::Counts::default();
-        partial.observation_sha256.clear();
+        let mut partial = super::Receipt::default();
 
         assert_eq!(
             super::run(&two_cuts, admitted, &mut partial),
@@ -509,7 +541,7 @@ mod tests {
             }),
         );
         assert_eq!(partial.counts, complete.counts);
-        assert_eq!(partial.observation_sha256, complete.observation_sha256);
+        assert_eq!(partial.digest(), complete.observation_sha256);
     }
 
     #[test]
@@ -545,8 +577,7 @@ mod tests {
             actual: &admitted.actual,
             schedule: &[0, 1, 2],
         };
-        let mut result = crate::replay::run(case, &sources);
-        result.counts = Counts::default();
+        let mut result = super::Receipt::default();
         verify_checkpoints(proof, &checkpoints, None, &mut result).unwrap();
         assert_eq!(result.counts.restorations, 3);
         let original = checkpoints[1].clone();
