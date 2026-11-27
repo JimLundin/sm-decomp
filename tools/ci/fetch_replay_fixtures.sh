@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the pinned native fixtures for replay and the fault workers.
+# Install the pinned native fixtures for replay and the fault check.
 set -euo pipefail
 if [[ $# != 2 && $# != 3 ]]; then
   echo "usage: fetch_replay_fixtures.sh ROM DEST [FOLDER]" >&2

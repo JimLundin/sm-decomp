@@ -7,7 +7,7 @@ Credits and licences for the tools and data the project uses are [below](#credit
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
-bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links; tests and fault plan for what changed
+bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
 ```
 
 The tests are the `cargo test` line of Quality (`.github/workflows/quality.yml`), which names
@@ -62,17 +62,18 @@ Run the full manifest locally with one build:
 uv run --no-project --with-requirements tools/fault-requirements.txt python tools/check_mutants.py
 ```
 
-CI runs `worker N` for each partition printed by `python3 tools/check_mutants.py plan`.
-Each worker builds one executable in a private directory. Tree-sitter finds the
+CI runs the same full manifest. The checker builds one executable in a private directory.
+Run `python3 tools/check_mutants.py validate` to check manifest coverage and source anchors
+without building or running replay. Tree-sitter finds the
 Rust function containing each edit. Every alternative starts with the original
 function body and applies one manifest replacement. Cargo Gamma selects one
-alternative at process startup. The worker compares the first bad cut and field,
+alternative at process startup. The checker compares the first bad cut and field,
 then launches the same binary with the selector cleared and requires the full
 original receipt. [Rust grammar](https://github.com/tree-sitter/tree-sitter-rust/tree/v0.24.2)
 and [Cargo Gamma runtime](https://github.com/microsoft/ox-tools/blob/cargo-gamma-v0.8.0/crates/cargo-gamma-rt/src/lib.rs).
 
 The manifest supplies the reviewed edits and their expected replay outcomes.
-Gamma's CLI generates its own mutations, so the worker uses its runtime directly.
+Gamma's CLI generates its own mutations, so the checker uses its runtime directly.
 The played runner can exit successfully when it detects a fault. Its receipt gives
 the first differing cut and field. [Cargo Gamma mutation operators](https://github.com/microsoft/ox-tools/tree/cargo-gamma-v0.8.0/crates/cargo-gamma-engine/src/ops/registry)
 
@@ -257,7 +258,7 @@ The planted fault table lists every catalogue rule and its assigned faults. To i
 detections, read the saved logs from reviewed runs of the fault definitions in your checkout.
 
 ```sh
-python3 tools/check_mutants.py rule-coverage --write /tmp/fault-evidence.toml worker-*.log
+python3 tools/check_mutants.py rule-coverage --write /tmp/fault-evidence.toml faults.log
 cargo run -p tools --bin tools -- report --fault-evidence /tmp/fault-evidence.toml
 ```
 

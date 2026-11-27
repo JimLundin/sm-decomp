@@ -3,7 +3,7 @@
 # and, each only when the branch (committed since its base, or in the working tree) changes its
 # subject: the tools' self-tests; verify's lib tests, which hold the README, the report, the
 # played runs and the vectors' pins to the tree; the planted faults' anchors and coverage
-# (tools/check_mutants.py plan, which runs no fault); and the adjusted vectors' rule owners
+# (tools/check_mutants.py validate, which runs no fault); and the adjusted vectors' rule owners
 # (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 
@@ -150,7 +150,7 @@ else skip verify-lib; fi
 if changed_since "$BASE" tools/mutants.toml tools/check_mutants.py crates/game/src/production \
   crates/game/src/production.rs crates/verify/src/replay/played.rs scenarios/replay/index.toml \
   scenarios/replay/baseline.toml; then
-  start faults "${SM_PY:-python3}" -I tools/check_mutants.py plan
+  start faults "${SM_PY:-python3}" -I tools/check_mutants.py validate
 else skip faults; fi
 # The rule owners, the specs' Parameter entries, the vectors' overrides and the clean crates that
 # make a domain probed.
@@ -194,7 +194,7 @@ if ! passed verify-lib; then
     echo "README STALE: run cargo run -p tools --bin tools -- report --write"
 fi
 if ! passed faults; then
-  fail "FAULTS FAIL: tools/check_mutants.py plan"
+  fail "FAULTS FAIL: tools/check_mutants.py validate"
   tail -n 1 "$O/faults.log"
 fi
 if ! passed owners; then

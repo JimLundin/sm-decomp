@@ -1,7 +1,6 @@
 # Production wiring faults must fail at the recorded cut and field.
 # Each supported replay responsibility has a distinct semantic fault.
 
-# CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 [runtime_callers]
 "crates/game/src/production/played/health.rs" = ["health_frame", "energy_the_hit_leaves"]

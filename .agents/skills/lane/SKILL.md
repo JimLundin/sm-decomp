@@ -41,7 +41,7 @@ role skill your brief names. For engineering work, follow the task route in AGEN
 ## Prove it
 
 - For every commit, run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`. It
-  runs verify's lib tests (the report, the README and the played runs), the planted faults' plan,
+  runs verify's lib tests (the report, the README and the played runs), the planted faults' manifest validation,
   the rule owners and the clean-room and lane tools' self-tests only when your branch changes their
   subject since `SM_GATE_BASE` (origin/main unless set; a stacked branch sets its base), and
   `cargo deny` where cargo-deny is installed. A failing check names its finding. When a gate on

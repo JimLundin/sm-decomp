@@ -393,7 +393,7 @@ leftward movement on 1,264 and the first ordinary turn lands on 1,265.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Sixty-two planted faults in the fault matrix, those of the responsibility `played`, stop
+Sixty-two planted faults in the fault manifest, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
@@ -640,13 +640,13 @@ historical evidence.
 
 [`tools/mutants.toml`](../tools/mutants.toml) pins one production wiring fault per supported
 responsibility to its exact recorded Difference cut and field. CI builds one
-selectable replay executable per worker. Each case must first pass. The worker runs
+selectable replay executable for the full manifest. Each case must first pass. The checker runs
 each fault in its own process, verifies its recorded stop, and requires a fresh
 fault-free process to reproduce the complete clean receipt, including its digest and
-counts. The [worker](BUILDING.md#run-the-replay-faults) prints the hashes of all
+counts. The [fault checker](BUILDING.md#run-the-replay-faults) prints the hashes of all
 three receipts. Each fault's `before` text must match its
 file exactly once, so a refactor that moves or duplicates a patched line fails Quality's
-fault-runner test and the fault plan before any build. Full pull-request, scheduled and manual CI
+fault-runner test and local manifest validation before any fault build. Full pull-request, scheduled and manual CI
 run every fault. A fast-forward to main reuses a successful pull-request verdict for the
 same head and tested tree. Missing evidence runs every fault. The supported responsibility
 inventory comes from the index and reviewed baseline, so omitting an owner fails the check.

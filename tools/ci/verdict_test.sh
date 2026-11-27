@@ -10,7 +10,7 @@ fail=0
 no() { echo "FAIL $*"; fail=1; }
 
 declare -A has
-for job in content replay faults-0; do
+for job in content replay faults; do
   has[$job]=$(bash "$verdict" inputs "$job") || no "$job: no input list"
 done
 reads() { grep -qxF "$2" <<<"${has[$1]}"; }
@@ -24,13 +24,14 @@ common=(.github/workflows/ci.yml .github/workflows/verify.yml .github/workflows/
 replay=(crates/game/src/lib.rs crates/verify/required-witnesses.toml scenarios/replay/index.toml
   scenarios/replay/baseline.toml scenarios/locks/lsnes.toml "$(git ls-files movies | head -1)"
   tools/ci/replay.sh tools/ci/replay_parallel.sh tools/ci/required_witnesses.py
-  tools/ci/fetch_audio_native.sh tools/check_mutants.py tools/mutants.toml
+  tools/ci/fetch_audio_native.sh tools/ci/fetch_replay_fixtures.sh tools/check_mutants.py
+  tools/mutants.toml tools/fault-requirements.txt
   tools/oracle/lsnes_server.lua docs/architecture/domains.toml docs/behaviours/world-camera.md
   README.md)
-for job in content replay faults-0; do
+for job in content replay faults; do
   for path in "${common[@]}"; do reads "$job" "$path" || no "$job does not read $path"; done
 done
-for job in replay faults-0; do
+for job in replay faults; do
   for path in "${replay[@]}"; do reads "$job" "$path" || no "$job does not read $path"; done
 done
 
@@ -74,16 +75,13 @@ doc=$(planted docs/STATUS.md)
 for job in content replay; do
   [ "$(bash "$verdict" tree "$job" "$doc")" = "${base[$job]}" ] || no "docs/STATUS.md changes $job's fingerprint"
 done
-# Each fault worker is its own verdict.
-[ "$(bash "$verdict" fingerprint faults-0)" != "$(bash "$verdict" fingerprint faults-1)" ] ||
-  no "two fault workers share a fingerprint"
 # One image release under two build numbers is one image; a new release is a new one.
 image() { ImageOS=ubuntu24 ImageVersion=$1 bash "$verdict" fingerprint replay; }
 [ "$(image 20261116.133.1)" = "$(image 20261116.376.1)" ] || no "one image release has two fingerprints"
 [ "$(image 20261116.133.1)" != "$(image 20261123.1.1)" ] || no "two image releases share a fingerprint"
 
 # Trust: a fake gh answers each Actions API call from a recorded response. Each case indexes one
-# candidate run under replay's key; only the good one may prove the verdict.
+# candidate run under the current job's key; only that check can prove the verdict.
 api=$(mktemp -d)
 trap 'rm -rf "$api"' EXIT
 cat >"$api/gh" <<'EOF'
@@ -104,19 +102,20 @@ esac
 jq -r "$expr" "$FAKE_API/$file.json"
 EOF
 chmod +x "$api/gh"
-fp=$(bash "$verdict" fingerprint replay)
 head=$(git rev-parse HEAD)
 moved=$(git commit-tree "$game" -p HEAD -m "planted engine change")
-# case_run NAME HEAD-REPOSITORY-ID TESTED-COMMIT CHECK CHECK-CONCLUSION
+# case_run NAME HEAD-REPOSITORY-ID TESTED-COMMIT CHECK CHECK-CONCLUSION [JOB]
 case_run() {
+  local job=${6:-replay} fp
+  fp=$(bash "$verdict" fingerprint "$job") || return 1
   mkdir -p "$api/$1"
-  printf '{"actions_caches":[{"key":"verdict-replay-%s-4242-1"}]}\n' "$fp" >"$api/$1/caches.json"
+  printf '{"actions_caches":[{"key":"verdict-%s-%s-4242-1"}]}\n' "$job" "$fp" >"$api/$1/caches.json"
   printf '{"path":".github/workflows/ci.yml","repository":{"id":1,"full_name":"o/r"},
     "head_repository":{"id":%s},"referenced_workflows":[{"path":"o/r/.github/workflows/verify.yml@%s",
     "sha":"%s"}]}\n' "$2" "$3" "$3" >"$api/$1/run.json"
-  printf '{"jobs":[{"name":"%s","conclusion":"%s","steps":[{"name":"Record the replay verdict %s",
-    "conclusion":"success"}]}]}\n' "$4" "$5" "$fp" >"$api/$1/jobs.json"
-  PATH="$api:$PATH" FAKE_API="$api/$1" GITHUB_REPOSITORY=o/r bash "$verdict" find replay "$fp"
+  printf '{"jobs":[{"name":"%s","conclusion":"%s","steps":[{"name":"Record the %s verdict %s",
+    "conclusion":"success"}]}]}\n' "$4" "$5" "$job" "$fp" >"$api/$1/jobs.json"
+  PATH="$api:$PATH" FAKE_API="$api/$1" GITHUB_REPOSITORY=o/r bash "$verdict" find "$job" "$fp"
 }
 command -v jq >/dev/null || no "the trust checks need jq"
 [ "$(case_run good 1 "$head" "verify / replay" success)" = 4242 ] || no "a passing replay check proves nothing"
@@ -124,6 +123,11 @@ case_run other-job 1 "$head" "quality / Quality" success >/dev/null && no "anoth
 case_run failed 1 "$head" "verify / replay" failure >/dev/null && no "a failed replay check proves replay"
 case_run fork 2 "$head" "verify / replay" success >/dev/null && no "a fork's run proves replay"
 case_run moved 1 "$moved" "verify / replay" success >/dev/null && no "a run on other inputs proves replay"
+
+[ "$(case_run full-faults 1 "$head" "verify / faults" success faults)" = 4242 ] ||
+  no "a passing full fault check proves nothing"
+case_run partial-faults 1 "$head" "verify / faults (0)" success faults >/dev/null &&
+  no "a partial fault check proves the full fault verdict"
 
 [ "$fail" = 0 ] && echo "VERDICT INPUTS OK"
 exit "$fail"

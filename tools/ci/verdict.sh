@@ -2,7 +2,7 @@
 # verdict.sh: a verification job reruns only when something it reads has changed (#741).
 #
 # A job's fingerprint hashes the mode and object id of every tracked file it reads at the tested
-# commit, the job's name (with its fault worker) and the runner image. The workflow files, this
+# commit, the job's name and the runner image. The workflow files, this
 # script and the pinned assets' SHA-256s (in verify.yml and tools/ci) are tracked inputs like any
 # other. When a job's work passes, its last step saves a cache entry
 # verdict-JOB-FINGERPRINT-RUN-ATTEMPT and is named "Record the JOB verdict FINGERPRINT".
@@ -20,7 +20,7 @@
 #   verdict.sh fingerprint JOB [TREE]  the tree hash, JOB and the runner image
 #   verdict.sh find JOB FINGERPRINT    the id of a run that passed JOB at FINGERPRINT; exit 1 if none
 #   verdict.sh step                    in a job: reuse a verdict or say why the work runs
-# JOB is content, replay or faults-WORKER.
+# JOB is content, replay or faults.
 set -uo pipefail
 
 # Whether JOB reads PATH. Everything is an input unless the job provably never reads it.
@@ -68,14 +68,6 @@ fingerprint() {
     sha256sum | cut -d' ' -f1
 }
 
-# JOB's check name in a CI run: verify / content, verify / replay, verify / faults (WORKER).
-check() {
-  case $1 in
-    faults-*) echo "verify / faults (${1#faults-})" ;;
-    *) echo "verify / $1" ;;
-  esac
-}
-
 # Whether run RUN attempt ATTEMPT passed JOB's work at FINGERPRINT on inputs whose hash is TREE.
 proven() {
   local run=$1 attempt=$2 job=$3 fp=$4 tree=$5 repo=$GITHUB_REPOSITORY tested
@@ -90,7 +82,7 @@ proven() {
   local passed
   # Only JOB's own check counts, and only when it passed: any other job could name a step so.
   passed=$(timeout 30 gh api "repos/$repo/actions/runs/$run/attempts/$attempt/jobs?per_page=100" --jq "[
-    .jobs[] | select(.name == \"$(check "$job")\" and .conclusion == \"success\") | .steps[]
+    .jobs[] | select(.name == \"verify / $job\" and .conclusion == \"success\") | .steps[]
     | select(.name == \"Record the $job verdict $fp\" and .conclusion == \"success\")] | length") ||
     return 1
   [ "$passed" -ge 1 ] 2>/dev/null
@@ -114,7 +106,6 @@ find_verdict() {
 # scheduled or dispatched (COLD=true), which always does the work.
 step() {
   local job=${JOB:?} fp run url
-  [ -n "${WORKER:-}" ] && job+="-$WORKER"
   echo "job=$job" >>"$GITHUB_OUTPUT"
   if ! fp=$(fingerprint "$job"); then
     echo "::warning::$job: no fingerprint, so the work runs and no verdict is recorded"

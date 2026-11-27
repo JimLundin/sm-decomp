@@ -1,6 +1,6 @@
 """Bridge fault credit requires an exact recorded difference and restored Pass."""
 import tempfile
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stdout
 from io import StringIO
 import json
 import subprocess
@@ -91,7 +91,7 @@ class MutantCheck(unittest.TestCase):
         self.assertEqual(report(["\n".join(contact + block(unassigned))]),
                          ["PuffTouches: killed through contact", *expected[1:]])
 
-    def test_full_manifest_and_workers_use_the_selectable_runner(self) -> None:
+    def test_full_manifest_uses_the_selectable_runner(self) -> None:
         root = Path(__file__).resolve().parents[1]
         manifest = root / "tools/mutants.toml"
         raw = manifest.read_bytes()
@@ -99,10 +99,7 @@ class MutantCheck(unittest.TestCase):
         roster = tuple(Fault(**row) for row in data["fault"])
         callers = check_mutants.runtime_callers(root, data["runtime_callers"])
         frozen = FrozenInputs({manifest: raw})
-        workers = check_mutants.partition_faults(roster)
-        commands = [([], roster), (["selectable"], roster)] + [
-            (["worker", str(index)], worker) for index, worker in enumerate(workers)]
-        for args, expected in commands:
+        for args in ([], ["selectable"]):
             with (
                 self.subTest(args=args),
                 patch.object(FrozenInputs, "capture", return_value=frozen),
@@ -110,81 +107,7 @@ class MutantCheck(unittest.TestCase):
                 patch.object(check_mutants, "run_selectable", return_value=1) as run,
             ):
                 self.assertEqual(check_mutants.main(args), 1)
-                run.assert_called_once_with(root, frozen, expected, callers)
-
-    def test_plan_and_worker_partition_exhaustive_rosters(self) -> None:
-        template = Fault("fault", "audio", "crates/game/src/production.rs",
-                         "measured", "zero", "audio/example", 3, "audio.reply0")
-        for count in [1, 3, 4, 5, 9, 25]:
-            roster = tuple(replace(template, name=f"fault-{index}", case=f"case-{index % 7}")
-                           for index in range(count))
-            workers = check_mutants.partition_faults(roster)
-            self.assertEqual(len(workers), min(count, 4))
-            self.assertTrue(all(workers))
-            self.assertCountEqual([fault for worker in workers for fault in worker], roster)
-            cases = [case for worker in workers for case in {fault.case for fault in worker}]
-            self.assertCountEqual(cases, {fault.case for fault in roster})
-        same_case = (template, replace(template, name="another"))
-        self.assertEqual(check_mutants.partition_faults(same_case), (same_case,))
-        with self.assertRaises(ValueError):
-            check_mutants.partition_faults(())
-
-        output = StringIO()
-        with redirect_stdout(output):
-            self.assertEqual(check_mutants.main(["plan"]), 0)
-        self.assertEqual(json.loads(output.getvalue()), {"worker": [0, 1, 2, 3]})
-
-        output = StringIO()
-        with patch("check_mutants.partition_faults", return_value=((template,),)), redirect_stdout(output):
-            self.assertEqual(check_mutants.main(["plan"]), 0)
-            with redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
-                check_mutants.main(["worker", "1"])
-            self.assertEqual(error.exception.code, 2)
-        self.assertEqual(json.loads(output.getvalue()), {"worker": [0]})
-
-    def test_partition_balances_rebuild_cost_and_keeps_manifest_order(self) -> None:
-        game = Fault("fault", "audio", "crates/game/src/production.rs",
-                     "measured", "zero", "audio/example", 3, "audio.reply0")
-        verify = replace(game, file="crates/verify/src/replay/played.rs")
-        # Case groups in manifest order: two verify faults, three pairs of game faults, then two
-        # single verify faults, a roster on which dealing by the number of faults puts three of
-        # the four verify faults, each about three game faults' time, on one worker.
-        shapes = [("a", verify), ("a", verify), ("b", game), ("b", game), ("c", game),
-                  ("c", game), ("d", game), ("d", game), ("e", verify), ("f", verify)]
-        roster = tuple(replace(kind, name=f"fault-{index}", case=case)
-                       for index, (case, kind) in enumerate(shapes))
-        workers = check_mutants.partition_faults(roster)
-        self.assertLessEqual(max(sum(fault.file == verify.file for fault in worker)
-                                 for worker in workers), 2)
-        for worker in workers:
-            self.assertEqual(list(worker), sorted(worker, key=roster.index))
-
-    def test_partition_splits_rebuild_time_evenly_where_it_can(self) -> None:
-        game = Fault("fault", "audio", "crates/game/src/production.rs",
-                     "measured", "zero", "audio/example", 3, "audio.reply0")
-        verify = replace(game, file="crates/verify/src/replay/played.rs")
-        # A verify fault rebuilds in about three game faults' time. In manifest order: four case
-        # groups of two game faults (2 each), four of one game fault (1 each) and last one verify
-        # and one game fault (4): 16 in all, which four workers can split 4 each. Dealt in
-        # manifest order the last group lands on a worker that already holds 3; dealt to the
-        # worker with the fewest faults, the 4 shares a worker with a 2.
-        shapes = ([(f"pair-{group}", game) for group in range(4) for _ in range(2)]
-                  + [(f"one-{group}", game) for group in range(4)]
-                  + [("mixed", verify), ("mixed", game)])
-        roster = tuple(replace(kind, name=f"fault-{index}", case=case)
-                       for index, (case, kind) in enumerate(shapes))
-        workers = check_mutants.partition_faults(roster)
-        time = [sum(3 if fault.file.startswith("crates/verify/") else 1 for fault in worker)
-                for worker in workers]
-        self.assertEqual(time, [4, 4, 4, 4])
-
-    def test_invalid_worker_commands_fail_before_build(self) -> None:
-        for args in [["worker"], ["worker", "-1"], ["worker", "4"], ["worker", "01"],
-                     ["worker", "0", "0"], ["worker", "0", "worker", "1"],
-                     ["plan", "worker", "0"], ["--literal", "worker", "0"]]:
-            with self.subTest(args=args), redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
-                check_mutants.main(args)
-            self.assertEqual(error.exception.code, 2)
+                run.assert_called_once_with(root, frozen, roster, callers)
 
     def test_build_failure_cannot_execute_a_stale_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -303,7 +226,7 @@ class MutantCheck(unittest.TestCase):
             with self.subTest(fault=fault.name, file=fault.file):
                 self.assertEqual(source_path(root, fault.file).read_bytes().count(fault.before.encode()), 1)
 
-    def test_a_drifted_anchor_stops_the_plan_before_any_build(self) -> None:
+    def test_manifest_validation_checks_anchors_without_building(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             source = root / "crates/game/src/production.rs"
@@ -328,10 +251,10 @@ field = "audio.reply0"
                      patch("check_mutants.validate_coverage"), \
                      patch("check_mutants.build_executable") as build, redirect_stdout(StringIO()):
                     if unique:
-                        self.assertEqual(check_mutants.main(["plan"]), 0)
+                        self.assertEqual(check_mutants.main(["validate"]), 0)
                     else:
                         with self.assertRaises(ValueError):
-                            check_mutants.main(["plan"])
+                            check_mutants.main(["validate"])
                     build.assert_not_called()
 
     def test_a_played_run_kills_only_at_its_recorded_stop(self) -> None:

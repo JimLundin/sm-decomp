@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-WORKER_COUNT = 4
 # A case that starts with this is a lock row played alone, `played ROW START END` as
 # `tools replay played` takes it; any other case is an indexed replay case.
 PLAYED = "played "
@@ -283,31 +282,6 @@ def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
     print(f"Unassigned faults: {unassigned}")
     return detections
 
-def rebuild_cost(fault: Fault) -> int:
-    """A fault's time is its rebuild: one in crates/verify rebuilds the verify crate, about
-    three times a game fault's (15-22 s against 4-6 s on CI's runners); its replay is under 1 s."""
-    return 3 if fault.file.startswith("crates/verify/") else 1
-
-def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]:
-    """Assign each case's faults together so only one worker runs its healthy baseline.
-
-    The costliest case groups are dealt first, each to the worker with the least rebuild cost so
-    far, so the workers finish together. Each worker runs its faults in the manifest's order.
-    """
-    if not faults:
-        raise ValueError("cannot partition an empty fault manifest")
-    by_case: dict[str, list[Fault]] = {}
-    for fault in faults:
-        by_case.setdefault(fault.case, []).append(fault)
-    def cost(group: list[Fault]) -> int:
-        return sum(map(rebuild_cost, group))
-    workers: list[list[Fault]] = [[] for _ in range(min(WORKER_COUNT, len(by_case)))]
-    for group in sorted(by_case.values(), key=cost, reverse=True):
-        min(workers, key=cost).extend(group)
-    order = {fault: index for index, fault in enumerate(faults)}
-    return tuple(tuple(sorted(worker, key=order.__getitem__)) for worker in workers)
-
-
 def runtime_callers(root: Path, raw: object) -> dict[str, tuple[str, ...]]:
     if not isinstance(raw, dict):
         raise ValueError("runtime_callers must be a table")
@@ -405,7 +379,7 @@ def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
         frozen.check(tree)
         success = replay_selectable(tree, faults, executable, frozen, env)
         inputs.check(root)
-    print(f"TIMING worker faults={len(faults)} seconds={time.perf_counter() - started:.6f}", flush=True)
+    print(f"TIMING selectable faults={len(faults)} seconds={time.perf_counter() - started:.6f}", flush=True)
     return 0 if success else 1
 
 
@@ -413,9 +387,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check replay fault detection and restoration.", allow_abbrev=False)
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("selectable", help="run the complete manifest in one selectable build")
-    commands.add_parser("plan", help="print the CI worker matrix")
-    worker = commands.add_parser("worker", help="run one partition of the fault manifest")
-    worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
+    commands.add_parser("validate", help="validate the manifest without building or running replay")
     coverage = commands.add_parser(
         "rule-coverage", help="report every catalogue rule using logs from reviewed runs of this roster")
     coverage.add_argument("--write", type=Path, metavar="RECEIPT", help="save detections for tools report")
@@ -439,21 +411,12 @@ def main(argv: list[str] | None = None) -> int:
                 f'format = 1\nmanifest_sha256 = "{hashlib.sha256(raw_manifest).hexdigest()}"\n'
                 f'detected = {names}\n', encoding="utf-8", newline="\n")
         return 0
-    if args.command in ("plan", "worker"):
-        partitions = partition_faults(roster)
-        if args.command == "plan":
-            print(json.dumps({"worker": list(range(len(partitions)))}))
-            return 0
-        index = int(args.index)
-        if index >= len(partitions):
-            parser.error(f"worker {index} is absent from this fault manifest")
-        faults = partitions[index]
-    else:
-        faults = roster
+    if args.command == "validate":
+        return 0
     inputs = FrozenInputs.capture(root)
     if inputs.files.get(manifest) != raw_manifest:
-        raise ValueError("fault manifest changed while planning")
-    return run_selectable(root, inputs, faults, callers)
+        raise ValueError("fault manifest changed during validation")
+    return run_selectable(root, inputs, roster, callers)
 
 if __name__ == "__main__":
     sys.exit(main())

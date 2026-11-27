@@ -175,7 +175,6 @@ jobs:
         run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
       - name: Build the shared replay command
         if: steps.verdict.outputs.reused == '' && inputs.target == ''
-        # Fault workers can reuse compiler state from a clean main replay build.
         run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
       - name: Play the M0 room alone from its seed
         # Diagnostic: prints the cuts held and where the run stopped, by cut and field name only.
@@ -205,31 +204,11 @@ jobs:
       - *cache_save
       - *record
 
-  fault-plan:
-    if: inputs.target == ''
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    outputs:
-      matrix: ${{ steps.plan.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Plan the exhaustive fault matrix
-        id: plan
-        run: |
-          matrix=$(python3 tools/check_mutants.py plan)
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-
-  # Each runner owns its checkout and mutable Cargo target. Only replay saves this cache family.
   faults:
-    needs: fault-plan
+    if: inputs.target == ''
     runs-on: ubuntu-24.04
     permissions: *verdict_permissions
     timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.fault-plan.outputs.matrix) }}
-    env:
-      WORKER: ${{ matrix.worker }}
     steps:
       - uses: actions/checkout@v4
       - *verdict
@@ -243,12 +222,12 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/fault-tools"
           "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: -r tools/fault-requirements.txt
-      - name: Build one selectable replay binary and check every fault in this partition
+      - name: Build one selectable replay binary and check every fault
         if: steps.verdict.outputs.reused == ''
         env:
           CARGO_INCREMENTAL: "1"
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
-            "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py worker "$WORKER"
+            "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
       - *record
