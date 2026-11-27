@@ -45,16 +45,18 @@ impl Case {
     }
 
     pub(super) fn sender_packet(&self) -> Result<&SenderPacket, Outcome> {
-        match self.native_packet()? {
-            NativePacket::Sender(packet) => Ok(packet),
-            _ => Err(super::data_failure(None, "native sender packet")),
+        if let NativePacket::Sender(packet) = self.native_packet()? {
+            Ok(packet)
+        } else {
+            Err(super::data_failure(None, "native sender packet"))
         }
     }
 
     pub(super) fn audio_packet(&self) -> Result<&AudioPacket, Outcome> {
-        match self.native_packet()? {
-            NativePacket::Audio(packet) => Ok(packet),
-            _ => Err(super::data_failure(None, "native audio packet")),
+        if let NativePacket::Audio(packet) = self.native_packet()? {
+            Ok(packet)
+        } else {
+            Err(super::data_failure(None, "native audio packet"))
         }
     }
 }
