@@ -54,7 +54,7 @@ pub(super) enum ExpectedReader {
     LandingSite(Box<[ExpectedCut; 2]>),
     Zebes(super::zebes::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
-    HealthTail(Box<[super::health_tail::Expected; 2]>),
+    HealthTail(Vec<super::health_tail::Expected>),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     NativeSearch(super::native_search::Expected),

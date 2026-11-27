@@ -16,6 +16,8 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    played: BTreeMap<String, super::index::PlayedWindow>,
+    native_cases: std::collections::BTreeSet<String>,
     sender_control: BTreeMap<String, SenderOfferControl>,
     fixture: Vec<FixturePair>,
     native_packet: Vec<super::index::NativePacket>,
@@ -31,11 +33,18 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
 });
 
 pub(super) fn native(case: &super::index::Case) -> Option<&'static super::index::NativePacket> {
-    PACKETS
-        .as_ref()?
+    let packets = PACKETS.as_ref()?;
+    if !packets.native_cases.contains(&case.id.0) {
+        return None;
+    }
+    packets
         .native_packet
         .iter()
         .find(|packet| packet.applies_to(case))
+}
+
+pub(super) fn played(id: &str) -> Option<&'static super::index::PlayedWindow> {
+    PACKETS.as_ref()?.played.get(id)
 }
 
 pub(super) fn connected(id: &str) -> Option<&'static ConnectedPacket> {

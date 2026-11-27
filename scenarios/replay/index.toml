@@ -47,6 +47,15 @@ instruments = 8
 samples = 8
 resources_sha256 = "6e63acdfeac091680644842973030b62100d718ddf9a5a7a2053ca29b0540036"
 
+[[native_packet]]
+kind = "health"
+contexts = { path = "ceres-health-tail-v1/borrowed.toml", sha256 = "8ca15c6669c31e4605046a10fefd772fed5a2a3f4f842aeef2a7655c791e49cf" }
+offers = { path = "ceres-tail-offer-v1/actor-offer.toml", sha256 = "23b8deabfaa84f7129bf4f46b36f1027c53a3e067b9d2115a12b8e476b7e568c" }
+hud_operands = { path = "ceres-health-hud-operands-v1/hud-operands.toml", sha256 = "a081de5b1d80cf60a7f0a1a475dbcf54efb2d8372fc15ae3ee6db0dfc51f2fec" }
+expected = { path = "ceres-health-tail-v1/expected.toml", sha256 = "813b6b8d06f6826b78925ae426278f288d7329f9167c8492d018667ebb9b6884" }
+offer_cuts = [993]
+impact_cuts = [993]
+
 [[case]]
 id = "movement/D-inherited-cut"
 kind = "scoped"
@@ -1685,7 +1694,7 @@ profile = "reference"
 responsibilities = ["ceres"]
 content = "player-rom-import"
 inputs = "scoped-ceres-fight-picture"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ordinary.door-cursor"], outputs = ["ridley.ordinary.prepared-oam", "ridley.ordinary.physical-oam"] }
+expectations = { played = { kind = "fight-picture", appends = [{ cut = 682, cursor = 59 }, { cut = 702, cursor = 58 }] }, provider = "pinned-record-cache", fields = ["ridley.ordinary.door-cursor"], outputs = ["ridley.ordinary.prepared-oam", "ridley.ordinary.physical-oam"] }
 checkpoints = true
 limits = ["One admitted ordinary fight with carried gameplay and OAM. Door, baby, body, Samus, wings and tail write at the real shared cursor. Compare the complete prepared and physical pictures at cuts 682 and 702, where no weapon draws before the door.", "The other cuts advance the room. Cut 675 includes a native weapon append. Weapon appends, ongoing hit-phase colours, the getaway and later actors are outside the picture comparison. At cut 682, Canonical restores the wing clock, camera, room view and Video with its pending sprite publication into an opaque in-memory room, then continues to cut 702."]
 
@@ -1902,7 +1911,7 @@ profile = "reference"
 responsibilities = ["ceres"]
 content = "player-rom-import"
 inputs = "scoped-ceres-flyby"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
+expectations = { played = { kind = "flyby", first = 1158, output_fields = 4987 }, provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
 checkpoints = false
 limits = ["The stopped retreat is reached inside ordinary play. The scope holds the carried Samus position from the backdrop and compares the boss, doors, clock and quake. At cut 1262 it checks the unserved shove request.", "The display comparison covers the dedicated exact publication consumer and sampled physical PPU, CGRAM and VRAM. Live renderer scheduling and pixel composition are outside this scope.", "The sound evidence compares the second queue append. Downstream audio service and queue limits are outside this run."]
 
@@ -1924,7 +1933,7 @@ profile = "reference"
 responsibilities = ["ceres"]
 content = "player-rom-import"
 inputs = "scoped-ceres-flyby"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
+expectations = { played = { kind = "flyby", first = 1158, output_fields = 4987 }, provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
 checkpoints = false
 limits = ["The stopped retreat is reached inside ordinary play. The scope holds the carried Samus position from the backdrop and compares the boss, doors, clock and quake. At cut 1262 it checks the unserved shove request.", "The display comparison covers the dedicated exact publication consumer and sampled physical PPU, CGRAM and VRAM. Live renderer scheduling and pixel composition are outside this scope.", "The sound evidence compares the second queue append. Downstream audio service and queue limits are outside this run."]
 
@@ -2394,7 +2403,7 @@ profile = "reference"
 responsibilities = ["ceres"]
 content = "player-rom-import"
 inputs = "ceres-shaft-actors"
-expectations = { provider = "pinned-record-cache", fields = ["shaft-actors.state"], outputs = ["shaft-actors.events", "shaft-actors.picture"] }
+expectations = { played = { kind = "shaft-actors", first = 2856, picture_fields = 208 }, provider = "pinned-record-cache", fields = ["shaft-actors.state"], outputs = ["shaft-actors.events", "shaft-actors.picture"] }
 checkpoints = true
 limits = ["One occupied return-room origin carries ordinary production through joined rooms and interrupted placement. Comparison starts at hall cut 225 and ends on the first held turn after shaft cut 164 reach.", "The rotation comparison covers the carried view. Display comparison covers the placement strip, the first prepared and published overlay, and the platform map low bytes through shaft cut 163. Reach compares the initial hold and fade from the native scene transition.", "Burst particle, centre and sound limit are compared at the producer. Native shaft cut 31 derives the culled offer from the actor cursor and RNG. Effect lifetime, audio queue delivery, later full OAM and the elevator scene are outside this scope.", "Continuation encodes shaft fields, the room entry and timer picture and retains the live surrounding room, ordinary vent phases and pending video. The no-advance control holds the uninstalled shaft origin."]
 
@@ -2555,7 +2564,7 @@ profile = "reference"
 responsibilities = ["ceres"]
 content = "player-rom-import"
 inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+expectations = { played = { kind = "ribs-reveal", cut = 577 }, provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
 checkpoints = true
 limits = ["The opening cut admits a placed Ridley and the doorway strip words. The case includes the first fade, wall placement and the first flyby turn.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows. A fork of the carried first reveal withholds publication, then restores the complete ribs clock and pending room picture for the following cut."]
 

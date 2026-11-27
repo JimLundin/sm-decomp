@@ -1119,6 +1119,9 @@ pub struct Expectations {
     /// Packet and member used by the native movement-work comparison.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub projection: Option<NativeProjection>,
+    /// Native capture coordinates used by a played comparison.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) played: Option<PlayedWindow>,
     /// Compared semantic field identities or quantities.
     pub fields: Vec<ObservationId>,
     /// Compared output identities or occurrences.
@@ -1126,6 +1129,22 @@ pub struct Expectations {
     #[serde(default)]
     /// Outputs compare only at this cut, or every cut when absent.
     pub output_cut: Option<u64>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+pub(super) enum PlayedWindow {
+    FightPicture { appends: [DoorAppend; 2] },
+    RibsReveal { cut: u64 },
+    ShaftActors { first: u64, picture_fields: usize },
+    Flyby { first: u64, output_fields: usize },
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct DoorAppend {
+    pub cut: u64,
+    pub cursor: u8,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1318,7 +1337,7 @@ struct IndexDocument {
     #[serde(default)]
     fixture: Vec<FixturePair>,
     #[serde(default)]
-    native_packet: Vec<NativePacket>,
+    native_packet: Option<Vec<NativePacket>>,
     #[serde(rename = "case")]
     cases: Vec<Case>,
 }
@@ -1333,19 +1352,30 @@ impl TryFrom<IndexDocument> for Index {
                 return Err("invalid or duplicate provider fixture");
             }
         }
+        // Published format-1 documents predate both native packets and played windows.
+        let legacy = doc.native_packet.is_none()
+            && doc
+                .cases
+                .iter()
+                .all(|case| case.native_packet.is_none() && case.expectations.played.is_none());
+        let declarations = doc.native_packet.unwrap_or_default();
         let mut kinds = std::collections::HashSet::new();
-        for packet in &doc.native_packet {
+        for packet in &declarations {
             if !packet.valid() || !kinds.insert(std::mem::discriminant(packet)) {
                 return Err("invalid or duplicate native packet");
             }
         }
         for case in &mut doc.cases {
             if case.native_packet.is_none() {
-                case.native_packet = doc
-                    .native_packet
-                    .iter()
-                    .find(|packet| packet.applies_to(case))
-                    .cloned();
+                let shared = declarations.iter().find(|packet| packet.applies_to(case));
+                let published = super::legacy_packets::native(case);
+                if !legacy && shared.is_none() && published.is_some() {
+                    return Err("missing native provider packet");
+                }
+                case.native_packet = shared.or(if legacy { published } else { None }).cloned();
+            }
+            if legacy && case.expectations.played.is_none() {
+                case.expectations.played = super::legacy_packets::played(&case.id.0).cloned();
             }
             if case.fixture.is_none() {
                 case.fixture = by_provider.get(&case.inputs).cloned();
@@ -2860,15 +2890,8 @@ fn health_tail_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
 
     case.kind == CaseKind::Scoped
-        && case.row == super::health_tail::ROW
-        && matches!(
-            case.start,
-            Start::NativeRecord {
-                frame: super::health_tail::ORIGIN,
-                ..
-            }
-        )
-        && case.end.cut_inclusive == super::health_tail::CUTS[1]
+        && matches!(case.start, Start::NativeRecord { frame, .. } if frame < case.end.cut_inclusive)
+        && case.health_packet().is_ok()
         && case.inputs == InputProvider::NativeHealthTailInputs
         && case.expectations.provider == ExpectedProvider::NativeHealthTailObservations
         && case.content == ContentProvider::HudReference
@@ -3037,6 +3060,23 @@ impl Case {
         }
         if (case.expectations.projection.is_some()
             && case.inputs != InputProvider::NativeSearchInputs)
+            || case
+                .expectations
+                .played
+                .as_ref()
+                .is_some_and(|window| !match window {
+                    PlayedWindow::FightPicture { .. } => {
+                        case.inputs == InputProvider::ScopedCeresFightPicture
+                    }
+                    PlayedWindow::RibsReveal { .. } => {
+                        case.inputs == InputProvider::PlayedCeresInputs
+                            && super::played::ridley_ribs::is_case(case)
+                    }
+                    PlayedWindow::ShaftActors { .. } => {
+                        case.inputs == InputProvider::CeresShaftActors
+                    }
+                    PlayedWindow::Flyby { .. } => case.inputs == InputProvider::ScopedCeresFlyby,
+                })
             || (case.connected_packet.is_some()
                 && case.inputs != InputProvider::ConnectedOrdinaryInputs)
             || case.id.0.is_empty()
@@ -3074,11 +3114,17 @@ impl Case {
             return Some(0);
         }
         if matches!(self.inputs, InputProvider::CeresShaftActors) {
-            return Some(super::played::indexed::shaft::FIRST_CUT);
+            return match self.expectations.played {
+                Some(PlayedWindow::ShaftActors { first, .. }) => Some(first),
+                _ => None,
+            };
         }
         match self.start {
-            Start::CacheCut { frame } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
-                super::played::flyby_scope::first_cut(frame)
+            Start::CacheCut { .. } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
+                match self.expectations.played {
+                    Some(PlayedWindow::Flyby { first, .. }) => Some(first),
+                    _ => None,
+                }
             }
             Start::CacheCut { frame }
             | Start::NativeRecord { frame, .. }
@@ -3257,10 +3303,25 @@ mod tests {
         assert!(constructed.validate().is_err());
 
         let mut document: super::IndexDocument = toml::from_str(INDEX).unwrap();
-        document
-            .native_packet
-            .push(document.native_packet.first().unwrap().clone());
+        let packets = document.native_packet.as_mut().unwrap();
+        packets.push(packets.first().unwrap().clone());
         assert!(Index::try_from(document).is_err());
+    }
+
+    #[test]
+    fn current_indexes_require_each_consumed_native_declaration() {
+        for kind in ["sender", "health", "audio"] {
+            let mut doc: super::IndexDocument = toml::from_str(INDEX).unwrap();
+            doc.native_packet.as_mut().unwrap().retain(|packet| {
+                !matches!(
+                    (kind, packet),
+                    ("sender", super::NativePacket::Sender(_))
+                        | ("health", super::NativePacket::Health(_))
+                        | ("audio", super::NativePacket::Audio(_))
+                )
+            });
+            assert!(Index::try_from(doc).is_err());
+        }
     }
 
     #[test]

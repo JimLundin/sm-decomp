@@ -5,7 +5,7 @@ use crate::replay::{compare::Observation, data_failure, result::Outcome};
 use crate::replay::{
     index::{
         Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
-        Responsibility, Start,
+        PlayedWindow, Responsibility, Start,
     },
     readers::ExpectedCut,
     result::CaseResult,
@@ -31,9 +31,7 @@ const BEAT_WAIT: WramWord = WramWord {
     name: "CERES_RIDLEY_RIBS_WAIT",
     offset: 0x780c,
 };
-const FIRST_REVEAL: u64 = 577;
 const LAST_FIGHT_CUT: u64 = 1614;
-const RELEASE_CUT: u64 = 578;
 
 const BEAT_FIELD: &str = "ridley.ribs.beat";
 const WAIT_FIELD: &str = "ridley.ribs.wait";
@@ -228,7 +226,7 @@ const OUTPUTS: &[ObservationId] = &[
     ObservationId::CeresRibsLower,
 ];
 
-pub(super) fn is_case(case: &Case) -> bool {
+pub(in crate::replay) fn is_case(case: &Case) -> bool {
     case.expectations.fields == FIELDS
 }
 
@@ -243,11 +241,13 @@ pub(super) fn valid(case: &Case) -> bool {
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && case.expectations.outputs == OUTPUTS
         && case.expectations.output_cut.is_none()
-        && case.checkpoints
-            == matches!(
-                (&case.start, case.end.cut_inclusive),
-                (Start::CacheCut { frame: 0 }, LAST_FIGHT_CUT)
-            )
+        && match (&case.expectations.played, &case.start) {
+            (Some(PlayedWindow::RibsReveal { cut }), Start::CacheCut { frame }) => {
+                case.checkpoints && frame < cut && *cut < case.end.cut_inclusive
+            }
+            (None, _) => !case.checkpoints,
+            _ => false,
+        }
 }
 
 pub(super) fn run(
@@ -270,7 +270,9 @@ pub(super) fn run(
             if current.video_frame != previous.video_frame.wrapping_add(1) {
                 return Err(data_failure(Some(cut), "played rows join"));
             }
-            let held = (case.checkpoints && cut == FIRST_REVEAL).then(|| run.clone());
+            let held = matches!(case.expectations.played,
+                Some(PlayedWindow::RibsReveal { cut: reveal }) if reveal == cut)
+            .then(|| run.clone());
             let fields = run.step(controller, &previous, &current, cut, (FIGHT, cut))?;
             record_fields(fields, cut, result, &mut digest, &frozen)?;
             if let Some(origin) = held {
@@ -279,7 +281,10 @@ pub(super) fn run(
                     controller,
                     &previous,
                     &current,
-                    &rows.record(RELEASE_CUT)?,
+                    &rows.record(
+                        cut.checked_add(1)
+                            .ok_or_else(|| data_failure(Some(cut), "ribs release cut"))?,
+                    )?,
                 )?;
                 result.counts.restorations = 1;
                 result.counts.pending_boundaries = 1;
@@ -441,6 +446,8 @@ fn pending_control(
 
 #[cfg(test)]
 mod tests {
+    const FIRST_REVEAL: u64 = 577;
+    const RELEASE_CUT: u64 = 578;
     use super::super::{open_rows, read_lock, tests};
     use super::*;
     use crate::source::VRAM_WRITE_QUEUE_TAIL;

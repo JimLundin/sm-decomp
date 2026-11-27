@@ -77,7 +77,7 @@ impl Expected {
         self.accepted_hit.is_some()
     }
 
-    pub(in crate::replay) fn read(tape: &[Self; 2], cut: u64) -> Result<ExpectedCut, Outcome> {
+    pub(in crate::replay) fn read(tape: &[Self], cut: u64) -> Result<ExpectedCut, Outcome> {
         let entry = tape
             .iter()
             .find(|entry| entry.end_cut == cut)

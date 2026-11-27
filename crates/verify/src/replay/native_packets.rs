@@ -1,6 +1,7 @@
 //! Reviewed source declarations shared by cases that consume the same native capture.
 
 use super::audio::AudioPacket;
+use super::health_tail::HealthPacket;
 use super::index::{Case, InputProvider, Start};
 use super::result::Outcome;
 use super::sender_offer::SenderPacket;
@@ -14,6 +15,8 @@ pub enum NativePacket {
     Sender(SenderPacket),
     /// Opening-room transport capture and its provenance.
     Audio(AudioPacket),
+    /// Health, HUD and actor evidence for a native tail window.
+    Health(HealthPacket),
 }
 
 impl NativePacket {
@@ -21,12 +24,14 @@ impl NativePacket {
         match self {
             Self::Sender(packet) => packet.valid(),
             Self::Audio(packet) => packet.valid(),
+            Self::Health(packet) => packet.valid(),
         }
     }
 
     pub(super) fn applies_to(&self, case: &Case) -> bool {
         match self {
             Self::Audio(_) => case.inputs == InputProvider::NativeFrameInputs,
+            Self::Health(_) => case.inputs == InputProvider::NativeHealthTailInputs,
             Self::Sender(_) => {
                 matches!(case.start, Start::NativeSenderOffer { .. })
                     || case.inputs == InputProvider::NativeTouchdownInputs
@@ -45,16 +50,22 @@ impl Case {
     }
 
     pub(super) fn sender_packet(&self) -> Result<&SenderPacket, Outcome> {
-        match self.native_packet()? {
-            NativePacket::Sender(packet) => Ok(packet),
-            _ => Err(super::data_failure(None, "native sender packet")),
-        }
+        let NativePacket::Sender(packet) = self.native_packet()? else {
+            return Err(super::data_failure(None, "native sender packet"));
+        };
+        Ok(packet)
     }
 
+    pub(super) fn health_packet(&self) -> Result<&HealthPacket, Outcome> {
+        let NativePacket::Health(packet) = self.native_packet()? else {
+            return Err(super::data_failure(None, "native health packet"));
+        };
+        Ok(packet)
+    }
     pub(super) fn audio_packet(&self) -> Result<&AudioPacket, Outcome> {
-        match self.native_packet()? {
-            NativePacket::Audio(packet) => Ok(packet),
-            _ => Err(super::data_failure(None, "native audio packet")),
-        }
+        let NativePacket::Audio(packet) = self.native_packet()? else {
+            return Err(super::data_failure(None, "native audio packet"));
+        };
+        Ok(packet)
     }
 }

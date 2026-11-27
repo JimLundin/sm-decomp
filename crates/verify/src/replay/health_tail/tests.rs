@@ -35,6 +35,7 @@ fn every_health_tail_frame_restores_exactly() {
         content,
         rules,
         inputs: InputReader::HealthTail(inputs),
+        schedule,
         ..
     } = fixture().1
     else {
@@ -50,7 +51,7 @@ fn every_health_tail_frame_restores_exactly() {
         Err(game::production::AdmissionFault::ContentChanged)
     ));
     let mut direct = production;
-    for cut in CUTS {
+    for cut in schedule {
         let mut resumed = restored(&direct, &content, &rules);
         let expected = inputs.advance(&mut direct, cut).unwrap();
         assert!(inputs.advance(&mut resumed, cut).unwrap().eq(&expected));
@@ -64,15 +65,16 @@ fn constructed_protected_duplicate_preserves_complete_carried_health() {
     let AdmittedCase {
         mut production,
         inputs: InputReader::HealthTail(inputs),
+        schedule,
         ..
     } = fixture().1
     else {
         panic!("scoped Health input provider");
     };
-    let [hit_cut, protected_cut] = CUTS;
+    let [hit_cut, protected_cut] = schedule.try_into().unwrap();
     inputs.advance(&mut production, hit_cut).unwrap();
     assert!(owner(&production).unwrap().health().protection != ProtectionFrames::ZERO);
-    let [hit, quiet] = inputs.0.as_slice() else {
+    let [hit, quiet] = inputs.frames.as_slice() else {
         panic!("native scope schedule");
     };
     let Impact::EligibleHit { .. } = hit.tail else {
@@ -100,6 +102,7 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
             content,
             rules,
             inputs: InputReader::HealthTail(mut inputs),
+            schedule,
             expected,
             mut actual,
             ..
@@ -110,7 +113,7 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
     };
     let mut direct = production.clone();
     let mut direct_actual = actual.clone();
-    let native_inputs = InputReader::HealthTail(Inputs(inputs.0.clone()));
+    let native_inputs = InputReader::HealthTail(inputs.clone());
     let original = owner(&production).unwrap();
     let mut powered_on_hud = original.hud().clone();
     powered_on_hud.mini_map = interface_hud::MiniMapPower::On;
@@ -132,12 +135,12 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
     .unwrap();
     let before = powered_on.clone();
     assert!(matches!(
-        inputs.advance(&mut powered_on, CUTS[0]),
+        inputs.advance(&mut powered_on, schedule[0]),
         Err(Outcome::Unsupported { .. })
     ));
     assert!(powered_on.eq(&before));
 
-    for frame in &mut inputs.0 {
+    for frame in &mut inputs.frames {
         let map = &mut frame.hud.map;
         map.position = types::Pair {
             x: u16::MAX,
@@ -148,7 +151,7 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
         map.map_collected = !map.map_collected;
     }
     let dormant_inputs = InputReader::HealthTail(inputs);
-    for cut in CUTS {
+    for cut in schedule {
         runner::execute(
             &case,
             &native_inputs,
@@ -179,12 +182,13 @@ fn equal_energy_preserves_the_stale_gauge() {
         mut content,
         rules,
         inputs: InputReader::HealthTail(inputs),
+        schedule,
         ..
     } = fixture().1
     else {
         panic!("scoped Health input provider");
     };
-    let [hit_cut, protected_cut] = CUTS;
+    let [hit_cut, protected_cut] = schedule.try_into().unwrap();
     let mut stale_hud = owner(&production).unwrap().hud().clone();
     let stale_words = observations::gauge_words(&stale_hud).unwrap();
     inputs.advance(&mut production, hit_cut).unwrap();
@@ -204,7 +208,7 @@ fn equal_energy_preserves_the_stale_gauge() {
     );
     let mut constructed =
         Production::admit(ProductionSeed::HealthTail(Box::new(state)), content, rules).unwrap();
-    let [_, quiet] = inputs.0[..] else {
+    let [_, quiet] = inputs.frames[..] else {
         panic!("native scope schedule");
     };
     let output = advance(
