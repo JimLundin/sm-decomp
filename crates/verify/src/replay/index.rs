@@ -54,8 +54,6 @@ pub enum Responsibility {
     ZebesDrawing,
     /// The scheduler's published landing request and retained destination.
     ZebesScheduler,
-    /// Static entry setup for the built room.
-    RoomLoading,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -193,8 +191,6 @@ pub enum InputProvider {
     StationExplosion,
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
-    /// Movie pad and platform opportunities for the return shaft's wall-jump dust.
-    PlayedShaftDust,
     /// One elevator arrival and T1 scheduling.
     Blackout,
     /// One admitted room and finished opportunities for the flyby’s owned producers.
@@ -225,10 +221,6 @@ pub enum InputProvider {
     SaveFileBoundaries,
     /// Authored demo controls and borrowed cinematic weapon opportunities.
     IntroMissileInputs,
-    /// Passage contents and block-script opportunities.
-    ShaftSetupTurns,
-    /// Independent passage phase and sampled button at each draw opportunity.
-    PassageJumpDraws,
     /// Scoped discovery and delivery inputs, including the interrupted start.
     ScopedIntroDeliveryInputs,
     /// The intro requests, completion and resulting actor position in the discovery room.
@@ -278,8 +270,6 @@ pub enum InputProvider {
 #[serde(rename_all = "kebab-case")]
 /// Source of immutable admitted content.
 pub enum ContentProvider {
-    /// The draw count uses fixed rules and no imported content.
-    PassageJump,
     /// Checked content imported from the player ROM.
     PlayerRomImport,
     /// Silent audio content: no clips or song, for frames that only queue offers.
@@ -607,43 +597,9 @@ pub enum ObservationId {
     /// Ordered missile and exhaust OAM bytes.
     #[serde(rename = "weapons.intro-oam")]
     IntroMissileOam,
-    /// Carried wall-jump dust centre, look and clock.
-    #[serde(rename = "shaft-dust.state")]
-    ShaftDustState,
-    /// Prepared wall-jump dust OAM slot and entry.
-    #[serde(rename = "shaft-dust.prepared")]
-    ShaftDustPrepared,
-    /// Published wall-jump dust OAM slot and entry.
-    #[serde(rename = "shaft-dust.published")]
-    ShaftDustPublished,
-    /// The native vent entry written after dust and body at the affected cut.
-    #[serde(rename = "shaft-dust.following-vent")]
-    ShaftDustFollowingVent,
-    /// Shaft setup view.
-    #[serde(rename = "shaft-entry.view")]
-    ShaftView,
-    /// Shaft setup affine-registers.
-    #[serde(rename = "shaft-entry.affine-registers")]
-    ShaftTransform,
-    /// Shaft setup rotation.
-    #[serde(rename = "shaft-entry.rotation")]
-    ShaftRotation,
-    /// Shaft setup cells.
-    #[serde(rename = "shaft-entry.cells")]
-    ShaftLevel,
-    /// Shaft setup placement.
-    #[serde(rename = "shaft-entry.placement")]
-    ShaftPlacement,
-    /// Shaft setup haze.
-    #[serde(rename = "shaft-entry.haze")]
-    ShaftHaze,
-
     /// Jump count and pending landing or end check.
     #[serde(rename = "movement.drawn-jump-held")]
     DrawnJumpHeld,
-    /// The input sampled on the last history-writing draw.
-    #[serde(rename = "movement.last-draw-jump")]
-    LastDrawJump,
     /// Semantic body and cannon pose selected on landing.
     #[serde(rename = "movement.landing.pose")]
     LandingPose,
@@ -1243,14 +1199,12 @@ impl InputProvider {
     const fn uses_played_witnesses(self) -> bool {
         matches!(
             self,
-            Self::ShaftSetupTurns
-                | Self::PlayedCeresInputs
+            Self::PlayedCeresInputs
                 | Self::ScopedCeresFlyby
                 | Self::ScopedCeresFightPicture
                 | Self::ScopedCeresWarning
                 | Self::PlayedShaftSound
                 | Self::ShaftPictures
-                | Self::PlayedShaftDust
         )
     }
 
@@ -1717,17 +1671,6 @@ macro_rules! landing_observations {
     };
 }
 
-macro_rules! shaft_observations {
-    () => {
-        ObservationId::ShaftView
-            | ObservationId::ShaftTransform
-            | ObservationId::ShaftRotation
-            | ObservationId::ShaftLevel
-            | ObservationId::ShaftPlacement
-            | ObservationId::ShaftHaze
-    };
-}
-
 macro_rules! health_observations {
     () => {
         ObservationId::HealthTailState
@@ -1742,10 +1685,6 @@ macro_rules! health_observations {
 macro_rules! appearance_observations {
     () => {
         O::StandingOamPending
-            | O::ShaftDustState
-            | O::ShaftDustPrepared
-            | O::ShaftDustPublished
-            | O::ShaftDustFollowingVent
             | O::StandingStripsPending
             | O::StandingOamPublished
             | O::StandingPublication
@@ -1818,7 +1757,6 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::SenderPermission
         | O::SenderRequest
         | O::TouchdownOffer => Responsibility::AudioSender,
-        shaft_observations!() => Responsibility::RoomLoading,
         health_observations!() => Responsibility::Health,
         explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
@@ -1830,7 +1768,6 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::Inside
         | O::MovementStateComplete
         | O::DrawnJumpHeld
-        | O::LastDrawJump
         | O::MovementPose
         | O::LandingPose
         | O::GetawayPhase
@@ -1910,7 +1847,6 @@ fn rule_owner(rule: &str, provider: InputProvider) -> Option<Responsibility> {
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
         ("world-camera/", Responsibility::Camera),
-        ("world-shaft-entry/", Responsibility::RoomLoading),
         ("world-doors/", Responsibility::Doors),
         ("weapons-projectiles/", Responsibility::Weapons),
         ("enemy-interactions/", Responsibility::Contact),
@@ -1948,11 +1884,6 @@ fn movement_witnessed_fields(
             O::BlackoutBattery,
             O::BlackoutTimerDrawing,
         ],
-        "world-shaft-entry/ShaftViewStarts" => &[O::ShaftView, O::ShaftTransform, O::ShaftRotation],
-        "world-shaft-entry/ShaftDoorSeals" => &[O::ShaftLevel, O::ShaftPlacement, O::ShaftHaze],
-        "samus-movement/Jumping" if provider == InputProvider::PassageJumpDraws => {
-            &[O::DrawnJumpHeld, O::LastDrawJump]
-        }
         "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
             &[O::LandingPose, O::LandingFloor]
         }
@@ -2063,8 +1994,6 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
         "interface-hud/Exploring" => &[O::HudExplored],
         super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
-        "samus-appearance/WallJumpDust" => &[O::ShaftDustState],
-        "samus-appearance/WallJumpDustPicture" => &[O::ShaftDustPrepared, O::ShaftDustPublished],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {
@@ -2301,16 +2230,6 @@ fn movement_provider_valid(
     observations: &BTreeSet<ObservationId>,
     recorded: bool,
 ) -> bool {
-    use ObservationId as O;
-    if case.inputs == InputProvider::PassageJumpDraws {
-        return recorded
-            && case.content == ContentProvider::PassageJump
-            && case.expectations.fields == [O::DrawnJumpHeld, O::LastDrawJump]
-            && case.expectations.outputs.is_empty()
-            && case.checkpoints
-            && !case.borrowed.is_empty()
-            && !case.limits.is_empty();
-    }
     if case.inputs == InputProvider::NativeSearchInputs {
         return native_search_provider_valid(case, observations);
     }
@@ -2611,28 +2530,6 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
-fn shaft_provider_valid(
-    case: &Case,
-    observations: &BTreeSet<ObservationId>,
-    recorded: bool,
-) -> bool {
-    recorded
-        && case.kind == CaseKind::Scoped
-        && matches!(case.start, Start::CacheCut { .. })
-        && case.first_cut().is_some_and(|first| {
-            super::played::witnesses::selected(case)
-                .and_then(|data| data.shaft())
-                .is_ok_and(|data| data.entry.covers(&case.row, first, case.end.cut_inclusive))
-        })
-        && case.inputs == InputProvider::ShaftSetupTurns
-        && case.content == ContentProvider::PlayerRomImport
-        && case.checkpoints
-        && observations.len() == 6
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-        && case.expectations.outputs.is_empty()
-}
-
 fn zebes_provider_valid(case: &Case) -> bool {
     use super::zebes::{INTEGRATED_FIELDS, INTEGRATED_OUTPUTS, SCOPED_FIELDS, SCOPED_OUTPUTS};
     use Responsibility::{Health, Zebes, ZebesDrawing, ZebesScheduler};
@@ -2718,9 +2615,6 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     ) {
         return super::played::indexed::valid(case);
     }
-    if case.inputs == InputProvider::PlayedShaftDust {
-        return super::played::shaft_dust::valid(case);
-    }
     if case.inputs == InputProvider::StationExplosion {
         return station_provider_valid(case);
     }
@@ -2776,7 +2670,6 @@ fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<Observatio
         [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
         [Responsibility::Weapons] => intro_missile_provider_valid(case, recorded),
         [Responsibility::Discovery] => discovery_provider_valid(case, recorded),
-        [Responsibility::RoomLoading] => shaft_provider_valid(case, observations, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Playback] => playback_provider_valid(case, recorded),
@@ -2927,7 +2820,6 @@ fn start_valid(case: &Case) -> bool {
                     InputProvider::Departure
                         | InputProvider::PlayedShaftSound
                         | InputProvider::ShaftPictures
-                        | InputProvider::PlayedShaftDust
                 )
         }
         Start::CacheCut { frame } => {

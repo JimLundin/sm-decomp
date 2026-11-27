@@ -3793,3 +3793,24 @@ source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f
 identity = "samus-appearance/fight-protection-hold"
 before_values = [23, 0, 92, 0, 0, 0, 0, 23, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest a843f52bf2dac4cbaa6bec65ac3a996d5a87a78e43a20d20f701bca2af188eef; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "room-loading/escape-shaft-entry"
+before_values = [57, 342, 0, 0, 0, 55, 335, 57, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 895db69227834a7467fcda4bed5bd64e05ec9ee10a35709917948594137a394c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "appearance/shaft-wall-jump-dust"
+before_values = [240, 240, 481, 62, 0, 172, 172, 6, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest f03af4e3d6c870b5f32530607a6b6621c24e0fa03620216bd3514d31b233c994; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "ba6374b7691014ef05bee22cec21dec64ae7edfa35e84630183ff0f5eea2079d"
+identity = "movement/passage-jump-history"
+before_values = [160, 320, 0, 0, 0, 146, 305, 160, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 3fe5394e5c92af0959e8d0e85e8b747dabe3c709205593c821a50fcaeb6ad80c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

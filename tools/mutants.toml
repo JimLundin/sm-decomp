@@ -1041,11 +1041,11 @@ case = "played chain-any-0009-DFD7 0 330"
 [[fault]]
 name = "passage-jump-count-held"
 rule = "samus-movement/Jumping"
-responsibility = "movement"
+responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
 before = '''    history.draw(jump);'''
 after = '''    history.last_draw = jump;'''
-case = "movement/passage-jump-history"
+case = "played chain-any-0009-DFD7 0 330"
 
 [[fault]]
 name = "escape-leap-landing-retains-facing"
@@ -1060,6 +1060,21 @@ after = '''    let leap = samus.pose;
     }
     Ok(result)'''
 case = "movement/escape-leap-landing"
+
+[[fault]]
+name = "played-leap-landing-retains-facing"
+rule = "samus-movement/BackwardLeap"
+responsibility = "played"
+file = "crates/game/src/production/played/samus.rs"
+before = '''        let outcome =
+            samus.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0);'''
+after = '''        let leap = samus.pose;
+        let outcome =
+            samus.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0);
+        if leap.action == types::Action::Leaping && outcome.floor_response.is_some() {
+            samus.pose.facing = leap.facing;
+        }'''
+case = "played chain-any-0010-DF8D 0 518"
 
 [[fault]]
 name = "played-active-jump-latch-omitted"
@@ -1750,11 +1765,11 @@ case = "played chain-any-0006-E0B5 0 3149"
 [[fault]]
 name = "shaft-closing-placement-stays-after-first-turn"
 rule = "world-shaft-entry/ShaftDoorSeals"
-responsibility = "room-loading"
+responsibility = "played"
 file = "crates/game/src/production/shaft_entry.rs"
 before = "self.placement = None;"
 after = "let _kept = self.placement;"
-case = "room-loading/escape-shaft-entry"
+case = "played chain-any-0010-DF8D 0 518"
 
 
 [[fault]]
@@ -1947,18 +1962,18 @@ case = "enemy-interactions/shaft-actor-picture"
 
 [[fault]]
 name = "shaft-wall-jump-dust-omits-picture"
-responsibility = "appearance"
+responsibility = "played"
 rule = "samus-appearance/WallJumpDustPicture"
 file = "crates/game/src/production/played/room_video.rs"
 before = "            sprites.dust,"
 after = "            super::shaft::dust::Placement::None,"
-case = "appearance/shaft-wall-jump-dust"
+case = "played chain-any-0010-DF8D 0 518"
 
 [[fault]]
 name = "shaft-wall-jump-dust-ignores-dry-touchdown"
-responsibility = "appearance"
+responsibility = "played"
 rule = "samus-appearance/WallJumpDust"
 file = "crates/game/src/production/played/shaft/dust.rs"
 before = "            DustArrival::DryTouchdown"
 after = "            DustArrival::None"
-case = "appearance/shaft-wall-jump-dust"
+case = "played chain-any-0010-DF8D 0 518"

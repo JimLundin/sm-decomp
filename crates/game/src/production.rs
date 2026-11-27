@@ -26,7 +26,6 @@ pub mod health_tail;
 pub mod hud;
 mod immutable;
 pub mod intro_missile_scope;
-pub mod jump_history;
 mod movement;
 pub mod movement_touchdown;
 pub mod playback;
@@ -72,8 +71,6 @@ pub enum Scope {
     LandingSite,
     /// Scheduled flight to Zebes and its drawing and health outputs.
     Zebes,
-    /// Static shaft room setup and its block-script retirement.
-    ShaftEntry,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// The Zebes flashback encounter at its cinematic actor turn.
@@ -84,8 +81,6 @@ pub enum Scope {
     HealthTail,
     /// Movement and semantic pose.
     Movement,
-    /// Jump history on draws while movement is paused.
-    JumpHistory,
     /// Ordinary Movement carried through Contact and touchdown graphics.
     MovementTouchdown,
     /// Audio transport, one frame at a time.
@@ -133,8 +128,6 @@ pub enum ProductionSeed {
     LandingSite(Box<landing_site::Run>),
     /// Complete flight, palette, sprite buffer and retained destination.
     Zebes(Box<zebes::State>),
-    /// Static shaft room setup and its block-script retirement.
-    ShaftEntry(shaft_entry::State),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete flashback encounter State, including any pending start.
@@ -145,8 +138,6 @@ pub enum ProductionSeed {
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
-    /// The carried jump count, pending check and last draw sample.
-    JumpHistory(samus_movement::DrawnJumpHistory),
     /// Movement, preceding Figure and the current audio transport.
     MovementTouchdown(Box<movement_touchdown::State>),
     /// Complete audio transport State; restoration never initializes it.
@@ -189,10 +180,6 @@ pub enum AdvanceInput<'a> {
     SaveFiles(save_files::Input<'a>),
     /// Cinematic weapon work, encounter and presentation opportunities.
     IntroMissiles(intro_missile_scope::Input<'a>),
-    /// Static shaft room setup and its block-script retirement.
-    ShaftEntry(shaft_entry::Opportunity),
-    /// A history-writing draw button sample or an interval without a draw.
-    JumpHistory(Option<samus_movement::JumpButton>),
     /// The next authorized scene phase and any completed drawing opportunity.
     Discovery(discovery::Frame),
     /// The continuous station, flight and Landing Site loader.
@@ -285,10 +272,6 @@ pub enum ProductionOutputs {
     SaveFiles(Box<save_files::Output>),
     /// Complete scoped cinematic weapon requests and publication.
     IntroMissiles(Box<intro_missile_scope::Output>),
-    /// Static shaft room setup and its block-script retirement.
-    ShaftEntry,
-    /// No external request accompanies the carried jump history.
-    JumpHistory,
     /// Requests to the surrounding owners and the completed sprite publication.
     Discovery(discovery::Publication),
     /// The receiving load publishes its progress and live writes in State.
@@ -338,8 +321,6 @@ pub enum AdmissionFault {
     Playback,
     /// Inconsistent flight owners or missing content.
     Zebes(zebes::Fault),
-    /// The built room grid or pending closing anchor is invalid.
-    ShaftLevel,
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
     /// State, content and rules must select the same entry.
@@ -492,8 +473,6 @@ impl Production {
             ProductionSeed::Discovery(_) => Scope::Discovery,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
-            ProductionSeed::ShaftEntry(_) => Scope::ShaftEntry,
-            ProductionSeed::JumpHistory(_) => Scope::JumpHistory,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
@@ -648,8 +627,6 @@ impl Production {
             OwnedState::Discovery(_) => Scope::Discovery,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
-            OwnedState::ShaftEntry(_) => Scope::ShaftEntry,
-            OwnedState::JumpHistory(_) => Scope::JumpHistory,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
@@ -804,8 +781,6 @@ impl Production {
             | OwnedState::Zebes(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
-            | OwnedState::ShaftEntry(_)
-            | OwnedState::JumpHistory(_)
             | OwnedState::WeaponsContact(_)
             | OwnedState::IntroMissiles(_)
             | OwnedState::Blocks(_)
@@ -840,8 +815,6 @@ impl Production {
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Zebes(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
-            OwnedState::ShaftEntry(state) => return Ok(self.encode_save(state.clone())),
-            OwnedState::JumpHistory(state) => return Ok(self.encode_save(*state)),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
@@ -913,14 +886,6 @@ impl Production {
             let checkpoint: Checkpoint<Box<intro_missile_scope::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::IntroMissiles(checkpoint.state)
-        } else if matches!(&content, ProductionContent::ShaftEntry(_)) {
-            let checkpoint: Checkpoint<shaft_entry::State> =
-                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
-            ProductionSeed::ShaftEntry(checkpoint.state)
-        } else if matches!(&content, ProductionContent::JumpHistory) {
-            let checkpoint: Checkpoint<Model<jump_history::Pin>> =
-                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
-            ProductionSeed::JumpHistory(checkpoint.state.0)
         } else if matches!(&content, ProductionContent::Discovery(_)) {
             let checkpoint: Checkpoint<Model<crate::state::owned::DiscoveryPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -996,7 +961,6 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         }
         Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
             .and_then(|()| canonical::model::pin_holds::<hud::HudPin>()),
-        Scope::JumpHistory => canonical::model::pin_holds::<jump_history::Pin>(),
         Scope::Movement => canonical::model::pin_holds::<crate::state::owned::MovementPin>(),
         Scope::MovementTouchdown => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
@@ -1014,7 +978,6 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         | Scope::Blackout
         | Scope::SaveFiles
         | Scope::LandingSite
-        | Scope::ShaftEntry
         | Scope::Blocks
         | Scope::Progress
         | Scope::Hud

@@ -36,8 +36,6 @@ pub(super) enum InputReader {
     Playback(CutTape<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
-    ShaftEntry(Tape<game::production::shaft_entry::Opportunity>),
-    JumpHistory(Tape<Option<samus_movement::JumpButton>>),
     Discovery(CutTape<game::production::played::discovery::Frame>),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
     LandingSite(CutTape<game::production::played::landing_site::Work>),
@@ -61,8 +59,6 @@ pub(super) enum ExpectedReader {
     Intro(super::played::intro::indexed::Expected),
     RecordedCuts(CutTape<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
-    ShaftEntry(Tape<ExpectedCut>),
-    JumpHistory(Tape<ExpectedCut>),
     Departure(super::departure::Tape<ExpectedCut>),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Vec<super::health_tail::Expected>),
@@ -86,8 +82,6 @@ pub(super) enum ActualReader {
     Playback,
     SaveFiles,
     IntroMissiles,
-    ShaftEntry,
-    JumpHistory,
     Discovery,
     Departure,
     LandingSite,
@@ -194,10 +188,6 @@ impl InputReader {
             Self::Playback(inputs) => super::playback::advance(production, inputs, cut),
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
-            Self::ShaftEntry(samples) => production
-                .advance(AdvanceInput::ShaftEntry(*samples.at(cut)?))
-                .map_err(|fault| super::production_failure(cut, fault)),
-            Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => production
                 .advance(AdvanceInput::Discovery(*inputs.at(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
@@ -257,7 +247,7 @@ fn movement_state_fields(state: &samus_movement::Samus) -> Vec<Observation> {
     vec![
         movement::landing_pose(state.pose),
         movement::movement_pose(state.pose),
-        super::jump_history::jump_part(state.jump_held),
+        movement::jump_part(state.jump_held),
         Observation::quantity("movement.base-speed", i64::from(state.run.speed.0)),
         Observation::quantity("movement.position.x", i64::from(state.position.x.0)),
         Observation::quantity("movement.position.y", i64::from(state.position.y.0)),
@@ -325,12 +315,6 @@ impl ActualReader {
                 InputReader::IntroMissiles(_),
                 ProductionOutputs::IntroMissiles(output),
             ) => super::intro_missiles::actual(production, Some(&output)),
-            (Self::ShaftEntry, InputReader::ShaftEntry(_), ProductionOutputs::ShaftEntry) => {
-                super::shaft_entry::actual(production)
-            }
-            (Self::JumpHistory, InputReader::JumpHistory(_), ProductionOutputs::JumpHistory) => {
-                super::jump_history::actual(production)
-            }
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
@@ -419,8 +403,6 @@ impl ActualReader {
                 .map(|battery| vec![battery])
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
-            Self::ShaftEntry => super::shaft_entry::actual(production),
-            Self::JumpHistory => super::jump_history::actual(production),
             Self::Discovery => super::discovery::actual(production, None),
             Self::Explosion => super::explosion::actual(production, None),
             Self::ShaftHud => super::blackout::hud::actual(production, &[]),
@@ -488,9 +470,7 @@ impl ExpectedReader {
         match self {
             Self::Intro(expected) => expected.read(cut),
             Self::Explosion(expected) => expected.read(cut),
-            Self::Blackout(tape) | Self::JumpHistory(tape) | Self::ShaftEntry(tape) => {
-                tape.at(cut).cloned()
-            }
+            Self::Blackout(tape) => tape.at(cut).cloned(),
             Self::RecordedCuts(expected) => expected.at(cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),

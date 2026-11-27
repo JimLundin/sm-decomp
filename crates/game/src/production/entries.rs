@@ -175,31 +175,6 @@ fn admit_standalone(
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
-        (seed, content, rules) => admit_room(seed, content, rules)?,
-    })
-}
-
-fn admit_room(
-    seed: ProductionSeed,
-    content: &ProductionContent,
-    rules: &ProductionRules,
-) -> Result<OwnedState, AdmissionFault> {
-    Ok(match (seed, content, rules) {
-        (
-            ProductionSeed::ShaftEntry(state),
-            ProductionContent::ShaftEntry(_),
-            ProductionRules::ShaftEntry,
-        ) => {
-            if !state.valid() {
-                return Err(AdmissionFault::ShaftLevel);
-            }
-            OwnedState::ShaftEntry(state)
-        }
-        (
-            ProductionSeed::JumpHistory(state),
-            ProductionContent::JumpHistory,
-            ProductionRules::JumpHistory,
-        ) => OwnedState::JumpHistory(Model(state)),
         _ => return Err(AdmissionFault::WrongScope),
     })
 }
@@ -278,17 +253,6 @@ pub(super) fn advance_scene(
         ) => state
             .advance(content, *rules, input)
             .map_err(|fault| ProductionFault::Unsupported(Unsupported::Departure(fault)))?,
-        (
-            OwnedState::ShaftEntry(state),
-            ProductionContent::ShaftEntry(setup),
-            ProductionRules::ShaftEntry,
-            AdvanceInput::ShaftEntry(opportunity),
-        ) => {
-            state
-                .advance(*setup, opportunity)
-                .map_err(ProductionFault::RoomLoad)?;
-            ProductionOutputs::ShaftEntry
-        }
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })
 }
@@ -300,15 +264,6 @@ fn advance(
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
-        (
-            OwnedState::JumpHistory(state),
-            ProductionContent::JumpHistory,
-            ProductionRules::JumpHistory,
-            AdvanceInput::JumpHistory(sample),
-        ) => {
-            super::jump_history::advance(&mut state.0, sample);
-            ProductionOutputs::JumpHistory
-        }
         (
             OwnedState::Blackout(state),
             ProductionContent::Blackout(content),

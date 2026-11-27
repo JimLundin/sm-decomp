@@ -91,20 +91,6 @@ pub struct State {
 }
 
 impl State {
-    /// The level forms complete rows and any pending placement fits inside them.
-    #[must_use]
-    pub fn valid(&self) -> bool {
-        let width = usize::from(self.width);
-        width > 0
-            && !self.cells.is_empty()
-            && self.cells.len().is_multiple_of(width)
-            && self.placement.is_none_or(|[x, y]| {
-                x < self.width
-                    && usize::from(y).saturating_add(3)
-                        < self.cells.len().checked_div(width).unwrap_or(0)
-            })
-    }
-
     /// The transient closing placement deletes itself on its first block-script turn.
     pub const fn run_blocks(&mut self) {
         self.placement = None;

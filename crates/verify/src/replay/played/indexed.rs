@@ -191,7 +191,6 @@ pub(in crate::replay) fn run_selected(
             InputProvider::ShaftPictures,
             super::shaft_native::indexed::run,
         ),
-        (InputProvider::PlayedShaftDust, super::shaft_dust::run),
     ];
     let &(_, adapter) = ADAPTERS
         .iter()

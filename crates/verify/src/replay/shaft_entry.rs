@@ -1,27 +1,11 @@
 //! Static shaft setup, read independently from the passage, the room grid and the display.
 
-use super::{
-    Sources, compare::Observation, data_failure, index::Case, played, progress, readers,
-    result::Outcome,
-};
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-    source,
-};
-use data::{
-    level::Block,
-    rom::{Rom, RomAddress},
-};
+use super::{compare::Observation, data_failure, result::Outcome};
+use crate::source;
+use data::level::Block;
 use game::{
-    production::{
-        Production, ProductionContent, ProductionRules, ProductionSeed, room_loading,
-        shaft_entry::{Haze, Opportunity, Rotation, State, View},
-    },
-    state::{
-        owned::OwnedState,
-        video::{BgMode, Mode7, Mode7Select},
-    },
+    production::shaft_entry::{Haze, Rotation, State, View},
+    state::video::{BgMode, Mode7, Mode7Select},
 };
 use oracle_record::FrameRecord;
 
@@ -152,99 +136,4 @@ pub(super) fn fields(state: &State) -> Vec<Observation> {
 
 pub(super) fn expected(record: &FrameRecord) -> Result<Vec<Observation>, Outcome> {
     Ok(fields(&observed(record)?))
-}
-
-pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcome> {
-    let OwnedState::ShaftEntry(state) = production.state() else {
-        return Err(data_failure(None, "shaft entry scope"));
-    };
-    Ok(fields(state))
-}
-
-pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "shaft entry lock"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "shaft entry lock schema"))?;
-    let row = lock
-        .row(&RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "shaft entry row"))?;
-    let cache = Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "shaft entry record pins"))?;
-    let super::index::Start::CacheCut { frame } = case.start else {
-        return Err(data_failure(None, "shaft entry cache start"));
-    };
-    let first = case
-        .first_cut()
-        .ok_or_else(|| data_failure(None, "shaft entry first cut"))?;
-    let trace = &played::witnesses::selected(case)?.shaft()?.entry;
-    if case.end.cut_inclusive >= row.frames.0
-        || !trace.covers(&case.row, first, case.end.cut_inclusive)
-    {
-        return Err(data_failure(Some(first), "shaft entry trace"));
-    }
-    let mut previous = readers::record(&cache, frame)?;
-    let rom =
-        Rom::new(std::fs::read(&sources.rom).map_err(|_| data_failure(None, "player ROM file"))?)
-            .map_err(|_| data_failure(None, "player ROM pin"))?;
-    let rooms = played::seed::rooms(&rom)?;
-    let selected = import::world::doorway(RomAddress::new(0x83, word(&previous.wram, 0x78d)?))
-        .filter(|id| *id == data::assets::world::doorways::FALLING_TILE_TO_ELEVATOR)
-        .ok_or_else(|| data_failure(None, "shaft entry incoming doorway"))?;
-    let setup = room_loading::setup(&rooms, selected, &progress::decode(&previous.wram)?)
-        .map_err(|_| data_failure(None, "shaft entry content"))?;
-    let content = ProductionContent::ShaftEntry(setup);
-    let rules = ProductionRules::ShaftEntry;
-    let production = Production::admit(
-        ProductionSeed::ShaftEntry(observed(&previous)?),
-        content.clone(),
-        rules.clone(),
-    )
-    .map_err(|_| data_failure(Some(frame), "shaft entry admission"))?;
-    let schedule: Vec<_> = (first..=case.end.cut_inclusive).collect();
-    let mut inputs = Vec::new();
-    let mut expectations = Vec::new();
-    // Starting inside the fetch must resume the installed setup.
-    let mut fetched = match frame.checked_sub(1) {
-        Some(prior) => word(&readers::record(&cache, prior)?.wram, 0x99c)? == 0xe4a9,
-        None => false,
-    };
-    for &cut in &schedule {
-        let current = readers::record(&cache, cut)?;
-        let inside_fetch = word(&previous.wram, 0x99c)? == 0xe4a9;
-        inputs.push(if inside_fetch && !fetched {
-            Opportunity::Fetch
-        } else if inside_fetch
-            && !played::platform::finished(&previous)
-            && played::platform::finished(&current)
-        {
-            Opportunity::Blocks
-        } else {
-            Opportunity::Hold
-        });
-        fetched = inside_fetch;
-        let fields = expected(&current)?;
-        expectations.push(readers::ExpectedCut {
-            semantics: fields.clone(),
-            semantic_count: fields.len(),
-            fields,
-            output_count: 0,
-            replies: 0,
-        });
-        previous = current;
-    }
-    if !inputs.contains(&Opportunity::Fetch) || !inputs.contains(&Opportunity::Blocks) {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "shaft fetch and block turns",
-        ));
-    }
-    Ok(readers::AdmittedCase {
-        production,
-        content,
-        rules,
-        schedule,
-        inputs: readers::InputReader::ShaftEntry(readers::Tape::new(first, inputs)),
-        actual: readers::ActualReader::ShaftEntry,
-        expected: readers::ExpectedReader::ShaftEntry(readers::Tape::new(first, expectations)),
-    })
 }

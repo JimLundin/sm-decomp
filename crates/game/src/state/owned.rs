@@ -106,8 +106,6 @@ pub enum OwnedState {
     LandingSite(Box<crate::production::played::landing_site::Run>),
     /// Complete flight to Zebes and its receiving owners.
     Zebes(Box<crate::production::played::zebes::State>),
-    /// Built room level, view, rotation seed, haze and closing placement.
-    ShaftEntry(crate::production::shaft_entry::State),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.
@@ -118,8 +116,6 @@ pub enum OwnedState {
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
-    /// Jump history and previous draw sample.
-    JumpHistory(Model<crate::production::jump_history::Pin>),
     /// Current Movement, Figure and audio transport at an ordinary opportunity.
     MovementTouchdown(Box<crate::production::movement_touchdown::State>),
     /// The complete audio transport between frames.

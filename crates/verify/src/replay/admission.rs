@@ -30,12 +30,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::IntroMissileInputs {
         return super::intro_missiles::admit(case, sources);
     }
-    if case.inputs == InputProvider::ShaftSetupTurns {
-        return super::shaft_entry::admit(case, sources);
-    }
-    if case.inputs == InputProvider::PassageJumpDraws {
-        return super::jump_history::admit(case, sources);
-    }
     if case.inputs == InputProvider::DiscoveryInputs {
         return super::discovery::admit(case, sources);
     }

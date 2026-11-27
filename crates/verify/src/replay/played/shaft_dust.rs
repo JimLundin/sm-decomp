@@ -8,16 +8,7 @@ use oracle_record::FrameRecord;
 
 use super::{PictureScope, Run};
 use crate::replay::{
-    blackout::observe::oam_bytes,
-    compare::Observation,
-    data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
-        Responsibility, Start,
-    },
-    readers::ExpectedCut,
-    result::{Counts, Outcome},
-    runner,
+    blackout::observe::oam_bytes, compare::Observation, data_failure, result::Outcome,
 };
 
 use super::shaft_native::word;
@@ -128,40 +119,6 @@ fn picture(field: &str, bytes: &[u8], looks: &[SpriteAttributes; 4]) -> Option<O
     })
 }
 
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Integrated
-        && matches!(case.start, Start::PlayedContinuation { .. })
-        && case.responsibilities
-            == [
-                Responsibility::Appearance,
-                Responsibility::Movement,
-                Responsibility::Camera,
-                Responsibility::Ceres,
-            ]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::PlayedShaftDust
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == [ObservationId::ShaftDustState]
-        && case.expectations.outputs
-            == [
-                ObservationId::ShaftDustPrepared,
-                ObservationId::ShaftDustPublished,
-                ObservationId::ShaftDustFollowingVent,
-            ]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
-
-pub(in crate::replay) const fn valid_counts(counts: &Counts, horizon: usize) -> bool {
-    counts.cuts == horizon
-        && counts.fields == horizon
-        && counts.outputs == horizon.saturating_mul(2).saturating_add(1)
-        && counts.replies == 0
-        && counts.pending_boundaries == 0
-        && counts.restorations > 0
-        && counts.restorations <= counts.publications
-}
-
 pub(super) fn observations(
     run: &Run<'_>,
     frame: &super::Frame<'_>,
@@ -216,138 +173,4 @@ fn looks<'r>(run: &'r Run<'_>) -> Result<&'r [SpriteAttributes; 4], Outcome> {
         .as_ref()
         .map(|art| &art.looks)
         .ok_or_else(|| data_failure(None, "wall-jump dust art"))
-}
-
-pub(in crate::replay::played) fn run(
-    room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
-    case: &Case,
-    result: &mut runner::Receipt,
-) -> Result<(), Outcome> {
-    let Start::PlayedContinuation { frame, .. } = case.start else {
-        return Err(data_failure(None, "shaft dust continuation start"));
-    };
-    let mut witness = Witness::default();
-    room.replay(case, |run, turn, _| {
-        let cut = turn.cut;
-        let place = turn.place;
-        let null = (cut > frame)
-            .then(|| {
-                let mut fields = actual(run, looks(run)?)?.to_vec();
-                if let Some(slot) = run.witnesses.shaft()?.following_vent(place) {
-                    let video = &run.state.room_video.video;
-                    fields.push(following_vent(
-                        slot,
-                        &oam_bytes(&video.batch.oam),
-                        &oam_bytes(&video.memory.oam),
-                    )?);
-                }
-                Ok::<_, Outcome>(fields)
-            })
-            .transpose()?;
-        let fields = turn.fields(run)?;
-        if let Some(null) = null {
-            witness.cut(run, &turn, fields, result, &null)?;
-        }
-        Ok(())
-    })?;
-    if witness.restored.is_some() {
-        return Err(Outcome::CheckpointFailure {
-            cut: case.end.cut_inclusive,
-        });
-    }
-    if !valid_counts(&result.counts, result.counts.cuts) {
-        return Err(data_failure(
-            Some(case.end.cut_inclusive),
-            "shaft dust and following vent coverage",
-        ));
-    }
-
-    Ok(())
-}
-
-#[derive(Default)]
-struct Witness<'a> {
-    restored: Option<(u64, Run<'a>)>,
-}
-
-impl<'a> Witness<'a> {
-    fn cut(
-        &mut self,
-        run: &Run<'a>,
-        frame: &super::rows::Turn<'_>,
-        mut fields: Vec<Observation>,
-        result: &mut runner::Receipt,
-        null: &[Observation],
-    ) -> Result<(), Outcome> {
-        fields.retain(|field| {
-            matches!(
-                field.field.as_str(),
-                STATE | PREPARED | PUBLISHED | FOLLOWING_VENT
-            )
-        });
-        let field_count = if run.witnesses.shaft()?.following_vent(frame.place).is_some() {
-            4
-        } else {
-            3
-        };
-        if fields.len() != field_count {
-            return Err(data_failure(
-                Some(frame.cut),
-                "wall-jump dust comparison opportunity",
-            ));
-        }
-        let state = fields
-            .iter()
-            .filter(|field| field.field == STATE)
-            .cloned()
-            .collect::<Vec<_>>();
-        let occupied = run.state.samus.appearance.0.dust.is_some();
-        let published = fields
-            .iter()
-            .any(|field| field.field == PUBLISHED && !field.bytes.is_empty());
-        let expected = ExpectedCut {
-            semantics: state,
-            semantic_count: 1,
-            fields,
-            output_count: field_count.saturating_sub(1),
-            replies: 0,
-        };
-        result.record(&expected, null, frame.cut)?;
-        if published {
-            result.published()?;
-        }
-        if let Some((origin, continuation)) = &mut self.restored {
-            frame
-                .fields(continuation)
-                .map_err(|_| Outcome::CheckpointFailure { cut: *origin })?;
-            if continuation.state != run.state || continuation.blackout != run.blackout {
-                return Err(Outcome::CheckpointFailure { cut: *origin });
-            }
-            if !occupied {
-                result.restored(1)?;
-                self.restored = None;
-            }
-        } else if occupied {
-            self.restored = Some((frame.cut, restore(run, frame.cut)?));
-        }
-        Ok(())
-    }
-}
-
-fn restore<'a>(run: &Run<'a>, cut: u64) -> Result<Run<'a>, Outcome> {
-    let mut resumed = run.clone();
-    let failed = || Outcome::CheckpointFailure { cut };
-    let appearance = &mut resumed.state.samus.appearance;
-    *appearance = canonical::from_bytes(&canonical::to_bytes(appearance)).map_err(|_| failed())?;
-    let saved_picture = run.state.room_video.picture_checkpoint();
-    *resumed.state.room_video.video = game::state::video::Video::default();
-    resumed
-        .state
-        .room_video
-        .restore_picture(&saved_picture)
-        .map_err(|_| failed())?;
-    if resumed.state != run.state {
-        return Err(failed());
-    }
-    Ok(resumed)
 }
