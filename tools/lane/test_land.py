@@ -136,7 +136,7 @@ class LandTest(unittest.TestCase):
         self.assertIn("kept lane/d", out)
         branches = land.git(self.repo, "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes")
         self.assertEqual(
-            sorted(branches.split()),
+            sorted(ref for ref in branches.split() if not ref.endswith("/HEAD")),
             [
                 "refs/heads/lane/c",
                 "refs/heads/lane/d",
