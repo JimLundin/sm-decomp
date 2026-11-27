@@ -78,7 +78,8 @@ struct NativeOffer {
     group: SoundGroup,
     cue: CueId,
     allowance: QueueAllowance,
-    permission: String,
+    #[serde(with = "super::index::Permission")]
+    permission: OfferPermission,
     prefetch_master_ticks: u64,
     exec_master_ticks: u64,
     disabled: bool,
@@ -153,16 +154,16 @@ impl RecordedProgress {
 
 impl NativeOffer {
     fn permission(&self) -> Result<OfferPermission, Outcome> {
-        let (name, permission) = if self.disabled {
-            ("Disabled", OfferPermission::Disabled)
+        let permission = if self.disabled {
+            OfferPermission::Disabled
         } else if self.demo {
-            ("Demo", OfferPermission::Demo)
+            OfferPermission::Demo
         } else if self.exploding {
-            ("Explosion", OfferPermission::Explosion)
+            OfferPermission::Explosion
         } else {
-            ("Enabled", OfferPermission::Enabled)
+            OfferPermission::Enabled
         };
-        if self.permission != name {
+        if self.permission != permission {
             return Err(data_failure(None, "sender offer suppression priority"));
         }
         Ok(permission)
@@ -441,49 +442,23 @@ fn cross_group_order(offers: &[NativeOffer]) -> bool {
         && at_cut(183).eq([(Action, SamusSilence), (Ambient, BackgroundSilence)])
 }
 
-fn constructed(control: SenderOfferControl) -> Window {
-    use CueId::{Door, Footstep, Land};
-    use OfferPermission::{Demo, Disabled, Enabled, Explosion};
-    use QueueAllowance::{Six, Three};
-    use SenderOfferControl::{
-        DenyAtSix, DenyDemo, DenyDisabled, DenyExplosion, DenySmallerLimit, OrderedPair,
-        RepeatAtFive,
-    };
-
-    let (tail, cues, allowance, permission, after): (&[_], &[_], _, _, &[_]) = match control {
-        OrderedPair => (&[], &[Land, Door], Six, Enabled, &[Land, Door]),
-        RepeatAtFive => (&[Land], &[Land], Six, Enabled, &[Land, Land]),
-        DenyAtSix => (&[Land, Door], &[Land], Six, Enabled, &[Land, Door]),
-        DenySmallerLimit => (&[Land], &[Door], Three, Enabled, &[Land]),
-        DenyDisabled => (&[], &[Door], Six, Disabled, &[]),
-        DenyDemo => (&[], &[Door], Six, Demo, &[]),
-        DenyExplosion => (&[], &[Door], Six, Explosion, &[]),
-    };
-    let queue = |tail: &[CueId]| -> VecDeque<CueId> {
-        [Footstep; 4]
-            .into_iter()
-            .chain(tail.iter().copied())
-            .collect()
-    };
-    let mut seed = CueQueue::default();
-    for cue in queue(tail) {
-        seed.push(cue);
-    }
+fn constructed(control: &SenderOfferControl) -> Window {
     Window {
         seed: SenderState {
-            queue: seed,
+            queue: control.seed.clone(),
             progress: SenderProgress::Ready,
         },
-        group: SoundGroup::Contact,
-        offers: cues
+        group: control.group,
+        offers: control
+            .cues
             .iter()
             .map(|&cue| audio_transport::Offer {
                 cue,
-                allowance,
-                permission,
+                allowance: control.allowance,
+                permission: control.permission,
             })
             .collect(),
-        expected: observations(&queue(after), &SenderProgress::Ready),
+        expected: observations(control.expected.cues(), &SenderProgress::Ready),
     }
 }
 
@@ -496,7 +471,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         expected,
     } = match case.start {
         Start::NativeSenderOffer { source_id } => native(&sources.native, source_id, cut)?,
-        Start::ConstructedSenderOffer { control } => constructed(control),
+        Start::ConstructedSenderOffer { ref control } => constructed(control),
         Start::NativeOpportunity { .. }
         | Start::NativeRecord { .. }
         | Start::PlayedContinuation { .. }

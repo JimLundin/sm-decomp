@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "924e6900b7dafb8661f70c5d38176c024c4e690cfe71678203c57774207d4bbe"
+index_sha256 = "329bf5ed1267d6777c904c688fb6b80e998c8e9146a47ae55db9e944555853d9"
 
 [[case]]
 id = "movement/D-inherited-cut"

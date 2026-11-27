@@ -976,7 +976,6 @@ claim = "ordered captured ingress and complete selected sender start"
 id = "sender-offer/ordered-pair"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "ordered-pair" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -986,6 +985,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep"]
+cues = ["Land", "Door"]
+allowance = "Six"
+permission = "Enabled"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -998,7 +1008,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/repeat-at-five"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "repeat-at-five" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1008,6 +1017,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"]
+cues = ["Land"]
+allowance = "Six"
+permission = "Enabled"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Land"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1020,7 +1040,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/deny-at-six"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "deny-at-six" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1030,6 +1049,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"]
+cues = ["Land"]
+allowance = "Six"
+permission = "Enabled"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land", "Door"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1042,7 +1072,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/deny-smaller-limit"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "deny-smaller-limit" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1052,6 +1081,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"]
+cues = ["Door"]
+allowance = "Three"
+permission = "Enabled"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep", "Land"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1064,7 +1104,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/deny-disabled"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "deny-disabled" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1074,6 +1113,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep"]
+cues = ["Door"]
+allowance = "Six"
+permission = "Disabled"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1086,7 +1136,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/deny-demo"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "deny-demo" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1096,6 +1145,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep"]
+cues = ["Door"]
+allowance = "Six"
+permission = "Demo"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1108,7 +1168,6 @@ claim = "fixed semantic queue and ordered offers"
 id = "sender-offer/deny-explosion"
 kind = "scoped"
 row = "constructed-sender-queue"
-start = { source = "constructed-sender-offer", control = "deny-explosion" }
 end = { cut_inclusive = 0 }
 rules = ["audio-transport/OfferAcceptance"]
 profile = "reference"
@@ -1118,6 +1177,17 @@ inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
 limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
+
+[case.start]
+source = "constructed-sender-offer"
+
+[case.start.control]
+group = "Contact"
+seed = ["Footstep", "Footstep", "Footstep", "Footstep"]
+cues = ["Door"]
+allowance = "Six"
+permission = "Explosion"
+expected = ["Footstep", "Footstep", "Footstep", "Footstep"]
 
 [[case.borrowed]]
 dependency = "sender.offer"

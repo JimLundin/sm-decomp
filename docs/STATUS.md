@@ -800,7 +800,9 @@ uses the source video cut, and the ingress identity distinguishes the two offers
 sender service are outside this scope.
 
 The constructed cases exercise same-group order, duplicates, capacity, reduced allowance
-and three suppressors. The saved final cut checks restoration of the complete transport State.
+and three suppressors. Each case's `start.control` declares the group, starting queue, ordered
+cues, allowance, permission and expected queue. The saved final cut checks restoration of the
+complete transport State.
 Each native case has one independent seed.
 
 ## Native audio frames
