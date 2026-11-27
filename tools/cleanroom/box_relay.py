@@ -6,13 +6,16 @@ export's lane folder, where `serve`, outside the box, adds the real credential a
 on to the API over TLS. So the key never enters the box, and the API is the one place the box
 can reach.
 
-What passes is an allow-list, since the box chooses every byte it sends: GET or POST of an
-origin-form target (`/...`) under the base URL's path and `v1/`, its segments plain names and
-its query plain characters; the request goes to the configured host with its own Host header,
-and only the headers a client of the API sends (content type, accept, user agent, anthropic-*,
-x-stainless-*, x-claude-*, x-app) go with it. A JSON body that asks the API itself to reach
-outside (a web search or fetch tool, an MCP server, a document or image by URL) is refused, so
-the API is no way to the web.
+What passes is an allow-list, since the box chooses every byte it sends: a POST of
+`v1/messages` or `v1/messages/count_tokens` under the base URL's path, with no query but
+`beta=true`, whose body is a JSON object of the members a coding session sends. Its tools are
+the session's own, run in the box; a server tool is refused, as is an MCP server or a
+container. Its content blocks are text, inline images, tool calls, tool results and thinking;
+a document, a file, a container upload or an image by URL or file id is refused. So the API
+runs nothing and fetches nothing for the box. The request goes to the configured host with
+its own Host header and only the headers a client of the API sends (content type, accept,
+user agent, anthropic-*, x-stainless-*, x-claude-*, x-app), and anthropic-beta keeps only the
+values in BETAS.
 
   serve SOCKET AUTH [PARENT]  outside: AUTH (a file, or - for stdin, so it touches no disk) is an
                               object of Claude Code's top-level settings members (apiKeyHelper,
@@ -57,30 +60,73 @@ BOX_SETTINGS = re.compile(r"(ANTHROPIC_(MODEL|SMALL_FAST_MODEL|DEFAULT_[A-Z]+_MO
 # hop-by-hop headers, and the box's own credential headers, which the relay replaces).
 HEADERS = re.compile(r"(content-type|accept|accept-encoding|accept-language|user-agent|x-app|"
                      r"anthropic-[a-z0-9-]+|x-stainless-[a-z0-9-]+|x-claude-[a-z0-9-]+)")
-SEGMENT = re.compile(r"[A-Za-z0-9_-][A-Za-z0-9._-]*")
-QUERY = re.compile(r"[A-Za-z0-9._~=&,-]*")
-METHODS = ("GET", "POST")
+ENDPOINTS = (["v1", "messages"], ["v1", "messages", "count_tokens"])
+QUERIES = ("", "beta=true")
+# The betas Claude Code 2.1.331 sent from the box, with and without --bare. Any other value is
+# dropped: a beta is how a request turns on a server feature.
+BETAS = frozenset({
+    "claude-code-20250219", "interleaved-thinking-2025-05-14", "context-management-2025-06-27",
+    "per-turn-control-2026-07-01", "mid-conversation-tool-changes-2026-07-01",
+    "thinking-token-count-2026-05-13", "effort-2025-11-24", "thinking-display-updates-2026-08-18",
+})
+MEMBERS = frozenset({
+    "model", "messages", "system", "tools", "tool_choice", "metadata", "max_tokens", "thinking",
+    "context_management", "output_config", "stream", "temperature", "top_p", "top_k",
+    "stop_sequences",
+})
+BLOCKS = frozenset({"text", "image", "tool_use", "tool_result", "thinking", "redacted_thinking"})
+RESULT_BLOCKS = frozenset({"text", "image"})
 HELPER_SECONDS = 300
 MAX_BODY = 64 << 20
-OUTSIDE = re.compile(r"(web_search|web_fetch|mcp)\w*|url")
 
 
-def reaches_outside(item: object) -> bool:
-    if isinstance(item, dict):
-        kind = item.get("type")
-        if "mcp_servers" in item or (isinstance(kind, str) and OUTSIDE.fullmatch(kind)):
-            return True
-        return any(reaches_outside(value) for value in item.values())
-    if isinstance(item, list):
-        return any(reaches_outside(value) for value in item)
-    return False
+def blocks_refusal(blocks: object, allowed: frozenset[str]) -> str | None:
+    if not isinstance(blocks, list):
+        return "content that is not a list"
+    for block in blocks:
+        kind = block.get("type") if isinstance(block, dict) else None
+        if kind not in allowed:
+            return f"the content block {kind!r}"
+        source = block.get("source")
+        if kind == "image" and not (isinstance(source, dict) and source.get("type") == "base64"):
+            return "an image that is not inline"
+        content = block.get("content")
+        if kind == "tool_result" and not isinstance(content, str) and content is not None:
+            if why := blocks_refusal(content, RESULT_BLOCKS):
+                return why
+    return None
 
 
-def body_reaches_outside(body: bytes) -> bool:
+def refusal(body: bytes) -> str | None:
+    """Why the request body may not go to the API, or None."""
     try:
-        return reaches_outside(json.loads(body))
+        request = json.loads(body)
     except ValueError:
-        return False
+        return "a body that is not JSON"
+    if not isinstance(request, dict):
+        return "a body that is not a JSON object"
+    if extra := sorted(set(request) - MEMBERS):
+        return f"the request member {extra[0]!r}"
+    tools = request.get("tools", [])
+    if not isinstance(tools, list):
+        return "tools that are not a list"
+    for tool in tools:
+        kind = tool.get("type", "custom") if isinstance(tool, dict) else None
+        if kind != "custom":
+            return f"the tool type {kind!r}"
+    system = request.get("system")
+    if not isinstance(system, str) and system is not None:
+        if why := blocks_refusal(system, frozenset({"text"})):
+            return why
+    messages = request.get("messages", [])
+    if not isinstance(messages, list):
+        return "messages that are not a list"
+    for message in messages:
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str):
+            if why := blocks_refusal(content, BLOCKS):
+                return why
+    return None
 
 
 def load_auth(path: str) -> tuple[dict[str, str], str | None]:
@@ -150,18 +196,18 @@ class Credential:
 
 
 def allowed_target(target: str, prefix: list[str]) -> str | None:
-    """The origin-form target to send, or None: `/` + the base path's segments + `v1` + plain
-    segments, and an optional plain query. Anything else (absolute form, `..`, `;`, `\\`, `%`,
-    empty segments) is refused, not normalised."""
-    if not target.startswith("/") or target.startswith("//"):
-        return None
-    path, sep, query = target.partition("?")
-    segments = path[1:].split("/")
-    if segments[:len(prefix)] != prefix or segments[len(prefix):len(prefix) + 1] != ["v1"]:
-        return None
-    if not all(SEGMENT.fullmatch(s) for s in segments) or not QUERY.fullmatch(query):
-        return None
-    return target
+    """The origin-form target to send, or None: `/`, the base path's segments, one of ENDPOINTS
+    and one of QUERIES, exactly. Anything else is refused, not normalised."""
+    path, _, query = target.partition("?")
+    if any(path == "/" + "/".join(prefix + endpoint) for endpoint in ENDPOINTS) and query in QUERIES:
+        return target
+    return None
+
+
+def betas(values: list[str]) -> tuple[list[str], list[str]]:
+    """The anthropic-beta values kept and those dropped."""
+    seen = [v.strip() for value in values for v in value.split(",") if v.strip()]
+    return [v for v in seen if v in BETAS], [v for v in seen if v not in BETAS]
 
 
 def watch_parent(parent: int) -> None:
@@ -194,7 +240,7 @@ def serve(sock_path: str, auth: str, parent: int | None) -> None:
 
         def relay(self) -> None:
             self.close_connection = True
-            if self.command not in METHODS:
+            if self.command != "POST":
                 self.send_error(405, "not a method of the API")
                 return
             target = allowed_target(self.path, prefix)
@@ -206,11 +252,17 @@ def serve(sock_path: str, auth: str, parent: int | None) -> None:
                 self.send_error(400, "a body of an explicit length only")
                 return
             body = self.rfile.read(length) if length else b""
-            if body_reaches_outside(body):
-                sys.stderr.write("box_relay: refused a request that asks the API to reach outside\n")
-                self.send_error(403, "the API may not reach outside for the box")
+            if why := refusal(body):
+                sys.stderr.write(f"box_relay: refused {why}\n")
+                self.send_error(403, f"the relay refuses {why}")
                 return
             headers = {k.lower(): v for k, v in self.headers.items() if HEADERS.fullmatch(k.lower())}
+            kept, unlisted = betas(self.headers.get_all("anthropic-beta") or [])
+            headers.pop("anthropic-beta", None)
+            if kept:
+                headers["anthropic-beta"] = ",".join(kept)
+            if unlisted:
+                sys.stderr.write(f"box_relay: dropped betas {', '.join(unlisted)}\n")
             dropped = sorted({k.lower() for k in self.headers if not HEADERS.fullmatch(k.lower())}
                              - {"host", "content-length", "connection", "authorization", "x-api-key"})
             if dropped:

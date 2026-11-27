@@ -1,7 +1,7 @@
 """box_relay.py against a fake API: what passes, what is refused, and what the API sees."""
 
 import http.server
-import io
+import importlib.util
 import json
 import os
 import pathlib
@@ -14,18 +14,27 @@ import time
 import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
-import box_relay  # noqa: E402
+SPEC = importlib.util.spec_from_file_location("box_relay", HERE / "box_relay.py")
+box_relay = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(box_relay)
 
 PREFIX = ["lms", "proxy", "anthropic"]
 
 
 class Target(unittest.TestCase):
-    def test_the_api_paths_pass(self):
+    def test_the_two_calls_of_a_session_pass(self):
         for t in ["/lms/proxy/anthropic/v1/messages", "/lms/proxy/anthropic/v1/messages?beta=true",
-                  "/lms/proxy/anthropic/v1/messages/count_tokens", "/lms/proxy/anthropic/v1/models"]:
+                  "/lms/proxy/anthropic/v1/messages/count_tokens"]:
             with self.subTest(t=t):
                 self.assertEqual(box_relay.allowed_target(t, PREFIX), t)
+
+    def test_every_other_api_path_is_refused(self):
+        for t in ["/lms/proxy/anthropic/v1/models", "/lms/proxy/anthropic/v1/files",
+                  "/lms/proxy/anthropic/v1/messages/batches", "/lms/proxy/anthropic/v1/skills",
+                  "/lms/proxy/anthropic/v1/complete", "/lms/proxy/anthropic/v1/messages?beta=false",
+                  "/lms/proxy/anthropic/v1/messages?beta=true&x=1", "/v1/messages"]:
+            with self.subTest(t=t):
+                self.assertIsNone(box_relay.allowed_target(t, PREFIX))
 
     def test_everything_else_is_refused(self):
         for t in ["http://evil.example/lms/proxy/anthropic/v1/messages", "evil.example:443",
@@ -40,22 +49,82 @@ class Target(unittest.TestCase):
                 self.assertIsNone(box_relay.allowed_target(t, PREFIX))
 
 
+def user(*blocks):
+    return {"model": "m", "messages": [{"role": "user", "content": list(blocks)}]}
+
+
+BASE64 = {"type": "base64", "media_type": "image/png", "data": "AA=="}
+
+
 class Body(unittest.TestCase):
-    def test_a_request_that_reaches_outside_is_refused(self):
-        for body in [{"tools": [{"type": "web_search_20250305", "name": "web_search"}]},
-                     {"tools": [{"type": "web_fetch_20250910", "name": "web_fetch"}]},
-                     {"mcp_servers": [{"type": "url", "url": "https://x"}]},
-                     {"messages": [{"role": "user", "content": [
-                         {"type": "document", "source": {"type": "url", "url": "https://x/a.pdf"}}]}]}]:
+    def refusal(self, body):
+        return box_relay.refusal(json.dumps(body).encode())
+
+    def test_a_body_that_is_not_a_json_object_is_refused(self):
+        for body in [b"not json", b"", b"[]", b'"text"', b"\xff"]:
             with self.subTest(body=body):
-                self.assertTrue(box_relay.body_reaches_outside(json.dumps(body).encode()))
+                self.assertIsNotNone(box_relay.refusal(body))
+
+    def test_every_server_tool_is_refused(self):
+        for kind in ["web_search_20250305", "web_fetch_20250910", "code_execution_20250825",
+                     "bash_20250124", "text_editor_20250728", "computer_20250124", "memory_20250818",
+                     "tool_search_tool_regex_20251119", "mcp_toolset", "advisor_20260301", None]:
+            with self.subTest(kind=kind):
+                self.assertIsNotNone(self.refusal({"model": "m", "tools": [{"type": kind, "name": "t"}]}))
+
+    def test_a_member_that_names_an_outside_service_is_refused(self):
+        for member in ["mcp_servers", "container", "betas", "service_tier"]:
+            with self.subTest(member=member):
+                self.assertIsNotNone(self.refusal({"model": "m", member: []}))
+
+    def test_a_file_a_document_or_an_upload_is_refused(self):
+        for block in [{"type": "document", "source": {"type": "url", "url": "https://x/a.pdf"}},
+                      {"type": "document", "source": {"type": "base64", "data": "AA=="}},
+                      {"type": "document", "source": {"type": "file", "file_id": "f"}},
+                      {"type": "image", "source": {"type": "url", "url": "https://x/a.png"}},
+                      {"type": "image", "source": {"type": "file", "file_id": "f"}},
+                      {"type": "container_upload", "file_id": "f"},
+                      {"type": "search_result", "source": "https://x", "title": "t", "content": []},
+                      {"type": "server_tool_use", "id": "s", "name": "web_search", "input": {}},
+                      {"type": "web_search_tool_result", "tool_use_id": "s", "content": []},
+                      {"type": "mcp_tool_use", "id": "m", "name": "x", "server_name": "s", "input": {}},
+                      {"type": "tool_result", "tool_use_id": "t", "content": [
+                          {"type": "document", "source": {"type": "url", "url": "https://x/a.pdf"}}]},
+                      {"type": "tool_result", "tool_use_id": "t", "content": [
+                          {"type": "image", "source": {"type": "url", "url": "https://x/a.png"}}]}]:
+            with self.subTest(block=block):
+                self.assertIsNotNone(self.refusal(user(block)))
+        self.assertIsNotNone(self.refusal({"model": "m", "system": [{"type": "document", "source": BASE64}]}))
 
     def test_the_cli_s_own_requests_pass(self):
-        body = {"model": "m", "tools": [{"name": "Bash", "description": "web_search url",
-                                         "input_schema": {"type": "object"}}],
-                "messages": [{"role": "user", "content": [{"type": "text", "text": '"type": "url"'}]}]}
-        self.assertFalse(box_relay.body_reaches_outside(json.dumps(body).encode()))
-        self.assertFalse(box_relay.body_reaches_outside(b"not json"))
+        body = {"model": "m", "max_tokens": 1, "stream": True, "metadata": {"user_id": "u"},
+                "thinking": {"type": "adaptive"}, "output_config": {"effort": "medium"},
+                "context_management": {"edits": [{"type": "clear_thinking_20251015", "keep": "all"}]},
+                "system": [{"type": "text", "text": "s", "cache_control": {"type": "ephemeral"}}],
+                "tools": [{"name": "Bash", "description": "web_search url", "input_schema": {"type": "object"}},
+                          {"type": "custom", "name": "Read", "input_schema": {"type": "object"}}],
+                "tool_choice": {"type": "auto"},
+                "messages": [
+                    {"role": "user", "content": "plain"},
+                    {"role": "user", "content": [{"type": "text", "text": '"type": "url"'},
+                                                 {"type": "image", "source": BASE64}]},
+                    {"role": "assistant", "content": [
+                        {"type": "thinking", "thinking": "t", "signature": "s"},
+                        {"type": "redacted_thinking", "data": "d"},
+                        {"type": "tool_use", "id": "t", "name": "Bash", "input": {"url": "https://x"}}]},
+                    {"role": "user", "content": [
+                        {"type": "tool_result", "tool_use_id": "t", "content": "out"},
+                        {"type": "tool_result", "tool_use_id": "t", "is_error": True,
+                         "content": [{"type": "text", "text": "x"}, {"type": "image", "source": BASE64}]}]}]}
+        self.assertIsNone(self.refusal(body))
+
+
+class Betas(unittest.TestCase):
+    def test_only_the_cli_s_betas_are_kept(self):
+        kept, dropped = box_relay.betas(["claude-code-20250219, files-api-2025-04-14",
+                                         "mcp-client-2025-04-04,effort-2025-11-24"])
+        self.assertEqual(kept, ["claude-code-20250219", "effort-2025-11-24"])
+        self.assertEqual(dropped, ["files-api-2025-04-14", "mcp-client-2025-04-04"])
 
 
 class Env(unittest.TestCase):
@@ -133,6 +202,8 @@ class Relay(unittest.TestCase):
     def test_a_request_goes_with_the_key_its_host_and_allowed_headers(self):
         status = self.send(b"POST /lms/proxy/anthropic/v1/messages?beta=true HTTP/1.1\r\nHost: evil.example\r\n"
                            b"Content-Length: 2\r\nX-Api-Key: cleanroom-relay\r\nAnthropic-Version: 1\r\n"
+                           b"Anthropic-Beta: claude-code-20250219,files-api-2025-04-14\r\n"
+                           b"anthropic-beta: mcp-client-2025-04-04\r\n"
                            b"X-Original-URL: /admin\r\nX-Forwarded-Host: evil.example\r\nForwarded: host=evil\r\n"
                            b"Connection: close\r\n\r\n{}")
         self.assertEqual(status, 200)
@@ -142,6 +213,7 @@ class Relay(unittest.TestCase):
         self.assertEqual(headers["authorization"], "Bearer SECRET-TOKEN")
         self.assertEqual(headers["x-gateway-key"], "gw")
         self.assertEqual(headers["anthropic-version"], "1")
+        self.assertEqual(headers["anthropic-beta"], "claude-code-20250219")
         for dropped in ["x-original-url", "x-forwarded-host", "forwarded", "x-api-key"]:
             self.assertNotIn(dropped, headers)
 
@@ -152,6 +224,11 @@ class Relay(unittest.TestCase):
                     b"POST /lms/proxy/anthropic/v1/..\\..\\admin HTTP/1.1\r\nContent-Length: 0\r\n\r\n",
                     b"POST /lms/proxy/anthropic/v1/%2e%2e/admin HTTP/1.1\r\nContent-Length: 0\r\n\r\n",
                     b"DELETE /lms/proxy/anthropic/v1/messages HTTP/1.1\r\n\r\n",
+                    b"GET /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 2\r\n\r\n{}",
+                    b"POST /lms/proxy/anthropic/v1/files HTTP/1.1\r\nContent-Length: 2\r\n\r\n{}",
+                    b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 8\r\n\r\nnot json",
+                    b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nContent-Length: 45\r\n\r\n"
+                    b'{"tools": [{"type": "web_fetch_20250910"}]}  ',
                     b"POST /lms/proxy/anthropic/v1/messages HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"]:
             with self.subTest(raw=raw[:40]):
                 self.assertIn(self.send(raw), (400, 403, 405))
