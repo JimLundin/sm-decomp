@@ -12,12 +12,14 @@
 # Each row is `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW`, which writes
 # `lean.bin` and `lean.txt`.
 #
-# Resumable: reuse a readable lean row with its pinned inputs and all requested watches.
+# Resumable: reuse a readable row with its pinned inputs, recorded by this lsnes and server,
+# with all requested watches.
 # Each row reports cached, recorded or failed, with corpus output in <cache>/.logs/<row>.log.
 #
 # ORACLE runs the oracle command line (default target/verify/oracle).
 # SM_TOOLS runs the cache reader (default target/verify/tools, built before use).
 # SM_LOCK names the format-2 lock (default scenarios/locks/lsnes.toml).
+# SM_LSNES names the lsnes executable the oracle runs (default lsnes on PATH).
 #
 # WATCH_PCS, when set, is the comma-separated list of instruction addresses passed to corpus as
 # `--watch-pcs`, so each row also gets its `hits.txt` (docs/ORACLE.md §6): the harnesses that hear

@@ -99,11 +99,8 @@ impl Measurements {
         for access in &record.apu_log {
             let port = usize::from(access.port & 3);
             match access.kind {
-                ApuAccessKind::CpuWrite | ApuAccessKind::DmaWrite => {
-                    self.cpu_port_writes[port] += 1;
-                }
-                ApuAccessKind::CpuRead | ApuAccessKind::DmaRead => self.cpu_port_reads[port] += 1,
-                ApuAccessKind::SpcWrite => {}
+                ApuAccessKind::CpuWrite => self.cpu_port_writes[port] += 1,
+                ApuAccessKind::CpuRead => self.cpu_port_reads[port] += 1,
             }
         }
         let apu_writes = record

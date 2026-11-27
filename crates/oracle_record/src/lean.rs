@@ -9,7 +9,7 @@
 //! The hits stay out: the cache keeps them in `hits.txt`.
 //!
 //! A record is the magic, the version, a kind byte (0 whole, 1 changes), the length and
-//! bytes of the rest of the record in [`codec`]'s encoding without the picture or hits and
+//! bytes of the rest of the record in [`codec`]'s encoding without the hits and
 //! with empty memories, the five memories' lengths in bytes, then either the memories' bytes or
 //! the number of runs and each run's unchanged bytes before it, its length and its bytes.
 //! VRAM and CGRAM are little-endian words, as [`codec`] writes them.
@@ -17,6 +17,8 @@
 use crate::FrameRecord;
 use crate::codec::{self, CodecError};
 
+/// The first line of a row's index, `lean.txt`: the cache layout's name and version.
+pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 2";
 /// The bytes every lean record starts with.
 pub const MAGIC: [u8; 4] = *b"SMFL";
 /// The encoding's version, after the magic.
@@ -63,7 +65,6 @@ pub fn encode(record: &FrameRecord, memories: &mut Memories, whole: bool, out: &
         cgram: Box::default(),
         oam: Box::default(),
         sram: Box::default(),
-        picture: None,
         hits: Vec::new(),
         ..record.clone()
     };
@@ -235,7 +236,7 @@ impl<'a> Reader<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CpuRegisters, Cut, Pad, Picture, PpuRegisters};
+    use crate::{CpuRegisters, Cut, Pad, PpuRegisters};
 
     /// Record `index`, whose WRAM byte $1234 and VRAM word $4000 hold `change`.
     fn record(index: u64, change: u8) -> FrameRecord {
@@ -263,21 +264,14 @@ mod tests {
             sram: vec![2; 0x2000].into_boxed_slice(),
             ppu: PpuRegisters::default(),
             apu_log: Vec::new(),
-            picture: Some(Picture::default()),
-            spc: None,
-            bank_instructions: None,
-            writes: Vec::new(),
             hits: Vec::new(),
-            legacy_ppu_digest: 7,
         }
     }
 
     fn same(a: &FrameRecord, b: &FrameRecord) -> bool {
-        (a.index, a.cut, a.pad, a.cpu, a.ppu, a.legacy_ppu_digest)
-            == (b.index, b.cut, b.pad, b.cpu, b.ppu, b.legacy_ppu_digest)
+        (a.index, a.cut, a.pad, a.cpu, a.ppu) == (b.index, b.cut, b.pad, b.cpu, b.ppu)
             && (&a.wram, &a.vram, &a.cgram, &a.oam, &a.sram)
                 == (&b.wram, &b.vram, &b.cgram, &b.oam, &b.sram)
-            && a.picture.is_none()
     }
 
     fn chain(records: &[FrameRecord]) -> Vec<Vec<u8>> {
@@ -299,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    fn a_chain_decodes_to_its_records_without_their_pictures() {
+    fn a_chain_decodes_to_its_records() {
         let records = [record(0, 0), record(1, 9), record(2, 9), record(3, 0xA0)];
         let encoded = chain(&records);
         let mut memories = Memories::default();

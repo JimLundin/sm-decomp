@@ -8,11 +8,6 @@ pub mod inputs;
 pub mod lean;
 pub mod lsnes;
 
-/// The picture's width in dots.
-pub const WIDTH: usize = 256;
-/// The most lines a picture holds (an overscan frame).
-pub const MAX_LINES: usize = 239;
-
 /// A controller word in JOY1 order: B is bit 15, R is bit 4.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Pad(pub u16);
@@ -126,16 +121,6 @@ pub struct PpuRegisters {
     pub dma: [[u8; 11]; 8],
 }
 
-/// One write to a PPU register $2100-$213F.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct RegisterWrite {
-    pub beam: Beam,
-    /// The B-bus address: $21xx.
-    pub register: u8,
-    pub value: u8,
-    pub source: WriteSource,
-}
-
 /// The CPU reaching a watched address.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Hit {
@@ -145,84 +130,18 @@ pub struct Hit {
     pub peek: [u8; 4],
 }
 
-/// Who wrote a register.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum WriteSource {
-    /// The main thread.
-    Main,
-    /// The NMI handler.
-    Nmi,
-    /// An IRQ handler.
-    Irq,
-    /// General-purpose DMA.
-    Dma,
-    /// HDMA.
-    Hdma,
-}
-
-/// One access to the APU ports: $2140-$2143 from the CPU or DMA, or
-/// $F4-$F7 from the SPC700.
+/// One CPU access to the APU ports $2140-$2143.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ApuAccess {
     pub kind: ApuAccessKind,
     pub port: u8,
     pub value: u8,
-    /// The SPC700 cycle counter when it landed, the APU caught up first:
-    /// for measuring the sound driver's latency, not for comparison.
-    pub apu_cycle: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ApuAccessKind {
     CpuWrite,
     CpuRead,
-    DmaWrite,
-    DmaRead,
-    /// The SPC700 writing a port the CPU reads.
-    SpcWrite,
-}
-
-/// The picture scanned out in a record's interval, in the PPU's domain:
-/// 15-bit BGR after colour math, before the master brightness.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Picture {
-    /// 224, or 239 on an overscan frame.
-    pub lines: usize,
-    /// `MAX_LINES` rows of `WIDTH` BGR555 dots; rows past `lines` are unused.
-    pub dots: Box<[u16]>,
-    /// Each line's master brightness (INIDISP bits 0-3).
-    pub brightness: [u8; MAX_LINES],
-    /// Each line's forced blank (INIDISP bit 7).
-    pub forced_blank: [bool; MAX_LINES],
-}
-
-impl Default for Picture {
-    fn default() -> Self {
-        Self {
-            lines: 224,
-            dots: vec![0; MAX_LINES * WIDTH].into_boxed_slice(),
-            brightness: [0; MAX_LINES],
-            forced_blank: [false; MAX_LINES],
-        }
-    }
-}
-
-/// The APU side at the cut (tier b).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SpcState {
-    pub a: u8,
-    pub x: u8,
-    pub y: u8,
-    pub sp: u8,
-    pub pc: u16,
-    pub psw: u8,
-    pub stopped: bool,
-    /// $2140-$2143 as the SPC700 reads them.
-    pub cpu_to_apu: [u8; 4],
-    /// $2140-$2143 as the CPU reads them.
-    pub apu_to_cpu: [u8; 4],
-    pub ram: Box<[u8]>,
-    pub dsp: [u8; 0x80],
 }
 
 /// One video frame of the machine: the closed interval (cut k-1, cut k].
@@ -252,21 +171,10 @@ pub struct FrameRecord {
     pub oam: Box<[u8]>,
     pub sram: Box<[u8]>,
     pub ppu: PpuRegisters,
-    /// The APU port accesses of the interval, in order (tier).
+    /// The CPU's APU port accesses of the interval, in order.
     pub apu_log: Vec<ApuAccess>,
-    /// The picture scanned out in the interval, which lsnes never fills.
-    pub picture: Option<Picture>,
-    /// The APU at the cut (tier).
-    pub spc: Option<SpcState>,
-    /// Instructions executed per program bank in the interval (tier).
-    pub bank_instructions: Option<Box<[u32]>>,
-    /// The B-bus PPU register writes of the interval, in order (tier).
-    pub writes: Vec<RegisterWrite>,
     /// Each time the CPU reached a watched address in the interval.
     pub hits: Vec<Hit>,
-    /// Backend detail kept only to compare with the existing lock's `ppu`
-    /// stream, which hashed the old PPU's struct fields.
-    pub legacy_ppu_digest: u64,
 }
 
 impl FrameRecord {

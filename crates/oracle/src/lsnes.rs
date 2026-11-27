@@ -37,6 +37,7 @@
 //! state was saved inside).
 
 use crate::lock::Sha256;
+use crate::record::lsnes::executable;
 use crate::record::{Beam, Cut, FrameRecord, Hit, Pad};
 use crate::{OracleError, OracleId, Start, Streams};
 use std::io::{BufRead, BufReader, Write};
@@ -66,9 +67,13 @@ const STEP_TIMEOUT: Duration = Duration::from_secs(30);
 /// How long lsnes may take to quit once asked.
 const QUIT_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// The `SM_LSNES` executable, or `lsnes` on PATH.
-fn executable() -> PathBuf {
-    std::env::var_os("SM_LSNES").map_or_else(|| PathBuf::from("lsnes"), PathBuf::from)
+/// The SHA-256 of the lsnes executable the oracle runs, which the record cache pins.
+///
+/// # Errors
+///
+/// The file system's error reading the executable.
+pub fn executable_sha256() -> std::io::Result<Sha256> {
+    std::fs::read(executable()).map(|bytes| Sha256::of(&bytes))
 }
 
 /// Why an lsnes process stopped serving.

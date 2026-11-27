@@ -72,11 +72,11 @@ def digest(data):
 
 def lean_record():
     # One whole VblankWithoutNmi record, with zeroed registers and no memories or events.
-    core = struct.pack("<4sBQIHBI??", b"SMFR", 1, 0, 0, 0, 1, 0, False, False)
+    core = struct.pack("<4sBQIHBI??", b"SMFR", 2, 0, 0, 0, 1, 0, False, False)
     cpu = bytes(16)
     memories = bytes(5 * 4)
     ppu = bytes(153)
-    events = bytes(4 + 3 + 4 + 4 + 8)
+    events = bytes(4 + 4)
     frame = core + cpu + memories + ppu + events
     return struct.pack("<4sBBI", b"SMFL", 1, 0, len(frame)) + frame + memories
 
@@ -105,12 +105,16 @@ class RecordCachesTest(unittest.TestCase):
         self.stub.chmod(0o755)
         self.lock = self.root / "lock.toml"
         self.pads = b"synthetic pad"
+        self.lsnes = self.root / "lsnes"
+        self.lsnes.write_text("#!/bin/sh\n")
+        self.lsnes.chmod(0o755)
+        self.server = digest(b"")
 
     def write_inputs(self, rows):
         self.lock.write_text(
             'format = 2\n'
             'oracle = { emulator = "synthetic", version = "test", '
-            f'server = "{digest(b"")}", fixes = [] }}\n'
+            f'server = "{self.server}", fixes = [] }}\n'
             + "".join(f"""
 [[row]]
 id = "{row}"
@@ -121,9 +125,10 @@ frames = 1
 """ for row in rows)
         )
         (self.fixtures / "lean.txt").write_text(
-            "# sm-decomp record cache lean 1\nrow fixture\n"
+            "# sm-decomp record cache lean 2\nrow fixture\n"
             f"seed_record {digest(self.state.read_bytes())}\nseed_words -\n"
-            f"pads {digest(self.pads)}\nframes 1\npictures no\n"
+            f"pads {digest(self.pads)}\nframes 1\n"
+            f"lsnes {digest(self.lsnes.read_bytes())}\nserver {self.server}\n"
             f"# frame offset length cut\n0 0 {len(self.records)} V\n"
         )
 
@@ -143,6 +148,7 @@ frames = 1
             text=True,
             env={**os.environ, "ORACLE": str(self.stub), "CALLS": str(self.calls),
                  "WATCH_PCS": watches, "SM_LOCK": str(self.lock),
+                 "SM_LSNES": str(self.lsnes),
                  "FIXTURES": str(self.fixtures), "FINAL_CACHE": str(self.cache),
                  **(env or {})},
             timeout=10,
@@ -201,6 +207,15 @@ frames = 1
         self.assert_recorded("stale")
         self.assert_recorded("stale")
         self.assertEqual(self.calls.read_text().splitlines(), ["stale"] * 5)
+
+    def test_a_cache_from_another_lsnes_or_server_is_regenerated(self):
+        self.add_pad("drift")
+        self.assert_recorded("drift")
+        self.lsnes.write_text("#!/bin/sh\n# another build\n")
+        self.assert_recorded("drift")
+        self.server = digest(b"another server")
+        self.assert_recorded("drift")
+        self.assertEqual(self.calls.read_text().splitlines(), ["drift"] * 3)
 
     def test_unusable_checker_or_lock_preserves_warm_row(self):
         self.add_pad("warm")

@@ -1,11 +1,11 @@
 //! The lockstep cache's reading side (docs/ORACLE.md, the record cache).
 //!
-//! `oracle corpus --cache DIR` writes each row's frame records to `DIR/<row>/`:
-//! `lean.bin`, the records as a chain of memory changes (`oracle_record::lean`), and
-//! `lean.txt` under [`LEAN_HEAD`], the row's lock pins, a `pictures no` line left from when
-//! a row could hold pictures, and one `frame offset length cut` line per frame. A [`Cache`]
-//! opens a row's directory, refuses it unless its pins are the lock row's, and gives its
-//! records in frame order, read from the file a record at a time.
+//! `oracle corpus --cache DIR` writes each row's frame records to `DIR/<row>/`. `lean.bin`
+//! holds the records as a chain of memory changes (`oracle_record::lean`). `lean.txt` starts
+//! with [`LEAN_HEAD`] and holds the row's lock pins, the [`Recorder`] and one
+//! `frame offset length cut` line per frame. A [`Cache`] opens a row's directory, refuses it
+//! unless its pins are the lock row's, and gives its records in frame order, read from the
+//! file a record at a time.
 //!
 //! A row recorded with watched instruction addresses also has `hits.txt` (a `# watched`
 //! line, then `frame pc line dot peek` per hit); [`Cache::record`] puts each frame's hits
@@ -15,16 +15,13 @@
 use crate::lock::{Frame, FrameCount, Row, Sha256};
 use core::fmt;
 use oracle_record::codec::CodecError;
-use oracle_record::lean;
+use oracle_record::lean::{self, LEAN_HEAD};
 use oracle_record::{Beam, Cut, FrameRecord, Hit, NmiKind};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
-
-/// The index's first line: the layout's name and version, as `oracle::cache` writes it.
-pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 1";
 
 /// A row's index and records, under its directory.
 const FILES: (&str, &str) = ("lean.txt", "lean.bin");
@@ -90,6 +87,8 @@ pub enum CacheError {
         /// The error.
         error: std::io::Error,
     },
+    /// The index is an older version of the layout and has to be recorded again.
+    OlderFormat(PathBuf),
     /// The index isn't the layout [`LEAN_HEAD`] names.
     Malformed {
         /// The index file.
@@ -118,6 +117,11 @@ impl fmt::Display for CacheError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io { path, error } => write!(f, "{}: {error}", path.display()),
+            Self::OlderFormat(path) => write!(
+                f,
+                "{}: the cache is in an older format and must be recorded again",
+                path.display()
+            ),
             Self::Malformed { path, line } => write!(f, "{}:{line}: malformed", path.display()),
             Self::WrongRow(id) => write!(f, "the cache is row {id}'s"),
             Self::Stale(pin) => write!(f, "stale cache: {pin:?} differs from the lock"),
@@ -132,6 +136,15 @@ impl fmt::Display for CacheError {
 }
 
 impl std::error::Error for CacheError {}
+
+/// The oracle build a row's cache was recorded by.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Recorder {
+    /// SHA-256 of the lsnes executable.
+    pub lsnes: Sha256,
+    /// SHA-256 of the server script it ran.
+    pub server: Sha256,
+}
 
 /// One index line: where a frame's record lies and how its interval ended.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -149,6 +162,7 @@ pub struct Entry {
 /// One row's cache, opened and checked.
 #[derive(Debug)]
 pub struct Cache {
+    recorder: Recorder,
     entries: Vec<Entry>,
     /// The records' file and what reading it has kept, its path for errors, and its length.
     records: Mutex<Records>,
@@ -214,6 +228,7 @@ struct Index {
     seed_words: Option<Sha256>,
     pads: Sha256,
     frames: FrameCount,
+    recorder: Recorder,
     entries: Vec<Entry>,
 }
 
@@ -229,9 +244,14 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
             line: number.saturating_add(1),
         };
         match key {
-            "" => (line == LEAN_HEAD)
-                .then(|| line.to_owned())
-                .ok_or_else(malformed),
+            "" if line == LEAN_HEAD => Ok(line.to_owned()),
+            "" if LEAN_HEAD
+                .rsplit_once(' ')
+                .is_some_and(|(layout, _)| line.starts_with(layout)) =>
+            {
+                Err(CacheError::OlderFormat(path.to_owned()))
+            }
+            "" => Err(malformed()),
             key => line
                 .strip_prefix(key)
                 .and_then(|rest| rest.strip_prefix(' '))
@@ -255,13 +275,14 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
     let seed_words = sha(&next("seed_words")?, 4)?;
     let pads = sha(&next("pads")?, 5)?.ok_or_else(|| malformed(5))?;
     let frames = FrameCount(next("frames")?.parse().map_err(|_| malformed(6))?);
-    if next("pictures")? != "no" {
-        return Err(malformed(7));
-    }
+    let recorder = Recorder {
+        lsnes: sha(&next("lsnes")?, 7)?.ok_or_else(|| malformed(7))?,
+        server: sha(&next("server")?, 8)?.ok_or_else(|| malformed(8))?,
+    };
     let entries = text
         .lines()
         .enumerate()
-        .skip(7)
+        .skip(8)
         .filter(|(_, line)| !line.starts_with('#'))
         .map(|(number, line)| {
             let bad = || malformed(number.saturating_add(1));
@@ -285,6 +306,7 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
         seed_words,
         pads,
         frames,
+        recorder,
         entries,
     })
 }
@@ -348,6 +370,7 @@ impl Cache {
             }
         };
         Ok(Self {
+            recorder: index.recorder,
             entries: index.entries,
             records: Mutex::new(Records {
                 file: records,
@@ -365,6 +388,12 @@ impl Cache {
     #[must_use]
     pub fn entries(&self) -> &[Entry] {
         &self.entries
+    }
+
+    /// The oracle build that recorded the row.
+    #[must_use]
+    pub const fn recorder(&self) -> Recorder {
+        self.recorder
     }
 
     /// The instruction addresses the row was recorded watching (none without `hits.txt`).
@@ -489,6 +518,8 @@ mod tests {
     use std::fmt::Write as _;
 
     const SHA: &str = "36f9967524b6959d84129fe8fc770ce83127c08b51bfaf8dd066208e9383a172";
+    const LSNES: &str = "1111111111111111111111111111111111111111111111111111111111111111";
+    const SERVER: &str = "2222222222222222222222222222222222222222222222222222222222222222";
 
     /// Frame `index` of an invented row, whose WRAM byte $123 and VRAM word $40 count frames
     /// and WRAM byte $200 counts hundreds of them, so a frame's changes alone don't make it.
@@ -521,12 +552,7 @@ mod tests {
             sram: vec![2; 0x20].into_boxed_slice(),
             ppu: PpuRegisters::default(),
             apu_log: Vec::new(),
-            picture: None,
-            spc: None,
-            bank_instructions: None,
-            writes: Vec::new(),
             hits: Vec::new(),
-            legacy_ppu_digest: 0,
         }
     }
 
@@ -548,7 +574,7 @@ mod tests {
         let mut records = Vec::new();
         let mut memories = lean::Memories::default();
         let mut index = format!(
-            "{LEAN_HEAD}\nrow {}\nseed_record -\nseed_words -\npads {SHA}\nframes {frames}\npictures no\n# frame offset length cut\n",
+            "{LEAN_HEAD}\nrow {}\nseed_record -\nseed_words -\npads {SHA}\nframes {frames}\nlsnes {LSNES}\nserver {SERVER}\n# frame offset length cut\n",
             row.id.0
         );
         for number in 0..frames {
@@ -602,7 +628,7 @@ mod tests {
 
     fn index(frames: &str) -> String {
         format!(
-            "{LEAN_HEAD}\nrow area-brinstar\nseed_record {SHA}\nseed_words -\npads {SHA}\nframes {frames}\npictures no\n# frame offset length cut\n0 0 10 R\n1 10 12 O\n"
+            "{LEAN_HEAD}\nrow area-brinstar\nseed_record {SHA}\nseed_words -\npads {SHA}\nframes {frames}\nlsnes {LSNES}\nserver {SERVER}\n# frame offset length cut\n0 0 10 R\n1 10 12 O\n"
         )
     }
 
@@ -616,6 +642,13 @@ mod tests {
         assert_eq!(parsed.seed_record, Sha256::try_from(SHA).ok());
         assert_eq!(parsed.seed_words, None);
         assert_eq!(parsed.frames, FrameCount(2));
+        assert_eq!(
+            parsed.recorder,
+            Recorder {
+                lsnes: Sha256([0x11; 32]),
+                server: Sha256([0x22; 32]),
+            }
+        );
         assert_eq!(
             parsed.entries.last(),
             Some(&Entry {
@@ -631,6 +664,16 @@ mod tests {
     fn a_malformed_index_names_its_line() {
         let parsed = parse_index(Path::new("lean.txt"), &index("two"));
         assert!(matches!(parsed, Err(CacheError::Malformed { line: 6, .. })));
+        let unpinned = index("2").replacen(&format!("server {SERVER}"), "server -", 1);
+        let parsed = parse_index(Path::new("lean.txt"), &unpinned);
+        assert!(matches!(parsed, Err(CacheError::Malformed { line: 8, .. })));
+    }
+
+    #[test]
+    fn an_index_of_an_older_layout_version_is_refused_as_older() {
+        let older = index("2").replacen(LEAN_HEAD, "# sm-decomp record cache lean 1", 1);
+        let parsed = parse_index(Path::new("lean.txt"), &older);
+        assert!(matches!(parsed, Err(CacheError::OlderFormat(_))));
     }
 
     #[test]

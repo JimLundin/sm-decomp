@@ -46,10 +46,6 @@ One record per video frame, lag or not. Record k covers (cut k-1, cut k] and the
 - **APU port log:** the CPU's reads and writes of `$2140-$2143`, in order.
 - **Watched-PC hits:** each with its beam position and four peeked WRAM bytes. Not digested.
 
-`FrameRecord` still carries `picture`, `spc`, `bank_instructions`, `writes` and
-`legacy_ppu_digest`, which lsnes never fills. They are part of the record codec, so they stay
-until the cache format next changes.
-
 Given the ROM, the start and the pads, records are bit-identical on every host.
 
 ### lsnes streams
@@ -238,6 +234,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
+| `tools cache-check LOCK [BUNDLE CACHE ROW [[--carry-watches] WATCH_PCS]]` | checks that a cached row has the lock's pins, was recorded by the lsnes the oracle would run and the lock's server, and watched the addresses |
 | `ROWS="..." tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
 
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
@@ -250,9 +247,13 @@ the CPU's APU port accesses; lsnes has no PPU write log and no SPC700 side to ti
 The **record cache** (`--cache OUT`) holds one directory per row. `OUT/<row>/lean.bin` holds
 each record with its five memories as the bytes that changed since the frame before, whole every
 256th frame, about 2 KB a frame. `oracle_record::lean` holds that codec. `lean.txt` holds the
-lock pins, a `pictures no` line left from when a row could hold pictures, and one
-`frame offset length cut` line per frame. `verify::cache` refuses a cache whose pins differ from
-the lock row. A row recorded with `--watch-pcs` also has `hits.txt`: `# watched` and the
+lock pins, the SHA-256 of the lsnes executable and of the server script that recorded the row,
+and one `frame offset length cut` line per frame. `verify::cache` refuses a cache whose pins
+differ from the lock row, and one whose index is in an older format, which has to be recorded
+again. `tools cache-check` also refuses one recorded by an lsnes other than the one the oracle
+would run, or by a server other than the one the lock pins, so a drifted oracle records the row
+again. A row
+recorded with `--watch-pcs` also has `hits.txt`: `# watched` and the
 addresses, then `frame pc line dot peek` per hit. The hits stay out of `lean.bin`, so a row
 recorded again with watches has the same records byte for byte, and
 `verify::cache::Cache::record` puts each frame's hits back.
@@ -261,7 +262,8 @@ recorded again with watches has the same records byte for byte, and
 the row's frame pads from its native seed and writes `lean.txt` last.
 `tools/oracle/record_caches.sh ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list of
 rows with eight lsnes processes by default. It requires Bash 5.1, `flock` and Python. The wrapper
-builds the default `tools` cache reader and skips a row when the reader accepts the existing cache. Set `WATCH_PCS`
+builds the default `tools` cache reader and skips a row when `tools cache-check` accepts the
+existing cache for the lsnes the oracle would run, found as section 2 says. Set `WATCH_PCS`
 to record the `hits.txt` read by independent causal input providers. `ORACLE` names the oracle
 command, `SM_TOOLS` overrides the cache reader and `SM_LOCK` overrides the lock.
 

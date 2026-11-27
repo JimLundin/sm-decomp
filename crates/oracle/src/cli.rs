@@ -607,6 +607,10 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
             fail(format!("{id}: no such row in the lock"));
         }
     }
+    let lsnes = cache.as_ref().map(|_| {
+        crate::lsnes::executable_sha256()
+            .unwrap_or_else(|error| fail(format!("the lsnes executable: {error}")))
+    });
     let observing = crate::corpus::Observe {
         streams: cache.is_some().then_some(Streams::PpuAndApuLog),
         watch: &watched_pcs,
@@ -669,9 +673,9 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
                 continue;
             }
         };
-        if let Some(writer) = cached {
+        if let (Some(writer), Some(lsnes)) = (cached, lsnes) {
             let bytes = writer
-                .finish(id, &row.into())
+                .finish(id, &crate::cache::Pins::of(row, lsnes))
                 .unwrap_or_else(|error| fail(format!("{id}: cache: {error}")));
             println!("  {id} cache: {} frames, {bytes} bytes", run.frames);
         }

@@ -433,7 +433,7 @@ doesn't fall, root integration and review, not implementation, set the pace.
 6. **Slowdown and loading time.** Frame counts depend on the original's CPU time (door loads,
    explosions, many enemies). A cost is a property of the original's code, which the clean
    room can't see. *Proposal:* T1 as an observer-fitted table of named costs per event,
-   measured from the records' `bank_instructions` and overruns, verified on the `timing`
+   measured from the records' overruns, verified on the `timing`
    stream; lag stays a borrowed input until it holds (decision 35).
 7. **Within-frame feedback forces merges.** A contact this frame changing her motion this
    frame, by MODEL §5's rule, merges domains and could grow a "combat" mega-domain. *Proposal:*
