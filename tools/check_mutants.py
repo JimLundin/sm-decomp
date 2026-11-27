@@ -235,6 +235,8 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> list[str]:
     for fault in faults:
         if fault.rule is not None and fault.rule not in rules:
             raise ValueError(f"fault {fault.name} names unknown catalogue rule {fault.rule}")
+        if fault.rule is not None and fault.case in cases and fault.rule not in cases[fault.case]["rules"]:
+            raise ValueError(f"case {fault.case} does not witness {fault.rule} for fault {fault.name}")
     return rules
 
 def catalogue_rules(root: Path) -> list[str]:
