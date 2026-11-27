@@ -177,8 +177,7 @@ Each step names its owner, what it waits for, and its done-condition.
     outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
     or into the next round's queue (model shape, spec gaps). Independent review excludes size
-    measurements. After the reports, the root completes the coordinator size assessment and
-    [Code Health review](#coordinator-code-health-review) below.
+    measurements. After the reports, the root completes the [coordinator size assessment](#coordinator-size-assessment).
     Size does not change the adversary's verdict; every non-size gate remains mandatory.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together. On the round's branch the root adds one to the model's `rounds`
@@ -214,36 +213,6 @@ its cost and risk. Exceeding the old-code guideline alone fails no gate and star
 Proceeding above it needs an explicit reason in the coordination log and landing report.
 A cut uses concrete review findings under "The loop"; its brief carries those shapes, with all
 size material withheld. It aims to improve the model, rather than shave a number.
-
-## Coordinator Code Health review
-
-After independent source review, the root runs the installed CodeScene CLI on the supported
-source files changed by the round or engineering task, including new modules and tests. Compare
-the reviewed commit with its fixed base; for moves and extractions, account for both the old
-file and every replacement so a split cannot hide a finding. Review clean models, adapters,
-engine code and development tools separately. Vendor code and deliberate checker fixtures are
-reported as exclusions, not improvement targets.
-
-Use `cs version` to record the analyzer version and `cs review --help` for its supported input
-forms. `cs review COMMIT:./path/to/file.rs` measures a committed file; `cs review --file-list
-PATHS --output REPORT` writes a human-readable report for a newline-separated path list.
-Keep reports outside the repository and confined exports. Machine-readable null scores mean
-"no scorable code" and are excluded from averages.
-
-The step is complete when the coordination log and landing/session review record:
-
-- the base and reviewed hashes, CLI version, command, exit status and file coverage, with
-  unsupported, unscorable, deleted and excluded files identified;
-- each changed file's before/after score and significant findings, with new/deleted files
-  shown explicitly; any aggregate names its population and weighting;
-- a disposition for each material finding: addressed and rechecked, queued as a concrete
-  shape outcome, or retained with the behaviour or contract that justifies it.
-
-Code Health is maintainability feedback, not proof of exactness. Decisions retain the source
-review's judgement and the existing mandatory gates. If the CLI is unavailable, authentication
-is missing or analysis fails, record the missing measurement and its cause explicitly; a
-missing result is never a clean result. The coordinator keeps metric reports and targets out
-of implementer and independent-reviewer material, and relays only concrete shape findings.
 
 ## What can run at once
 
@@ -412,9 +381,8 @@ review included. Each session has three parts:
 3. **Review.** New scope stops in the last part of the session. The root completes the work
    already in flight under the rule below and writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
-   should take up, including the [Code Health review](#coordinator-code-health-review) of the
-   session's changes, and the behaviour share of its commit lines (MODEL §1 decision 36): the
-   lines added and removed under `crates/clean/` and the played loop
+   should take up. Report the behaviour share of the session's commit lines (MODEL §1 decision 36).
+   Count the lines added and removed under `crates/clean/` and the played loop
    (`crates/game/src/production/played*`), against all other lines under `crates/` and `tools/`,
    from `git diff --numstat` over the session's range. Update each selected work issue with its actual outcome, evidence and
    remaining dependency; the session review links those issues.

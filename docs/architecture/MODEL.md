@@ -223,12 +223,7 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     the engine pins each State's shape and a test holds the pin to the shape traced from the
     type: a State that changes shape fails it until the pin moves. This is how decision 21 is
     done.
-30. **CodeScene measures code health during review** (Jim, 2026-11-14). The root measures
-    the reviewed code after independent source review and records the findings and their
-    disposition alongside the existing evidence. Code Health supplements behavioural proof
-    and the size assessment; it sets no score threshold. Implementers and independent
-    reviewers receive concrete shape findings, with metric reports kept by the coordinator.
-    The procedure is in [PROCESS](../cleanroom/PROCESS.md#coordinator-code-health-review).
+30. *Retired.*
 31. **Track bounded work beneath the milestone** (Jim, 2026-11-16). The milestone issue
     holds the goal and its measured progress. Work proceeds through smaller issues, each with
     one verifiable outcome, an owner, dependencies, current state and completion evidence.
