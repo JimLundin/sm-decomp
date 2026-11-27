@@ -2860,15 +2860,8 @@ fn health_tail_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
 
     case.kind == CaseKind::Scoped
-        && case.row == super::health_tail::ROW
-        && matches!(
-            case.start,
-            Start::NativeRecord {
-                frame: super::health_tail::ORIGIN,
-                ..
-            }
-        )
-        && case.end.cut_inclusive == super::health_tail::CUTS[1]
+        && matches!(case.start, Start::NativeRecord { frame, .. } if frame < case.end.cut_inclusive)
+        && case.health_packet().is_ok()
         && case.inputs == InputProvider::NativeHealthTailInputs
         && case.expectations.provider == ExpectedProvider::NativeHealthTailObservations
         && case.content == ContentProvider::HudReference

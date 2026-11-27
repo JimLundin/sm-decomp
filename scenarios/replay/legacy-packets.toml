@@ -50,3 +50,12 @@ simultaneous = [
     { cut = 157, offers = [["Action", "Beam"], ["Contact", "Door"]] },
     { cut = 183, offers = [["Action", "SamusSilence"], ["Ambient", "BackgroundSilence"]] },
 ]
+
+[[native_packet]]
+kind = "health"
+contexts = { path = "ceres-health-tail-v1/borrowed.toml", sha256 = "8ca15c6669c31e4605046a10fefd772fed5a2a3f4f842aeef2a7655c791e49cf" }
+offers = { path = "ceres-tail-offer-v1/actor-offer.toml", sha256 = "23b8deabfaa84f7129bf4f46b36f1027c53a3e067b9d2115a12b8e476b7e568c" }
+hud_operands = { path = "ceres-health-hud-operands-v1/hud-operands.toml", sha256 = "a081de5b1d80cf60a7f0a1a475dbcf54efb2d8372fc15ae3ee6db0dfc51f2fec" }
+expected = { path = "ceres-health-tail-v1/expected.toml", sha256 = "813b6b8d06f6826b78925ae426278f288d7329f9167c8492d018667ebb9b6884" }
+offer_cuts = [993]
+impact_cuts = [993]

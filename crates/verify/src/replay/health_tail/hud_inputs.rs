@@ -12,18 +12,8 @@ use interface_hud::{
 use serde::Deserialize;
 use types::Pair;
 
-use super::{CUTS, ORIGIN, ROW, Tape, read};
-use crate::replay::{data_failure, hud, result::Outcome};
-
-const PIN: &str = "a081de5b1d80cf60a7f0a1a475dbcf54efb2d8372fc15ae3ee6db0dfc51f2fec";
-
-#[derive(Deserialize)]
-struct Source {
-    initial_cut: u64,
-    initial_wram_sha256: String,
-    #[serde(flatten)]
-    tape: Tape<Opportunity>,
-}
+use super::{Window, WramTape};
+use crate::replay::{data_failure, hud, index::FixtureFile, result::Outcome};
 
 #[derive(Deserialize)]
 struct Opportunity {
@@ -107,51 +97,29 @@ enum Absent {
     None,
 }
 
-/// Each frame's HUD inputs. Her stock as the first frame begins is the origin record's;
-/// as the second begins, the stock the first frame's status bar drew.
 pub(super) fn load(
+    file: &FixtureFile,
     native: &Path,
+    window: &Window<'_>,
     origin_pin: &str,
     origin_wram: &[u8],
-) -> Result<[HudFrame; 2], Outcome> {
-    let source: Source = read(
-        native,
-        "ceres-health-hud-operands-v1/hud-operands.toml",
-        PIN,
-    )?;
-    if source.initial_cut != ORIGIN
-        || source.initial_wram_sha256 != origin_pin
-        || source.tape.row != ROW
-        || source
-            .tape
-            .opportunity
-            .each_ref()
-            .map(|entry| entry.end_cut)
-            != CUTS
-    {
-        return Err(data_failure(None, "Health tail HUD origin and schedule"));
-    }
-    // The origin is main gameplay and the HUD frames are its next two, so the scene runs the
-    // escape countdown in each, nothing starts it, and the count of finished frames goes on
-    // from the origin's by one.
-    let countdown = CountdownInputs {
+) -> Result<Vec<HudFrame>, Outcome> {
+    let source: WramTape<Opportunity> = file.read(native)?;
+    let opportunities = source.frames(window, origin_pin, |entry| entry.end_cut)?;
+    let mut countdown = CountdownInputs {
         runs: hud::countdown_runs(origin_wram, origin_wram)?,
         start: None,
         finished: hud::finished_frames(origin_wram)?,
     };
-    let [first, next] = source.tape.opportunity;
-    let first = inputs(first, hud::stock_at_start(origin_wram)?.counts, countdown)?;
-    let drawn = EnumMap::from_fn(|ammo| first.ammunition.of(ammo).count);
-    let finished = interface_hud::FinishedFrames(countdown.finished.0.wrapping_add(1));
-    let next = inputs(
-        next,
-        drawn,
-        CountdownInputs {
-            finished,
-            ..countdown
-        },
-    )?;
-    Ok([first, next])
+    let mut counts = hud::stock_at_start(origin_wram)?.counts;
+    let mut frames = Vec::with_capacity(opportunities.len());
+    for observed in opportunities {
+        let frame = inputs(observed, counts, countdown)?;
+        counts = EnumMap::from_fn(|ammo| frame.ammunition.of(ammo).count);
+        countdown.finished.0 = countdown.finished.0.wrapping_add(1);
+        frames.push(frame);
+    }
+    Ok(frames)
 }
 
 fn inputs(
