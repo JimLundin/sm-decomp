@@ -2,13 +2,12 @@
 
 use super::compare::Observation;
 use super::index::Case;
+use super::played::{explosion, open_rows, platform::finished, rows::Rows};
 use super::readers::{
-    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
+    ActualReader, AdmittedCase, CutTape, ExpectedCut, ExpectedReader, InputReader,
 };
 use super::result::Outcome;
 use super::{Sources, data_failure, production_failure};
-use crate::cache::Cache;
-use crate::lock::{Lock, RowId};
 use data::assets::landing_site::Graphics;
 use data::map::MapCells;
 use data::rom::Rom;
@@ -27,13 +26,9 @@ use game::state::video::{
     NmiBatch, Oam, OamEntry, ObjectSelect, Registers, Scroll, SpriteCount, TileBases, TilemapBase,
     Video, VideoMemory, VramWord, WindowSettings, Windows,
 };
-use oracle_record::{Cut, FrameRecord, NmiKind, PpuRegisters};
+use oracle_record::{Cut, FrameRecord, PpuRegisters};
 use types::{RandomNumber, RandomSequence};
 
-pub(super) const ROW: &str = "chain-any-0011-DF45";
-pub(super) const DEPARTURE: u64 = 2123;
-pub(super) const RECEIVING: u64 = 2124;
-pub(super) const RESUMED: u64 = 2125;
 pub(super) fn placement(record: &FrameRecord) -> Result<Placement, Outcome> {
     let [room, door, camera_x, camera_y, samus_x, samus_y] = words(record, ROOM)?;
     let bad = || data_failure(Some(record.index), "departure room placement");
@@ -66,8 +61,6 @@ pub(super) fn placement_words(place: Placement) -> Result<[u16; 6], Outcome> {
     Ok([room, door, camera_x, camera_y, samus_x, samus_y])
 }
 
-const SHAFT_SEED: u64 = 0;
-const FLIGHT_SEED: u64 = 1004;
 const SHADOW_WORDS: usize = 1024;
 const AFFINE: [usize; 8] = [
     0x198d, 0x198f, 0x00b1, 0x00b3, 0x0078, 0x007a, 0x007c, 0x007e,
@@ -76,36 +69,56 @@ const ROOM: [usize; 6] = [0x079b, 0x078d, 0x0911, 0x0915, 0x0af6, 0x0afa];
 const COLOUR_QUEUE: [usize; 3] = [0x74, 0x75, 0x76];
 const MIRRORS: [usize; 10] = [0x51, 0x52, 0x55, 0x57, 0x58, 0x59, 0x5a, 0x5c, 0x5d, 0x5e];
 
-pub(super) struct Inputs {
-    pub receiving: Work,
-    pub resumed: Work,
-}
-
-fn cache(lock: &Lock, root: &std::path::Path, row: &str) -> Result<Cache, Outcome> {
-    let row = lock
-        .row(&RowId(row.to_owned()))
-        .ok_or_else(|| data_failure(None, "landing record row"))?;
-    Cache::open(root, row).map_err(|_| data_failure(None, "landing pinned records"))
-}
-
-pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .ok()
-        .and_then(|text| Lock::parse(&text).ok())
-        .ok_or_else(|| data_failure(None, "landing record lock"))?;
-    let flight = cache(&lock, &sources.cache, ROW)?;
-    let early = record(&flight, SHAFT_SEED)?;
-    let departure = carry_flight(sources, &flight, &early)?;
-    let arrival = record(&cache(&lock, &sources.cache, "any-zebes-arrival")?, 0)?;
+pub(super) fn graphics(sources: &Sources) -> Result<Graphics, Outcome> {
     let rom = std::fs::read(&sources.rom)
         .ok()
         .and_then(|bytes| Rom::new(bytes).ok())
         .ok_or_else(|| data_failure(None, "landing player ROM"))?;
-    let graphics = import::landing_site::import(rom.lorom())
-        .map_err(|_| data_failure(None, "landing graphics import"))?;
-    let accepted = timing(&arrival, &graphics)?;
-    let continued = accepted.saturating_add(2);
-    let expected = observations(&departure, &arrival, &graphics, accepted, continued)?;
+    import::landing_site::import(rom.lorom())
+        .map_err(|_| data_failure(None, "landing graphics import"))
+}
+
+pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    let window = case.cache_window()?;
+    let first = *window.cuts.start();
+    let lock = super::read_lock(sources)?;
+    let mut rows = open_rows(sources, &lock, window.row)?;
+    let (departure, last) = carry_flight(sources, &mut rows, window.origin)?;
+    let graphics = graphics(sources)?;
+    let (arrival, accepted) = receiving(&mut rows, first, &last, &graphics)?;
+
+    // Only the first interval is native. Each further cut accepts a constructed
+    // word of ROM sprite data, keeping the newest byte pending in the DMA.
+    let rom_end = graphics
+        .sprites
+        .len()
+        .min(usize::from(graphics.sprite_length));
+    let remaining = rom_end.saturating_sub(usize::from(accepted));
+    let words =
+        u64::try_from(remaining / 2).map_err(|_| data_failure(Some(first), "landing ROM span"))?;
+    let last_rom_cut = first.saturating_add(words);
+    if *window.cuts.end() > last_rom_cut {
+        return Err(data_failure(
+            Some(last_rom_cut.saturating_add(1)),
+            "landing constructed transfer outside ROM",
+        ));
+    }
+
+    let mut inputs = vec![Work::Open {
+        accepted,
+        selected: true,
+    }];
+    let mut progress = accepted;
+    for cut in window.cuts.clone().skip(1) {
+        progress = progress
+            .checked_add(2)
+            .ok_or_else(|| data_failure(Some(cut), "landing word progress"))?;
+        inputs.push(Work::Transfer {
+            accepted: progress,
+            selected: false,
+        });
+    }
+    let observations = observations(&departure, &arrival, &graphics, window.cuts.clone())?;
     let content = ProductionContent::LandingSite(Box::new(graphics));
     let rules = ProductionRules::LandingSite;
     let production = Production::admit(
@@ -113,51 +126,68 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         content.clone(),
         rules.clone(),
     )
-    .map_err(|_| data_failure(Some(DEPARTURE), "landing production admission"))?;
-    let inputs = Inputs {
-        receiving: Work::Open {
-            accepted,
-            selected: true,
-        },
-        resumed: Work::Transfer {
-            accepted: continued,
-            selected: false,
-        },
-    };
+    .map_err(|_| data_failure(Some(window.origin), "landing production admission"))?;
     Ok(AdmittedCase {
         production,
         content,
         rules,
-        inputs: InputReader::LandingSite(inputs),
-        expected: ExpectedReader::LandingSite(Box::new(expected)),
+        inputs: InputReader::LandingSite(CutTape {
+            first,
+            values: inputs,
+        }),
+        expected: ExpectedReader::RecordedCuts(CutTape {
+            first,
+            values: observations,
+        }),
         actual: ActualReader::LandingSite,
-        schedule: (RECEIVING..=case.end.cut_inclusive).collect(),
+        schedule: window.cuts.collect(),
     })
 }
 
-const fn finished(record: &FrameRecord) -> bool {
-    matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
+// Find the shaft's saved map before the blank station-to-flight handoff. Neither
+// the outgoing flight nor the receiving loader supplies that earlier owner's map.
+fn flight_origin(
+    rows: &mut Rows<'_>,
+    departure: u64,
+) -> Result<(u64, FrameRecord, ExploredMap), Outcome> {
+    let mut previous = rows.record(0)?;
+    let mut crateria = None;
+    for cut in 1..=departure {
+        if super::blackout::elevator_room(&previous)? && explosion::shaft_starts(&previous)? {
+            crateria = Some(map(&previous, 0xcd52, 0xd908)?);
+        }
+        let current = rows.successor(cut, &previous)?;
+        if super::zebes::starts(&current)? && !super::zebes::starts(&previous)? {
+            let crateria =
+                crateria.ok_or_else(|| data_failure(Some(cut), "landing prior shaft map"))?;
+            return Ok((cut, current, crateria));
+        }
+        previous = current;
+    }
+    Err(data_failure(
+        Some(departure),
+        "landing station-to-flight handoff",
+    ))
 }
 
-fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Result<Run, Outcome> {
-    let mut last = record(flight, FLIGHT_SEED)?;
+fn carry_flight(
+    sources: &Sources,
+    rows: &mut Rows<'_>,
+    departure: u64,
+) -> Result<(Run, FrameRecord), Outcome> {
+    let (seed, mut last, crateria) = flight_origin(rows, departure)?;
     let mut vram = last.vram.to_vec();
     let mut random = RandomSequence {
         number: RandomNumber(word(&last, 0x05e5)?),
     };
     let (mut production, _, _) = super::zebes::admit_seed(&sources.rom, &last)?;
-    for cut in FLIGHT_SEED.saturating_add(1)..=DEPARTURE {
-        let current = record(flight, cut)?;
+    for cut in seed.saturating_add(1)..=departure {
+        let current = rows.successor(cut, &last)?;
         if finished(&last) {
             game_random::advance_random(&mut random);
         }
-        let cadence = if finished(&current) {
-            screens_zebes::FrameAdvance::Finished
-        } else {
-            screens_zebes::FrameAdvance::BorrowedLag
-        };
         let ProductionOutputs::Zebes(output) = production
-            .advance(AdvanceInput::Zebes(cadence))
+            .advance(AdvanceInput::Zebes(super::zebes::cadence(&current)))
             .map_err(|fault| production_failure(cut, fault))?
         else {
             return Err(data_failure(Some(cut), "landing preceding flight scope"));
@@ -175,23 +205,23 @@ fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Resul
     }
     if vram.as_slice() != last.vram.as_ref() {
         return Err(Outcome::Difference {
-            cut: DEPARTURE,
+            cut: departure,
             field: "landing.carried.vram".to_owned(),
         });
     }
     let OwnedState::Zebes(state) = production.state() else {
         return Err(data_failure(
-            Some(DEPARTURE),
+            Some(departure),
             "landing departure production scope",
         ));
     };
     if state.flow != Flow::Loading(LoadDestination::LandingSite) {
-        return Err(data_failure(Some(DEPARTURE), "landing pending departure"));
+        return Err(data_failure(Some(departure), "landing pending departure"));
     }
     let current_area = Area::try_from(byte(&last, 0x079f)?)
-        .map_err(|_| data_failure(Some(DEPARTURE), "landing departure area"))?;
+        .map_err(|_| data_failure(Some(departure), "landing departure area"))?;
     let publication = registers(&last.ppu);
-    Ok(Run {
+    let run = Run {
         flow: state.flow,
         random: random.number.0,
         finished: state.finished,
@@ -203,7 +233,7 @@ fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Resul
             current_area,
             AreaMaps {
                 active: map(&last, 0x07f7, 0x0789)?,
-                crateria: map(early, 0xcd52, 0xd908)?,
+                crateria,
             },
             ShadowTilemaps {
                 bg1: tilemap(&last, 0x4000)?,
@@ -227,7 +257,8 @@ fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Resul
             },
             ..Video::default()
         },
-    })
+    };
+    Ok((run, last))
 }
 
 fn bytes(record: &FrameRecord, address: usize, length: usize) -> Result<&[u8], Outcome> {
@@ -378,50 +409,32 @@ pub(in crate::replay) const fn channel(
     }
 }
 
-fn timing(arrival: &FrameRecord, graphics: &Graphics) -> Result<u16, Outcome> {
-    let dma = channel(
-        *arrival
-            .ppu
-            .dma
-            .get(1)
-            .ok_or_else(|| data_failure(Some(RECEIVING), "landing DMA channel"))?,
-    );
-    let accepted = graphics
-        .sprite_length
-        .checked_sub(dma.count)
-        .ok_or_else(|| data_failure(Some(RECEIVING), "landing DMA count"))?;
-    if !matches!(arrival.cut, Cut::VblankWithoutNmi)
-        || arrival.video_frame != 15_197
-        || arrival.cpu.k != 0x82
-        || arrival.cpu.pc != 0x8327
-        || dma.source_bank != graphics.sprite_source.bank
-        || dma.source
-            != graphics
-                .sprite_source
-                .advanced(accepted.saturating_add(1))
-                .offset
-    {
-        return Err(data_failure(
-            Some(RECEIVING),
-            "landing T1 selected read and NMI-off interval",
-        ));
-    }
-    Ok(accepted)
+pub(super) const fn receiving_phase(record: &FrameRecord) -> bool {
+    matches!(record.cut, Cut::VblankWithoutNmi) && record.cpu.k == 0x82 && record.cpu.pc == 0x8327
 }
 
-pub(super) fn advance(
-    inputs: &Inputs,
-    production: &mut Production,
+pub(super) fn receiving(
+    rows: &mut Rows<'_>,
     cut: u64,
-) -> Result<ProductionOutputs, Outcome> {
-    let work = match cut {
-        RECEIVING => inputs.receiving,
-        RESUMED => inputs.resumed,
-        _ => return Err(data_failure(Some(cut), "landing playback schedule")),
-    };
-    production
-        .advance(AdvanceInput::LandingSite(work))
-        .map_err(|fault| production_failure(cut, fault))
+    previous: &FrameRecord,
+    graphics: &Graphics,
+) -> Result<(FrameRecord, u16), Outcome> {
+    let current = rows.successor(cut, previous)?;
+    if receiving_phase(&current)
+        && let Work::Open {
+            accepted,
+            selected: true,
+        } = explosion::receiving_work(&current, graphics)?
+        && accepted > 0
+        && accepted < graphics.sprite_length
+        && usize::from(accepted) < graphics.sprites.len()
+    {
+        return Ok((current, accepted));
+    }
+    Err(data_failure(
+        Some(cut),
+        "landing selected ROM read at the NMI-off loader interval",
+    ))
 }
 
 fn values(field: &str, bytes: Vec<u8>) -> Observation {
@@ -605,34 +618,59 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
     ])
 }
 
+// The timing input measures DMA work from the remaining byte count. Independently
+// locate the observed pending byte from the selected read's physical source cursor.
 fn observations(
     run: &Run,
     arrival: &FrameRecord,
     graphics: &Graphics,
+    cuts: std::ops::RangeInclusive<u64>,
+) -> Result<Vec<ExpectedCut>, Outcome> {
+    let first = *cuts.start();
+    let source = channel(arrival.ppu.dma[1]).source;
+    let mut accepted = source
+        .wrapping_sub(graphics.sprite_source.offset)
+        .checked_sub(1)
+        .filter(|accepted| *accepted > 0)
+        .ok_or_else(|| data_failure(Some(first), "landing observed sprite cursor"))?;
+    let mut vram = arrival.vram.to_vec();
+    let mut observed = vec![expected(
+        run, arrival, graphics, &vram, accepted, true, first,
+    )?];
+    for cut in cuts.skip(1) {
+        let next = accepted
+            .checked_add(2)
+            .ok_or_else(|| data_failure(Some(cut), "landing constructed word"))?;
+        commit_bytes(&mut vram, graphics, accepted, next, cut)?;
+        observed.push(expected(run, arrival, graphics, &vram, next, false, cut)?);
+        accepted = next;
+    }
+    Ok(observed)
+}
+
+fn commit_bytes(
+    vram: &mut [u16],
+    graphics: &Graphics,
     accepted: u16,
     continued: u16,
-) -> Result<[ExpectedCut; 2], Outcome> {
-    let mut vram = arrival.vram.to_vec();
-    let first = expected(run, arrival, graphics, &vram, accepted, true)?;
+    cut: u64,
+) -> Result<(), Outcome> {
     for offset in accepted.saturating_sub(1)..continued.saturating_sub(1) {
         let value = graphics
             .sprites
             .get(usize::from(offset))
             .copied()
-            .ok_or_else(|| data_failure(Some(RESUMED), "landing constructed source"))?;
+            .ok_or_else(|| data_failure(Some(cut), "landing constructed source"))?;
         let slot = vram
             .get_mut(0x6000_usize.saturating_add(usize::from(offset / 2)))
-            .ok_or_else(|| data_failure(Some(RESUMED), "landing constructed destination"))?;
+            .ok_or_else(|| data_failure(Some(cut), "landing constructed destination"))?;
         let mut pair = slot.to_le_bytes();
         if let Some(lane) = pair.get_mut(usize::from(offset % 2)) {
             *lane = value;
         }
         *slot = u16::from_le_bytes(pair);
     }
-    Ok([
-        first,
-        expected(run, arrival, graphics, &vram, continued, false)?,
-    ])
+    Ok(())
 }
 
 fn expected(
@@ -642,6 +680,7 @@ fn expected(
     vram: &[u16],
     accepted: u16,
     selected: bool,
+    cut: u64,
 ) -> Result<ExpectedCut, Outcome> {
     use game::exact::direct_dma::{PendingWrite, Transfer};
     let pending = accepted.saturating_sub(1);
@@ -649,11 +688,11 @@ fn expected(
         .sprites
         .get(usize::from(pending))
         .copied()
-        .ok_or_else(|| data_failure(Some(RECEIVING), "landing accepted byte identity"))?;
+        .ok_or_else(|| data_failure(Some(cut), "landing accepted byte identity"))?;
     let mut dma = arrival.ppu.dma;
     let native = dma
         .get_mut(1)
-        .ok_or_else(|| data_failure(Some(RECEIVING), "landing observed channel"))?;
+        .ok_or_else(|| data_failure(Some(cut), "landing observed channel"))?;
     if !selected {
         let mut continued = channel(*native);
         continued.source = graphics.sprite_source.advanced(accepted).offset;

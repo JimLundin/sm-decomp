@@ -98,6 +98,19 @@ impl<'a> Rows<'a> {
         Ok((row.id.0.clone(), own))
     }
 
+    /// Read the next native interval, including across a row boundary.
+    pub(in crate::replay) fn successor(
+        &mut self,
+        cut: u64,
+        previous: &FrameRecord,
+    ) -> Result<FrameRecord, Outcome> {
+        let current = self.record(cut)?;
+        if current.video_frame != previous.video_frame.wrapping_add(1) {
+            return Err(data_failure(Some(cut), "disconnected native video frames"));
+        }
+        Ok(current)
+    }
+
     /// The record at the run's `cut`.
     pub(in crate::replay) fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
         let (place, own) = self.chain.place(cut)?;

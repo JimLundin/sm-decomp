@@ -2798,15 +2798,9 @@ fn station_provider_valid(case: &Case) -> bool {
 }
 
 fn landing_provider_valid(case: &Case) -> bool {
-    use super::landing_site as landing;
     use ObservationId as O;
     case.kind == CaseKind::Scoped
-        && case.row == landing::ROW
-        && case.start
-            == (Start::CacheCut {
-                frame: landing::DEPARTURE,
-            })
-        && case.end.cut_inclusive == landing::RESUMED
+        && case.cache_window().is_ok()
         && case.responsibilities == [Responsibility::LandingSite]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache

@@ -8,14 +8,14 @@ use game::production::{
 };
 use game::state::owned::OwnedState;
 use game::state::video::{Colour, Oam};
-use oracle_record::{Cut, FrameRecord, NmiKind};
+use oracle_record::FrameRecord;
 use screens_zebes::{ColourEffectRequest, FrameAdvance};
 use types::zebes::{Brightness, FlightView, ScenePicture, StarField, SubtitleChoice, ZebesStage};
 
 use super::compare::Observation;
-use super::index::{Case, ObservationId, Responsibility, Start};
+use super::index::{Case, ObservationId, Responsibility};
 use super::readers::{
-    ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
+    ActualReader, AdmittedCase, CutTape, ExpectedCut, ExpectedReader, InputReader,
 };
 use super::result::{Counts, Outcome};
 use super::{Sources, data_failure};
@@ -56,7 +56,7 @@ pub(super) const INTEGRATED_OUTPUTS: &[ObservationId] = &[
 const SCENE_FIELDS_ON_FINISH: usize = 14;
 const RECEIVING_FIELDS: usize = 5;
 const DRAW_OUTPUTS_ON_FINISH: usize = 2;
-const SETUP_AND_JOIN_OUTPUTS: usize = 6;
+const SETUP_OUTPUTS: usize = 5;
 
 pub(super) fn valid_counts(case: &Case, counts: &Counts) -> bool {
     let integrated = case
@@ -78,13 +78,15 @@ pub(super) fn valid_counts(case: &Case, counts: &Counts) -> bool {
         counts
             .cuts
             .saturating_add(finished.saturating_mul(DRAW_OUTPUTS_ON_FINISH))
-            .saturating_add(SETUP_AND_JOIN_OUTPUTS)
+            .saturating_add(if finished > 0 { SETUP_OUTPUTS } else { 0 })
     } else {
         counts.cuts
     };
     finished <= counts.cuts
         && finished_fields.is_multiple_of(SCENE_FIELDS_ON_FINISH)
-        && counts.outputs == outputs
+        // Only a finished flight-to-load handoff adds the independent receiving observation.
+        && (counts.outputs == outputs
+            || (integrated && finished > 0 && counts.outputs.checked_sub(1) == Some(outputs)))
         && counts.publications == 0
         && counts.replies == 0
         && counts.pending_boundaries == 0
@@ -99,47 +101,6 @@ const PICTURES: [(ScenePicture, usize, u16); 7] = [
     (ScenePicture::English, 20, 0x9654),
     (ScenePicture::Japanese, 18, 0x968d),
 ];
-
-pub(super) struct Inputs {
-    start: u64,
-    cuts: Vec<FrameAdvance>,
-}
-
-pub(super) struct Expected {
-    start: u64,
-    cuts: Vec<ExpectedCut>,
-}
-
-impl Inputs {
-    pub fn advance(
-        &self,
-        production: &mut Production,
-        cut: u64,
-    ) -> Result<ProductionOutputs, Outcome> {
-        let index = offset(self.start, cut)?;
-        let input = self
-            .cuts
-            .get(index)
-            .ok_or_else(|| data_failure(Some(cut), "flight cut input"))?;
-        advance(production, *input, cut)
-    }
-}
-
-impl Expected {
-    pub fn read(&self, cut: u64) -> Result<ExpectedCut, Outcome> {
-        self.cuts
-            .get(offset(self.start, cut)?)
-            .cloned()
-            .ok_or_else(|| data_failure(Some(cut), "flight expected cut"))
-    }
-}
-
-fn offset(start: u64, cut: u64) -> Result<usize, Outcome> {
-    cut.checked_sub(start)
-        .and_then(|offset| offset.checked_sub(1))
-        .and_then(|offset| usize::try_from(offset).ok())
-        .ok_or_else(|| data_failure(Some(cut), "flight cut range"))
-}
 
 pub(super) fn starts(seed: &FrameRecord) -> Result<bool, Outcome> {
     Ok(word(seed, GAME_FLOW)? == SCENE_FLOW
@@ -223,15 +184,15 @@ pub(super) fn admit_seed(
     Ok((production, content, rules))
 }
 
-const fn cadence(record: &FrameRecord) -> FrameAdvance {
-    if matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested)) {
+pub(super) const fn cadence(record: &FrameRecord) -> FrameAdvance {
+    if super::played::platform::finished(record) {
         FrameAdvance::Finished
     } else {
         FrameAdvance::BorrowedLag
     }
 }
 
-fn advance(
+pub(super) fn advance(
     production: &mut Production,
     input: FrameAdvance,
     cut: u64,
@@ -247,41 +208,40 @@ fn advance(
 }
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let Start::CacheCut { frame: start } = case.start else {
-        return Err(data_failure(None, "flight cache start"));
-    };
-    let lock = std::fs::read_to_string(&sources.lock)
-        .ok()
-        .and_then(|text| crate::lock::Lock::parse(&text).ok())
-        .ok_or_else(|| data_failure(None, "flight record lock"))?;
-    let row = lock
-        .row(&crate::lock::RowId(case.row.clone()))
-        .ok_or_else(|| data_failure(None, "flight record row"))?;
-    let cache = crate::cache::Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "flight pinned cache"))?;
-    let mut previous = record(&cache, start)?;
+    let window = case.cache_window()?;
+    let lock = super::read_lock(sources)?;
+    let mut rows = super::played::open_rows(sources, &lock, window.row)?;
+    let mut previous = rows.record(window.origin)?;
     let (production, content, rules) = admit_seed(&sources.rom, &previous)?;
     let integrated = case
         .responsibilities
         .contains(&Responsibility::ZebesDrawing);
-    let first = start
-        .checked_add(1)
-        .ok_or_else(|| data_failure(None, "flight first cut"))?;
-    let schedule: Vec<_> = (first..=case.end.cut_inclusive).collect();
-    let mut input_cuts = Vec::with_capacity(schedule.len());
-    let mut expected_cuts = Vec::with_capacity(schedule.len());
-    let landing = integrated
-        .then(|| landing_seed(&lock, sources))
-        .transpose()?;
-    for &cut in &schedule {
-        let current = record(&cache, cut)?;
+    let first = *window.cuts.start();
+    let mut schedule = Vec::new();
+    let mut input_cuts = Vec::new();
+    let mut expected_cuts = Vec::new();
+    for cut in window.cuts {
+        let current = rows.successor(cut, &previous)?;
+        schedule.push(cut);
         input_cuts.push(cadence(&current));
         let mut observed = expected(&previous, &current, integrated)?;
-        if let Some(landing) = &landing
-            && word(&current, GAME_FLOW)? == LOADING_FLOW
-        {
-            observed.fields.push(landing_join(landing)?);
-            observed.output_count = observed.output_count.saturating_add(1);
+        if word(&current, GAME_FLOW)? == LOADING_FLOW {
+            if cut < case.end.cut_inclusive {
+                return Err(data_failure(
+                    Some(cut.saturating_add(1)),
+                    "flight beyond loading handoff",
+                ));
+            }
+            if integrated {
+                let graphics = super::landing_site::graphics(sources)?;
+                let next = cut
+                    .checked_add(1)
+                    .ok_or_else(|| data_failure(Some(cut), "flight receiving cut"))?;
+                let (landing, _) =
+                    super::landing_site::receiving(&mut rows, next, &current, &graphics)?;
+                observed.fields.push(landing_join(&landing)?);
+                observed.output_count = observed.output_count.saturating_add(1);
+            }
         }
         expected_cuts.push(observed);
         previous = current;
@@ -299,13 +259,13 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         rules,
         schedule,
         actual,
-        inputs: InputReader::Zebes(Inputs {
-            start,
-            cuts: input_cuts,
+        inputs: InputReader::Zebes(CutTape {
+            first,
+            values: input_cuts,
         }),
-        expected: ExpectedReader::Zebes(Expected {
-            start,
-            cuts: expected_cuts,
+        expected: ExpectedReader::RecordedCuts(CutTape {
+            first,
+            values: expected_cuts,
         }),
     })
 }
@@ -791,15 +751,6 @@ fn has_effect(record: &FrameRecord, id: u16) -> Result<bool, Outcome> {
         }
     }
     Ok(false)
-}
-
-fn landing_seed(lock: &crate::lock::Lock, sources: &Sources) -> Result<FrameRecord, Outcome> {
-    let row = lock
-        .row(&crate::lock::RowId("any-zebes-arrival".to_owned()))
-        .ok_or_else(|| data_failure(None, "receiving Landing Site row"))?;
-    let cache = crate::cache::Cache::open(&sources.cache, row)
-        .map_err(|_| data_failure(None, "receiving Landing Site cache pins"))?;
-    record(&cache, 0)
 }
 
 fn landing_join(record: &FrameRecord) -> Result<Observation, Outcome> {

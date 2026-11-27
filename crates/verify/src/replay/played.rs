@@ -272,7 +272,7 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
     }
 }
 
-fn open_rows<'a>(
+pub(in crate::replay) fn open_rows<'a>(
     sources: &'a Sources,
     lock: &'a crate::lock::Lock,
     row: &str,

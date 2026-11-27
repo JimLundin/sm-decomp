@@ -40,8 +40,8 @@ pub(super) enum InputReader {
     JumpHistory(Tape<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
-    LandingSite(super::landing_site::Inputs),
-    Zebes(super::zebes::Inputs),
+    LandingSite(CutTape<game::production::played::landing_site::Work>),
+    Zebes(CutTape<screens_zebes::FrameAdvance>),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -66,8 +66,6 @@ pub(super) enum ExpectedReader {
     JumpHistory(Tape<ExpectedCut>),
     Discovery(super::discovery::Expectations),
     Departure(super::departure::Tape<ExpectedCut>),
-    LandingSite(Box<[ExpectedCut; 2]>),
-    Zebes(super::zebes::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Vec<super::health_tail::Expected>),
     SenderOffer(Vec<Observation>),
@@ -177,8 +175,10 @@ impl InputReader {
             Self::Departure(tape) => production
                 .advance(AdvanceInput::Departure(*tape.get(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
-            Self::LandingSite(inputs) => super::landing_site::advance(inputs, production, cut),
-            Self::Zebes(inputs) => inputs.advance(production, cut),
+            Self::LandingSite(inputs) => production
+                .advance(AdvanceInput::LandingSite(*inputs.at(cut)?))
+                .map_err(|fault| super::production_failure(cut, fault)),
+            Self::Zebes(inputs) => super::zebes::advance(production, *inputs.at(cut)?, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -467,18 +467,6 @@ impl ExpectedReader {
             Self::SaveFiles(expected) => expected.read(cut),
             Self::Discovery(expected) => expected.at(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),
-            Self::LandingSite(expected) => match cut {
-                super::landing_site::RECEIVING => Ok(expected
-                    .first()
-                    .cloned()
-                    .ok_or_else(|| data_failure(Some(cut), "landing receiving expectation"))?),
-                super::landing_site::RESUMED => Ok(expected
-                    .last()
-                    .cloned()
-                    .ok_or_else(|| data_failure(Some(cut), "landing resumed expectation"))?),
-                _ => Err(data_failure(Some(cut), "landing expected cut coordinate")),
-            },
-            Self::Zebes(expected) => expected.read(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),
