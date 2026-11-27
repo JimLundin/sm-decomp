@@ -126,8 +126,7 @@ Each step names its owner, what it waits for, and its done-condition.
    crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
-7. **Import** (root): `import.sh` first runs `code_check.sh --import`, which refuses a variant
-   import (L4) even in a crate whose older ones still only warn on the trunk. Then it runs
+7. **Import** (root): `import.sh` first runs `code_check.sh`. Then it runs
    `scan.sh` on each file the commits add or change, and refuses a hit that file didn't hold at
    the export's start; the trunk's own hits don't block. It runs the mirror scan
    (`scan.sh --mirror`) on the model against the spec and decode notes on the lane branch, and
@@ -182,9 +181,7 @@ Each step names its owner, what it waits for, and its done-condition.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together. On the round's branch the root moves a plan domain's `status` in
     [`docs/architecture/domains.toml`](../architecture/domains.toml) when its work starts or
-    ends, deletes the crate's line from
-    `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
-    trunk's check refuses a listed crate with none), and regenerates the README
+    ends, and regenerates the README
     (`tools report --write`); the integration already carries `played.toml` and the README for
     any played run it moved, and the root reviews those figures. It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with

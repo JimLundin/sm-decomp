@@ -601,7 +601,7 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
     (lane / "awk.path").write_text(paths["awk"] + "\n", encoding="utf-8", newline="\n")
     shutil.copyfile(brief, lane / "brief.txt")
     commands = {
-        "code_check": [paths["bash"], str(here / "code_check.sh"), "--import",
+        "code_check": [paths["bash"], str(here / "code_check.sh"),
                        str(export / "crates/clean/types"), str(export / folders[0])],
         "check": [paths["cargo"], "check", "--locked", "--offline", "--all-targets"],
         "clippy": [paths["cargo"], "clippy", "--locked", "--offline", "--all-targets", "--no-deps", "--", "-D", "warnings"],

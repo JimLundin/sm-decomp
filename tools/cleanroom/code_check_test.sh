@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # code_check_test.sh: code_check.sh passes code_check_fixtures/clean and, on every other fixture
-# (named TAG__variant), fails and names TAG; L4 warns in a crate its warn list names, except
-# under --import, and refuses a listed crate with none left. Run from anywhere; exit 1 lists what
-# went wrong.
+# (named TAG__variant), fails and names TAG. Run from anywhere; exit 1 lists what went wrong.
 here=$(cd "$(dirname "$0")" && pwd)
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
@@ -19,23 +17,8 @@ for dir in "$here"/code_check_fixtures/*__*/; do
 done
 [ "$n" -gt 0 ] || fail "no fixtures"
 
-# L4 warns in a crate the warn list names, refuses there under --import, and refuses a listed
-# crate with no variant import left.
 scratch=$(mktemp -d) || exit 1
 trap 'rm -rf "$scratch"' EXIT
-list=$scratch/warn-list
-echo crates/clean/demo >"$list"
-listed=$here/code_check_fixtures/variant-import__listed
-out=$(CODE_CHECK_VARIANT_WARN=$list bash "$here/code_check.sh" "$listed" 2>&1) || fail "a listed crate's variant import refused: $out"
-grep -q ': warning: .*: variant-import: ' <<<"$out" || fail "a listed crate's variant import not warned: $out"
-if CODE_CHECK_VARIANT_WARN=$list bash "$here/code_check.sh" --import "$listed" >/dev/null 2>&1; then
-  fail "--import passed a listed crate's variant import"
-fi
-if out=$(CODE_CHECK_VARIANT_WARN=$list bash "$here/code_check.sh" "$here/code_check_fixtures/clean" 2>&1); then
-  fail "a listed crate with no variant import passed"
-else
-  grep -q ': variant-import: listed in ' <<<"$out" || fail "a stale list line not named: $out"
-fi
 
 # An inherited declaration takes its source, version and features from the target
 # workspace. The checked-out repository supplies the approvals.
@@ -83,5 +66,5 @@ refuses 'malformed workspace TOML' manifest
 # the tag code_check.sh names and the clean one passes; an awk not pinned outside the export
 # refuses before any test.
 out=$("${SM_PY:-python3}" -I "$here/vector_runner_test.py" 2>&1) || fail "the vector runner's wiring: $out"
-[ "$bad" -eq 0 ] && echo "CODE CHECK FIXTURES OK: clean passes, $n forbidden fixtures each named; workspace inheritance checked; L4's warn list holds; the vector runner fails on a shape finding and refuses an unpinned awk"
+[ "$bad" -eq 0 ] && echo "CODE CHECK FIXTURES OK: clean passes, $n forbidden fixtures each named; workspace inheritance checked; the vector runner fails on a shape finding and refuses an unpinned awk"
 exit $bad

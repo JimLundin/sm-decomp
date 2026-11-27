@@ -41,5 +41,5 @@ trap - HUP INT TERM
 # Even an API or tool failure is checked. No launch success precedes the canary gate.
 bash "$here/canary.sh" check "$3" "$1" "$4" || exit 1
 [ "$status" -eq 0 ] || exit "$status"
-bash "$here/code_check.sh" --import "$1"/crates/clean/* || exit 1
+bash "$here/code_check.sh" "$1"/crates/clean/* || exit 1
 echo "LAUNCH OK Responses $4"

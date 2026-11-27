@@ -506,10 +506,7 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
     field or a behaviour.
   - **L4, `variant-import`.** No `use` of an enum's variants outside test code (`use
     Kind::{A, B}`, `use Kind::*`, at any depth of a use tree): a variant is named through its
-    enum, so a reader sees which enum a bare name belongs to. Crates that still hold such
-    imports are listed in `tools/cleanroom/variant_import_warn.txt`: on the trunk their sites
-    are warnings, the import (`code_check.sh --import`) refuses them in every crate an export
-    holds, and a listed crate with none left is a finding, so its line goes with the round.
+    enum, so a reader sees which enum a bare name belongs to.
 - **The budget beside the score** (decision 19). The decode notes' Budget section holds the
   baseline (the old code's tokens, by area, at a commit) and the budget. The budget is k ×
   units even where it exceeds the baseline: behaviour beyond the old code's scope grows its

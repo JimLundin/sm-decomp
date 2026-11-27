@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# code_check.sh [--import] DIR...: refuse clean-room crates that cargo would run or read outside
+# code_check.sh DIR...: refuse clean-room crates that cargo would run or read outside
 # their own sources while it builds them, and the clean room's coding rules no lint holds (MODEL
 # §5; launch.sh cannot confine what cargo runs). Files, the network, processes, the environment,
 # include_bytes!, env!, assembly and unsafe code are clippy's: the workspace forbids
@@ -10,7 +10,6 @@
 # archive of one, or this repository. A root with no clean crate passes. Exit 1 prints one line
 # per finding:
 #   code_check: PATH: TAG: DETAIL
-# A warning, which doesn't fail, is `code_check: warning: PATH: TAG: DETAIL`.
 #
 # Sources (src/ and tests/ *.rs, comments and string contents removed, whitespace collapsed):
 #   include-path   include!/include_str! of anything but a literal path that resolves to
@@ -32,10 +31,7 @@
 #     variant, constant or literal key, `=>` and a data value naming no local, as `tools size`
 #     counts it; a key's own number is still refused), array lengths and tuple fields.
 #   variant-import (L4) a `use` outside test code that imports an enum's variants (`use Kind::A`,
-#     `use Kind::{A, B}`, `use Kind::*`). In a crate variant_import_warn.txt lists (crates written
-#     before the rule) it is a warning, unless --import, which import.sh passes: an implementer
-#     round removes them from every crate its export holds. A listed crate with none left is a
-#     `variant-import` finding too, so its line goes. The three rules are lint_scan.awk.
+#     `use Kind::{A, B}`, `use Kind::*`). The three rules are lint_scan.awk.
 # Manifest: lints-key (no `[lints] workspace = true`) edition (not 2024)
 #   build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt; or not at its pinned version, of an allowed kind, with
@@ -58,22 +54,11 @@
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 start=$PWD
-importing=0
-[ "${1:-}" = --import ] && { importing=1; shift; }
-[ $# -ge 1 ] || { echo "usage: code_check.sh [--import] DIR..." >&2; exit 2; }
+[ $# -ge 1 ] || { echo "usage: code_check.sh DIR..." >&2; exit 2; }
 bad=0
 count=0
-# The crates whose variant imports still warn; CODE_CHECK_VARIANT_WARN names another list (tests).
-warn_list=${CODE_CHECK_VARIANT_WARN:-$here/variant_import_warn.txt}
-# Whether the crate being checked only warns of its variant imports, and how many it has.
-variant_warn=0
-variants=0
 
 hit() { # REL TAG DETAIL
-  if [ "$2" = variant-import ]; then
-    variants=$((variants + 1))
-    [ "$variant_warn" -eq 1 ] && { printf 'code_check: warning: %s: %s: %s\n' "$1" "$2" "$3"; return; }
-  fi
   printf 'code_check: %s: %s: %s\n' "$1" "$2" "$3"
   bad=1; count=$((count + 1))
 }
@@ -89,15 +74,6 @@ denied=$(awk '
   /^\[/ { on = 0 }
   on && /=/ && /"(deny|forbid)"/ { name = $1; sub(/=.*/, "", name); printf "%s%s ", p, name }
   END { print "warnings" }' "$here/../../Cargo.toml")
-
-# The warn list's crates, one per line, trailing blanks and # lines dropped.
-warned=()
-if [ "$importing" -eq 0 ] && [ -f "$warn_list" ]; then
-  while IFS= read -r line || [ -n "$line" ]; do
-    line=${line%"${line##*[![:space:]]}"}
-    [[ $line == '#'* ]] || warned+=("$line")
-  done <"$warn_list"
-fi
 
 # An include!/include_str! call in FILE (the call and what follows it): allowed only with a
 # literal path to the domain's vector file, or, as text, its spec or a clean crate's source.
@@ -126,7 +102,7 @@ check_include() { # FILE REL ROOT DOMAIN CALL
 }
 
 check_crate() { # CRATE_DIR
-  local crate root domain rel p t w tag detail findings allowed=() sources=() library=() paths=()
+  local crate root domain rel p tag detail findings allowed=() sources=() library=() paths=()
   cd "$start" && cd "$1" && crate=$PWD
   case $crate in
     */crates/clean/types) root=${crate%/crates/clean/types}; domain="" ;;
@@ -134,8 +110,6 @@ check_crate() { # CRATE_DIR
     *) root=$crate; domain="" ;;
   esac
   rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=${crate##*/}
-  variants=0; variant_warn=0
-  for w in "${warned[@]}"; do [ "$w" = "$rel" ] && variant_warn=1; done
   allowed=("$root/crates/clean/types")
   [ -z "$domain" ] || allowed+=("$crate")
 
@@ -176,10 +150,6 @@ check_crate() { # CRATE_DIR
     while IFS=$'\t' read -r tag p detail; do
       [ -n "$tag" ] && hit "$rel/src/$p" "$tag" "$detail"
     done < <(awk -f "$here/strip_rust.awk" -f "$here/shape_scan.awk" "${library[@]}")
-  fi
-  if [ "$variant_warn" -eq 1 ] && [ "$variants" -eq 0 ]; then
-    variant_warn=0
-    hit "$rel" variant-import "listed in ${warn_list##*/} with no variant import left: delete its line"
   fi
   cd "$start" || exit 2
 }

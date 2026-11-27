@@ -6,8 +6,7 @@
 # `git am`, authorship and messages kept. Each must touch only the [import] paths of
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
-# code_check.sh --import (nothing cargo would run or read at build time, and no variant import
-# even in a crate whose old ones still only warn on the trunk), add no scan.sh hit to a file
+# code_check.sh (nothing cargo would run or read at build time, and no variant import), add no scan.sh hit to a file
 # that didn't hold it at the export's start, and add no function the mirror scan maps onto one
 # routine (against the spec and decode notes on BRANCH), or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
@@ -72,7 +71,7 @@ done
 # export's HEAD, which is what the patches add up to.
 git_isolated "$scratch/export.git" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
 git show HEAD:Cargo.toml >"$checked/Cargo.toml"
-bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
+bash "$cleanroom_dir/code_check.sh" "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
 # The clean room's scan (scan.sh's checks 1-3: the original's addresses, names and shapes) on what
 # the implementer changed: each file the commits add or change, at the export's HEAD, against the

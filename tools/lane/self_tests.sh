@@ -24,7 +24,7 @@ suite() {
 cargo=(Cargo.toml Cargo.lock rust-toolchain.toml .cargo/config .cargo/config.toml 'crates/*/Cargo.toml')
 scanner=(crates/tools/src/bin/cleanroom "$clean"/{scan.sh,scan_tool.sh,scan_lexicon,scan_allow.txt} "${cargo[@]}")
 brief=("$clean"/{scan_brief.sh,score_scan.sh,score_words.txt} "${scanner[@]}")
-source_checks=("$clean"/{code_check.sh,allowed_deps.txt,variant_import_warn.txt,check_manifest.py}
+source_checks=("$clean"/{code_check.sh,allowed_deps.txt,check_manifest.py}
   "$clean"/{source_scan,lint_scan,shape_scan,strip_rust}.awk Cargo.toml)
 runner=("$clean"/{vector_runner.py,shape_scan.awk,strip_rust.awk})
 launch=("$clean"/{launch.sh,launch_stream.py,box_relay.py,lib.sh,allowlist.txt,canary.sh}
