@@ -192,7 +192,7 @@ fn expected(
     let passing = !shaft_elevator && passage::passing(wram)?;
     fields.push(passage::observation(passing));
     // In play every draw is the loop's own, so a frame's draws are compared where it finished.
-    if (finished && !passing) || shaft_native::compared(frame) {
+    if (finished && !passing) || frame.witnesses.shaft()?.actors(frame.place) {
         fields.push(frame::random_observation(frame::random(wram)?));
     }
     if finished {
@@ -277,13 +277,15 @@ fn open_rows<'a>(
     lock: &'a crate::lock::Lock,
     row: &str,
 ) -> Result<rows::Rows<'a>, Outcome> {
-    // The lock is the repository's `scenarios/locks/<oracle>.toml`, under the tables of seeds.
-    let root = sources
+    rows::Rows::open(lock, lock_root(sources)?, &sources.cache, row)
+}
+
+fn lock_root(sources: &Sources) -> Result<&Path, Outcome> {
+    sources
         .lock
         .ancestors()
         .nth(3)
-        .ok_or_else(|| data_failure(None, "played lock path"))?;
-    rows::Rows::open(lock, root, &sources.cache, row)
+        .ok_or_else(|| data_failure(None, "played lock path"))
 }
 
 /// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone. Cuts
@@ -872,7 +874,11 @@ impl<'a> Run<'a> {
             shaft_raster: platform::shaft_raster(previous, current)?,
             room_hdma: platform::room_hdma(previous, current)?,
             audio: played::passage::PassageAudio {
-                shaft_reply: shaft_sound::reply(place, finished(current)),
+                shaft_reply: shaft_sound::reply(
+                    self.witnesses.shaft()?.sound(place),
+                    place.1,
+                    finished(current),
+                ),
                 sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
             },
@@ -1162,7 +1168,7 @@ impl<'a> Run<'a> {
             retiring_return,
         )?;
         self.population_fields(frame, retiring_return, &mut expected, &mut actual)?;
-        if shaft_native::compared(frame) {
+        if frame.witnesses.shaft()?.actors(frame.place) {
             expected.extend(shaft_native::expected(frame)?);
             actual.extend(shaft_native::actual(&self.state, Some(outputs)));
         }
@@ -1214,7 +1220,9 @@ impl<'a> Run<'a> {
                 outputs.ridley.is_some_and(|run| run.getaway.is_some()),
             )?);
             actual.extend(quake::actual(&self.state, outputs.quake));
-            if owns_vent_draws && !shaft_native::compared(frame) && passage::passing(&current.wram)?
+            if owns_vent_draws
+                && !frame.witnesses.shaft()?.actors(frame.place)
+                && passage::passing(&current.wram)?
             {
                 expected.push(frame::random_observation(frame::random(&current.wram)?));
             }
@@ -1239,10 +1247,12 @@ impl<'a> Run<'a> {
             expected.push(ridley::placement(&current.wram)?);
             actual.push(ridley::placed(self.state.station.ridley.is_some()));
         }
-        if frame.place.0 == super::shaft_entry::ROW && (222..=278).contains(&frame.place.1) {
+        let shaft = frame.witnesses.shaft()?;
+        if shaft.entry.contains(frame.place) {
             expected.extend(super::shaft_entry::expected(current)?);
             actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
             platform::compare_shaft_background(
+                &shaft.background,
                 self.state.room_tiles,
                 &self.state.room_video.video,
                 current,

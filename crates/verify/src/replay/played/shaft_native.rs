@@ -12,7 +12,9 @@ use boss_ceres_ridley::{BurstPoint, ShaftOverlayPhase};
 use game::production::played::{Outputs, State};
 use oracle_record::FrameRecord;
 
+#[cfg(test)]
 const HALL: &str = "chain-any-0010-DF8D";
+#[cfg(test)]
 const SHAFT: &str = "chain-any-0011-DF45";
 
 pub(super) fn word(record: &FrameRecord, at: usize) -> Result<u16, Outcome> {
@@ -57,6 +59,33 @@ struct Rotation {
     matrix: [i16; 4],
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Visit {
+    None,
+    Burst,
+    FinalBurst,
+}
+
+impl Visit {
+    const fn observed(before: Option<Overlay>, after: Overlay) -> Self {
+        match (before, after) {
+            (Some(Overlay::Rumble { wait: 0, .. }), Overlay::Rumble { wait: 4, left, .. }) => {
+                // The rumble ends before the reloaded wait allows another burst.
+                if left <= 4 {
+                    Self::FinalBurst
+                } else {
+                    Self::Burst
+                }
+            }
+            _ => Self::None,
+        }
+    }
+}
+
+pub(super) fn sound_visit(previous: &FrameRecord, current: &FrameRecord) -> Result<Visit, Outcome> {
+    Ok(Visit::observed(Some(overlay(previous)?), overlay(current)?))
+}
+
 fn rotation(record: &FrameRecord) -> Result<Rotation, Outcome> {
     let track = word(record, 0x07e1)?;
     Ok(Rotation {
@@ -99,7 +128,8 @@ pub(super) fn fetch_retires(
 }
 
 pub(super) fn in_elevator(frame: &Frame<'_>) -> Result<bool, Outcome> {
-    Ok(frame.place.0 == SHAFT && matches!(word(frame.current, 0x0998)?, 32 | 33))
+    Ok(matches!(word(frame.current, 0x0998)?, 32 | 33)
+        && crate::replay::blackout::elevator_room(frame.current)?)
 }
 
 pub(super) fn partial_palette(frame: &Frame<'_>, fade_steps: u8) -> bool {
@@ -109,11 +139,6 @@ pub(super) fn partial_palette(frame: &Frame<'_>, fade_steps: u8) -> bool {
         Doors::Passing(Passage { phase: Phase::Brightening(FadeTime(step)), .. })
             if (1..=u16::from(fade_steps).saturating_add(1)).contains(&step)
     )
-}
-
-pub(super) fn compared(frame: &Frame<'_>) -> bool {
-    let (row, cut) = frame.place;
-    (row == HALL && (225..=278).contains(&cut)) || (row == SHAFT && cut <= 239)
 }
 
 fn fields(
@@ -165,7 +190,8 @@ pub(super) fn expected(frame: &Frame<'_>) -> Result<Vec<Observation>, Outcome> {
         ));
     }
     let after = overlay(current)?;
-    let placed = frame.place == (HALL, 225);
+    let placed =
+        after == Overlay::Opening && word(frame.previous, 0x0f78)? != word(current, 0x0f78)?;
     let mut observations = fields(
         after,
         rotation(current)?,

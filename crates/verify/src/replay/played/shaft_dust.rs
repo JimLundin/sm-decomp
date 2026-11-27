@@ -132,21 +132,9 @@ fn picture(field: &str, bytes: &[u8], looks: &[SpriteAttributes; 4]) -> Option<O
     })
 }
 
-const HALL: &str = "chain-any-0010-DF8D";
-const SHAFT: &str = "chain-any-0011-DF45";
-const FINAL_ROOM_WORK: u64 = 239;
-const HALL_FINAL_CUT: u64 = 278;
-const SHAFT_FINAL_ROOM_WORK: u64 = HALL_FINAL_CUT + 1 + FINAL_ROOM_WORK;
-
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
-        && case.row == HALL
-        && case.start
-            == (Start::PlayedContinuation {
-                seed: 0,
-                frame: HALL_FINAL_CUT,
-            })
-        && case.end.cut_inclusive == SHAFT_FINAL_ROOM_WORK
+        && matches!(case.start, Start::PlayedContinuation { .. })
         && case.responsibilities
             == [
                 Responsibility::Appearance,
@@ -178,26 +166,27 @@ pub(in crate::replay) const fn valid_counts(counts: &Counts, horizon: usize) -> 
         && counts.restorations <= counts.publications
 }
 
-fn compared((row, local): (&str, u64)) -> bool {
-    row == SHAFT && local <= FINAL_ROOM_WORK
-}
-
 pub(super) fn observations(
     run: &Run<'_>,
     frame: &super::Frame<'_>,
     (native, written): (&mut Vec<Observation>, &mut Vec<Observation>),
 ) -> Result<(), Outcome> {
-    if compared(frame.place) {
+    let trace = frame.witnesses.shaft()?;
+    if trace.elevator.contains(frame.place) {
         let looks = looks(run)?;
         native.extend(expected(frame.current, looks)?);
         written.extend(actual(run, looks)?);
-        if frame.place.1 == 17 && run.picture_scope != PictureScope::ShaftActors {
+        if let Some(slot) = trace
+            .following_vent(frame.place)
+            .filter(|_| run.picture_scope != PictureScope::ShaftActors)
+        {
             // The dust and aggregate witnesses check the shifted vent entry. The shaft
             // actor witness compares its own mounted spans during locked work.
             let video = &run.state.room_video.video;
             let prepared = frame.current.wram.get(PREPARED_OAM).unwrap_or_default();
-            native.push(following_vent(prepared, &frame.current.oam)?);
+            native.push(following_vent(slot, prepared, &frame.current.oam)?);
             written.push(following_vent(
+                slot,
                 &oam_bytes(&video.batch.oam),
                 &oam_bytes(&video.memory.oam),
             )?);
@@ -206,18 +195,18 @@ pub(super) fn observations(
     Ok(())
 }
 
-fn following_vent(prepared: &[u8], published: &[u8]) -> Result<Observation, Outcome> {
-    const SLOT: usize = 63;
+fn following_vent(slot: usize, prepared: &[u8], published: &[u8]) -> Result<Observation, Outcome> {
+    let offset = slot.saturating_mul(4);
     let mut bytes = Vec::with_capacity(10);
     for picture in [prepared, published] {
         let entry = picture
-            .get(SLOT * 4..SLOT * 4 + 4)
+            .get(offset..offset.saturating_add(4))
             .ok_or_else(|| data_failure(None, "shaft dust following vent OAM entry"))?;
         let high = picture
-            .get(LOW_BYTES + SLOT / 4)
+            .get(LOW_BYTES.saturating_add(slot / 4))
             .ok_or_else(|| data_failure(None, "shaft dust following vent OAM high bit"))?;
         bytes.extend(entry);
-        bytes.push((high >> ((SLOT % 4) * 2)) & 3);
+        bytes.push((high >> ((slot % 4).wrapping_mul(2))) & 3);
     }
     Ok(Observation {
         field: FOLLOWING_VENT.into(),
@@ -258,9 +247,10 @@ pub(in crate::replay) fn run(
         let null = (cut > frame)
             .then(|| {
                 let mut fields = actual(&run, looks(&run)?)?.to_vec();
-                if local == 17 {
+                if let Some(slot) = run.witnesses.shaft()?.following_vent(place) {
                     let video = &run.state.room_video.video;
                     fields.push(following_vent(
+                        slot,
                         &oam_bytes(&video.batch.oam),
                         &oam_bytes(&video.memory.oam),
                     )?);
@@ -291,6 +281,12 @@ pub(in crate::replay) fn run(
         return Err(Outcome::CheckpointFailure {
             cut: case.end.cut_inclusive,
         });
+    }
+    if !valid_counts(&result.counts, result.counts.cuts) {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "shaft dust and following vent coverage",
+        ));
     }
     result.observation_sha256 = crate::lock::Sha256::of(&witness.digest).to_string();
     Ok(())
@@ -325,7 +321,11 @@ impl<'a> Witness<'a> {
                 STATE | PREPARED | PUBLISHED | FOLLOWING_VENT
             )
         });
-        let field_count = if frame.place.1 == 17 { 4 } else { 3 };
+        let field_count = if run.witnesses.shaft()?.following_vent(frame.place).is_some() {
+            4
+        } else {
+            3
+        };
         if fields.len() != field_count {
             return Err(data_failure(
                 Some(frame.number),

@@ -125,7 +125,8 @@ pub(super) fn check(
     current: &FrameRecord,
     cut: u64,
 ) -> Result<(), Outcome> {
-    if matches!(current.video_frame, 13_313 | 13_314) {
+    // The committed save and its following dispatch retain the shaft scroll.
+    if explosion::pending(current)? || explosion::pending(previous)? {
         let shaft = production
             .blackout()
             .ok_or_else(|| data_failure(Some(cut), "shaft publication"))?;

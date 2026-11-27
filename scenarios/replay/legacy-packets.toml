@@ -213,6 +213,25 @@ pictures = [
     { row = "chain-any-0011-DF45", cut = 28, picture = { kind = "overlay", slot = 29 } },
 ]
 
+[played_witnesses.shaft]
+entry = { row = "chain-any-0010-DF8D", first = 222, last = 278 }
+background = { effects_from = 225, interrupted_shadow = [227], tiles_from = 228 }
+hall = { row = "chain-any-0010-DF8D", first = 225, last = 278 }
+elevator = { row = "chain-any-0011-DF45", first = 0, last = 239 }
+following_vent = { cut = 17, slot = 63 }
+prepared_prefix = 16
+locked_prefix = 24
+return_fade = { window = { row = "chain-any-0006-E0B5", first = 1611, last = 1657 }, timer_draw = 1612, first_palette = 1613, interrupted = 5, prepared = 20 }
+
+# CPU reads between native cue and clear acknowledgements.
+[[played_witnesses.shaft.sound]]
+window = { row = "chain-any-0010-DF8D", first = 239, last = 278 }
+cue = []
+
+[[played_witnesses.shaft.sound]]
+window = { row = "chain-any-0011-DF45", first = 0, last = 43 }
+cue = [[3, 6], [9, 12], [16, 19], [22, 25], [28, 31], [34, 37], [39, 42]]
+
 # Body drawer writes attributed by the native trace, including the seed cut.
 [[played_witnesses.samus_body]]
 row = "chain-any-0006-E0B5"

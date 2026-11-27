@@ -20,26 +20,12 @@ use game::production::{played, sender::Sounds};
 use std::{collections::VecDeque, num::NonZeroU8};
 use types::audio::{CueAllowance, CueId, OfferPermission, Request, SenderProgress, SenderState};
 
-const ORIGIN: &str = "chain-any-0006-E0B5";
-const SEED: u64 = 1690;
-const START: u64 = 2869; // Hall cut 238.
-const LAST: u64 = 2953; // Shaft cut 43.
-const HALL: &str = "chain-any-0010-DF8D";
-const SHAFT: &str = "chain-any-0011-DF45";
-const CUE_REPLIES: [u64; 7] = [3, 9, 16, 22, 28, 34, 39];
-const CLEAR_REPLIES: [u64; 7] = [7, 13, 20, 26, 32, 38, 43];
 const STATE: &[O] = &[O::SenderPermission, O::SenderQueue, O::SenderProgress];
 const OUTPUTS: &[O] = &[O::ShaftSoundOffer, O::SenderRequest];
 
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
-        && case.row == ORIGIN
-        && case.start
-            == (Start::PlayedContinuation {
-                seed: SEED,
-                frame: START,
-            })
-        && case.end.cut_inclusive == LAST
+        && matches!(case.start, Start::PlayedContinuation { .. })
         && case.responsibilities == [Responsibility::Ceres, Responsibility::AudioSender]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -51,23 +37,17 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
 
 /// Reply reads reconstructed from the acknowledged native cue and clear edges. Between edges
 /// the last acknowledged value gives the same CPU comparison at the scheduled service.
-pub(super) fn reply((row, cut): (&str, u64), finished: bool) -> Option<Request> {
-    if !finished {
-        return None;
-    }
-    match row {
-        HALL if (239..=278).contains(&cut) => Some(Request::Absent),
-        SHAFT if cut <= 43 => {
-            let cue = CUE_REPLIES.iter().filter(|&&edge| edge <= cut).count();
-            let clear = CLEAR_REPLIES.iter().filter(|&&edge| edge <= cut).count();
-            Some(if cue > clear {
-                Request::Cue(CueId::ShaftExplosion)
-            } else {
-                Request::Absent
-            })
-        }
-        _ => None,
-    }
+pub(super) fn reply(
+    trace: Option<&super::witnesses::shaft::Sound>,
+    cut: u64,
+    finished: bool,
+) -> Option<Request> {
+    let trace = trace.filter(|_| finished)?;
+    Some(if trace.cue(cut) {
+        Request::Cue(CueId::ShaftExplosion)
+    } else {
+        Request::Absent
+    })
 }
 
 fn permission(wram: &[u8]) -> Result<Sounds, Outcome> {
@@ -142,7 +122,7 @@ fn observations(
     }
 }
 
-fn expected(wram: &[u8], (row, local): (&str, u64), cut: u64) -> Result<ExpectedCut, Outcome> {
+fn expected(wram: &[u8], offer: bool, cut: u64) -> Result<ExpectedCut, Outcome> {
     let bad = || data_failure(Some(cut), "Ambient sender RAM");
     let byte = |offset| wram.get(offset).copied().ok_or_else(bad);
     let head = byte(0x0644)?;
@@ -173,27 +153,17 @@ fn expected(wram: &[u8], (row, local): (&str, u64), cut: u64) -> Result<Expected
         3 => SenderProgress::AwaitClear,
         _ => return Err(bad()),
     };
-    // Independently observed B8 producer visits include the culled particle's sound at shaft/31.
-    let offer = matches!(
-        (row, local),
-        (HALL, 241 | 256 | 271) | (SHAFT, 1 | 6 | 11 | 16 | 21 | 26 | 31)
-    )
-    .then_some(audio_transport::Offer {
+    let sounds = permission(wram)?;
+    let offer = offer.then_some(audio_transport::Offer {
         cue: CueId::ShaftExplosion,
         allowance: CueAllowance::Six,
-        permission: if row == HALL {
+        permission: if sounds == Sounds::Disabled {
             OfferPermission::Disabled
         } else {
             OfferPermission::Enabled
         },
     });
-    Ok(observations(
-        permission(wram)?,
-        &queue,
-        &progress,
-        offer,
-        request,
-    ))
+    Ok(observations(sounds, &queue, &progress, offer, request))
 }
 
 fn actual(run: &Run<'_>, offer: Option<audio_transport::Offer>) -> ExpectedCut {
@@ -246,7 +216,11 @@ pub(in crate::replay) fn run(
 ) -> Result<(), Outcome> {
     let lock = read_lock(sources)?;
     let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(SEED)?;
+    let Start::PlayedContinuation { seed, frame } = case.start else {
+        return Err(data_failure(None, "shaft sound continuation start"));
+    };
+    let last = case.end.cut_inclusive;
+    let mut previous = rows.record(seed)?;
     let mut controller = seed_controller(&previous)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
@@ -255,13 +229,13 @@ pub(in crate::replay) fn run(
     let mut live = Run::for_case(&previous, &content, sources, case)?;
     let mut pending = None;
     compared(
-        SEED,
-        &expected(&previous.wram, (ORIGIN, SEED), SEED)?.fields,
+        seed,
+        &expected(&previous.wram, false, seed)?.fields,
         &actual(&live, None).fields,
     )?;
     let mut digest = Vec::new();
     let replayed = (|| {
-        for cut in SEED.saturating_add(1)..=LAST {
+        for cut in seed.saturating_add(1)..=last {
             let current = rows.record(cut)?;
             if current.video_frame != previous.video_frame.wrapping_add(1) {
                 return Err(data_failure(Some(cut), "played rows join"));
@@ -275,11 +249,21 @@ pub(in crate::replay) fn run(
                 cut,
                 place,
             };
-            let mut restored = (cut > START).then(|| restore(&live, cut)).transpose()?;
+            let mut restored = (cut > frame).then(|| restore(&live, cut)).transpose()?;
             let null = actual(&live, None);
             let outputs = step.advance(&mut live)?;
+            let mut final_offer = false;
             if let Some(restored) = restored.as_mut() {
-                let observed = expected(&current.wram, place, cut)?;
+                if live.witnesses.shaft()?.sound(place).is_none() {
+                    return Err(data_failure(Some(cut), "shaft sender reply trace"));
+                }
+                let visit = super::shaft_native::sound_visit(&previous, &current)?;
+                final_offer = visit == super::shaft_native::Visit::FinalBurst;
+                let observed = expected(
+                    &current.wram,
+                    visit != super::shaft_native::Visit::None,
+                    cut,
+                )?;
                 compared(
                     cut,
                     &observed.fields,
@@ -291,18 +275,31 @@ pub(in crate::replay) fn run(
             }
             if let Some(restored) = pending.as_mut() {
                 step.check_continuation(restored, &live, &outputs)?;
-                if cut == LAST {
+                if cut == last {
                     result.counts.pending_restorations = 1;
                 }
             }
             // The cut leaves two cues queued while the sender waits for a clear reply.
             // Resume across both queued presentations and the final clear.
-            if place == (SHAFT, 31) {
+            if final_offer {
+                let sender = &live.state.shaft_sound.sender;
+                if sender.queue.cues().len() != 2 || sender.progress != SenderProgress::AwaitClear {
+                    return Err(data_failure(Some(cut), "shaft pending sender"));
+                }
                 pending = Some(restore(&live, cut)?);
                 result.counts.pending_boundaries = 1;
             }
             controller = controller.read(current.pad.0, polled(&current));
             previous = current;
+        }
+        if result.counts.pending_restorations != 1
+            || live.state.shaft_sound.sender.progress != SenderProgress::Ready
+            || !live.state.shaft_sound.sender.queue.cues().is_empty()
+        {
+            return Err(data_failure(
+                Some(last),
+                "shaft sender release after pending offer",
+            ));
         }
         Ok(())
     })();

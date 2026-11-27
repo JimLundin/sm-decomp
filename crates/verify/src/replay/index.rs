@@ -1306,7 +1306,8 @@ impl InputProvider {
     const fn uses_played_witnesses(self) -> bool {
         matches!(
             self,
-            Self::PlayedSamusPicture
+            Self::ShaftSetupTurns
+                | Self::PlayedSamusPicture
                 | Self::PlayedCeresInputs
                 | Self::ScopedCeresFlyby
                 | Self::ScopedCeresFightPicture
@@ -2737,12 +2738,12 @@ fn shaft_provider_valid(
 ) -> bool {
     recorded
         && case.kind == CaseKind::Scoped
-        && case.row == super::shaft_entry::ROW
-        && case.start
-            == Start::CacheCut {
-                frame: super::shaft_entry::START,
-            }
-        && case.end.cut_inclusive == super::shaft_entry::END
+        && matches!(case.start, Start::CacheCut { .. })
+        && case.first_cut().is_some_and(|first| {
+            super::played::witnesses::selected(case)
+                .and_then(|data| data.shaft())
+                .is_ok_and(|data| data.entry.covers(&case.row, first, case.end.cut_inclusive))
+        })
         && case.inputs == InputProvider::ShaftSetupTurns
         && case.content == ContentProvider::PlayerRomImport
         && case.checkpoints

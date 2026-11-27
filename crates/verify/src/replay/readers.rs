@@ -36,7 +36,7 @@ pub(super) enum InputReader {
     Playback(CutTape<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
-    ShaftEntry(Vec<game::production::shaft_entry::Opportunity>),
+    ShaftEntry(Tape<game::production::shaft_entry::Opportunity>),
     JumpHistory(Tape<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
@@ -62,7 +62,7 @@ pub(super) enum ExpectedReader {
     RecordedCuts(CutTape<ExpectedCut>),
     Flashback(super::flashback::Expectations),
     SaveFiles(super::save_files::Expected),
-    ShaftEntry(Vec<ExpectedCut>),
+    ShaftEntry(Tape<ExpectedCut>),
     JumpHistory(Tape<ExpectedCut>),
     Discovery(super::discovery::Expectations),
     Departure(super::departure::Tape<ExpectedCut>),
@@ -170,9 +170,7 @@ impl InputReader {
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::ShaftEntry(samples) => production
-                .advance(AdvanceInput::ShaftEntry(*super::shaft_entry::at(
-                    samples, cut,
-                )?))
+                .advance(AdvanceInput::ShaftEntry(*samples.at(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => inputs.advance(production, cut),
@@ -461,11 +459,12 @@ impl ExpectedReader {
         match self {
             Self::Intro(expected) => expected.read(cut),
             Self::Explosion(expected) => expected.read(cut),
-            Self::Blackout(tape) | Self::JumpHistory(tape) => tape.at(cut).cloned(),
+            Self::Blackout(tape) | Self::JumpHistory(tape) | Self::ShaftEntry(tape) => {
+                tape.at(cut).cloned()
+            }
             Self::Flashback(expected) => expected.at(cut),
             Self::RecordedCuts(expected) => expected.at(cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
-            Self::ShaftEntry(tape) => super::shaft_entry::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),
             Self::LandingSite(expected) => match cut {

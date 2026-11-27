@@ -1,5 +1,7 @@
 //! Native writer attribution shared by ordinary play and the indexed providers.
 
+pub(super) mod shaft;
+
 use crate::replay::{data_failure, result::Outcome};
 use game::state::video::OAM_SPRITES;
 use serde::{Deserialize, Serialize};
@@ -8,25 +10,32 @@ use serde::{Deserialize, Serialize};
 #[serde(deny_unknown_fields)]
 pub(in crate::replay) struct Witnesses {
     room_video: Option<super::room_video::RoomVideoWitnesses>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    shaft: Option<shaft::Shaft>,
     samus_body: Vec<BodyTrace>,
     pub(super) ribs: Vec<RowWindow>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct RowWindow {
-    row: String,
-    first: u64,
-    last: u64,
+pub(in crate::replay) struct RowWindow {
+    pub(in crate::replay::played) row: String,
+    pub(in crate::replay::played) first: u64,
+    pub(in crate::replay::played) last: u64,
 }
 
 impl RowWindow {
-    pub(super) fn covers(&self, row: &str, first: u64, last: u64) -> bool {
+    pub(in crate::replay) fn covers(&self, row: &str, first: u64, last: u64) -> bool {
         self.row == row && self.first <= first && first <= last && last <= self.last
     }
 
     pub(super) fn contains(&self, (row, cut): (&str, u64)) -> bool {
         self.covers(row, cut, cut)
+    }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.row == other.row && self.first.max(other.first) <= self.last.min(other.last)
     }
 
     pub(super) const fn valid(&self) -> bool {
@@ -71,6 +80,7 @@ impl Witnesses {
         self.room_video
             .as_ref()
             .is_none_or(super::room_video::RoomVideoWitnesses::valid)
+            && self.shaft.as_ref().is_none_or(shaft::Shaft::valid)
             && self.ribs.iter().all(RowWindow::valid)
             && self.samus_body.iter().enumerate().all(|(index, trace)| {
                 !trace.row.is_empty()
@@ -96,6 +106,17 @@ impl Witnesses {
                     .as_ref()
             })
             .ok_or_else(|| data_failure(None, "historical room video witnesses"))
+    }
+
+    pub(in crate::replay) fn shaft(&self) -> Result<&shaft::Shaft, Outcome> {
+        self.shaft
+            .as_ref()
+            .or_else(|| {
+                crate::replay::legacy_packets::played_witnesses()?
+                    .shaft
+                    .as_ref()
+            })
+            .ok_or_else(|| data_failure(None, "historical shaft witnesses"))
     }
 
     pub(super) fn body(&self, row: &str, first: u64, last: u64) -> Option<&BodyTrace> {

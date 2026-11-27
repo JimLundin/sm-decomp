@@ -12,8 +12,6 @@ use interface_hud::{Dropped, NewArea, OutOfPlayInputs};
 use types::Parts as _;
 use world_doors::{Activity, Doors, FadeTime, Finishing, Inputs, Passage, Phase, Scene};
 
-const ROW: &str = "chain-any-0006-E0B5";
-
 #[test]
 #[ignore = "pinned record cache and player ROM"]
 fn native_return_darkening() -> Result<(), Outcome> {
@@ -22,8 +20,11 @@ fn native_return_darkening() -> Result<(), Outcome> {
 
 fn prove(sources: &Sources) -> Result<(), Outcome> {
     let lock = super::read_lock(sources)?;
-    let mut rows = super::open_rows(sources, &lock, ROW)?;
-    let mut previous = rows.record(1610)?;
+    let witnesses = super::witnesses::read(super::lock_root(sources)?)?;
+    let fade = &witnesses.shaft()?.return_fade;
+    let window = &fade.window;
+    let mut rows = super::open_rows(sources, &lock, &window.row)?;
+    let mut previous = rows.record(window.first.saturating_sub(1))?;
     let (door, mut scene) = origin(&previous, sources)?;
     let mut production = admit(Doors::Passing(Passage::START), &scene)?;
     let mut physical: Vec<_> = previous.cgram.to_vec();
@@ -34,7 +35,7 @@ fn prove(sources: &Sources) -> Result<(), Outcome> {
     let mut restored: Option<(Doors, Scene, super::return_timing::ReturnTiming)> = None;
     let mut early = 0_usize;
     let mut prepared = 0_usize;
-    for cut in 1611..=1657 {
+    for cut in window.first..=window.last {
         let current = rows.record(cut)?;
         let publishes = super::finished(&current);
         let ready = timing.ready(
@@ -108,16 +109,14 @@ fn prove(sources: &Sources) -> Result<(), Outcome> {
             &physical,
             exports.report,
             complete,
+            fade,
         )?;
-        prepared = prepared.saturating_add(usize::from(cut >= 1613 && complete));
+        prepared = prepared.saturating_add(usize::from(cut >= fade.first_palette && complete));
         early = early.saturating_add(usize::from(ready && !publishes));
         previous = current;
     }
-    assert_eq!(early, 5);
-    assert_eq!(prepared, 20);
-    super::tests::diagnostic(format_args!(
-        "RETURN FADE 47 matched cuts; 5 ready before publication; 20 prepared and 45 physical palette comparisons"
-    ));
+    assert_eq!(early, fade.interrupted);
+    assert_eq!(prepared, fade.prepared);
     Ok(())
 }
 
@@ -135,6 +134,7 @@ fn compare(
     physical: &[u16],
     report: world_doors::Report,
     complete: bool,
+    fade: &super::witnesses::shaft::Fade,
 ) -> Result<(), Outcome> {
     let expected_phase = match read(&current.wram, 0x099c)? {
         0xe29e => Phase::Quieting { asked: true },
@@ -169,11 +169,11 @@ fn compare(
         "movement.position",
         scene.her == movement::seed(&current.wram)?.position,
     )?;
-    if cut < 1613 {
+    if cut < fade.first_palette {
         return check(
             cut,
             "doors.timer-draw",
-            report.runs[Activity::Timer] == (cut == 1612),
+            report.runs[Activity::Timer] == (cut == fade.timer_draw),
         );
     }
     let expected = colours::palette(&current.wram)?;

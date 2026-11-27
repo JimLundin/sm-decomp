@@ -1,6 +1,7 @@
 //! Carry the return hall into the locked shaft and compare the selected C1 picture.
 
-use super::{HALL, SHAFT, word};
+use super::word;
+use crate::replay::played::room_video::{Lane, Picture};
 use crate::replay::{
     Sources, appearance,
     blackout::{observe::oam_bytes, standing::packed_oam},
@@ -18,21 +19,9 @@ use crate::replay::{
 use game::production::played::{room_video::RoomVideo, shaft::ShaftEffects};
 use oracle_record::FrameRecord;
 
-const FIRST: u64 = 225;
-const LAST: u64 = 518;
-const HALL_PREPARES: u64 = 239;
-const HALL_PUBLISHES: u64 = 240;
-const LOCKED_PREFIX: usize = 24;
-
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
-        && case.row == HALL
-        && case.start
-            == (Start::PlayedContinuation {
-                seed: 0,
-                frame: FIRST - 1,
-            })
-        && case.end.cut_inclusive == LAST
+        && matches!(case.start, Start::PlayedContinuation { .. })
         && case.responsibilities == [Responsibility::ShaftPicture]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -86,12 +75,47 @@ fn held(cut: u64, field: &str, matches: bool) -> Result<(), Outcome> {
     }
 }
 
+struct Selection<'a> {
+    writer: Option<&'a Picture>,
+    prepared_prefix: u8,
+    overlay_pieces: u8,
+    locked_prefix: usize,
+    locked: bool,
+    suspended: bool,
+}
+
+impl<'a> Selection<'a> {
+    fn at(
+        witnesses: &'a crate::replay::played::witnesses::Witnesses,
+        place: (&str, u64),
+        previous: &FrameRecord,
+        current: &FrameRecord,
+        cut: u64,
+    ) -> Result<Self, Outcome> {
+        let shaft = witnesses.shaft()?;
+        if !shaft.actors(place) {
+            return Err(data_failure(Some(cut), "shaft picture actor trace"));
+        }
+        let writers = witnesses.room_video()?;
+        Ok(Self {
+            writer: writers.picture(place),
+            prepared_prefix: shaft.prepared_prefix,
+            overlay_pieces: writers.overlay_pieces,
+            locked_prefix: usize::from(shaft.locked_prefix),
+            locked: shaft.elevator.contains(place)
+                && matches!(word(previous, 0x0998)?, 32 | 33)
+                && matches!(word(current, 0x0998)?, 32 | 33),
+            suspended: crate::replay::blackout::final_room_overrun(previous, current),
+        })
+    }
+}
+
 fn picture(
     room: &RoomVideo,
     prior: &RoomVideo,
     current: &FrameRecord,
     cut: u64,
-    (row, local): (&str, u64),
+    selected: &Selection<'_>,
     retained: usize,
 ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
     let video = &room.video;
@@ -121,49 +145,61 @@ fn picture(
             slots,
         )
     };
-    Ok(match (row, local) {
-        (HALL, HALL_PREPARES) => {
+    let prefix = usize::from(selected.prepared_prefix);
+    Ok(match selected.writer {
+        Some(Picture::Prepare) => {
             held(
                 cut,
                 "shaft-picture.pending-cursor",
                 word(current, 0x0590)? == video.batch.sprites.0.saturating_mul(4)
-                    && video.batch.sprites.0 == 16,
+                    && video.batch.sprites.0 == u16::from(selected.prepared_prefix),
             )?;
-            vec![pending("shaft-picture.prepared-prefix", 0..16)?]
+            vec![pending("shaft-picture.prepared-prefix", 0..prefix)?]
         }
-        (HALL, HALL_PUBLISHES) => {
+        Some(Picture::Publish) => {
             held(
                 cut,
                 "shaft-picture.consumed-cursor",
                 video.batch.sprites.0 == 0,
             )?;
-            vec![published("shaft-picture.published-prefix", 0..16)?]
+            vec![published("shaft-picture.published-prefix", 0..prefix)?]
         }
-        (HALL, 241 | 256) => vec![pending("shaft-picture.pending-first-effect", 0..1)?],
-        (HALL, 243) => vec![published("shaft-picture.published-first-effect", 0..1)?],
-        (SHAFT, 0 | 1 | 28) => {
-            let first: usize = match local {
-                0 => 23,
-                1 => 24,
-                _ => 29,
-            };
+        Some(Picture::FirstEffect { lane, slot }) => {
+            let first = usize::from(*slot);
+            let span = first..first.saturating_add(1);
+            vec![match lane {
+                Lane::Prepared => pending("shaft-picture.pending-first-effect", span)?,
+                Lane::Published => published("shaft-picture.published-first-effect", span)?,
+            }]
+        }
+        Some(Picture::Overlay { slot }) => {
+            let first = usize::from(*slot);
             vec![pending(
                 "shaft-picture.overlay-after-effects",
-                first..first.saturating_add(12),
+                first..first.saturating_add(usize::from(selected.overlay_pieces)),
             )?]
         }
-        (SHAFT, 165..=239) => {
+        None if selected.locked => {
             let mut observations = vec![
-                pending("shaft-picture.pending-locked-prefix", 0..LOCKED_PREFIX)?,
-                published("shaft-picture.published-locked-prefix", 0..LOCKED_PREFIX)?,
+                pending(
+                    "shaft-picture.pending-locked-prefix",
+                    0..selected.locked_prefix,
+                )?,
+                published(
+                    "shaft-picture.published-locked-prefix",
+                    0..selected.locked_prefix,
+                )?,
             ];
-            if retained > LOCKED_PREFIX {
+            if retained > selected.locked_prefix {
                 observations.extend([
-                    pending("mounted-vent.pending-oam", LOCKED_PREFIX..retained)?,
-                    published("mounted-vent.published-oam", LOCKED_PREFIX..retained)?,
+                    pending("mounted-vent.pending-oam", selected.locked_prefix..retained)?,
+                    published(
+                        "mounted-vent.published-oam",
+                        selected.locked_prefix..retained,
+                    )?,
                 ]);
             }
-            if local == 239 {
+            if selected.suspended {
                 held(
                     cut,
                     "shaft-picture.suspended-cursor",
@@ -211,17 +247,27 @@ pub(in crate::replay::played) fn restore<'a>(run: &Run<'a>, cut: u64) -> Result<
     Ok(candidate)
 }
 
-fn check_hall_publication(before: &Run<'_>, after: &Run<'_>, cut: u64) -> Result<(), Outcome> {
+fn check_hall_publication(
+    before: &Run<'_>,
+    after: &Run<'_>,
+    cut: u64,
+    writer: Option<&Picture>,
+) -> Result<(), Outcome> {
     let previous = &before.state.room_video.video;
     let published = &after.state.room_video.video.memory;
-    if cut == HALL_PREPARES {
+    if matches!(writer, Some(Picture::Prepare)) {
         held(
             cut,
             "shaft-picture.physical-hold",
             &previous.memory == published,
         )?;
     }
-    if cut == HALL_PUBLISHES {
+    if matches!(writer, Some(Picture::Publish)) {
+        held(
+            cut,
+            "shaft-picture.pending-publication",
+            before.state.room_video.pending_platform().is_some(),
+        )?;
         let mut batch = previous.batch.clone();
         batch.finalise_oam();
         held(
@@ -262,7 +308,10 @@ pub(in crate::replay) fn run(
 ) -> Result<(), Outcome> {
     let lock = read_lock(sources)?;
     let mut rows = open_rows(sources, &lock, &case.row)?;
-    let mut previous = rows.record(0)?;
+    let Start::PlayedContinuation { seed, frame } = case.start else {
+        return Err(data_failure(None, "shaft picture continuation start"));
+    };
+    let mut previous = rows.record(seed)?;
     let mut controller = seed_controller(&previous)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
@@ -270,10 +319,10 @@ pub(in crate::replay) fn run(
     };
     let mut run = Run::for_case(&previous, &content, sources, case)?;
     run.picture_scope = PictureScope::ShaftActors;
-    let mut retained = LOCKED_PREFIX;
+    let mut retained = usize::from(run.witnesses.shaft()?.locked_prefix);
     let mut digest = Vec::new();
     let proof = (|| -> Result<(), Outcome> {
-        for cut in 1..=LAST {
+        for cut in seed.saturating_add(1)..=case.end.cut_inclusive {
             let current = rows.record(cut)?;
             if current.video_frame != previous.video_frame.wrapping_add(1) {
                 return Err(data_failure(Some(cut), "played rows join"));
@@ -281,11 +330,12 @@ pub(in crate::replay) fn run(
             let (row, local) = rows.place(cut)?;
             let place = (row.as_str(), local);
             let prior = cut.saturating_sub(1);
-            let mut checkpoint = (cut >= FIRST).then(|| restore(&run, prior)).transpose()?;
+            let mut checkpoint = (cut > frame).then(|| restore(&run, prior)).transpose()?;
             let matched = run.step(controller, &previous, &current, cut, place)?;
             if let Some(restored) = &mut checkpoint {
-                check_hall_publication(restored, &run, cut)?;
-                if place.0 == SHAFT && (165..=239).contains(&local) {
+                let selected = Selection::at(run.witnesses, place, &previous, &current, cut)?;
+                check_hall_publication(restored, &run, cut, selected.writer)?;
+                if selected.locked {
                     let art = run
                         .played
                         .shaft_vent_art
@@ -302,7 +352,7 @@ pub(in crate::replay) fn run(
                     &restored.state.room_video,
                     &current,
                     cut,
-                    place,
+                    &selected,
                     retained,
                 )?;
                 frozen.extend(held_picture);
@@ -322,7 +372,7 @@ pub(in crate::replay) fn run(
                     replies: 0,
                 };
                 cuts.restorations = cuts.restorations.saturating_add(1);
-                if cut == HALL_PUBLISHES {
+                if matches!(selected.writer, Some(Picture::Publish)) {
                     cuts.publications = cuts.publications.saturating_add(1);
                     cuts.pending_boundaries = cuts.pending_boundaries.saturating_add(1);
                     cuts.pending_restorations = cuts.pending_restorations.saturating_add(1);
@@ -331,6 +381,12 @@ pub(in crate::replay) fn run(
             }
             controller = controller.read(current.pad.0, polled(&current));
             previous = current;
+        }
+        if result.counts.publications != 1 || result.counts.outputs == 0 {
+            return Err(data_failure(
+                Some(case.end.cut_inclusive),
+                "shaft picture publication witness",
+            ));
         }
         Ok(())
     })();

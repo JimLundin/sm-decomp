@@ -1,6 +1,8 @@
 //! B8 requests compared at the actor turn, including turns that interrupt before publication.
 
-use super::{Frame, Overlay, SHAFT, overlay, word};
+#[cfg(test)]
+use super::SHAFT;
+use super::{Frame, Overlay, overlay, word};
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
 use boss_ceres_ridley::{
     AlternatingLook, BeaconStep, Lights, OverlayTurn, RumbleBurst, RumbleParticle,
@@ -73,17 +75,15 @@ fn burst(
     before: Option<Overlay>,
     after: Overlay,
 ) -> Result<Option<RumbleBurst>, Outcome> {
-    let due = matches!(
-        (before, after),
-        (
-            Some(Overlay::Rumble { wait: 0, .. }),
-            Overlay::Rumble { wait: 4, .. }
-        )
-    );
-    let (particle, centre) = match (due, fresh_particle(frame)?) {
-        (true, Some(spawn)) => spawn,
-        (true, None) if frame.place == (SHAFT, 31) => culled_particle(frame)?,
-        (false, None) => return Ok(None),
+    let visit = super::Visit::observed(before, after);
+    let (particle, centre) = match (visit, fresh_particle(frame)?) {
+        (super::Visit::Burst | super::Visit::FinalBurst, Some(spawn)) => spawn,
+        (super::Visit::FinalBurst, None)
+            if matches!(before, Some(Overlay::Rumble { next: 1, .. })) =>
+        {
+            culled_particle(frame)?
+        }
+        (super::Visit::None, None) => return Ok(None),
         _ => return Err(data_failure(Some(frame.cut), "shaft burst spawn cut")),
     };
     // The queue-call contract is independent of the particle and its eventual retirement.

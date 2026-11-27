@@ -317,6 +317,7 @@ pub(super) fn shaft_background(
 
 /// Compare the completed shaft writes. The interrupted fill's staging bytes belong to T1.
 pub(super) fn compare_shaft_background(
+    trace: &super::witnesses::shaft::Background,
     state: game::production::played::room_tiles::ShaftBackground,
     video: &game::state::video::Video,
     record: &FrameRecord,
@@ -326,7 +327,7 @@ pub(super) fn compare_shaft_background(
         cut,
         field: format!("shaft-entry.{field}"),
     };
-    if (225..=226).contains(&cut) || (228..=278).contains(&cut) {
+    if cut >= trace.effects_from && !trace.interrupted_shadow.contains(&cut) {
         let shadow = record
             .wram
             .get(0x4000..0x4800)
@@ -344,7 +345,7 @@ pub(super) fn compare_shaft_background(
             return Err(difference("bg1-shadow"));
         }
     }
-    if (225..=278).contains(&cut) {
+    if cut >= trace.effects_from {
         let expected = record
             .vram
             .get(0x5880..0x6000)
@@ -353,7 +354,7 @@ pub(super) fn compare_shaft_background(
             return Err(difference("effects"));
         }
     }
-    if (228..=278).contains(&cut) {
+    if cut >= trace.tiles_from {
         let expected = record
             .vram
             .get(0x4800..0x5000)
@@ -391,6 +392,8 @@ mod shaft_background_tests {
             arrival: None,
             slide_frames: 0,
         });
+        let witnesses = rows.witnesses().unwrap();
+        let trace = &witnesses.shaft().unwrap().background;
         let mut background = game::production::played::room_tiles::ShaftBackground::default();
         let Ok(path) = std::env::var("SM_ROM") else {
             return;
@@ -407,7 +410,7 @@ mod shaft_background_tests {
             if background != before {
                 background.install_background(&mut video, &effects).unwrap();
             }
-            compare_shaft_background(background, &video, &current, cut).unwrap();
+            compare_shaft_background(trace, background, &video, &current, cut).unwrap();
             if (225..=227).contains(&cut) {
                 assert_eq!(
                     video.memory.vram.get(0x4800..0x5000),
