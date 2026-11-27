@@ -392,7 +392,7 @@ pub fn header(oracle: crate::OracleId, server_sha256: &str) -> String {
 /// SHA-256 of a file's bytes, `None` if it doesn't exist.
 pub fn file_sha256(path: &Path) -> Option<String> {
     let bytes = std::fs::read(path).ok()?;
-    Some(crate::ladder::hex(&crate::ladder::sha256(&bytes)))
+    Some(crate::ladder::hex(&data::rom::sha256(&bytes)))
 }
 
 /// Row `id`'s facts from the scenario files in `directory` (every `.toml`

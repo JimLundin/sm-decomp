@@ -578,7 +578,7 @@ fn check_rung(
         std::fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))
     };
     let stored = read(ladder.record_path(to))?;
-    let sha = crate::ladder::hex(&crate::ladder::sha256(&stored));
+    let sha = crate::ladder::hex(&data::rom::sha256(&stored));
     if ladder.record_sha256(to) != Some(sha.as_str()) {
         return Err(format!(
             "rung {to}'s record is not the one its manifest lists"
