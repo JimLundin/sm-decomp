@@ -180,9 +180,9 @@ Each step names its owner, what it waits for, and its done-condition.
     measurements. After the reports, the root completes the [coordinator size assessment](#coordinator-size-assessment).
     Size does not change the adversary's verdict; every non-size gate remains mandatory.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
-    together. On the round's branch the root adds one to the model's `rounds`
-    in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
-    domain's `status` when its work starts or ends), deletes the crate's line from
+    together. On the round's branch the root moves a plan domain's `status` in
+    [`docs/architecture/domains.toml`](../architecture/domains.toml) when its work starts or
+    ends, deletes the crate's line from
     `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
     trunk's check refuses a listed crate with none), and regenerates the README
     (`tools report --write`); the integration already carries `played.toml` and the README for

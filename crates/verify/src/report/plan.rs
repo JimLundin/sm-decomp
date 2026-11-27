@@ -76,14 +76,11 @@ impl Milestone {
     }
 }
 
-/// A clean-room model crate and the rounds landed on it.
+/// A clean-room model crate.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Model {
     name: String,
-    /// The rounds landed on it, which the plan records for its readers; no page shows it.
-    #[serde(rename = "rounds")]
-    _rounds: usize,
 }
 
 /// A clean-room domain of the plan.

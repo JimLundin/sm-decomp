@@ -1,11 +1,10 @@
 # The whole-game plan of domains.md (§3 the domains, §4 the waves) as data, for `verify::report`:
 # its domain graph, the milestone the README counts frames over, and the rungs toward it. The root
-# changes it in the commit that lands a round: the model's `rounds` by one, and a domain's
-# `status` when its work starts or its queue empties.
+# changes a domain's `status` in the commit that lands a round when its work starts or its queue
+# empties.
 #
 # [[model]]: a clean-room model crate, `crates/clean/<crate>` (its name with dashes as
-# underscores), with the rounds landed on main. Every model of `verify::report::DOMAINS` has one,
-# and only those.
+# underscores). Every model of `verify::report::DOMAINS` has one, and only those.
 #
 # [[domain]]: a clean-room domain of the plan. `area` is the part of the game it belongs to:
 # samus, weapons, world, enemy, boss, interface, run, game, screens or audio, and the first word of
@@ -33,123 +32,93 @@
 
 [[model]]
 name = "audio-transport"
-rounds = 3
 
 [[model]]
 name = "samus-movement"
-rounds = 32
 
 [[model]]
 name = "world-camera"
-rounds = 7
 
 [[model]]
 name = "run-progress"
-rounds = 8
 
 [[model]]
 name = "interface-hud"
-rounds = 10
 
 [[model]]
 name = "world-blocks"
-rounds = 4
 
 [[model]]
 name = "samus-appearance"
-rounds = 14
 
 [[model]]
 name = "boss-ceres-ridley"
-rounds = 13
 
 [[model]]
 name = "screens-explosion"
-rounds = 1
 
 [[model]]
 name = "screens-blackout"
-rounds = 1
 
 [[model]]
 name = "world-doors"
-rounds = 2
 
 [[model]]
 name = "weapons-projectiles"
-rounds = 2
 
 [[model]]
 name = "enemy-interactions"
-rounds = 2
 
 [[model]]
 name = "samus-health"
-rounds = 3
 
 [[model]]
 name = "world-quake"
-rounds = 2
 
 [[model]]
 name = "world-haze"
-rounds = 1
 
 [[model]]
 name = "game-time"
-rounds = 1
 
 [[model]]
 name = "game-random"
-rounds = 1
 
 [[model]]
 name = "screens-boot"
-rounds = 1
 
 [[model]]
 name = "screens-arrival"
-rounds = 1
 
 [[model]]
 name = "screens-flight"
-rounds = 2
 
 [[model]]
 name = "screens-zebes"
-rounds = 1
 
 [[model]]
 name = "screens-intro"
-rounds = 4
 
 [[model]]
 name = "screens-flashback"
-rounds = 1
 
 [[model]]
 name = "screens-playback"
-rounds = 1
 
 [[model]]
 name = "screens-discovery"
-rounds = 1
 
 [[model]]
 name = "screens-title"
-rounds = 1
 
 [[model]]
 name = "screens-file-select"
-rounds = 1
 
 [[model]]
 name = "screens-options"
-rounds = 1
 
 [[model]]
 name = "save-files"
-rounds = 1
 
 # Wave 0
 

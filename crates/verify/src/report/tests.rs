@@ -83,7 +83,7 @@ fn the_plan_agrees_with_the_rebuilt_domains() {
     let rebuilt = BTreeSet::from(["world-camera"]);
     let plan = |domain: &str| {
         format!(
-            "platform = []\n[[model]]\nname = \"world-camera\"\nrounds = 5\n[[domain]]\n{domain}\
+            "platform = []\n[[model]]\nname = \"world-camera\"\n[[domain]]\n{domain}\
              [milestone]\nname = \"m\"\nmovie = \"any\"\nends = \"any:12\"\nneeds = [\"CAM\"]\n"
         )
     };
@@ -155,7 +155,6 @@ fn a_domain_reads_only_other_domains_of_the_plan() {
             "platform = []
 [[model]]
 name = \"world-camera\"
-rounds = 5
              [[domain]]
 id = \"CAM\"
 name = \"c\"
@@ -270,10 +269,8 @@ impl Fixture {
             "platform = []
 [[model]]
 name = \"world-camera\"
-rounds = 1
              [[model]]
 name = \"samus-movement\"
-rounds = 1
              [[domain]]
 id = \"CAM\"
 name = \"c\"
