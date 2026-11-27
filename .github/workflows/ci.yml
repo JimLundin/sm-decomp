@@ -8,7 +8,7 @@ name: CI
 # Main pushes run Quality only, to refresh its clean build cache. tools/lane/land.py fast-forwards
 # main to a pull request head whose verification passed. verify/** runs verification only.
 # The nightly run does every job cold.
-# Called jobs report as "<caller job> / <job>", for example "verify / content".
+# Called jobs report as "<caller job> / <job>", for example "verify / replay".
 on:
   pull_request:
   push:

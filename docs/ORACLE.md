@@ -235,7 +235,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-check LOCK [BUNDLE CACHE ROW [[--carry-watches] WATCH_PCS]]` | checks that a cached row has the lock's pins, was recorded by the lsnes the oracle would run and the lock's server, and watched the addresses |
-| `ROWS="..." tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
+| `python3 tools/ci/replay_data.py pack SOURCE ROM OUT` | packs `SOURCE/cache` and `SOURCE/native` as the replay data for ci-data |
 
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
 `relock-v2-lsnes/` directory. Capture checks each selected row's pad SHA-256 and length, then
@@ -276,10 +276,10 @@ a native seed in the format-2 bundle. They have no indexed replay cases.
 
 ## 7. Data: the ROM, bundles and the cipher
 
-- **ROM:** unheadered, SHA-1 `da957f0d63d14cb441d215462904c4fa8519c613`, SHA-256
-  `12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72`, at `rom/sm.smc` (ignored).
-  CI decrypts it from the private `JimLundin/ci-data` repository with `SM_ROM_KEY`
-  (`openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000`) and checks the SHA-1.
+- **ROM:** unheadered, at `rom/sm.smc` (ignored), pinned by `ROM_SHA256` in
+  [`tools/ci/replay_data.py`](../tools/ci/replay_data.py), which checks it. CI decrypts it from the
+  private `JimLundin/ci-data` repository with `SM_ROM_KEY`
+  (`openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000`).
 - **The cipher of every data bundle:** AES-256-CBC, PBKDF2 with 200000 iterations and SHA-256; the
   passphrase is the hex SHA-256 of `"sm-decomp-seeds-v1"` followed by the ROM's bytes. Bundles are
   assets of the `ci-data` release; a pin is the ciphertext's SHA-256.
@@ -291,22 +291,20 @@ echo "SHA256  b.enc" | sha256sum --check
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -in b.enc | tar -xz -C DATA
 ```
 
-- **The relock bundle** `relock-v2-lsnes-c5db2305181b2d46.tar.gz.enc` (SHA-256
-  `6516bc303398e2a9a1403763c7176756d00fe75be7c13b704c696195b9a19c65`), pinned by the `bundles` line
-  of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
-  `.lss` and `.words`, and all 651 rows' `pads/<row>.pads`. These remain independent source assets;
+- **The relock bundle**, pinned by the `bundles` line of `scenarios/locks/lsnes.toml`, unpacks to
+  `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`, `.lss` and `.words`, and all 651 rows'
+  `pads/<row>.pads`. These remain independent source assets;
   indexed replay declares which seed and input formats its admission supports.
-- **The lockstep record cache** `lockstep-cache-19e7684d7ff099ba.tar.xz.enc` (SHA-256
-  `a9e4fa04844821514806259744a55dad7b0d1c32b58fd5a18cd2a4ff8589707f`), pinned in
-  `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  86 MB). The asset retains independent recorded rows and watched causal traces.
+- **The replay data** holds the lockstep record cache under `cache/` and the native fixtures
+  under `native/`, one asset pinned by `ASSET` and `ASSET_SHA256` in
+  [`tools/ci/replay_data.py`](../tools/ci/replay_data.py). `replay_data.py fetch ROM DEST` installs
+  it. The cache retains independent recorded rows and watched causal traces.
   Replay case metadata selects required rows; admission checks source pins and record coverage.
   Required acceptance runs the complete index rather than former harness floor-file unions.
   Local selection can use the cases whose required sources are available; missing data fails
   the selected case, never silently skips it.
-  Pack it with
-  `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
-  repins it.
+  `replay_data.py pack` makes a new asset from a new cache or fixture; a new asset is a commit
+  that repins it.
 - Only the root uploads (`timeout 600 gh release upload ci-data FILE`). Nothing unencrypted and
   ROM-derived is ever committed or uploaded; logs carry ids, frames, field names and hashes.
 

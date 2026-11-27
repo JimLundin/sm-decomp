@@ -87,12 +87,12 @@ jobs:
         run: '"$RUNNER_TEMP/fault-tools/bin/python" -m unittest discover -s tools -p "test_*mutants.py"'
       - name: Test the movie input import
         run: python3 -m unittest discover -s tools -p test_movie_inputs.py
-      - name: Test native fixture qualification and publication
-        run: python3 -m unittest discover -s tools/ci -p test_publish_native_fixture.py
       - name: Test the oracle capture tools
         run: SM_TOOLS="$PWD/target/debug/tools" python3 -m unittest discover -s tools/oracle -p "test_*.py"
       - name: Test clean cargo cache retention
         run: python3 -m unittest discover -s tools/ci -p test_retain_cargo_caches.py
+      - name: Test the replay data install
+        run: python3 -m unittest discover -s tools/ci -p test_replay_data.py
       - name: Test the landing tool
         run: python3 -m unittest discover -s tools/lane -p test_land.py
       - name: Save the cargo registry and the build

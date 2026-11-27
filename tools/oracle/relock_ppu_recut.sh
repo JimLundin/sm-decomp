@@ -120,7 +120,7 @@ while read -r capture index; do
     cp "$work/seeds/$capture/$index.record" "$work/relock-v2-lsnes/seeds/$capture/$index.record"
 done < "$work/logs/targets.txt"
 
-# Deterministic, as tools/ci/pack_lockstep_cache.sh; through stdout, since GNU
+# Deterministic, as tools/ci/replay_data.py packs; through stdout, since GNU
 plain=$work/relock-v2-lsnes.tar.gz
 (cd "$work" && tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
     --mode=u+rw,go-w,a+rX -cf - relock-v2-lsnes) | gzip -n -9 > "$plain"
