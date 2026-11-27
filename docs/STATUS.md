@@ -679,6 +679,10 @@ Install the encrypted [sender offer fixture](../tools/ci/fetch_sender_offers.sh)
 with `bash tools/ci/fetch_sender_offers.sh "$ROM" "$NATIVE"`, then select
 `--rule audio-transport/OfferAcceptance --native "$NATIVE"` in the shared replay command.
 
+The index's sender `[[native_packet]]` pins the ingress and FIFO files, their source capture
+and window count. Its `simultaneous` entries declare the group and cue order at shared cuts.
+Native touchdown cases use the same packet to join their Contact offer to its FIFO observation.
+
 Each recorded case admits one group's independent starting queue and progress and the
 borrowed offer from `inputs.toml`. It plays one frame through production's audio owner with that
 offer and a cadence of no audio turn and no service: the window's bracket holds no service of the
