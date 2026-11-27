@@ -132,7 +132,7 @@ struct Presentation {
     at: Instant,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Alias {
     group: u8,

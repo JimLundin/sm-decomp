@@ -63,7 +63,7 @@ pub(super) enum ExpectedReader {
     Movement { cache: Box<Cache>, row: String },
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub(super) enum ActualReader {
     Explosion,
     Blackout(bool),

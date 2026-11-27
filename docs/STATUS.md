@@ -31,6 +31,12 @@ writes safe TOML receipts containing IDs, counts, field names and hashes, not RO
 Local case selection is useful diagnosis; required acceptance runs the complete index, with no
 automatic reseed after a failure.
 
+The shared replay runner opens each saved checkpoint. When a restored run reaches the next
+checkpoint at the same cut, it can use one continuation for both saves if the complete
+production state, context and observation reader agree. Both saves earn restoration credit
+only after that continuation reaches its reviewed end or unsupported boundary. Checkpoints
+whose state or reader differs replay their own remaining cuts.
+
 ## Frames played alone
 
 The rung measure is the number of cuts a room plays alone from its seed.

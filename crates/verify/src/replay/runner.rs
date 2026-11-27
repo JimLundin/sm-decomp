@@ -184,7 +184,7 @@ pub(super) fn run(
             actual: &actual,
             schedule: &schedule,
         },
-        checkpoints,
+        &checkpoints,
         stop.as_ref(),
         result,
     )?;
@@ -206,7 +206,7 @@ struct CheckpointProof<'a> {
 
 fn verify_checkpoints(
     proof: CheckpointProof<'_>,
-    checkpoints: Vec<CutCheckpoint>,
+    checkpoints: &[CutCheckpoint],
     stop: Option<&(u64, Outcome)>,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
@@ -218,21 +218,42 @@ fn verify_checkpoints(
         actual,
         schedule,
     } = proof;
-    for (start, saved, mut restored_actual) in checkpoints {
-        let failed = Outcome::CheckpointFailure { cut: start };
-        let mut restored = Production::restore(&saved, content.clone(), rules.clone())
+    let mut joined = std::collections::BTreeMap::new();
+    for (index, (start, saved, projection)) in checkpoints.iter().enumerate() {
+        if let Some(pending) = joined.remove(&index) {
+            credit_restoration(result, pending)?;
+            continue;
+        }
+        let mut restored_actual = projection.clone();
+        let failed = Outcome::CheckpointFailure { cut: *start };
+        let mut restored = Production::restore(saved, content.clone(), rules.clone())
             .map_err(|_| failed.clone())?;
         let pending_save = pending_write(&restored);
         let compared_suffix = schedule
             .iter()
-            .filter(|cut| **cut > start)
+            .filter(|cut| *cut > start)
             .take_while(|cut| stop.is_none_or(|(end, _)| *cut != end));
+        let mut later = checkpoints
+            .iter()
+            .enumerate()
+            .skip(index.saturating_add(1))
+            .peekable();
         for cut in compared_suffix {
             let resumed = reader.execute(&mut restored, &mut restored_actual, *cut);
             if stop.is_some() {
                 resumed.map_err(|_| failed.clone())?;
             } else {
                 resumed?;
+            }
+            if let Some((ordinal, (_, next_save, next_actual))) =
+                later.next_if(|(_, (at, _, _))| at == cut)
+                && &restored_actual == next_actual
+                && let Ok(next) = Production::restore(next_save, content.clone(), rules.clone())
+                && next == restored
+            {
+                joined.insert(ordinal, pending_write(&next));
+                restored = next;
+                restored_actual = next_actual.clone();
             }
         }
         if let Some((cut, direct_outcome)) = stop {
@@ -249,12 +270,16 @@ fn verify_checkpoints(
         {
             return Err(failed);
         }
-        if pending_save {
-            count(&mut result.counts.pending_restorations, 1)?;
-        }
-        count(&mut result.counts.restorations, 1)?;
+        credit_restoration(result, pending_save)?;
     }
     Ok(())
+}
+
+fn credit_restoration(result: &mut CaseResult, pending: bool) -> Result<(), Outcome> {
+    if pending {
+        count(&mut result.counts.pending_restorations, 1)?;
+    }
+    count(&mut result.counts.restorations, 1)
 }
 
 fn pending_write(production: &Production) -> bool {
@@ -371,6 +396,65 @@ mod tests {
         );
         assert_eq!(partial.counts, complete.counts);
         assert_eq!(partial.observation_sha256, complete.observation_sha256);
+    }
+
+    #[test]
+    fn a_divergent_checkpoint_runs_its_own_suffix_in_capture_order() {
+        use super::{CheckpointProof, CutReader, capture_checkpoint, verify_checkpoints};
+        use crate::replay::readers::ActualReader;
+        use crate::replay::result::Counts;
+
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let find = |name| index.cases.iter().find(|case| case.id.0 == name).unwrap();
+        let case = find("sender-offer/ordered-pair");
+        let sources = Sources::default();
+        let mut admitted = admission::admit(case, &sources).unwrap();
+        let other = admission::admit(find("sender-offer/deny-smaller-limit"), &sources).unwrap();
+        let reader = CutReader {
+            case,
+            inputs: &admitted.inputs,
+            expected: &admitted.expected,
+        };
+        let mut checkpoints = Vec::new();
+        for cut in 0..3 {
+            reader
+                .execute(&mut admitted.production, &mut admitted.actual, cut)
+                .unwrap();
+            checkpoints
+                .push(capture_checkpoint(&admitted.production, &admitted.actual, cut).unwrap());
+        }
+        let proof = CheckpointProof {
+            reader: &reader,
+            content: &admitted.content,
+            rules: &admitted.rules,
+            production: &admitted.production,
+            actual: &admitted.actual,
+            schedule: &[0, 1, 2],
+        };
+        let mut result = crate::replay::run(case, &sources);
+        result.counts = Counts::default();
+        verify_checkpoints(proof, &checkpoints, None, &mut result).unwrap();
+        assert_eq!(result.counts.restorations, 3);
+        let original = checkpoints[1].clone();
+        for middle in [
+            capture_checkpoint(&other.production, &admitted.actual, 1).unwrap(),
+            (
+                1,
+                original.1,
+                ActualReader::SenderOffer(audio_transport::SoundGroup::Action),
+            ),
+        ] {
+            checkpoints[1] = middle;
+            result.counts = Counts::default();
+            assert_eq!(
+                verify_checkpoints(proof, &checkpoints, None, &mut result),
+                Err(Outcome::Difference {
+                    cut: 2,
+                    field: "sender.queue".to_owned()
+                })
+            );
+            assert_eq!(result.counts.restorations, 1);
+        }
     }
 
     #[test]
