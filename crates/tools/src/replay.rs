@@ -11,7 +11,7 @@ use verify::replay::{
 
 mod map;
 
-pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       tools replay played ROW START END --cache CACHE --rom ROM --lock LOCK (END may pass ROW into the rows that continue it)\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
+pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       tools replay played ROW START END --cache CACHE --rom ROM --lock LOCK (END may pass ROW into the rows that continue it)\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
 
 struct Options {
     ids: Vec<CaseId>,
@@ -57,7 +57,6 @@ fn options(args: &[String]) -> Result<Options, String> {
                 options.kind = Some(match value.as_str() {
                     "scoped" => CaseKind::Scoped,
                     "integrated" => CaseKind::Integrated,
-                    "movie" => CaseKind::Movie,
                     _ => return Err("unknown scope".to_owned()),
                 });
             }
@@ -394,8 +393,7 @@ mod tests {
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }
-                | Start::ConstructedSenderOffer { .. }
-                | Start::PowerOn => None,
+                | Start::ConstructedSenderOffer { .. } => None,
             },
             end_cut: case.end.cut_inclusive,
             counts: floor.counts.clone(),
@@ -469,7 +467,7 @@ mod tests {
 
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/replay");
         let baseline_path = root.join("baseline.toml");
-        let id = "movie/missing-power-on";
+        let id = "blocks/missing-requests";
         let args = vec![
             "check".to_owned(),
             root.join("index.toml").to_string_lossy().into_owned(),

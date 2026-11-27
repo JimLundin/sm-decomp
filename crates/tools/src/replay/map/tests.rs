@@ -63,10 +63,9 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
 }
 
 /// Every indexed case that reaches the travelled-distance rule, in index order.
-const TRAVEL_CASES: [&str; 5] = [
+const TRAVEL_CASES: [&str; 4] = [
     "movement/D-inherited-cut",
     "integrated/missing-dependency-closure",
-    "movie/missing-power-on",
     "movement/getaway-shove-door",
     "movement/getaway-shove-floor-and-wall",
 ];
@@ -128,10 +127,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             ))
             .map(|view| view.declaration.id.0.as_str())
             .collect::<Vec<_>>(),
-        [
-            "integrated/missing-dependency-closure",
-            "movie/missing-power-on",
-        ]
+        ["integrated/missing-dependency-closure"]
     );
     for case in by_file {
         let by_case = mapping
@@ -190,7 +186,7 @@ fn borrowed_stimuli_are_not_added_to_witnessed_rules_or_expectations() {
 }
 
 #[test]
-fn empty_rule_boundaries_and_native_and_power_on_starts_remain_distinct() {
+fn empty_rule_boundaries_and_native_starts_remain_distinct() {
     let (_, index, mapping, baseline) = fixture();
     let selected = mapping.select(&index, &Selection::default()).unwrap();
     let views = views(&mapping, &baseline, &selected).unwrap();
@@ -198,7 +194,7 @@ fn empty_rule_boundaries_and_native_and_power_on_starts_remain_distinct() {
         .iter()
         .filter(|view| view.declaration.rules.is_empty())
         .collect();
-    assert_eq!(empty.len(), 4);
+    assert_eq!(empty.len(), 3);
     assert!(empty.iter().all(|view| view.declared_relevance.is_empty()
         && view.reviewed_requirement.claim == Claim::Boundary));
     let record = views
@@ -213,12 +209,6 @@ fn empty_rule_boundaries_and_native_and_power_on_starts_remain_distinct() {
         .unwrap();
     assert_eq!(native.coordinates, Coordinates::NativeFixture);
     assert_eq!(native.first_compared_cut, Some(0));
-    let power = views
-        .iter()
-        .find(|view| view.declaration.id.0 == "movie/missing-power-on")
-        .unwrap();
-    assert_eq!(power.coordinates, Coordinates::PowerOn);
-    assert_eq!(power.reviewed_requirement.claim, Claim::Boundary);
 }
 
 #[test]
@@ -378,7 +368,7 @@ fn combined_selectors_intersect_and_unrelated_cases_fail() {
     let selection = Selection {
         ids: vec![
             CaseId("movement/D-inherited-cut".to_owned()),
-            CaseId("movie/missing-power-on".to_owned()),
+            CaseId("integrated/missing-dependency-closure".to_owned()),
         ],
         rule: Some("samus-movement/TravelledDistances".to_owned()),
         path: Some("crates/clean/samus_movement/src/travel.rs".to_owned()),

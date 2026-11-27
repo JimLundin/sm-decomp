@@ -110,8 +110,7 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
             Start::NativeOpportunity { .. }
             | Start::NativeSeed { .. }
             | Start::NativeSenderOffer { .. }
-            | Start::ConstructedSenderOffer { .. }
-            | Start::PowerOn => None,
+            | Start::ConstructedSenderOffer { .. } => None,
         },
         end_cut: case.end.cut_inclusive,
         counts: receipt.counts,

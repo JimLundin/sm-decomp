@@ -518,8 +518,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         | Start::NativeRecord { .. }
         | Start::PlayedContinuation { .. }
         | Start::CacheCut { .. }
-        | Start::NativeSeed { .. }
-        | Start::PowerOn => return Err(data_failure(Some(cut), "sender offer start contract")),
+        | Start::NativeSeed { .. } => {
+            return Err(data_failure(Some(cut), "sender offer start contract"));
+        }
     };
     let content = ProductionContent::Audio(Box::new(audio::Content::silent()));
     let rules = ProductionRules::Audio;

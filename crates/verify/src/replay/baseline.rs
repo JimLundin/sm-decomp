@@ -230,8 +230,7 @@ impl ValidatedBaseline<'_> {
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }
-                | Start::ConstructedSenderOffer { .. }
-                | Start::PowerOn => None,
+                | Start::ConstructedSenderOffer { .. } => None,
             };
             if result.kind != case.kind
                 || result.row != case.row
@@ -589,17 +588,17 @@ observation_schema = "semantic-v1"
 lock = "invented-lock.toml"
 
 [[case]]
-id = "movie/invented"
-kind = "movie"
+id = "blocks/invented"
+kind = "scoped"
 row = "invented-row"
-start = { source = "power-on" }
+start = { source = "cache-cut", frame = 0 }
 end = { cut_inclusive = 1 }
-rules = ["samus-movement/TravelledDistances"]
+rules = []
 profile = "reference"
-responsibilities = ["movement", "audio"]
+responsibilities = ["blocks"]
 content = "player-rom-import"
-inputs = "movie"
-expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
+inputs = "unavailable"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
 checkpoints = false
 limits = ["invented scope A"]
 "#;

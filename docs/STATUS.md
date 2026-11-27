@@ -781,15 +781,14 @@ Borrowed providers, phases, fields and limits stay in the declaration and do not
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
 The default query shows all indexed cases, including three empty-rule boundaries with empty code
-links. A travel-file query includes the scoped witness and the integrated and movie held
-Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
+links. A travel-file query includes the scoped witness and the integrated held Unsupported
+boundary. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.
 
 Cache cuts are local to the named record row: W15 starts at cut 814 and compares cuts 815
 through 817 of `item-morph-ball`. Native seeds and records use native fixture coordinates:
 `audio/native-control` compares fixture cuts 0 through 183, and the Ceres tail record's case
-compares cuts 993 and 994 after its cut-992 origin. Power-on starts have their own coordinate
-family. The report exposes
+compares cuts 993 and 994 after its cut-992 origin. The report exposes
 the index's lock path and source declarations; it supplies no movie-global offset conversion.
 
 ## Carried ordinary movement, appearance and camera

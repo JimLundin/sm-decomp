@@ -408,21 +408,6 @@ checkpoints = false
 limits = ["independent complete block seed and ordered reaction requests unavailable", "boundary holds unsupported; no behaviour Pass"]
 
 [[case]]
-id = "doors/missing-passage-inputs"
-kind = "scoped"
-row = "chain-any-0003-DFD7"
-start = { source = "cache-cut", frame = 0 }
-end = { cut_inclusive = 1 }
-rules = []
-profile = "reference"
-responsibilities = ["doors"]
-content = "player-rom-import"
-inputs = "unavailable"
-expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
-checkpoints = false
-limits = ["independent complete passage seed and opportunity-time inputs unavailable", "boundary holds unsupported; no behaviour Pass"]
-
-[[case]]
 id = "audio-sender/missing-service-inputs"
 kind = "scoped"
 row = "chain-any-0003-DFD7"
@@ -463,21 +448,6 @@ profile = "reference"
 responsibilities = ["movement", "audio"]
 content = "player-rom-import"
 inputs = "preceding-cut-movement-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
-checkpoints = false
-limits = ["complete production dependency closure unavailable", "boundary holds unsupported; no behaviour Pass"]
-
-[[case]]
-id = "movie/missing-power-on"
-kind = "movie"
-row = "chain-any-0003-DFD7"
-start = { source = "power-on" }
-end = { cut_inclusive = 1 }
-rules = ["samus-movement/TravelledDistances"]
-profile = "reference"
-responsibilities = ["movement", "audio"]
-content = "player-rom-import"
-inputs = "movie"
 expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
 checkpoints = false
 limits = ["complete production dependency closure unavailable", "boundary holds unsupported; no behaviour Pass"]

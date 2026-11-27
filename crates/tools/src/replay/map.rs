@@ -209,7 +209,6 @@ enum Coordinates {
     WithinVideoNativeOpportunity,
     NativeSenderOfferCut,
     ConstructedSenderOfferCut,
-    PowerOn,
 }
 
 const fn coordinates(case: &Case) -> Coordinates {
@@ -219,7 +218,6 @@ const fn coordinates(case: &Case) -> Coordinates {
         Start::NativeSeed { .. } | Start::NativeRecord { .. } => Coordinates::NativeFixture,
         Start::NativeSenderOffer { .. } => Coordinates::NativeSenderOfferCut,
         Start::ConstructedSenderOffer { .. } => Coordinates::ConstructedSenderOfferCut,
-        Start::PowerOn => Coordinates::PowerOn,
     }
 }
 

@@ -62,9 +62,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             [Responsibility::Blocks] => {
                 "independent complete block seed and ordered reaction requests"
             }
-            [Responsibility::Doors] => {
-                "independent complete passage seed and opportunity-time inputs"
-            }
             [Responsibility::AudioSender] => {
                 "independent CPU sender seed and ordered queue/service inputs"
             }
@@ -76,12 +73,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         return Err(Outcome::Unsupported {
             cut: None,
             dependency: dependency.to_owned(),
-        });
-    }
-    if case.kind == super::index::CaseKind::Movie {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "complete production power-on and movie input pipeline".to_owned(),
         });
     }
     match case.responsibilities.as_slice() {

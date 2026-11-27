@@ -31,7 +31,7 @@ if bash tools/ci/replay.sh; then exit 1; else status=$?; fi
 export REPLAY_METADATA_STATUS=23 REPLAY_TEST_STATUS=0
 if bash tools/ci/replay.sh; then exit 1; else status=$?; fi
 [ "$status" = 23 ]
-export REPLAY_METADATA_STATUS=0 REPLAY_TEST_CASE=movie/missing-power-on
+export REPLAY_METADATA_STATUS=0 REPLAY_TEST_CASE=blocks/missing-requests
 bash tools/ci/replay.sh --case "$REPLAY_TEST_CASE"
 export REPLAY_TEST_STATUS=19
 if bash tools/ci/replay.sh --case "$REPLAY_TEST_CASE"; then exit 1; else status=$?; fi

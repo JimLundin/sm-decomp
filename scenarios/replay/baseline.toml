@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "433a8c9009017f626fafe1302c18b820a0ddf6e85126e943bfe381f049f7c94f"
+index_sha256 = "51f82c9fcfd67840fb614d487b29a735b50ce26f5861919734a149bc660bad16"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -218,24 +218,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "doors/missing-passage-inputs"
-claim = "boundary"
-expected = { status = "unsupported", dependency = "independent complete passage seed and opportunity-time inputs" }
-observation_sha256 = ""
-
-[case.counts]
-cuts = 0
-fields = 0
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "audio-sender/missing-service-inputs"
 claim = "boundary"
 expected = { status = "unsupported", dependency = "independent CPU sender seed and ordered queue/service inputs" }
@@ -275,24 +257,6 @@ pending_restorations = 0
 id = "integrated/missing-dependency-closure"
 claim = "boundary"
 expected = { status = "unsupported", dependency = "complete integrated production dependency closure" }
-observation_sha256 = ""
-
-[case.counts]
-cuts = 0
-fields = 0
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "movie/missing-power-on"
-claim = "boundary"
-expected = { status = "unsupported", dependency = "complete production power-on and movie input pipeline" }
 observation_sha256 = ""
 
 [case.counts]

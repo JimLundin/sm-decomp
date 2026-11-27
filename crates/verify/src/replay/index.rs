@@ -24,8 +24,6 @@ pub enum CaseKind {
     Scoped,
     /// Selected owners and their production dependency closure.
     Integrated,
-    /// Power-on play using movie inputs.
-    Movie,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -143,8 +141,6 @@ pub enum Start {
         /// Exact fixture SHA-256.
         sha256: String,
     },
-    /// Power-on start without borrowed record state.
-    PowerOn,
 }
 
 /// A constructed offer window over one sender queue before its next service.
@@ -280,8 +276,6 @@ pub enum InputProvider {
     SenderOffers,
     /// Each frame's offers and audio cadence, from the native capture's port log.
     NativeFrameInputs,
-    /// Power-on play using movie inputs.
-    Movie,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -2656,10 +2650,7 @@ fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId
     case.kind == CaseKind::Scoped
         && matches!(
             case.responsibilities.as_slice(),
-            [Responsibility::Blocks
-                | Responsibility::Doors
-                | Responsibility::AudioSender
-                | Responsibility::Appearance]
+            [Responsibility::Blocks | Responsibility::AudioSender | Responsibility::Appearance]
         )
         && case.rules.is_empty()
         && observations.is_empty()
@@ -2732,7 +2723,6 @@ fn zebes_provider_valid(case: &Case) -> bool {
                 && case.expectations.fields == INTEGRATED_FIELDS
                 && case.expectations.outputs == INTEGRATED_OUTPUTS
         }
-        CaseKind::Movie => false,
     };
     supported
         && case.content == ContentProvider::PlayerRomImport
@@ -3040,7 +3030,6 @@ fn start_valid(case: &Case) -> bool {
         Start::ConstructedSenderOffer { control } => {
             control.valid() && case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
         }
-        Start::PowerOn => case.kind == CaseKind::Movie && case.borrowed.is_empty(),
     }
 }
 
@@ -3211,7 +3200,7 @@ impl Case {
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
                 Some(self.end.cut_inclusive)
             }
-            Start::NativeSeed { .. } | Start::PowerOn => Some(0),
+            Start::NativeSeed { .. } => Some(0),
         }
     }
 }
