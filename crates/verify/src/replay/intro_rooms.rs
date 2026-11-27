@@ -29,7 +29,6 @@ use interface_hud::{Ammo, SelectableItem, Selection};
 use types::{Pair, Pose, Position};
 use weapons_projectiles as beam;
 
-pub(super) const GRID_FIELDS: usize = 2 + rooms::BACKED_CELLS * 2;
 pub(super) const ACTOR_FIELDS: usize = 18;
 
 pub(super) fn valid(case: &Case) -> bool {

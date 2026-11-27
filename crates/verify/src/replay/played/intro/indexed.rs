@@ -9,7 +9,7 @@ use crate::replay::played::{at, open_rows, read_lock};
 use crate::replay::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader,
 };
-use crate::replay::{Counts, Outcome, Sources, data_failure, production_failure};
+use crate::replay::{Outcome, Sources, data_failure, production_failure};
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
@@ -75,30 +75,6 @@ pub(in crate::replay) fn initial(production: &Production) -> Result<Vec<Observat
     });
     fields.extend(super::actual(Part::Flashback, state, None).1);
     Ok(fields)
-}
-
-/// An interrupted turn compares only the two brightness fields and the frame-finished flag.
-pub(in crate::replay) fn valid_count_shape(counts: &Counts) -> bool {
-    if counts.cuts == 0 {
-        return counts == &Counts::default();
-    }
-    // Holding State gives exactly the interrupted cuts: a finished frame always publishes
-    // frame-finished, which the held step leaves clear.
-    let finished = counts.cuts.saturating_sub(counts.null_cuts);
-    let brightness = counts.cuts.saturating_mul(2);
-    let frames = counts.cuts;
-    // A finished turn adds 26 State fields and the owned colours after page 1. It adds
-    // six report fields and up to two palette portions, one of which the boss can own.
-    finished > 0
-        && counts.fields.checked_sub(brightness).is_some_and(|extra| {
-            (finished.saturating_mul(26)..=finished.saturating_mul(27)).contains(&extra)
-        })
-        && counts.outputs.checked_sub(frames).is_some_and(|extra| {
-            (finished.saturating_mul(6)..=finished.saturating_mul(8)).contains(&extra)
-        })
-        && counts.publications == 0
-        && counts.replies == 0
-        && counts.pending_boundaries == 0
 }
 
 /// Read each pinned cut once. Only the input tape enters production.

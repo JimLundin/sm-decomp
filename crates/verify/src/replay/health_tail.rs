@@ -26,7 +26,7 @@ mod hud_inputs;
 mod observations;
 #[cfg(test)]
 mod tests;
-pub(super) use observations::{Expected, OUTPUTS_PER_CUT, actual, field_count, initial};
+pub(super) use observations::{Expected, actual, initial};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

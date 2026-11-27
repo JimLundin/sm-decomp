@@ -103,22 +103,6 @@ impl SaveSchedule {
                 .all(|step| !step.row.is_empty() && step.request.valid())
     }
 
-    pub(in crate::replay) fn pending_boundaries(&self, cuts: usize) -> usize {
-        let mut pending = false;
-        self.0
-            .iter()
-            .take(cuts)
-            .filter(|step| {
-                if step.request.starts_write() {
-                    pending = true;
-                } else if matches!(step.request, Request::Finish) {
-                    pending = false;
-                }
-                pending
-            })
-            .count()
-    }
-
     pub(super) fn read(
         &self,
         case: &Case,

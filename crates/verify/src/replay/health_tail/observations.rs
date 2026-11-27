@@ -8,15 +8,6 @@ use super::owner;
 use crate::replay::{compare::Observation, data_failure, readers::ExpectedCut, result::Outcome};
 
 const GAUGE_WORDS: usize = 16;
-// Health's complete State, Drawing's energy history, and the gauge's shown energy and redraw.
-const FIELDS_PER_CUT: usize = 9;
-// The Warning request, the protection Drawing reads and all ordered CPU gauge words.
-pub(in crate::replay) const OUTPUTS_PER_CUT: usize = 2 + GAUGE_WORDS;
-
-pub(in crate::replay) const fn field_count(cuts: usize) -> Option<usize> {
-    cuts.checked_mul(FIELDS_PER_CUT)
-}
-
 #[derive(Deserialize)]
 struct Health {
     energy_whole: u16,

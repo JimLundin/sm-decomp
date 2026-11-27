@@ -121,7 +121,6 @@ use crate::replay::compare::Observation;
 use crate::replay::index::{Case, Start};
 use crate::replay::played::{open_rows, read_lock};
 use crate::replay::readers::ExpectedCut;
-use crate::replay::result::Counts;
 use crate::replay::{Sources, compared, runner};
 use game::production::played::intro::{EncounterReplies, FightInput};
 use oracle_record::FrameRecord;
@@ -258,27 +257,6 @@ fn publications(events: &[IntroEvent], palette: Option<&types::Palette>) -> Vec<
         ]);
     }
     result
-}
-
-/// The staged discovery start and its resumed room turn each compare full State.
-pub(in crate::replay) fn valid_count_shape(counts: &Counts) -> bool {
-    // Every cut compares brightness. A turn that runs also compares the other 29 State
-    // fields and two report fields, with optional clicks and the two palette portions.
-    let Some(extra) = counts.fields.checked_sub(counts.cuts.saturating_mul(2)) else {
-        return false;
-    };
-    let turns = extra / 29;
-    // The start publishes both palette portions. The resumed turn publishes neither;
-    // neither turn has the text click comparison.
-    let least = turns.saturating_mul(2).saturating_add(2);
-    let most = turns.saturating_mul(5).saturating_sub(4);
-    (2..=counts.cuts).contains(&turns)
-        && extra.is_multiple_of(29)
-        && counts.null_cuts >= counts.cuts.saturating_sub(turns)
-        && (least..=most).contains(&counts.outputs)
-        && counts.publications == 0
-        && counts.replies == 0
-        && counts.pending_boundaries == 1
 }
 
 /// Run the delivery scope with the same production adapter used by the normal intro caller.

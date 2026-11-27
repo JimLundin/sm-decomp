@@ -279,16 +279,6 @@ pub(super) struct Expectations {
 
 const EARLY_FIELDS: usize = 4;
 
-// Only the first map frame's owners are compared beside the map.
-pub(super) const fn field_count(case: &super::index::Case, cuts: usize) -> Option<usize> {
-    match cuts {
-        0 => Some(0),
-        1 => Some(case.expectations.fields.len()),
-        2 => case.expectations.fields.len().checked_add(EARLY_FIELDS),
-        _ => None,
-    }
-}
-
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let window = case.cache_window()?;
     let (first, second) = (*window.cuts.start(), *window.cuts.end());

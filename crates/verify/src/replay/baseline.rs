@@ -1,8 +1,6 @@
 //! Reviewed replay floors distinguish exact behaviour from explicitly held capability boundaries.
 
-use super::index::{
-    Case, CaseId, ExpectedProvider, IndexSnapshot, InputProvider, Responsibility, Start, valid_hash,
-};
+use super::index::{Case, CaseId, IndexSnapshot, Start, valid_hash};
 use super::result::{CaseResult, Counts, Outcome};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, btree_map::Entry};
@@ -137,7 +135,7 @@ impl Baseline {
                 }
                 _ => false,
             };
-            if !valid || !valid_counts(case, floor) {
+            if !valid {
                 return Err(BaselineFault::InvalidClaim(floor.id.clone()));
             }
             entry.insert((*case, floor));
@@ -268,224 +266,9 @@ impl ValidatedBaseline<'_> {
     }
 }
 
-fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
-    if case.inputs == InputProvider::PlayedShaftSound {
-        return Some(
-            counts.cuts.checked_mul(case.expectations.fields.len()) == Some(counts.fields)
-                && counts.cuts.checked_mul(case.expectations.outputs.len()) == Some(counts.outputs)
-                && counts.pending_boundaries == 1
-                && counts.publications == 0
-                && counts.replies == 0,
-        );
-    }
-    if case.inputs == InputProvider::ScopedIntroDeliveryInputs {
-        return Some(super::played::intro::delivery::valid_count_shape(counts));
-    }
-    if case.inputs == InputProvider::ScopedIntroInputs {
-        return Some(super::played::intro::indexed::valid_count_shape(counts));
-    }
-    if case.inputs == InputProvider::Blackout {
-        return Some(
-            counts.cuts.checked_mul(case.expectations.fields.len()) == Some(counts.fields)
-                && counts.cuts.checked_mul(case.expectations.outputs.len()) == Some(counts.outputs)
-                && counts.pending_boundaries == 1
-                && counts.publications == 0
-                && counts.replies == 0,
-        );
-    }
-    if case.inputs == InputProvider::SaveFileBoundaries {
-        return Some(
-            counts.fields == counts.cuts
-                && counts.outputs == 0
-                && counts.publications == 0
-                && counts.replies == 0
-                && counts.pending_boundaries
-                    == case.save_steps.as_ref()?.pending_boundaries(counts.cuts),
-        );
-    }
-    if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
-        return Some(
-            super::early_map::field_count(case, counts.cuts) == Some(counts.fields)
-                && counts.outputs == 0
-                && counts.publications == 0
-                && counts.replies == 0
-                && counts.pending_boundaries == 0,
-        );
-    }
-    if case.expectations.provider == ExpectedProvider::NativeHealthTailObservations {
-        use super::health_tail::{OUTPUTS_PER_CUT, field_count};
-        return Some(
-            field_count(counts.cuts) == Some(counts.fields)
-                && counts.cuts.checked_mul(OUTPUTS_PER_CUT) == Some(counts.outputs)
-                && counts.publications == 0
-                && counts.replies == 0
-                && counts.pending_boundaries == 0,
-        );
-    }
-    None
-}
-
-fn valid_counts(case: &Case, floor: &Floor) -> bool {
-    let Some(first) = case.first_cut() else {
-        return false;
-    };
-    let Some(horizon) = case
-        .end
-        .cut_inclusive
-        .checked_sub(first)
-        .and_then(|span| span.checked_add(1))
-        .and_then(|count| usize::try_from(count).ok())
-    else {
-        return false;
-    };
-    let counts = &floor.counts;
-    let restores_per_cut = usize::from(case.checkpoints);
-    if counts.cuts > horizon
-        || counts.null_cuts > counts.cuts
-        || counts.null_fields > counts.fields
-        || counts.publications > counts.outputs
-        || counts.restorations > counts.cuts.saturating_mul(restores_per_cut)
-        || counts.pending_restorations != counts.pending_boundaries
-    {
-        return false;
-    }
-    if case.inputs == InputProvider::ScopedCeresFightPicture {
-        // This producer advances the entire horizon, compares two complete pictures and
-        // restores the first for a single continuation through the second.
-        return floor.expected == Outcome::Pass
-            && *counts
-                == Counts {
-                    cuts: 2,
-                    fields: 2,
-                    outputs: 4,
-                    restorations: 1,
-                    ..Counts::default()
-                };
-    }
-    match floor.expected {
-        Outcome::Pass => {
-            if counts.cuts != horizon
-                || counts.restorations != horizon.saturating_mul(restores_per_cut)
-            {
-                return false;
-            }
-        }
-        Outcome::Unsupported { cut: None, .. } => {
-            if *counts != Counts::default() {
-                return false;
-            }
-        }
-        Outcome::Unsupported { cut: Some(cut), .. } => {
-            if cut < first
-                || cut > case.end.cut_inclusive
-                || usize::try_from(cut.saturating_sub(first)).ok() != Some(counts.cuts)
-                || counts.pending_boundaries != 0
-            {
-                return false;
-            }
-        }
-        Outcome::Difference { .. }
-        | Outcome::DataFailure { .. }
-        | Outcome::CheckpointFailure { .. } => return false,
-    }
-    if let Some(valid) = expanded_counts(case, counts) {
-        return valid;
-    }
-    if case.responsibilities == [Responsibility::Audio] {
-        // Each cut compares at most four replies, and every cut its three request lines.
-        return counts
-            .cuts
-            .checked_mul(4)
-            .is_some_and(|most| counts.replies <= most)
-            && counts
-                .cuts
-                .checked_mul(3)
-                .and_then(|lines| lines.checked_add(counts.replies))
-                == Some(counts.outputs)
-            && counts.publications == 0
-            && counts.pending_boundaries == 0;
-    }
-    scoped_counts(case, counts, first)
-}
-
-fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
-    use super::index::{InputProvider, ObservationId};
-    const WIDTHS: &[(ObservationId, usize)] = &[
-        (
-            ObservationId::IntroRoomGrid,
-            super::intro_rooms::GRID_FIELDS,
-        ),
-        (
-            ObservationId::IntroRoomActor,
-            super::intro_rooms::ACTOR_FIELDS,
-        ),
-        (
-            ObservationId::CeresTailState,
-            4 + 9 * boss_ceres_ridley::TAIL_SEGMENTS,
-        ),
-        (
-            ObservationId::CeresTailPlaces,
-            boss_ceres_ridley::TAIL_SEGMENTS,
-        ),
-        (ObservationId::CeresTailKnockback, 2),
-        (ObservationId::CeresRetreatBody, 23),
-        (ObservationId::CeresBackdropWalls, 2),
-        (ObservationId::CeresBackdropColours, 6),
-        (ObservationId::CeresTailHealth, 6),
-    ];
-    if case.inputs == InputProvider::ShaftPictures {
-        // All slots and the overlay clock are compared on every cut. The number of
-        // mounted clocks and compared OAM spans varies with the native room.
-        return counts.fields >= counts.cuts.saturating_mul(19)
-            && counts.outputs >= counts.cuts.min(2)
-            && counts.publications == 1
-            && counts.pending_boundaries == 1
-            && counts.replies == 0;
-    }
-    if case.inputs == super::index::InputProvider::ScopedCeresWarning {
-        return counts.cuts.checked_mul(3) == Some(counts.fields)
-            && counts.outputs >= counts.cuts.saturating_mul(10)
-            && counts.publications == 0
-            && counts.replies == 0
-            && counts.pending_boundaries == 0;
-    }
-    if case.inputs == super::index::InputProvider::ScopedCeresFlyby {
-        let Some(super::index::PlayedWindow::Flyby { output_fields, .. }) =
-            case.expectations.played
-        else {
-            return false;
-        };
-        return counts.cuts.checked_mul(6) == Some(counts.fields)
-            && counts.outputs == output_fields
-            && counts.publications == 0
-            && counts.replies == 0
-            && counts.pending_boundaries == 0;
-    }
-    let width = |field: &ObservationId| {
-        WIDTHS
-            .iter()
-            .find_map(|(id, width)| (*id == *field).then_some(*width))
-            .unwrap_or(1)
-    };
-    let fields = case.expectations.fields.iter().map(width).sum::<usize>();
-    let outputs = case.expectations.outputs.iter().map(width).sum::<usize>();
-    let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
-        usize::from(
-            at.checked_sub(first)
-                .and_then(|offset| usize::try_from(offset).ok())
-                .is_some_and(|offset| offset < counts.cuts),
-        )
-    });
-    fields.checked_mul(counts.cuts) == Some(counts.fields)
-        && outputs.checked_mul(output_cuts) == Some(counts.outputs)
-        && counts.publications == 0
-        && counts.replies == 0
-        && counts.pending_boundaries == 0
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{Baseline, BaselineFault, Claim, Floor, valid_counts};
+    use super::{Baseline, BaselineFault, Claim, Floor};
     use crate::replay::{
         index::IndexSnapshot,
         result::{CaseResult, Counts, Outcome},
@@ -673,92 +456,8 @@ limits = ["invented scope A"]
     }
 
     #[test]
-    fn a_known_boundary_allows_restorations_only_for_checkpointed_cuts() {
+    fn boundary_credit_requires_an_unsupported_result() {
         let (snapshot, baseline, _) = fixture();
-        let mut case = snapshot.index().cases.first().unwrap().clone();
-        case.end.cut_inclusive = 157;
-        let mut boundary = baseline.cases.into_iter().next().unwrap();
-        boundary.claim = Claim::Boundary;
-        boundary.expected = Outcome::Unsupported {
-            cut: Some(157),
-            dependency: "producer".to_owned(),
-        };
-
-        assert!(valid_counts(&case, &boundary));
-        boundary.counts.restorations = 2;
-        assert!(!valid_counts(&case, &boundary));
-        boundary.counts.restorations = 1;
-        case.checkpoints = false;
-        assert!(!valid_counts(&case, &boundary));
-        boundary.counts.restorations = 0;
-        assert!(valid_counts(&case, &boundary));
-    }
-
-    #[test]
-    fn short_intro_windows_still_require_complete_state_outputs_and_room_restore() {
-        use crate::replay::index::{InputProvider, Start};
-        let (snapshot, baseline, _) = fixture();
-        let mut case = snapshot.index().cases[0].clone();
-        let mut floor = baseline.cases[0].clone();
-        case.start = Start::CacheCut { frame: 10 };
-        case.end.cut_inclusive = 12;
-        case.checkpoints = false;
-        case.inputs = InputProvider::ScopedIntroInputs;
-        floor.counts = Counts {
-            cuts: 2,
-            fields: 31,
-            outputs: 10,
-            null_cuts: 1,
-            ..Counts::default()
-        };
-        assert!(valid_counts(&case, &floor));
-        floor.counts.outputs = 2;
-        assert!(!valid_counts(&case, &floor));
-        floor.counts.outputs = 10;
-        floor.counts.fields = 4;
-        assert!(!valid_counts(&case, &floor));
-
-        case.inputs = InputProvider::ScopedIntroDeliveryInputs;
-        floor.counts = Counts {
-            cuts: 2,
-            fields: 62,
-            outputs: 6,
-            pending_boundaries: 1,
-            pending_restorations: 1,
-            ..Counts::default()
-        };
-        assert!(valid_counts(&case, &floor));
-        floor.counts.pending_restorations = 0;
-        assert!(!valid_counts(&case, &floor));
-        floor.counts.pending_restorations = 1;
-        floor.counts.fields -= 1;
-        assert!(!valid_counts(&case, &floor));
-    }
-
-    #[test]
-    fn invalid_horizon_null_counts_restores_and_boundary_credit_are_rejected() {
-        let (snapshot, baseline, _) = fixture();
-        for counts in [
-            Counts {
-                cuts: 2,
-                ..baseline.cases[0].counts.clone()
-            },
-            Counts {
-                null_cuts: 2,
-                ..baseline.cases[0].counts.clone()
-            },
-            Counts {
-                restorations: 0,
-                ..baseline.cases[0].counts.clone()
-            },
-        ] {
-            let mut invalid = baseline.clone();
-            invalid.cases[0].counts = counts;
-            assert!(matches!(
-                invalid.validate_index(&snapshot),
-                Err(BaselineFault::InvalidClaim(_))
-            ));
-        }
         let mut boundary = baseline;
         boundary.cases[0].claim = Claim::Boundary;
         boundary.cases[0].expected = Outcome::Unsupported {

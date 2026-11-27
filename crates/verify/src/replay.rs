@@ -50,7 +50,7 @@ mod zebes;
 use crate::cache::CacheError;
 use compare::{CompareFault, Observation};
 use index::{Case, Start};
-use result::{CaseResult, Counts, Outcome};
+use result::{CaseResult, Outcome};
 use std::path::{Path, PathBuf};
 
 /// Local and CI supply the same paths; selected cases read only their required pinned data.
