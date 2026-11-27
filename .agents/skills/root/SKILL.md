@@ -74,7 +74,6 @@ For the two confined roles, the brief is also part of the barrier:
 - **Interface a brief adds is named.** An outcome that adds interface (a constructor, a
   `Default`, a new public type) says so in the brief, and you check the next blind read for
   it: a trap the new interface made shows there first.
-- **Scanned.** `tools/cleanroom/scan_brief.sh BRIEF` reports 0 before `launch.sh` takes it.
 
 ## The confined sessions
 
@@ -105,8 +104,9 @@ Confined sessions have no `cleanroom` function or other tool beyond the launch's
 brief names the checks as CLEANROOM.md does (`cargo check --all-targets`,
 `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, with `-p <crate> -p types` to
 narrow a run) and the exact vector-runner command `launch.sh` appends. Before `launch.sh`, put
-the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_brief.sh`; a
-`name` hit is usually an ordinary phrase that matches the lexicon, which rewording clears.
+the toolchain's bin directory on `PATH` (`export.sh` runs cargo). When `launch.sh` refuses a
+brief on a `name` hit, that is usually an ordinary phrase that matches the lexicon, which
+rewording clears.
 
 ## Landing
 

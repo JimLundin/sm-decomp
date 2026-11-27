@@ -3,8 +3,10 @@
 # and, each only when the branch (committed since its base, or in the working tree) changes its
 # subject: the tools' self-tests; verify's lib tests, which hold the README, the report, the
 # played runs and the vectors' pins to the tree; the planted faults' anchors and coverage
-# (tools/check_mutants.py validate, which runs no fault); and the adjusted vectors' rule owners
-# (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test). CI runs the other tests.
+# (tools/check_mutants.py validate, which runs no fault); the adjusted vectors' rule owners
+# (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test); and, for each domain whose
+# spec or vectors change, an adjusted vector for every Parameter entry
+# (tools/cleanroom/adjusted_vectors.sh --gate). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
@@ -92,7 +94,7 @@ fi
 O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 O_resolved=$(cd "$O" && pwd -P)
-checks=(fmt clippy deny crate-rules self-tests doc-links verify-lib faults owners)
+checks=(fmt clippy deny crate-rules self-tests doc-links verify-lib faults owners adjusted)
 cleanup() {
   "${SM_PY:-python3}" - "$O" "$O_resolved" "${checks[@]}" <<'PY'
 import pathlib
@@ -158,6 +160,15 @@ if changed_since "$BASE" tools/cleanroom/adjusted_rule_owners tools/cleanroom/ad
   tools/cleanroom/adjusted_vectors_run.py scenarios/vectors docs/behaviours crates/clean; then
   start owners "${SM_PY:-python3}" -I tools/cleanroom/adjusted_vectors_run.py --owners
 else skip owners; fi
+# The domains whose spec or vectors change, of those that have both.
+mapfile -t domains < <({
+  git diff --name-only --no-renames "$BASE...HEAD" -- docs/behaviours scenarios/vectors
+  git status --porcelain --no-renames --untracked-files=all -- docs/behaviours scenarios/vectors | cut -c4-
+} | sed -nE 's#^docs/behaviours/([^/.]+)\.md$#\1#p; s#^scenarios/vectors/([^/]+)\.toml$#\1#p' | sort -u |
+  while read -r d; do [ -f "docs/behaviours/$d.md" ] && [ -f "scenarios/vectors/$d.toml" ] && echo "$d"; done)
+if [ ${#domains[@]} -gt 0 ]; then
+  start adjusted bash tools/cleanroom/adjusted_vectors.sh --gate "${domains[@]}"
+else skip adjusted; fi
 wait
 
 if ! passed fmt; then
@@ -201,7 +212,11 @@ if ! passed owners; then
   fail "OWNERS FAIL: tools/cleanroom/adjusted_vectors_run.py --owners"
   grep '^adjusted_vectors_run: ' "$O/owners.log" | reason owners
 fi
-for check in verify-lib faults owners; do
+if ! passed adjusted; then
+  fail "ADJUSTED FAIL: tools/cleanroom/adjusted_vectors.sh --gate"
+  grep ' has no adjusted vector$' "$O/adjusted.log" | reason adjusted
+fi
+for check in verify-lib faults owners adjusted; do
   ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since $BASE"
 done
 if [ "$ok" -eq 1 ]; then

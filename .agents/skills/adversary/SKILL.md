@@ -27,15 +27,12 @@ findings it resolves. For a re-gate, review the delta, and check each earlier fi
 2. **Completeness and boundary.** List what the original does in this domain that the spec
    misses, and every behaviour placed in the wrong domain. Done when each is confirmed covered or
    is a finding.
-3. **Leaks.** Run `tools/cleanroom/scan.sh` on the spec and vectors and `scan_brief.sh` on the
-   brief. Then read for **structure** the scans can't see: routine boundaries, call order, internal
+3. **Leaks.** Run `tools/cleanroom/scan.sh` on the spec and vectors. Then read for **structure** the scans can't see: routine boundaries, call order, internal
    flags and modes, enum orders that follow RAM codes, table indexing (the rule is in
    [MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned)). Review every phrase
    the observer added to the scan's allow list. Done when every entry has been read for structure.
 4. **Form and coverage.** Every rule is an arm citing vectors that exist.
-   Every `Parameter` entry has a vector at a value other than the reference one
-   (`tools/cleanroom/adjusted_vectors.sh --gate <domain>`); re-derive a sample of those values
-   as you would a constructed vector's. A missing one stops the spec.
+   Re-derive a sample of the adjusted vectors' values as you would a constructed vector's.
 5. **The brief** asks for what the spec supports and nothing more. It names spec entries and
    shape. Done when each brief item is checked against the spec.
 6. **Verdict:** LAUNCH, LAUNCH AFTER FIXES, or REWORK.

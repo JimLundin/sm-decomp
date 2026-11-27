@@ -6,7 +6,8 @@
 # a cargo or rustfmt configuration outside the tree, a configuration that includes another, a
 # file only an outside ignore rule hides, or a skip-worktree file says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
 # even where git status hides untracked files; and shows a failing check's last lines when its tool prints none of the lines the gate
-# looks for. Run from anywhere; exit 1 lists what went wrong.
+# looks for; and gates the adjusted vectors of each domain whose spec or vectors change.
+# Run from anywhere; exit 1 lists what went wrong.
 here=$(cd "$(dirname "$0")" && pwd)
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
@@ -201,5 +202,17 @@ out=$(gate GATE_TEST_STATUS_verify_lib=1 GATE_TEST_OUT_verify_lib='invented link
 grep -qx 'invented link failure' <<<"$out" || fail "verify's lib tests failed with no reason: $out"
 grep -qx 'invented decode error' <<<"$out" || fail "the owners check failed with no reason: $out"
 
-[ "$bad" -eq 0 ] && echo "GATE TEST OK: a bad base stops it, a clean branch passes and its tree's next gate reuses it, a failed gate isn't reused, an untracked subject runs its check, a failure shows its log"
+# A changed spec or vector file gates the adjusted vectors of its domain, when it has both.
+printf '#!/bin/sh\necho "$*" >"%s/adjusted"\necho "adjusted: $2: Entry has no adjusted vector"\nexit 1\n' "$ran" \
+  >"$repo/tools/cleanroom/adjusted_vectors.sh"
+mkdir -p "$repo/docs/behaviours" "$repo/scenarios/vectors"
+echo 'Invented spec.' >"$repo/docs/behaviours/demo.md"
+echo 'Invented spec.' >"$repo/docs/behaviours/alone.md"
+echo 'Invented vectors.' >"$repo/scenarios/vectors/demo.toml"
+echo 'Invented vectors.' >"$repo/scenarios/vectors/orphan.toml"
+out=$(gate) && fail "a domain without an adjusted vector passed: $out"
+[ "$(cat "$ran/adjusted" 2>/dev/null)" = "--gate demo" ] || fail "the adjusted vectors gated other domains: $out"
+grep -qx 'adjusted: demo: Entry has no adjusted vector' <<<"$out" || fail "the adjusted check failed with no reason: $out"
+
+[ "$bad" -eq 0 ] && echo "GATE TEST OK: a bad base stops it, a clean branch passes and its tree's next gate reuses it, a failed gate isn't reused, an untracked subject runs its check, a failure shows its log, a changed domain gates its adjusted vectors"
 exit $bad

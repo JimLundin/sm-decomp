@@ -89,8 +89,8 @@ Each step names its owner, what it waits for, and its done-condition.
    - each entry whose switch is `Parameter` has at least one vector at a value other than the
      reference one: a vector that names the entry and overrides the reference rules (the
      vector's `rules` table), so adjusting the behaviour is proven, not assumed.
-     `tools/cleanroom/adjusted_vectors.sh --gate <domain>` passes. A domain specced before this
-     rule meets it at its next spec round; until then the script's listing is advisory;
+     `tools/lane/gate.sh` holds every domain whose spec or vectors a branch changes to this
+     rule, through `tools/cleanroom/adjusted_vectors.sh --gate`;
    - `docs/behaviours/<domain>.decode.md` holds the sources and the harness note;
    - the observer's reference model agrees with every vector;
    - `tools/cleanroom/scan.sh` finds 0 on the spec and vectors;
@@ -98,15 +98,15 @@ Each step names its owner, what it waits for, and its done-condition.
 2. **Brief** (root), after 1. Done when the brief:
    - names only spec entries and shape findings;
    - carries the runner command;
-   - passes `tools/cleanroom/scan_brief.sh` with 0.
+   - passes `tools/cleanroom/scan_brief.sh`, which `launch.sh` and the responses controller run
+     before they take a brief.
 3. **Spec gate** (adversary), after 1 and 2, on a domain's first spec and on a spec delta that
    adds a mechanism (a new table, interpreter or kind of state) or crosses into another domain
-   (MODEL §1 decision 20). It gates the spec and the brief together, and refuses a spec whose
-   `Parameter` entries lack an adjusted vector (`adjusted_vectors.sh --gate`). Done on a
-   verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
-   for the spec, the root for the brief), then a re-gate of the delta. Any other amendment
-   skips this step: its scans and `adjusted_vectors.sh --gate` still pass before the launch,
-   and the round gate (step 10) reviews the spec delta with the code.
+   (MODEL §1 decision 20). It gates the spec and the brief together. Done on a verdict of
+   LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer for the
+   spec, the root for the brief), then a re-gate of the delta. Any other amendment skips this
+   step: its scans still pass before the launch, and the round gate (step 10) reviews the spec
+   delta with the code.
 4. **Hold the spec** (root). A round lands whole (step 11), so the spec stays on the
    round's branch, a new domain's first spec as much as an amendment, and the round exports from
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed

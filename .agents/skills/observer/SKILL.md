@@ -33,9 +33,8 @@ engine's current code for your domain.
    invented content to exercise the rule. Each entry whose switch is `Parameter` gets at least one
    vector at a value other than the reference one: it names the entry and overrides the
    reference rules in the vector's `rules` table, the form the vector file's header states.
-   Done when every arm that says `checked: oracle` has a vector, every constructed vector's
-   values are worked by hand from the bank log, and `tools/cleanroom/adjusted_vectors.sh --gate
-   <domain>` passes.
+   Done when every arm that says `checked: oracle` has a vector and every constructed vector's
+   values are worked by hand from the bank log.
 5. **Reference model.** Write a small model of your spec (Python, in `$TEMP/collab/<lane>/`) and
    run it on every vector, and per frame over the cached records. Done when it agrees with every
    vector, and its agreement per frame beats a do-nothing model, with the counts stated.
