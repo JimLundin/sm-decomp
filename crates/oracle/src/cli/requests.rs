@@ -1,5 +1,5 @@
 //! Complete command requests are validated without acquiring inputs or outputs.
-use crate::Tiers;
+use crate::Streams;
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 
@@ -54,7 +54,7 @@ pub(super) struct MovieRequest {
     pub inputs: PathBuf,
     pub frames: Option<usize>,
     pub seeds: Option<(PathBuf, PathBuf)>,
-    pub streams: Option<Tiers>,
+    pub streams: Option<Streams>,
     pub ranges: bool,
     pub lag_log: Option<PathBuf>,
     pub watch: Option<(usize, usize)>,
@@ -77,7 +77,6 @@ pub(super) struct CorpusRequest {
     pub watched_pcs: Vec<u32>,
     pub lean: bool,
     pub cache: Option<PathBuf>,
-    pub cache_pictures: crate::record::codec::PictureMode,
 }
 impl MovieRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
@@ -86,8 +85,7 @@ impl MovieRequest {
         };
         let mut frames = None;
         let mut seeds: Option<(PathBuf, PathBuf)> = None;
-        // The record streams asked of lsnes: none, or the tiers with the PPU registers.
-        let mut streams: Option<Tiers> = None;
+        let mut streams: Option<Streams> = None;
         let mut ranges = false;
         let mut lag_log: Option<PathBuf> = None;
         let mut watch: Option<(usize, usize)> = None;
@@ -153,22 +151,14 @@ impl MovieRequest {
                             RequestError::Invalid("--from-ladder DIR".to_string())
                         })?));
                 }
-                // The picture, the APU port log and the PPU registers
-                // with each record (docs/ORACLE.md, MEASUREMENTS (o)).
-                "--streams" => {
-                    streams = Some(Tiers {
-                        picture: true,
-                        apu_log: true,
-                    });
-                }
+                // The APU port log and the PPU registers with each record
+                // (docs/ORACLE.md, MEASUREMENTS (o)).
+                "--streams" => streams = Some(Streams::PpuAndApuLog),
                 // The PPU registers with each record, and no other
                 // stream: a seed record the gate decodes needs them, and the rest
                 // of the record stays byte for byte as without.
                 "--ppu" => {
-                    streams.get_or_insert(Tiers {
-                        picture: false,
-                        apu_log: false,
-                    });
+                    streams.get_or_insert(Streams::Ppu);
                 }
                 // Records without the memories, about twice as fast;
                 // for cutting native seeds, not for comparing.
@@ -239,7 +229,7 @@ impl MovieRequest {
 impl CorpusRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
         let [rom, lock, bundle, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
+            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR]".to_string()));
         };
         let mut only = Vec::new();
         let mut limit = usize::MAX;
@@ -248,7 +238,6 @@ impl CorpusRequest {
         let mut watched_pcs: Vec<u32> = Vec::new();
         let mut lean = false;
         let mut cache: Option<PathBuf> = None;
-        let mut cache_pictures = crate::record::codec::PictureMode::Drop;
         let mut options = rest.iter();
         while let Some(option) = options.next() {
             match option.as_str() {
@@ -320,14 +309,10 @@ impl CorpusRequest {
                             RequestError::Invalid("--cache DIR".to_string())
                         })?));
                 }
-                "--cache-pictures" => cache_pictures = crate::record::codec::PictureMode::Keep,
                 other => return Err(RequestError::Invalid(format!("unknown option {other}"))),
             }
         }
         if lean && (cache.is_some() || !watched.is_empty()) {
-            return Err(RequestError::Compatibility);
-        }
-        if cache_pictures == crate::record::codec::PictureMode::Keep && cache.is_none() {
             return Err(RequestError::Compatibility);
         }
         Ok(Self {
@@ -341,7 +326,6 @@ impl CorpusRequest {
             watched_pcs,
             lean,
             cache,
-            cache_pictures,
         })
     }
 }

@@ -9,8 +9,8 @@
 # <cache>   the cache root; each row is written to `<cache>/<row>/`.
 # [jobs]    rows recorded at once, default 8. Each is one lsnes process.
 #
-# Each row is `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW`. Corpus
-# writes the lean tier (`lean.bin`, `lean.txt`), which omits pictures.
+# Each row is `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW`, which writes
+# `lean.bin` and `lean.txt`.
 #
 # Resumable: reuse a readable lean row with its pinned inputs and all requested watches.
 # Each row reports cached, recorded or failed, with corpus output in <cache>/.logs/<row>.log.

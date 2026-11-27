@@ -15,16 +15,6 @@ pub const MAGIC: [u8; 4] = *b"SMFR";
 /// The encoding's version, after the magic.
 pub const VERSION: u8 = 1;
 
-/// Whether an encoding, or a decoding, keeps the record's picture.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PictureMode {
-    /// Keep it, when the record has one.
-    Keep,
-    /// Encode the record as if it had none: a third of the size. Decoding passes over its
-    /// bytes, for a reader that never looks at the picture.
-    Drop,
-}
-
 /// Why bytes are not an encoded record.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CodecError {
@@ -67,7 +57,7 @@ impl fmt::Display for CodecError {
 impl std::error::Error for CodecError {}
 
 /// `record` as bytes, appended to `out`.
-pub fn encode(record: &FrameRecord, pictures: PictureMode, out: &mut Vec<u8>) {
+pub fn encode(record: &FrameRecord, out: &mut Vec<u8>) {
     let mut w = Writer(out);
     w.bytes(&MAGIC);
     w.u8(VERSION);
@@ -113,11 +103,7 @@ pub fn encode(record: &FrameRecord, pictures: PictureMode, out: &mut Vec<u8>) {
         w.u8(access.value);
         w.u32(access.apu_cycle);
     }
-    let picture = match pictures {
-        PictureMode::Keep => record.picture.as_ref(),
-        PictureMode::Drop => None,
-    };
-    w.option(picture, Writer::picture);
+    w.option(record.picture.as_ref(), Writer::picture);
     w.option(record.spc.as_ref(), Writer::spc);
     w.option(record.bank_instructions.as_deref(), |w, counts| {
         w.len(counts.len());
@@ -151,17 +137,6 @@ pub fn encode(record: &FrameRecord, pictures: PictureMode, out: &mut Vec<u8>) {
 ///
 /// A [`CodecError`] when the bytes are not exactly one encoded record.
 pub fn decode(bytes: &[u8]) -> Result<FrameRecord, CodecError> {
-    decode_with(bytes, PictureMode::Keep)
-}
-
-/// The record `bytes` encode, with its picture when `pictures` keeps it and none otherwise.
-/// A dropped picture's bytes are passed over by their lengths, so its forced-blank flags are
-/// not checked.
-///
-/// # Errors
-///
-/// A [`CodecError`] when the bytes are not exactly one encoded record.
-pub fn decode_with(bytes: &[u8], pictures: PictureMode) -> Result<FrameRecord, CodecError> {
     let mut r = Reader { rest: bytes };
     if r.array::<4>("magic")? != MAGIC {
         return Err(CodecError::BadMagic);
@@ -228,13 +203,7 @@ pub fn decode_with(bytes: &[u8], pictures: PictureMode) -> Result<FrameRecord, C
             apu_cycle: r.u32("apu cycle")?,
         })
     })?;
-    let picture = match pictures {
-        PictureMode::Keep => r.option("picture", Reader::picture)?,
-        PictureMode::Drop => {
-            r.option("picture", Reader::skip_picture)?;
-            None
-        }
-    };
+    let picture = r.option("picture", Reader::picture)?;
     let spc = r.option("spc", Reader::spc)?;
     let bank_instructions = r.option("bank_instructions", |r| {
         r.list("bank_instructions", |r| r.u32("bank_instructions"))
@@ -643,18 +612,6 @@ impl Reader<'_> {
         })
     }
 
-    fn skip_picture(&mut self) -> Result<(), CodecError> {
-        self.len("picture lines")?;
-        let dots = self.len("picture dots")?;
-        let bytes = dots
-            .checked_mul(2)
-            .ok_or(CodecError::TooLong("picture dots"))?;
-        self.take("picture dots", bytes)?;
-        self.take("picture brightness", MAX_LINES)?;
-        self.take("picture forced blank", MAX_LINES)?;
-        Ok(())
-    }
-
     fn spc(&mut self) -> Result<SpcState, CodecError> {
         let [a, x, y, sp] = self.array("spc")?;
         Ok(SpcState {
@@ -763,7 +720,7 @@ mod tests {
     fn a_record_decodes_to_itself() {
         let record = sample();
         let mut bytes = Vec::new();
-        encode(&record, PictureMode::Keep, &mut bytes);
+        encode(&record, &mut bytes);
         assert_eq!(
             decode(&bytes).map(|decoded| same(&decoded, &record)),
             Ok(true)
@@ -771,39 +728,9 @@ mod tests {
     }
 
     #[test]
-    fn decoding_without_the_picture_reads_the_rest_as_it_is() {
-        let record = sample();
-        let mut bytes = Vec::new();
-        encode(&record, PictureMode::Keep, &mut bytes);
-        let expected = FrameRecord {
-            picture: None,
-            ..record
-        };
-        assert_eq!(
-            decode_with(&bytes, PictureMode::Drop).map(|decoded| same(&decoded, &expected)),
-            Ok(true)
-        );
-    }
-
-    #[test]
-    fn dropping_the_picture_drops_only_the_picture() {
-        let record = sample();
-        let mut bytes = Vec::new();
-        encode(&record, PictureMode::Drop, &mut bytes);
-        let expected = FrameRecord {
-            picture: None,
-            ..record
-        };
-        assert_eq!(
-            decode(&bytes).map(|decoded| same(&decoded, &expected)),
-            Ok(true)
-        );
-    }
-
-    #[test]
     fn short_and_long_bytes_are_refused() {
         let mut bytes = Vec::new();
-        encode(&sample(), PictureMode::Keep, &mut bytes);
+        encode(&sample(), &mut bytes);
         let short = bytes
             .get(..bytes.len().saturating_sub(1))
             .unwrap_or_default();

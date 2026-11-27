@@ -3,7 +3,7 @@
 use crate::lock::{Row, Sha256, Start as LockStart};
 use crate::lsnes::{Lsnes, NativeSeed};
 use crate::record::{Cut, FrameRecord, NmiKind, Pad};
-use crate::{OracleError, Start, Tiers};
+use crate::{OracleError, Start, Streams};
 use std::path::Path;
 use std::time::Instant;
 
@@ -91,10 +91,10 @@ impl Sources {
     }
 }
 
-/// Optional tiers and watched addresses.
+/// Optional streams and watched addresses.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Observe<'a> {
-    pub tiers: Tiers,
+    pub streams: Option<Streams>,
     pub watch: &'a [u32],
     /// Four bytes of WRAM to sample at each watched instruction.
     pub peek: Option<u32>,
@@ -121,8 +121,8 @@ pub fn run_row_with(
         seed.apply(&mut oracle)?;
     }
     oracle.memories = !observing.lean;
-    if observing.tiers.picture || observing.tiers.apu_log {
-        oracle.record_streams(observing.tiers)?;
+    if let Some(streams) = observing.streams {
+        oracle.record_streams(streams)?;
     }
     let started = Instant::now();
     let mut run = RowRun::default();

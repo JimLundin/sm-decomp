@@ -17,13 +17,12 @@ pub mod ladder;
 pub use data::oracle_lock as lock;
 pub mod lsnes;
 pub mod measure;
-pub mod png;
 pub use oracle_record as record;
 pub mod seed;
 
 pub use record::{
     ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, Nmi, NmiKind, Pad,
-    Picture, PpuRegisters,
+    PpuRegisters,
 };
 
 /// Who produced a record: locks and records are keyed by it.
@@ -48,13 +47,13 @@ pub enum Start {
     State(Vec<u8>),
 }
 
-/// The optional streams a step records besides the PPU registers.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Tiers {
-    /// The picture scanned out in the interval.
-    pub picture: bool,
-    /// The APU port log of the interval.
-    pub apu_log: bool,
+/// The optional streams a step records besides the memories.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Streams {
+    /// The PPU registers.
+    Ppu,
+    /// The PPU registers and the APU port log of the interval.
+    PpuAndApuLog,
 }
 
 /// Why an oracle could not start, or stopped.

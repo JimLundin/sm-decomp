@@ -25,9 +25,8 @@ with the engine (PRINCIPLES P12). lsnes is a separate GPL process driven by
 
 Acceptance replay never runs an oracle: it compares actual production with pinned independent
 observations. Each observation comes from the most accurate oracle that produces it. lsnes
-records the memories, the picture, the CPU port log and the PPU registers (MEASUREMENTS (o),
-(r)). The five PPU fields lsnes doesn't expose are not compared (Q4), and no record holds the
-SPC700 side (Q7).
+records the memories, the CPU port log and the PPU registers (MEASUREMENTS (o)). The five PPU
+fields lsnes doesn't expose are not compared (Q4), and no record holds the SPC700 side (Q7).
 
 ### The frame record (contract v1)
 
@@ -44,40 +43,20 @@ One record per video frame, lag or not. Record k covers (cut k-1, cut k] and the
 - **Raw state at cut k:** CPU registers, WRAM 128 KiB, VRAM 64 KiB, CGRAM 512 B, OAM 544 B, SRAM,
   and `PpuRegisters` (INIDISP to SETINI, NMITIMEN, HTIME/VTIME, HDMAEN, MEMSEL, the eight DMA
   channels' `$43x0-$43xA`), rebuilt from decoded emulator state so they survive a state load.
-- **The picture scanned out in the interval** (the one NMI k-1 committed): 224 or 239 lines of
-  256 BGR555 dots after colour math, with each line's brightness and forced blank.
 - **APU port log:** the CPU's reads and writes of `$2140-$2143`, in order.
 - **Watched-PC hits:** each with its beam position and four peeked WRAM bytes. Not digested.
 
-`FrameRecord` still carries `spc`, `bank_instructions`, `writes` and `legacy_ppu_digest`, which
-lsnes never fills. They are part of the record codec, so they stay until the cache format next
-changes.
+`FrameRecord` still carries `picture`, `spc`, `bank_instructions`, `writes` and
+`legacy_ppu_digest`, which lsnes never fills. They are part of the record codec, so they stay
+until the cache format next changes.
 
 Given the ROM, the start and the pads, records are bit-identical on every host.
 
-### The picture compared
-
-Two pictures are equal when every dot shows the same 8-bit colour (`Picture::shown`, the
-`video` stream):
-
-- a dot's 5-bit components `c` at its line's master brightness `b` (0-15) show as
-  `round((b + 1) * c * 255 / 496)` each (`record::shown_channel`, lsnes's palette for bsnes dots);
-- a dot on a forced-blank line shows black.
-
-At brightness 15 the map is one-to-one, so equality is BGR555 equality. Below 15 lsnes's
-screenshot can't tell some components apart, nor brightness 0 from 1. The record keeps the
-brightest level that produces the screenshot and the smallest component per value, so the
-comparison is exact wherever any screenshot could tell.
-The compositor writes the same PPU-domain dots, so no emulator's colour conversion is the authority.
-
 ### lsnes streams
 
-`Lsnes::record_streams` (the server's `T <picture> <apu> <ppu>` request, before the first step)
-adds three streams; otherwise records are unchanged.
+`Lsnes::record_streams` adds the PPU registers, and the APU port log when asked; otherwise
+records are unchanged. It sends the server's `T <apu> <ppu>` request before the first step.
 
-- **Picture:** lsnes's screenshot of the video frame the step ends in, taken in `on_frame` after
-  lsnes hands the frame to its screen buffer, sent as its own PNG (base64) and mapped back to BGR555.
-  Streams cost lsnes about 26%.
 - **APU port log:** the CPU side only (`memory.registerwrite`/`registerread`), hooked in every bank
   that maps the I/O page, because the game reaches the ports through its data bank (`$82`, `$85`).
 - **PPU registers:** rebuilt from bsnes's decoded fields in `memory.getregisters()`, without
@@ -110,7 +89,7 @@ keeps the directory. A record not announced within 60 s (first step) or 30 s (la
 lsnes and fails the row as silent. The script loads a start itself (`OH_START`, `load-state`):
 lsnes rejects a state given on its command line with this ROM and hangs.
 
-**Crate layout.** `crates/oracle/src`: `lib.rs` (`Start`, `Tiers`, `OracleId`, `OracleError`),
+**Crate layout.** `crates/oracle/src`: `lib.rs` (`Start`, `Streams`, `OracleId`, `OracleError`),
 `lsnes.rs` (open a start, step one video frame with a pad, request a save, record streams),
 `seed.rs` (lsnes room captures' work RAM), `corpus.rs` (row inputs and playback),
 `cache.rs` (the record cache's writer), `ladder.rs`, `measure.rs`, `cli.rs` and `bin/oracle.rs`.
@@ -183,11 +162,11 @@ pads = "<sha256 of the .pads file>"
 frames = 477
 ```
 
-A row from a derived seed also pins its edits with `seed_words`. `server` is the SHA-256 of
-`lsnes_server.lua`. `data::oracle_lock::Lock` reads the file for capture and replay, and refuses an
-unknown key, a key given twice or a row entered twice. Capture checks the emulator, version, fixes
-and server before it plays a row. The lock holds nothing a run produces. The record cache (§6)
-holds the runs.
+A row from a derived seed also pins its edits with `seed_words`. `server` is the SHA-256 of the
+`lsnes_server.lua` the oracle is built with, and capture refuses a lock that pins another. It
+checks the emulator, version and fixes too before it plays a row. `data::oracle_lock::Lock` reads
+the file for capture and replay, and refuses an unknown key, a key given twice or a row entered
+twice. The lock holds nothing a run produces. The record cache in §6 holds the runs.
 
 ## 5. The re-lock (RELOCK §3)
 
@@ -254,12 +233,11 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | Command | Does |
 | --- | --- |
 | `oracle movie ROM INPUTS [--frames N] [--from STATE FRAME] [--lag-log CSV [--positions-only]] [--seeds CSV DIR [--ranges]] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--watch FROM EVERY] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
-| `oracle corpus ROM LOCK BUNDLE [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
+| `oracle corpus ROM LOCK BUNDLE [--cache OUT] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
 | `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
-| `tools cache-lean LOCK FROM TO ROW...` | writes record cache rows again as the lean tier |
 | `ROWS="..." tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
 
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
@@ -269,23 +247,18 @@ counts alone. `oracle trace` shows CPU, room and APU port observations
 for a row's frame range. `oracle measure` reads instruction hits, decompression pointers and
 the CPU's APU port accesses; lsnes has no PPU write log and no SPC700 side to time.
 
-The **record cache**
-(`--cache OUT`) holds one directory per row in one of two tiers, with the lock pins and one
-`frame offset length cut` line per frame in its index; `verify::cache` refuses a cache whose
-pins differ from the lock row. The **full tier** (`--cache-pictures`) is `OUT/<row>/records.bin`,
-every `FrameRecord` with its picture in `oracle_record::codec`'s encoding, and `index.txt`. The
-**lean tier** (the default) is `lean.bin`, each record without its picture and its five memories
-as the bytes that changed since the frame before, whole every 256th frame
-(`oracle_record::lean`), and `lean.txt` with the lock pins: about 2 KB a frame against the full
-tier's 330 KB. Replay observations that need no picture use the lean tier when available, with
-the full tier otherwise; only the compositor's checks need the pictures. `tools cache-lean LOCK
-FROM TO ROW...` writes full rows again as lean ones. A row recorded with
-`--watch-pcs` also has `hits.txt`: `# watched` and the addresses, then `frame pc line dot peek`
-per hit. The hits stay out of `records.bin`, so a row recorded again with watches has the same
-records byte for byte, and `verify::cache::Cache::record` puts each frame's hits back.
+The **record cache** (`--cache OUT`) holds one directory per row. `OUT/<row>/lean.bin` holds
+each record with its five memories as the bytes that changed since the frame before, whole every
+256th frame, about 2 KB a frame. `oracle_record::lean` holds that codec. `lean.txt` holds the
+lock pins, a `pictures no` line left from when a row could hold pictures, and one
+`frame offset length cut` line per frame. `verify::cache` refuses a cache whose pins differ from
+the lock row. A row recorded with `--watch-pcs` also has `hits.txt`: `# watched` and the
+addresses, then `frame pc line dot peek` per hit. The hits stay out of `lean.bin`, so a row
+recorded again with watches has the same records byte for byte, and
+`verify::cache::Cache::record` puts each frame's hits back.
 
 **Making the record cache.** `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW` plays
-the row's frame pads from its native seed and writes the lean tier with `lean.txt` last.
+the row's frame pads from its native seed and writes `lean.txt` last.
 `tools/oracle/record_caches.sh ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list of
 rows with eight lsnes processes by default. It requires Bash 5.1, `flock` and Python. The wrapper
 builds the default `tools` cache reader and skips a row when the reader accepts the existing cache. Set `WATCH_PCS`
@@ -377,7 +350,7 @@ longer runs, whose code git history keeps; the rest are lsnes's. Letters that le
 - **(o) lsnes gives the picture, the CPU port log and the PPU registers** from Lua, without linking
   emulator code; it lacks the SPC side and the five PPU fields (Q4).
 - **(r) lsnes's picture** is the right frame when taken in `on_frame`; PNG transport makes streams
-  cost 26%.
+  cost 26%. That transport has since been removed.
 - **(s) lsnes's APU log after a resume** was empty because the game uses the bank-`$82`/`$85` port
   mirrors; hooking every bank fixed it.
 - **(t) lsnes's joypad reads** have no bank gap.

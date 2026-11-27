@@ -14,23 +14,20 @@
 //! still running ([`Cut::NmiStillRunning`]), before the NMI's counter writes
 //! and joypad read.
 //!
-//! With the picture or APU log tiers on ([`Lsnes::record_streams`] before the
-//! first step), each record also carries the picture (the screenshot of the
-//! video frame the step ends in, sent as lsnes's PNG and mapped back from its
-//! 8-bit palette to BGR555 at the one brightness that produces it), the CPU's
-//! accesses to
-//! $2140-$2143 (no DMA or SPC700 side, no APU cycle) and the PPU registers
-//! (rebuilt from bsnes's decoded fields, with the DMA channels; `nmitimen`,
-//! `htime`, `vtime`, `hdmaen` and `memsel` stay at their defaults).
+//! With the streams on ([`Lsnes::record_streams`] before the first step), each
+//! record also carries the PPU registers (rebuilt from bsnes's decoded fields,
+//! with the DMA channels; `nmitimen`, `htime`, `vtime`, `hdmaen` and `memsel`
+//! stay at their defaults) and, when asked, the CPU's accesses to $2140-$2143
+//! (no DMA or SPC700 side, no APU cycle).
 //!
 //! Watched-PC hits come from the server's trace (`OH_TRACE`, asked for at
 //! start by [`Lsnes::open_watching`]): each with its beam position, split
 //! between records at the cut (the NMI handler's RTI, or the frame boundary).
 //! Measurement traces can also peek four bytes of WRAM at a watched instruction.
 //!
-//! Not recorded by this backend: the SPC state (lsnes exposes SPC700 and DSP
-//! only as raw core structs), the instruction profile, the PPU register write
-//! log, the per-line forced blank and `overscan`.
+//! Not recorded by this backend: the picture, the SPC state (lsnes exposes
+//! SPC700 and DSP only as raw core structs), the instruction profile, the PPU
+//! register write log and `overscan`.
 //!
 //! A saved state is lsnes's own, taken at the frame boundary that ends the
 //! step it was requested before: after that step's cut, or inside its NMI
@@ -40,9 +37,8 @@
 //! state was saved inside).
 
 use crate::lock::Sha256;
-use crate::record::lsnes::RawPicture;
-use crate::record::{Beam, Cut, FrameRecord, Hit, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
-use crate::{OracleError, OracleId, Start, Tiers};
+use crate::record::{Beam, Cut, FrameRecord, Hit, Pad};
+use crate::{OracleError, OracleId, Start, Streams};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -419,57 +415,6 @@ pub const IDENTITY: OracleId = OracleId {
     fixes: &[],
 };
 
-/// One master brightness's 8-bit channel values ([`shown_channel`], lsnes's
-/// lrgb palette) mapped back to the 5-bit component; ambiguous values keep
-/// the smallest, which shows the same value.
-fn channel_inverse(brightness: u8) -> [Option<u8>; 256] {
-    let mut inverse = [None; 256];
-    for component in (0..32u8).rev() {
-        inverse[usize::from(shown_channel(brightness, component))] = Some(component);
-    }
-    inverse
-}
-
-/// The picture from lsnes's decoded screenshot: the brightest level whose
-/// palette produces every channel value, its inverse as BGR555 dots. Its
-/// [`Picture::shown`] is the screenshot again, dot for dot, whichever level
-/// it picked. A hires or interlaced screenshot keeps its even dots and lines.
-fn decode_picture(width: usize, height: usize, rgb: &[u8]) -> Picture {
-    let mut picture = Picture::default();
-    let (step_x, step_y) = (width / WIDTH.max(1), if height > MAX_LINES { 2 } else { 1 });
-    picture.lines = (height / step_y).min(MAX_LINES);
-    let level = (0..=15u8)
-        .rev()
-        .map(|brightness| (brightness, channel_inverse(brightness)))
-        .find(|(_, inverse)| {
-            rgb.iter()
-                .all(|&value| inverse[usize::from(value)].is_some())
-        });
-    let Some((brightness, inverse)) = level else {
-        return picture;
-    };
-    picture.brightness.fill(brightness);
-    for (line, row) in picture
-        .dots
-        .chunks_mut(WIDTH)
-        .take(picture.lines)
-        .enumerate()
-    {
-        for (x, dot) in row.iter_mut().enumerate() {
-            let at = 3 * ((line * step_y * width) + (x * step_x.max(1)));
-            let Some([r, g, b]) = rgb
-                .get(at..at + 3)
-                .and_then(|part| <[u8; 3]>::try_from(part).ok())
-            else {
-                continue;
-            };
-            let component = |value: u8| u16::from(inverse[usize::from(value)].unwrap_or(0));
-            *dot = component(r) | (component(g) << 5) | (component(b) << 10);
-        }
-    }
-    picture
-}
-
 impl Lsnes {
     /// [`Lsnes::open`], recording a hit whenever the CPU reaches one of
     /// `addresses` (24-bit; instruction starts only, since lsnes's exec
@@ -617,16 +562,11 @@ impl Lsnes {
         self.next_pad = Some(next);
     }
 
-    /// Record the picture and the APU port log as `tiers` asks, and the PPU
-    /// registers with them, from the next step on. Ask before the first
-    /// step: the server registers the port callbacks only then.
-    pub fn record_streams(&mut self, tiers: Tiers) -> Result<(), OracleError> {
-        let request = format!(
-            "T {} {} 1",
-            u8::from(tiers.picture),
-            u8::from(tiers.apu_log)
-        );
-        self.send(&request)
+    /// Record `streams` from the next step on. Ask before the first step: the
+    /// server registers the port callbacks only then.
+    pub fn record_streams(&mut self, streams: Streams) -> Result<(), OracleError> {
+        let apu_log = u8::from(streams == Streams::PpuAndApuLog);
+        self.send(&format!("T {apu_log} 1"))
     }
 
     /// Ask for the state at the frame boundary that ends the coming step,
@@ -688,22 +628,8 @@ impl Lsnes {
     }
 
     fn decode(&mut self, bytes: &[u8]) -> Result<(), Cause> {
-        let picture = crate::record::lsnes::decode(bytes, &mut self.record)
-            .map_err(|error| Cause::Record(error.to_string()))?;
-        self.record.picture = match picture {
-            None => None,
-            Some(RawPicture::Png(text)) => {
-                let (width, height, rgb) = crate::png::base64(text)
-                    .as_deref()
-                    .and_then(crate::png::rgb)
-                    .ok_or_else(|| Cause::Record("picture: not a PNG this decoder reads".into()))?;
-                Some(decode_picture(width, height, &rgb))
-            }
-            Some(RawPicture::Rgb { width, height, rgb }) => {
-                Some(decode_picture(width, height, rgb))
-            }
-        };
-        Ok(())
+        crate::record::lsnes::decode(bytes, &mut self.record)
+            .map_err(|error| Cause::Record(error.to_string()))
     }
 
     /// Power on with `rom`, or resume `start`.
@@ -797,19 +723,8 @@ impl Drop for Lsnes {
 
 /// The SHA-256 of the server script this build runs, which the lock pins
 /// (docs/ORACLE.md, the lock).
-pub fn server_sha256() -> String {
-    crate::ladder::hex(&data::rom::sha256(SERVER.as_bytes()))
-}
-
-/// Whether the recorder can reproduce observations from this server.
-pub(crate) fn compatible_server(pinned: Sha256) -> bool {
-    const CAPTURE_SERVER: &str = "833e4df966372d1277ecc1449fb59f9ba61c527b691336c6f87f09b3c5090ee9";
-    const MEASUREMENT_SERVER: &str =
-        "e952a381b5a53a82a0dabb3cc68a006907319c92a1b987a1ea3a50c49f4dfd46";
-    let current = server_sha256();
-    let pinned = pinned.to_string();
-    // The optional measurement peek changes only the trace when it is enabled.
-    pinned == current || (pinned == CAPTURE_SERVER && current == MEASUREMENT_SERVER)
+pub fn server_sha256() -> Sha256 {
+    Sha256::of(SERVER.as_bytes())
 }
 
 #[cfg(test)]
@@ -852,11 +767,10 @@ mod tests {
     }
 
     #[test]
-    fn the_current_server_accepts_the_committed_lock() {
+    fn the_committed_lock_pins_the_server_this_build_runs() {
         let lock = crate::lock::Lock::parse(include_str!("../../../scenarios/locks/lsnes.toml"))
             .expect("valid capture lock");
-        assert!(compatible_server(lock.header.oracle.server));
-        assert!(!compatible_server(crate::lock::Sha256([0; 32])));
+        assert_eq!(lock.header.oracle.server, server_sha256());
     }
 
     /// An RTI past the boundary sent the record before: its frame's hits

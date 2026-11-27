@@ -257,7 +257,7 @@ hidden entries, and hardware publication stay with the exact writer and caller.
 
 ### Shaft evidence and harness
 
-Source records are the locked lean tiers for `chain-any-0010-DF8D` and
+Source records are the cached rows `chain-any-0010-DF8D` and
 `chain-any-0011-DF45`.
 
 Seed at hall 225 after native room placement. Compare hall 226 through 278 and shaft

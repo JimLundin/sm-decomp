@@ -1,24 +1,19 @@
 //! The lockstep cache's writing side (docs/ORACLE.md, the record cache).
 //!
 //! `corpus --cache DIR` plays each row from its frame pads and writes every frame's record
-//! to `DIR/<row>/`: `records.bin`, the records one after another in their own encoding
-//! (`oracle_record::codec`), and `index.txt`, the row's lock pins and one line per frame
-//! (`frame offset length cut`). The index is written last, so a row that failed part way
-//! has no index and a reader refuses it. ROM-derived: the cache stays in `$TEMP`.
+//! to `DIR/<row>/`: `lean.bin`, the records as a chain of memory changes
+//! (`oracle_record::lean`), and `lean.txt` under [`LEAN_HEAD`], the row's lock pins and one
+//! line per frame (`frame offset length cut`). The index is removed first and written last,
+//! so a row that failed part way has no index and a reader refuses it. ROM-derived: the
+//! cache stays in `$TEMP`.
 //!
 //! A run that watched instruction addresses also writes `hits.txt`: a `# watched` line
 //! naming them, then one `frame pc line dot peek` line per hit (hex pc and peek). The hits
-//! stay out of `records.bin`, so a row recorded again with watches has the same records
+//! stay out of `lean.bin`, so a row recorded again with watches has the same records
 //! as without, and an earlier cache gains its hits by the file alone.
-//!
-//! Without pictures the writer takes the lean tier instead (`oracle_record::lean`): the
-//! records as a chain of memory changes in `lean.bin`, indexed by `lean.txt` under
-//! [`LEAN_HEAD`], a fraction of the bytes. With them it takes the full tier above. Either
-//! way it removes both indexes first, so a row holds only the tier last written whole.
 //!
 //! `verify::cache` reads it.
 
-use crate::record::codec::{self, PictureMode};
 use crate::record::lean;
 use crate::record::{Cut, FrameRecord, NmiKind};
 use std::fmt::Write as _;
@@ -26,8 +21,6 @@ use std::io::{BufWriter, Write as _};
 use std::path::{Path, PathBuf};
 
 /// The index's first line: the layout's name and version.
-pub const HEAD: &str = "# sm-decomp record cache 1";
-/// The lean tier's index's first line.
 pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 1";
 
 /// The lock pins a row's cache is valid for, as the lock writes them.
@@ -63,19 +56,12 @@ const fn cut_letter(record: &FrameRecord) -> char {
     }
 }
 
-/// The tier a writer takes.
-enum Tier {
-    /// Each record whole, with its picture.
-    Full,
-    /// The lean chain, with the memories of the last record written.
-    Lean(lean::Memories),
-}
-
 /// One row's cache, being written.
 pub struct Writer {
     directory: PathBuf,
     records: BufWriter<std::fs::File>,
-    tier: Tier,
+    /// The memories of the last record written, which the next one's changes apply to.
+    memories: lean::Memories,
     scratch: Vec<u8>,
     offset: u64,
     index: String,
@@ -85,30 +71,23 @@ pub struct Writer {
 }
 
 impl Writer {
-    /// Start row `id`'s cache under `root`, removing any earlier index first: the full tier
-    /// when `pictures` keeps them, the lean tier otherwise.
+    /// Start row `id`'s cache under `root`, removing any earlier index first.
     ///
     /// # Errors
     ///
     /// The file system's error.
-    pub fn create(root: &Path, id: &str, pictures: PictureMode) -> std::io::Result<Self> {
+    pub fn create(root: &Path, id: &str) -> std::io::Result<Self> {
         let directory = root.join(id);
         std::fs::create_dir_all(&directory)?;
-        for index in ["index.txt", "lean.txt"] {
-            match std::fs::remove_file(directory.join(index)) {
-                Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error),
-                Ok(()) | Err(_) => {}
-            }
+        match std::fs::remove_file(directory.join("lean.txt")) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error),
+            Ok(()) | Err(_) => {}
         }
-        let (tier, records) = match pictures {
-            PictureMode::Keep => (Tier::Full, "records.bin"),
-            PictureMode::Drop => (Tier::Lean(lean::Memories::default()), "lean.bin"),
-        };
-        let records = BufWriter::new(std::fs::File::create(directory.join(records))?);
+        let records = BufWriter::new(std::fs::File::create(directory.join("lean.bin"))?);
         Ok(Self {
             directory,
             records,
-            tier,
+            memories: lean::Memories::default(),
             scratch: Vec::with_capacity(0x6_0000),
             offset: 0,
             index: String::new(),
@@ -147,21 +126,9 @@ impl Writer {
                 );
             }
         }
-        match &mut self.tier {
-            Tier::Lean(memories) => {
-                let whole = usize::try_from(self.frames)
-                    .is_ok_and(|position| position.is_multiple_of(lean::KEY_INTERVAL));
-                lean::encode(record, memories, whole, &mut self.scratch);
-            }
-            Tier::Full if record.hits.is_empty() => {
-                codec::encode(record, PictureMode::Keep, &mut self.scratch);
-            }
-            Tier::Full => {
-                let mut without = record.clone();
-                without.hits.clear();
-                codec::encode(&without, PictureMode::Keep, &mut self.scratch);
-            }
-        }
+        let whole = usize::try_from(self.frames)
+            .is_ok_and(|position| position.is_multiple_of(lean::KEY_INTERVAL));
+        lean::encode(record, &mut self.memories, whole, &mut self.scratch);
         self.records.write_all(&self.scratch)?;
         let length = u64::try_from(self.scratch.len()).unwrap_or(u64::MAX);
         let _ = writeln!(
@@ -184,12 +151,8 @@ impl Writer {
     pub fn finish(mut self, id: &str, pins: &Pins) -> std::io::Result<u64> {
         self.records.flush()?;
         let none = || "-".to_owned();
-        let (head, pictures, index) = match self.tier {
-            Tier::Full => (HEAD, "yes", "index.txt"),
-            Tier::Lean(_) => (LEAN_HEAD, "no", "lean.txt"),
-        };
         let text = format!(
-            "{head}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures {pictures}\n# frame offset length cut\n{}",
+            "{LEAN_HEAD}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures no\n# frame offset length cut\n{}",
             pins.seed_record.clone().unwrap_or_else(none),
             pins.seed_words.clone().unwrap_or_else(none),
             pins.pads,
@@ -204,7 +167,7 @@ impl Writer {
                 Ok(()) | Err(_) => {}
             },
         }
-        std::fs::write(self.directory.join(index), text)?;
+        std::fs::write(self.directory.join("lean.txt"), text)?;
         Ok(self.offset)
     }
 }
