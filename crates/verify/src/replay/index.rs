@@ -169,7 +169,7 @@ pub struct End {
     pub cut_inclusive: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
@@ -1158,6 +1158,73 @@ impl ConnectedPacket {
     }
 }
 
+/// One authenticated TOML file under the local native fixture root.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct FixtureFile {
+    /// Relative directory and member name, separated by a slash.
+    pub path: String,
+    /// SHA-256 of the file bytes.
+    pub sha256: String,
+}
+
+impl FixtureFile {
+    fn valid(&self) -> bool {
+        let component = |part: &str| fixture_component(part) && !part.contains(['\\', ':', '\0']);
+        self.path
+            .split_once('/')
+            .is_some_and(|(directory, name)| component(directory) && component(name))
+            && valid_hash(&self.sha256)
+    }
+
+    pub(super) fn read<T: serde::de::DeserializeOwned>(
+        &self,
+        root: &Path,
+    ) -> Result<T, super::result::Outcome> {
+        let failure = |reason| super::data_failure(None, &format!("{} {reason}", self.path));
+        if !self.valid() {
+            return Err(failure("fixture reference"));
+        }
+        let text =
+            std::fs::read_to_string(root.join(&self.path)).map_err(|_| failure("fixture file"))?;
+        if crate::lock::Sha256::of(text.as_bytes()).to_string() != self.sha256 {
+            return Err(failure("fixture pin"));
+        }
+        toml::from_str(&text).map_err(|_| failure("fixture schema"))
+    }
+}
+
+/// Input and independent observation files for a scoped provider.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct FixturePair {
+    /// Provider whose typed readers consume these files.
+    pub provider: InputProvider,
+    /// File read for admission.
+    pub inputs: FixtureFile,
+    /// File read by the provider's comparison reader.
+    pub expected: FixtureFile,
+}
+
+impl FixturePair {
+    fn valid(&self) -> bool {
+        self.provider.uses_fixture_pair()
+            && self.inputs.path != self.expected.path
+            && self.inputs.sha256 != self.expected.sha256
+            && self.inputs.valid()
+            && self.expected.valid()
+    }
+}
+
+impl InputProvider {
+    const fn uses_fixture_pair(self) -> bool {
+        matches!(
+            self,
+            Self::EarlyMapInputs | Self::NativeTouchdownInputs | Self::ScopedShotDrawingInputs
+        )
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// One witness replayed continuously from its admitted start.
@@ -1185,6 +1252,9 @@ pub struct Case {
     /// Reviewed fixture for connected ordinary inputs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connected_packet: Option<ConnectedPacket>,
+    /// Input and observation files selected for this provider.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fixture: Option<FixturePair>,
     /// Declared independent comparison observations.
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
@@ -1201,7 +1271,7 @@ pub struct Case {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(try_from = "IndexDocument")]
 /// The complete strict TOML case catalogue.
 pub struct Index {
     /// Strict metadata format version.
@@ -1215,6 +1285,45 @@ pub struct Index {
     #[serde(rename = "case")]
     /// Complete committed case list.
     pub cases: Vec<Case>,
+}
+
+/// Shared fixtures are expanded so a selected case carries its entire execution recipe.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct IndexDocument {
+    format: u16,
+    engine_api: String,
+    observation_schema: String,
+    lock: PathBuf,
+    #[serde(default)]
+    fixture: Vec<FixturePair>,
+    #[serde(rename = "case")]
+    cases: Vec<Case>,
+}
+
+impl TryFrom<IndexDocument> for Index {
+    type Error = &'static str;
+
+    fn try_from(mut doc: IndexDocument) -> Result<Self, Self::Error> {
+        let mut by_provider = std::collections::BTreeMap::new();
+        for pair in doc.fixture {
+            if !pair.valid() || by_provider.insert(pair.provider, pair).is_some() {
+                return Err("invalid or duplicate provider fixture");
+            }
+        }
+        for case in &mut doc.cases {
+            if case.fixture.is_none() {
+                case.fixture = by_provider.get(&case.inputs).cloned();
+            }
+        }
+        Ok(Self {
+            format: doc.format,
+            engine_api: doc.engine_api,
+            observation_schema: doc.observation_schema,
+            lock: doc.lock,
+            cases: doc.cases,
+        })
+    }
 }
 
 /// Validated declarations and their identity from one immutable byte snapshot.
@@ -2275,7 +2384,7 @@ fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> 
 fn early_map_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
-        && case.id.0 == "connected-ordinary/early-mini-map"
+        && (case.fixture.is_some() || case.id.0 == "connected-ordinary/early-mini-map")
         && case.row == "chain-any-0003-DFD7"
         && matches!(case.start, Start::CacheCut { frame: 78 })
         && case.end.cut_inclusive == 80
@@ -2847,6 +2956,14 @@ fn start_valid(case: &Case) -> bool {
 }
 
 impl Case {
+    pub(super) fn fixture_pair(&self) -> Result<&FixturePair, super::result::Outcome> {
+        self.fixture
+            .as_ref()
+            .or_else(|| super::legacy_packets::fixture(self.inputs))
+            .filter(|pair| pair.provider == self.inputs && pair.valid())
+            .ok_or_else(|| super::data_failure(None, "scoped provider fixture"))
+    }
+
     pub(super) fn connected_packet(&self) -> Option<&ConnectedPacket> {
         self.connected_packet
             .as_ref()
@@ -2871,6 +2988,11 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
+        if (case.fixture.is_some() || case.inputs.uses_fixture_pair())
+            && case.fixture_pair().is_err()
+        {
+            return Err(IndexFault::InvalidCase(case.id.clone()));
+        }
         if (case.expectations.projection.is_some()
             && case.inputs != InputProvider::NativeSearchInputs)
             || (case.connected_packet.is_some()
@@ -3045,6 +3167,61 @@ mod tests {
             Err(IndexFault::UnknownCase(_))
         ));
     }
+    #[test]
+    fn shared_fixture_pairs_travel_with_selected_cases() {
+        let index = Index::parse(INDEX).unwrap();
+        let mut touchdown = index
+            .cases
+            .iter()
+            .filter(|case| case.inputs == super::InputProvider::NativeTouchdownInputs);
+        let mut first = touchdown.next().unwrap().clone();
+        let second = touchdown.next().unwrap();
+        let pair = first.fixture.as_ref().unwrap();
+        assert_eq!(
+            pair.inputs.path,
+            second.fixture.as_ref().unwrap().inputs.path
+        );
+        let mut wrong = first.clone();
+        wrong.fixture = index
+            .cases
+            .iter()
+            .find(|case| case.inputs == super::InputProvider::EarlyMapInputs)
+            .unwrap()
+            .fixture
+            .clone();
+        assert!(wrong.validate().is_err());
+
+        let standalone: super::Case = toml::from_str(&toml::to_string(&first).unwrap()).unwrap();
+        assert!(standalone.validate().is_ok());
+        assert_eq!(
+            standalone.fixture.unwrap().expected.sha256,
+            pair.expected.sha256
+        );
+        for path in [
+            "",
+            "expected.toml",
+            "../expected.toml",
+            "fixture/..",
+            "/outside/file",
+            "dir/sub/file",
+            "dir/..\\file",
+            "C:/file",
+        ] {
+            first.fixture.as_mut().unwrap().expected.path = path.to_owned();
+            assert!(first.validate().is_err(), "{path}");
+        }
+    }
+
+    #[test]
+    fn shared_fixtures_have_one_valid_declaration_per_provider() {
+        let mut doc: super::IndexDocument = toml::from_str(INDEX).unwrap();
+        doc.fixture.push(doc.fixture.first().unwrap().clone());
+        assert!(Index::try_from(doc).is_err());
+        let mut doc: super::IndexDocument = toml::from_str(INDEX).unwrap();
+        doc.fixture.first_mut().unwrap().inputs.sha256 = "uncounted".to_owned();
+        assert!(Index::try_from(doc).is_err());
+    }
+
     #[test]
     fn connected_packets_bind_the_reviewed_scope_independently_of_the_case_name() {
         let index = Index::parse(INDEX).unwrap();

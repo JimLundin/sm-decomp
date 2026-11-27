@@ -121,19 +121,18 @@ fn ordinary_recipe(
     })
 }
 
-fn weapons_recipe(
-    wram: &[u8],
-    sources: &Sources,
-    inputs: InputProvider,
-) -> Result<Recipe, Outcome> {
+fn weapons_recipe(wram: &[u8], sources: &Sources, case: &Case) -> Result<Recipe, Outcome> {
     let content = Arc::new(weapons::Content::load(&sources.rom)?);
     let seed = ProductionSeed::WeaponsContact(Box::new(weapons::seed(wram, &content)?));
     let production_content = ProductionContent::WeaponsContact(Box::new(content.weapons.clone()));
-    let (source, actual) = if inputs == InputProvider::ScopedShotDrawingInputs {
+    let (source, actual) = if case.inputs == InputProvider::ScopedShotDrawingInputs {
         (
             Context::ShotInputs(
                 content,
-                Arc::new(super::shot_drawing::InputCut::load(&sources.native)?),
+                Arc::new(super::shot_drawing::InputCut::load(
+                    &sources.native,
+                    &case.fixture_pair()?.inputs,
+                )?),
             ),
             Actual::ShotDrawing,
         )
@@ -175,7 +174,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
             )
         }
         [Responsibility::Weapons, Responsibility::Contact] => {
-            return weapons_recipe(wram, sources, case.inputs);
+            return weapons_recipe(wram, sources, case);
         }
         [Responsibility::Camera] => (
             Context::Camera,
@@ -286,7 +285,10 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
                 Context::Connected { content, .. } => Context::ConnectedObservations(content),
                 Context::ShotInputs(content, _) => Context::ShotExpected(
                     content,
-                    Arc::new(super::shot_drawing::ExpectedCut::load(&sources.native)?),
+                    Arc::new(super::shot_drawing::ExpectedCut::load(
+                        &sources.native,
+                        &case.fixture_pair()?.expected,
+                    )?),
                 ),
                 recipe @ (Context::ShotExpected(..)
                 | Context::Ceres(_)

@@ -1,6 +1,6 @@
 //! Packet identities for format-1 cases written before the index declared their fixtures.
 
-use super::index::{ConnectedPacket, NativeProjection};
+use super::index::{ConnectedPacket, FixturePair, InputProvider, NativeProjection};
 use super::native_search::Coordinates;
 use serde::Deserialize;
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -14,6 +14,7 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    fixture: Vec<FixturePair>,
     connected: BTreeMap<String, ConnectedPacket>,
     native_search: BTreeMap<String, Search>,
 }
@@ -32,4 +33,12 @@ pub(super) fn connected(id: &str) -> Option<&'static ConnectedPacket> {
 pub(super) fn projection(pin: &str, coordinates: Coordinates) -> Option<&'static NativeProjection> {
     let search = PACKETS.as_ref()?.native_search.get(pin)?;
     (search.coordinates == coordinates).then_some(&search.projection)
+}
+
+pub(super) fn fixture(provider: InputProvider) -> Option<&'static FixturePair> {
+    PACKETS
+        .as_ref()?
+        .fixture
+        .iter()
+        .find(|pair| pair.provider == provider)
 }

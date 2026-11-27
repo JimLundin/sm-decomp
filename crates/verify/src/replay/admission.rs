@@ -49,7 +49,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         return super::zebes::admit(case, sources);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
-        return super::early_map::admit(sources);
+        return super::early_map::admit(case, sources);
     }
     if case.inputs == InputProvider::NativeHealthTailInputs {
         return super::health_tail::admit(case, sources);
