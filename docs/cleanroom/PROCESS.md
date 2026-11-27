@@ -129,8 +129,9 @@ Each step names its owner, what it waits for, and its done-condition.
    against the lexicon within those 100 calls, so the root reads `scan.log` after the session
    for lines that try words rather than model code.
 7. **Import** (root): `cargo cleanroom import DOMAIN` on the lane branch. It refuses an
-   export whose `.git` holds anything but objects, refs, HEAD, the index, logs, the last
-   commit message, ORIG_HEAD and the read-only config, info and hooks, a history that doesn't
+   export whose `.git` is not the folder the export made, whose config differs from the
+   exported bytes, whose info or hooks is not empty, or which holds anything but objects, refs,
+   HEAD, the index, logs, the last commit message and ORIG_HEAD beside them, a history that doesn't
    start at the export's commit, and a commit that touches anything but the
    manifest and the Rust files under `src/` and `tests/` of the shared types and the model (an
    attributes file, a build script, cargo configuration or a hidden file among them). It then

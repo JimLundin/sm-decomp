@@ -273,7 +273,7 @@ pub fn probe(name: &str) -> Result<(String, bool), String> {
 }
 
 fn probe_at(lane: &Lane, repo: &Path, cli: &Path, record: &Path) -> Result<(String, bool), String> {
-    let breaches = git_breaches(&lane.export)?;
+    let breaches = git_breaches(lane)?;
     if !breaches.is_empty() {
         return Err(format!(
             "the export's .git holds what no session's git leaves:\n{}",
@@ -367,7 +367,7 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
         }
         fs::write(lane.brief(), text).map_err(|e| e.to_string())?;
     }
-    let breaches = git_breaches(&lane.export)?;
+    let breaches = git_breaches(&lane)?;
     if !breaches.is_empty() {
         return Err(format!(
             "the export's .git holds what no session's git leaves:\n{}",
@@ -415,7 +415,7 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
     drop(relay);
     let mut out = String::new();
     let _ = writeln!(out, "transcript {}", transcript.display());
-    let breaches = git_breaches(&lane.export)?;
+    let breaches = git_breaches(&lane)?;
     if !breaches.is_empty() {
         let _ = writeln!(
             out,
@@ -661,14 +661,11 @@ mod tests {
             export: base.join("probe"),
             dir: base.join("probe.lane"),
         };
-        for dir in [
-            lane.export.join(".git/info"),
-            lane.export.join(".git/hooks"),
-            lane.dir.clone(),
-        ] {
+        for dir in [&lane.export, &lane.dir] {
             fs::create_dir_all(dir).unwrap();
         }
-        fs::write(lane.export.join(".git/config"), "").unwrap();
+        crate::export::init(&lane.export).unwrap();
+        lane.record_git().unwrap();
         let cli = base.join("claude");
         fs::write(&cli, format!("#!/bin/sh\necho '{version}'\n")).unwrap();
         let mut perms = fs::metadata(&cli).unwrap().permissions();

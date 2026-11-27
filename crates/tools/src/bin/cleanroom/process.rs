@@ -125,4 +125,29 @@ impl Lane {
     pub fn export_root(&self) -> PathBuf {
         self.dir.join("export-root")
     }
+
+    /// The export's `.git` folder as `cleanroom export` made it, by device and inode.
+    pub fn git_inode(&self) -> PathBuf {
+        self.dir.join("git-inode")
+    }
+
+    /// The bytes of the export's `.git/config` as `cleanroom export` wrote them.
+    pub fn git_config(&self) -> PathBuf {
+        self.dir.join("git-config")
+    }
+
+    /// Notes what a session may not change in the export's `.git`: the folder itself and its
+    /// configuration. The notes live in the lane folder, outside the box.
+    pub fn record_git(&self) -> Result<(), String> {
+        let git = self.export.join(".git");
+        let meta = std::fs::symlink_metadata(&git).map_err(|e| format!("{}: {e}", git.display()))?;
+        std::fs::write(self.git_inode(), inode(&meta)).map_err(|e| e.to_string())?;
+        std::fs::copy(git.join("config"), self.git_config()).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+}
+
+pub fn inode(meta: &std::fs::Metadata) -> String {
+    use std::os::unix::fs::MetadataExt as _;
+    format!("{} {}\n", meta.dev(), meta.ino())
 }

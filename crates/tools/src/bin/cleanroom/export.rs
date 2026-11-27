@@ -101,6 +101,7 @@ impl Export<'_> {
                 .map_err(|e| e.to_string())?;
         }
         init(&lane.export)?;
+        lane.record_git()?;
         output(git(&lane.export).args(["add", "-A"]))?;
         output(git(&lane.export).args([
             "commit",
@@ -224,7 +225,7 @@ impl Export<'_> {
 /// The export's git, with the `info` and `hooks` folders the box mounts read-only, and a
 /// configuration that never packs on its own: an automatic gc writes `packed-refs` and `gc.log`,
 /// which the import refuses.
-fn init(export: &Path) -> Result<(), String> {
+pub fn init(export: &Path) -> Result<(), String> {
     output(git(export).args(["init", "-q", "--template=", "-b", "main"]))?;
     for folder in ["info", "hooks"] {
         fs::create_dir_all(export.join(".git").join(folder)).map_err(|e| e.to_string())?;

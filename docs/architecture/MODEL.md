@@ -424,8 +424,10 @@ shares one object store and every ref, so a sparse checkout is not enough. So:
   has no history, no other refs and no remote, and lives outside the home. Results come back
   as patches, applied by `cleanroom import`, which reads the export through a mirror of its
   objects alone, at most `CLEANROOM_MIRROR_MAX_MB` (1024). The box mounts the export's
-  `.git/config`, `.git/info` and `.git/hooks` read-only, and `run` and `import` refuse an export
-  whose `.git` holds anything a session's git doesn't leave.
+  `.git/config`, `.git/info` and `.git/hooks` read-only. Since a session can still move `.git`
+  aside and make another, `export` records the folder's inode and the config's bytes in the
+  lane folder, and `run` and `import` refuse an export whose `.git` differs from them or holds
+  anything a session's git doesn't leave.
 - **The session runs in a box.** `cleanroom run` starts the agent in a container with no
   network whose file system is the export, the toolchain and the tool, so nothing else is
   there to read. The model's API is the one way out, through a relay that holds the
