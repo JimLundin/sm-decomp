@@ -5,7 +5,7 @@ use super::{
     observe::{CLOCK, EXHAUST, OAM, SLOTS, STOCK, expected_events, field, pieces},
     word,
 };
-use crate::replay::{readers::ExpectedCut, result::Outcome};
+use crate::replay::{played::platform::finished, readers::ExpectedCut, result::Outcome};
 use data::rom::{Lorom, RomAddress};
 use data::spritemap::{SpriteSize, Spritemap};
 use oracle_record::FrameRecord;
@@ -21,7 +21,6 @@ pub(in crate::replay) struct Expected {
     shot_maps: Vec<Spritemap>,
     puff_pictures: Vec<u16>,
     missile_oam_attributes: Vec<u16>,
-    cuts: Vec<ExpectedCut>,
 }
 
 impl Expected {
@@ -67,7 +66,6 @@ impl Expected {
             shot_maps,
             puff_pictures,
             missile_oam_attributes,
-            cuts: Vec::new(),
         })
     }
 
@@ -103,36 +101,31 @@ impl Expected {
     }
 
     pub(super) fn read(
-        &mut self,
+        &self,
         prior: Option<&FrameRecord>,
         frame: &FrameRecord,
-        timing: &super::inputs::Timing,
-    ) -> Result<(), Outcome> {
+    ) -> Result<ExpectedCut, Outcome> {
         let semantics = self.state(frame)?;
         let mut fields = semantics.clone();
-        fields.extend(expected_events(prior, frame, timing.turn)?);
-        let sprites = if timing.publish {
+        fields.extend(expected_events(
+            prior.map(|f| f.wram.as_ref()),
+            &frame.wram,
+            frame.index,
+        )?);
+        // A requested NMI publishes the recorded OAM even when the actor is held.
+        let sprites = if finished(frame) {
             self.oam(frame)?
         } else {
             Vec::new()
         };
         fields.push(field(OAM, sprites.into_iter().flatten()));
-        self.cuts.push(ExpectedCut {
+        Ok(ExpectedCut {
             semantic_count: semantics.len(),
             output_count: fields.len().saturating_sub(semantics.len()),
             replies: 0,
             fields,
             semantics,
-        });
-        Ok(())
-    }
-
-    pub(in crate::replay) fn at(&self, cut: u64) -> Result<ExpectedCut, Outcome> {
-        usize::try_from(cut)
-            .ok()
-            .and_then(|cut| self.cuts.get(cut))
-            .cloned()
-            .ok_or_else(|| data_failure(Some(cut), "missile expected cut"))
+        })
     }
 
     fn state(

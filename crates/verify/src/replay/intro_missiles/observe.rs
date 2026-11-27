@@ -1,6 +1,7 @@
 //! Projections for the scoped weapon State and deliveries.
 
-use super::{data_failure, word};
+use super::data_failure;
+use crate::replay::weapons::word;
 use crate::replay::{compare::Observation, result::Outcome};
 use game::{
     exact::oam::HIDDEN_Y,
@@ -10,7 +11,6 @@ use game::{
     },
     state::video::Oam,
 };
-use oracle_record::FrameRecord;
 use weapons_projectiles as w1;
 
 pub(super) const STOCK: &str = "weapons.intro-stock";
@@ -211,19 +211,18 @@ pub(super) fn actual_oam(oam: &Oam) -> Vec<[u16; 4]> {
 }
 
 pub(super) fn expected_events(
-    prior: Option<&FrameRecord>,
-    current: &FrameRecord,
-    turn: bool,
+    prior: Option<&[u8]>,
+    current: &[u8],
+    cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
-    let previous = prior.filter(|_| turn);
     let mut debit = 0;
     let mut impact = Vec::new();
     let mut puffs = Vec::new();
     let mut candidates = Vec::new();
-    if let Some(prior) = previous {
+    if let Some(prior) = prior {
         debit = word(prior, 0x09c6)?
             .checked_sub(word(current, 0x09c6)?)
-            .ok_or_else(|| data_failure(Some(current.index), "missile stock transition"))?;
+            .ok_or_else(|| data_failure(Some(cut), "missile stock transition"))?;
         for id in (0..5_u16).rev() {
             let offset = usize::from(id).saturating_mul(2);
             let before = |base: usize| word(prior, base.saturating_add(offset));
@@ -232,10 +231,15 @@ pub(super) fn expected_events(
             if hit {
                 impact.push(id);
             }
-            if before(0x0c18)? == 0x8100 && before(0x0c90)? == 1 {
+            // Each flight update advances the trail countdown, including a shot that
+            // becomes an impact after flight. A held slot produces no candidate or puff.
+            let flew = hit
+                || (after(0x0c18)? == 0x8100
+                    && (before(0x0c18)? != 0x8100 || before(0x0c90)? != after(0x0c90)?));
+            if flew && before(0x0c18)? == 0x8100 && before(0x0c90)? == 1 {
                 puffs.extend([id, before(0x0b64)?, before(0x0b78)?]);
             }
-            if hit || after(0x0c18)? == 0x8100 {
+            if flew {
                 candidates.extend([id, after(0x0b64)?]);
             }
         }
@@ -248,4 +252,30 @@ pub(super) fn expected_events(
         field(WORLD, [0]),
         field(SOUND, [0]),
     ])
+}
+
+#[test]
+fn recorded_flight_and_stock_changes_report_events_even_with_stationary_scene_clocks() {
+    let mut before = vec![0; 0x2000];
+    let slot = 2;
+    let set = |ram: &mut [u8], address: usize, value: u16| {
+        ram[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    set(&mut before, 0x09c6, 4);
+    set(&mut before, 0x0c18 + slot, 0x8100);
+    set(&mut before, 0x0c90 + slot, 1);
+    set(&mut before, 0x0b64 + slot, 50);
+    set(&mut before, 0x0b78 + slot, 30);
+    let mut after = before.clone();
+    set(&mut after, 0x09c6, 3);
+    set(&mut after, 0x0c90 + slot, 4);
+    set(&mut after, 0x0b64 + slot, 48);
+    let moving = expected_events(Some(&before), &after, 1).unwrap();
+    assert!(moving.contains(&field(PUFFS, [1, 50, 30])));
+    assert!(moving.contains(&field(CANDIDATES, [1, 48])));
+    assert!(moving.contains(&field(DEBIT, [1])));
+    let held = expected_events(Some(&after), &after, 2).unwrap();
+    assert!(held.contains(&field(PUFFS, [])));
+    assert!(held.contains(&field(CANDIDATES, [])));
+    assert!(held.contains(&field(DEBIT, [0])));
 }

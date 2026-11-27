@@ -2565,9 +2565,6 @@ fn intro_missile_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
 
     recorded
-        && case.start == Start::CacheCut { frame: 0 }
-        && case.row == super::intro_missiles::ROW
-        && case.end.cut_inclusive == super::intro_missiles::END
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::IntroMissileInputs
         && case.expectations.output_cut.is_none()
@@ -3173,9 +3170,11 @@ impl Case {
             // driven by the predecessor's press.
             return Some(0);
         }
-        if matches!(self.inputs, InputProvider::IntroMissileInputs) {
+        if let Start::CacheCut { frame } = self.start
+            && matches!(self.inputs, InputProvider::IntroMissileInputs)
+        {
             // Compare the admitted setup before the first actor turn.
-            return Some(0);
+            return Some(frame);
         }
         if matches!(self.inputs, InputProvider::CeresShaftActors) {
             return match self.expectations.played {

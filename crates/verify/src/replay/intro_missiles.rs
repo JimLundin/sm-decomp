@@ -5,10 +5,7 @@ mod inputs;
 mod observe;
 
 use super::{Sources, compare::Observation, data_failure, index::Case, readers, result::Outcome};
-use crate::{
-    cache::Cache,
-    lock::{Lock, RowId},
-};
+use crate::{cache::Cache, lock::RowId};
 use canonical::model::Model;
 use data::rom::Rom;
 use game::{
@@ -26,16 +23,20 @@ use weapons_projectiles as w1;
 pub(super) use expected::Expected;
 pub(super) use inputs::Inputs;
 
-pub(super) const ROW: &str = "any-intro-2219";
-pub(super) const END: u64 = 649;
-
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedCase, Outcome> {
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "missile record lock"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "missile lock schema"))?;
+    let super::index::Start::CacheCut { frame: first } = case.start else {
+        return Err(data_failure(None, "missile cache origin"));
+    };
+    let lock = super::read_lock(sources)?;
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "missile lock row"))?;
+    if case.end.cut_inclusive >= row.frames.0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "missile row horizon",
+        ));
+    }
     let cache =
         Cache::open(&sources.cache, row).map_err(|_| data_failure(None, "missile record pins"))?;
     let bad_rom = || data_failure(None, "missile player ROM");
@@ -50,25 +51,40 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         .map_err(|_| data_failure(None, "ordinary weapon content"))?;
     let content =
         Content::new(art, power).map_err(|_| data_failure(None, "cinematic weapon content"))?;
-    let origin = readers::record(&cache, 0)?;
-    let seed = seed(&origin)?;
-    let world = super::weapons::terrain(&origin.wram)?;
-    let schedule: Vec<_> = (0..=case.end.cut_inclusive).collect();
-    let mut inputs = Inputs::new(inputs::Demo::load(rom)?, world);
-    let mut expected = Expected::load(rom)?;
-    let mut previous = None;
-    for (&cut, bytes) in schedule.iter().zip(cache.records_without_pictures()) {
-        let (actual, frame) = bytes.map_err(|_| data_failure(Some(cut), "missile record cut"))?;
+    let offset =
+        usize::try_from(first).map_err(|_| data_failure(Some(first), "missile row offset"))?;
+    let mut records = cache.records_without_pictures().skip(offset);
+    let mut read = |cut| {
+        let (actual, frame) = records
+            .next()
+            .and_then(Result::ok)
+            .ok_or_else(|| data_failure(Some(cut), "missile record cut"))?;
         if actual.0 != cut {
             return Err(data_failure(Some(cut), "missile record coordinate"));
         }
-        let timing = inputs::timing(previous.as_ref(), &frame)?;
-        inputs.read(previous.as_ref(), &frame, &timing, &content)?;
-        expected.read(previous.as_ref(), &frame, &timing)?;
+        Ok(frame)
+    };
+    let origin = read(first)?;
+    let seed = seed(&origin)?;
+    let world = super::weapons::terrain(&origin.wram)?;
+    let schedule: Vec<_> = (first..=case.end.cut_inclusive).collect();
+    let mut inputs = Inputs::new(inputs::Demo::load(rom)?, world, first);
+    let observations = Expected::load(rom)?;
+    let mut expected = Vec::with_capacity(schedule.len());
+    let mut previous = None;
+    // The witness ends by the first held cut after the intro has hidden its actors.
+    let mut ended = false;
+    for record in std::iter::once(Ok(origin)).chain(schedule.iter().skip(1).copied().map(read)) {
+        let frame = record?;
+        if ended {
+            return Err(data_failure(Some(frame.index), "missile battle ended"));
+        }
+        if let Some(prior) = previous.as_ref() {
+            ended = inputs::hidden(prior)? && inputs::hidden(&frame)?;
+        }
+        inputs.read(previous.as_ref(), &frame, &content)?;
+        expected.push(observations.read(previous.as_ref(), &frame)?);
         previous = Some(frame);
-    }
-    if previous.is_none_or(|frame| frame.index != case.end.cut_inclusive) {
-        return Err(data_failure(None, "complete missile replay horizon"));
     }
 
     let content = ProductionContent::IntroMissiles(Box::new(content));
@@ -81,12 +97,21 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<readers::AdmittedC
         rules,
         schedule,
         inputs: readers::InputReader::IntroMissiles(inputs),
-        expected: readers::ExpectedReader::IntroMissiles(expected),
+        expected: readers::ExpectedReader::RecordedCuts(readers::CutTape {
+            first,
+            values: expected,
+        }),
         actual: readers::ActualReader::IntroMissiles,
     })
 }
 
 fn seed(frame: &FrameRecord) -> Result<ProductionSeed, Outcome> {
+    if !inputs::starts_demo(frame)? || word(frame, 0x0ccc)? != 0 || word(frame, 0x0cce)? != 0 {
+        return Err(data_failure(
+            Some(frame.index),
+            "missile battle demo origin",
+        ));
+    }
     let mut fractions = enum_map::EnumMap::from_fn(|_| w1::Axes {
         x: w1::PixelFraction(0),
         y: w1::PixelFraction(0),
@@ -95,7 +120,10 @@ fn seed(frame: &FrameRecord) -> Result<ProductionSeed, Outcome> {
         let offset = index.saturating_mul(2);
         let w = |column: usize| word(frame, column.saturating_add(offset));
         if w(0x0c40)? != 0 || w(0x0c90)? != 0 {
-            return Err(data_failure(Some(0), "cinematic weapon origin slots"));
+            return Err(data_failure(
+                Some(frame.index),
+                "cinematic weapon origin slots",
+            ));
         }
         fraction.x = w1::PixelFraction(w(0x0b8c)?);
         fraction.y = w1::PixelFraction(w(0x0ba0)?);

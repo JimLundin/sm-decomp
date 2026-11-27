@@ -1,7 +1,7 @@
 //! External phase, live authoring controls and after-flight encounter opportunity.
 
 use super::{data_failure, word};
-use crate::replay::{played::platform::finished, result::Outcome, weapons};
+use crate::replay::{played::platform::finished, readers::CutTape, result::Outcome, weapons};
 use data::rom::{Lorom, RomAddress};
 use game::production::{
     AdvanceInput, Production, ProductionOutputs,
@@ -46,19 +46,23 @@ impl Demo {
     }
 }
 
-pub(super) struct Timing {
-    pub(super) turn: bool,
-    pub(super) publish: bool,
-    pub(super) drawing: Presentation,
+pub(super) fn hidden(frame: &FrameRecord) -> Result<bool, Outcome> {
+    Ok(word(frame, DRAW_GATE)? == 0)
 }
 
-pub(super) fn timing(prior: Option<&FrameRecord>, frame: &FrameRecord) -> Result<Timing, Outcome> {
+pub(super) fn starts_demo(frame: &FrameRecord) -> Result<bool, Outcome> {
+    Ok(word(frame, DRAW_GATE)? != 0
+        && word(frame, 0x0a88)? == 0x8000
+        && word(frame, 0x0a7e)? == DEMO_FIRST
+        && word(frame, 0x0a7c)? == 1)
+}
+
+fn opportunity(
+    prior: Option<&FrameRecord>,
+    frame: &FrameRecord,
+) -> Result<(bool, Presentation), Outcome> {
     let Some(prior) = prior else {
-        return Ok(Timing {
-            turn: false,
-            publish: false,
-            drawing: Presentation::Hold,
-        });
+        return Ok((false, Presentation::Hold));
     };
     let turn = word(prior, DRAW_GATE)? != 0 && word(prior, BEAT)? != word(frame, BEAT)?;
     let complete = finished(frame);
@@ -70,11 +74,7 @@ pub(super) fn timing(prior: Option<&FrameRecord>, frame: &FrameRecord) -> Result
         (false, true, _) if publish => Presentation::Publish,
         _ => Presentation::Hold,
     };
-    Ok(Timing {
-        turn,
-        publish,
-        drawing,
-    })
+    Ok((turn, drawing))
 }
 
 #[derive(Clone)]
@@ -93,16 +93,19 @@ pub(in crate::replay) struct Inputs {
     demo: Demo,
     elapsed: usize,
     grid: QuietBeamWorld,
-    tape: Vec<Cut>,
+    tape: CutTape<Cut>,
 }
 
 impl Inputs {
-    pub(super) const fn new(demo: Demo, grid: QuietBeamWorld) -> Self {
+    pub(super) const fn new(demo: Demo, grid: QuietBeamWorld, first: u64) -> Self {
         Self {
             demo,
             elapsed: 0,
             grid,
-            tape: Vec::new(),
+            tape: CutTape {
+                first,
+                values: Vec::new(),
+            },
         }
     }
 
@@ -110,10 +113,10 @@ impl Inputs {
         &mut self,
         prior: Option<&FrameRecord>,
         frame: &FrameRecord,
-        timing: &Timing,
         content: &Content,
     ) -> Result<(), Outcome> {
-        let work = if timing.turn {
+        let (turn, drawing) = opportunity(prior, frame)?;
+        let work = if turn {
             let prior =
                 prior.ok_or_else(|| data_failure(Some(frame.index), "weapon work origin"))?;
             let [held, fresh] = self.demo.at(self.elapsed);
@@ -130,10 +133,7 @@ impl Inputs {
         } else {
             None
         };
-        self.tape.push(Cut {
-            work,
-            drawing: timing.drawing,
-        });
+        self.tape.values.push(Cut { work, drawing });
         Ok(())
     }
 
@@ -142,10 +142,7 @@ impl Inputs {
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
-        let input = usize::try_from(cut)
-            .ok()
-            .and_then(|cut| self.tape.get(cut))
-            .ok_or_else(|| data_failure(Some(cut), "missile input cut"))?;
+        let input = self.tape.at(cut)?;
         let contact = |candidates: &[w1::MissileCandidate]| {
             let work = input.work.as_ref()?;
             // The boss phase is external to W1. Its contact rule reads the first ordered
