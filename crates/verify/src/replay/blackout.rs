@@ -42,10 +42,6 @@ fn standing_body(case: &Case) -> bool {
     case.rules.iter().any(|rule| rule == standing::RULE)
 }
 
-fn shaft_hud(case: &Case) -> bool {
-    case.responsibilities == [Responsibility::Hud]
-}
-
 pub(super) fn valid(case: &Case) -> bool {
     if case.kind != CaseKind::Scoped
         || !matches!(case.start, Start::CacheCut { .. })
@@ -61,10 +57,6 @@ pub(super) fn valid(case: &Case) -> bool {
         return case.responsibilities == [Responsibility::Appearance]
             && case.expectations.fields == fields
             && case.expectations.outputs == outputs;
-    }
-    if shaft_hud(case) {
-        return case.expectations.fields == hud::FIELDS
-            && case.expectations.outputs == hud::OUTPUTS;
     }
     let outputs = &case.expectations.outputs;
     let common = outputs
@@ -119,7 +111,6 @@ fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Ou
         && word(&record.wram, 0x93f)? & 0x8000 != 0
         && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
         && !standing_body(case)
-        && !shaft_hud(case)
         && !memory
     {
         return Ok(Origin::Reach);
@@ -133,7 +124,6 @@ fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Ou
         (true, true) => Origin::SuspendedStanding,
         (true, false) => Origin::Standing,
         (false, true) => Origin::Suspended,
-        (false, false) if shaft_hud(case) => Origin::Hud,
         (false, false) => Origin::Locked,
     })
 }
@@ -152,14 +142,10 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         import::countdown::import(rom.lorom()).map_err(|_| data_failure(None, "timer art"))?;
     let mut previous = record(&cache, frame)?;
     let body = standing_body(case);
-    let hud = shaft_hud(case);
     let origin = origin(case, &previous)?;
     origin.check(case, frame)?;
     let late = matches!(origin, Origin::Suspended | Origin::SuspendedStanding);
     let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
-    let hud_assets = hud
-        .then(|| hud::admit(&previous, rom.lorom(), &mut state))
-        .transpose()?;
     let locked_look = if body && !late {
         Some(standing::LockedLook::read(&previous, rom.lorom())?)
     } else {
@@ -173,7 +159,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         format,
         graphics: data::pose::tiles::Graphics::default(),
         standing: art,
-        hud: hud_assets,
+        hud: None,
     }));
     let rules = ProductionRules::Blackout;
     let production = Production::admit(
@@ -200,8 +186,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         inputs.push(input);
         expected.push(if body {
             standing::expected(&current, rom.lorom())?
-        } else if hud {
-            hud::expected(&previous, &current)?
         } else {
             observe::expected(&previous, &current, late)?
         });
@@ -217,8 +201,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         expected: ExpectedReader::Blackout(Tape::new(first, expected)),
         actual: if body {
             ActualReader::StandingBody
-        } else if hud {
-            ActualReader::ShaftHud
         } else {
             ActualReader::Blackout(late)
         },
@@ -361,7 +343,7 @@ mod owned_standing {
         )?;
         compared(
             165,
-            &hud::expected(&prior, &current)?.fields,
+            &hud::expected(&prior, &current)?,
             &hud::actual(&production, &output.regular_publication)?,
         )
     }

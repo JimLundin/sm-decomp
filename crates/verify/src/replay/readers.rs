@@ -69,7 +69,6 @@ pub(super) enum ExpectedReader {
 pub(super) enum ActualReader {
     Blackout(bool),
     StandingBody,
-    ShaftHud,
     Intro,
     IntroRooms,
     Flashback,
@@ -300,9 +299,6 @@ impl ActualReader {
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
-            (Self::ShaftHud, InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
-                super::blackout::hud::actual(production, &out.regular_publication)
-            }
             (Self::StandingBody, InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::standing::actual(production, &out)
             }
@@ -375,7 +371,6 @@ impl ActualReader {
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::Discovery => super::discovery::actual(production, None),
-            Self::ShaftHud => super::blackout::hud::actual(production, &[]),
             Self::StandingBody => super::blackout::standing::actual(
                 production,
                 &game::production::blackout::Output::default(),

@@ -155,7 +155,7 @@ pub(super) fn check(
     )?;
     compared(
         cut,
-        &blackout::hud::expected(previous, current)?.fields,
+        &blackout::hud::expected(previous, current)?,
         &blackout::hud::actual(production, &output.regular_publication)?,
     )?;
     if let Some(shaft) = shaft

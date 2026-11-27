@@ -1829,19 +1829,19 @@ case = "appearance/elevator-standing-picture"
 
 [[fault]]
 name = "hud-locked-shaft-drops-pending-regular-upload"
-responsibility = "hud"
+responsibility = "played"
 file = "crates/game/src/production/blackout.rs"
 before = '''        let (standing_publication, regular_publication) = self.publish(cut, content)?;'''
 after = '''        if !cut.publish {
             self.video.batch.vram.clear();
         }
         let (standing_publication, regular_publication) = self.publish(cut, content)?;'''
-case = "hud/locked-shaft-publication"
+case = "played any-power-on 0 15196"
 
 
 [[fault]]
 name = "hud-locked-shaft-drains-without-publishing"
-responsibility = "hud"
+responsibility = "played"
 file = "crates/game/src/production/blackout.rs"
 before = '''                regular = self.video.process_vram_writes(&content.graphics);'''
 after = '''                if matches!(cut.work, Work::SaveCompleted) {
@@ -1849,7 +1849,7 @@ after = '''                if matches!(cut.work, Work::SaveCompleted) {
                 } else {
                     regular = self.video.process_vram_writes(&content.graphics);
                 }'''
-case = "hud/locked-shaft-publication"
+case = "played any-power-on 0 15196"
 
 [[fault]]
 name = "shaft-sound-ignore-room-hold"

@@ -1896,29 +1896,6 @@ operation = "suspended-room-work"
 claim = "the same room and NMI path continues its single admitted pending picture"
 
 [[case]]
-id = "hud/locked-shaft-publication"
-kind = "scoped"
-row = "chain-any-0011-DF45"
-start = { source = "cache-cut", frame = 164 }
-end = { cut_inclusive = 241 }
-rules = ["interface-hud/HerBlink", "interface-hud/MiniMapWindow"]
-profile = "reference"
-responsibilities = ["hud"]
-content = "player-rom-import"
-inputs = "blackout"
-expectations = { provider = "pinned-record-cache", fields = ["hud.grid", "hud.explored", "hud.energy", "hud.missiles", "hud.supers", "hud.bombs", "hud.highlighted", "hud.selected", "hud.one-shot", "hud.map-off", "hud.frame-count"], outputs = ["hud.pending-transfer", "hud.publication", "hud.published-grid"] }
-checkpoints = true
-limits = ["One seed admits the locked room's HUD, position, stock and video. Only the HUD grid, regular queue and its VRAM range are compared. Shaft geometry, actors, affine and platform publication require B8."]
-
-[[case.borrowed]]
-operation = "locked-hud-origin"
-claim = "the locked room retains the post-motion position, stock and reserve"
-
-[[case.borrowed]]
-operation = "locked-hud-work"
-claim = "T1 supplies opportunities to prepare, hold and publish the carried regular queue"
-
-[[case]]
 id = "audio-sender/shaft-bursts"
 kind = "integrated"
 row = "chain-any-0006-E0B5"
