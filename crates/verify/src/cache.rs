@@ -421,6 +421,12 @@ impl Cache {
         let text = read(index_path.clone())?;
         let text = String::from_utf8_lossy(&text);
         let index = parse_index(&index_path, &text)?;
+        if index.lean != (index_name == LEAN_FILES.0) {
+            return Err(CacheError::Malformed {
+                path: index_path,
+                line: 1,
+            });
+        }
         if index.row != row.id.0 {
             return Err(CacheError::WrongRow(index.row));
         }
