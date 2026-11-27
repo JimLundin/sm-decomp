@@ -1,5 +1,9 @@
 //! Native qualification of the shaft overlay graphics write.
 
+mod witnesses;
+use crate::replay::blackout::{observe::oam_bytes, standing::packed_oam};
+pub(super) use witnesses::{Lane, Picture, RoomVideoWitnesses};
+
 #[cfg(test)]
 use super::{open_rows, read_lock, tests::sources};
 #[cfg(test)]
@@ -82,26 +86,37 @@ pub(super) fn compare(
     expected: &mut Vec<super::Observation>,
     actual: &mut Vec<super::Observation>,
 ) -> Result<(), super::Outcome> {
+    let trace = frame.witnesses.room_video()?;
     compare_live_overlay(
         &room.video,
         overlay_placed,
-        frame.current,
-        frame.place,
-        frame.cut,
+        frame,
+        trace.overlay_placement.contains(frame.place),
         (expected, actual),
     )?;
-    compare_shaft_picture(
-        room,
-        frame.current,
-        frame.place,
-        frame.cut,
-        (expected, actual),
-    )?;
-    compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
-    compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
-    compare_gameplay_tile_layout(room, frame.current, frame.place, frame.cut)?;
-    compare_shaft_affine(room, frame.current, frame.place, frame.cut)?;
-    if matches!(frame.place, ("chain-any-0011-DF45", 0..=239)) && room.standard_bg3().is_some() {
+    compare_shaft_picture(room, frame, trace, (expected, actual))?;
+    compare_shaft_sheet(room, frame, trace)?;
+    if let Some(field) = if trace
+        .ridley_dma
+        .iter()
+        .any(|window| window.contains(frame.place))
+    {
+        Some("room-video.ridley-main-screen-dma")
+    } else {
+        trace
+            .ridley_reset
+            .contains(frame.place)
+            .then_some("room-video.ridley-main-screen-reset")
+    } {
+        compare_ridley_hdma(room, frame.current, field, frame.cut)?;
+    }
+    if matches!(passing.start, Readiness::StandardBackground { .. })
+        || (trace.departure_layout.contains(frame.place) && room.standard_bg3().is_some())
+    {
+        compare_gameplay_tile_layout(room, frame.current, frame.cut)?;
+    }
+    if trace.shaft_transform.contains(frame.place) && room.standard_bg3().is_some() {
+        compare_shaft_affine(room, frame.current, frame.cut)?;
         compare_shaft_bg2_scroll(&room.video, frame.current, frame.cut)?;
     }
     compare_shaft_raster(room, frame.current, expected, actual);
@@ -121,12 +136,16 @@ pub(super) fn compare(
 fn compare_live_overlay(
     video: &Video,
     placed: bool,
-    record: &oracle_record::FrameRecord,
-    (row, local): (&str, u64),
-    cut: u64,
+    frame: &super::Frame<'_>,
+    placement_due: bool,
     (expected_fields, actual_fields): Fields<'_>,
 ) -> Result<(), super::Outcome> {
-    if row == "chain-any-0010-DF8D" && local == 225 && !placed {
+    let super::Frame {
+        current: record,
+        cut,
+        ..
+    } = *frame;
+    if placement_due && !placed {
         return Err(super::Outcome::Difference {
             cut,
             field: "room-video.shaft-overlay-placement".into(),
@@ -189,16 +208,9 @@ pub(super) fn compare_door_enemy_tiles(
 pub(super) fn compare_ridley_hdma(
     video: &RoomVideo,
     record: &FrameRecord,
-    place: (&str, u64),
+    scope: &str,
     cut: u64,
 ) -> Result<(), Outcome> {
-    let scope = match place {
-        ("chain-any-0005-E06B", 214..=215) | ("chain-any-0006-E0B5", 1659..=1660) => {
-            "room-video.ridley-main-screen-dma"
-        }
-        ("chain-any-0006-E0B5", 1661..=1664) => "room-video.ridley-main-screen-reset",
-        _ => return Ok(()),
-    };
     // An ordinary room seed does not carry the earlier startup's effect channels.
     if video.idle_hdma().is_some()
         && crate::replay::landing_site::io_bytes(video.video.dma[4]) != record.ppu.dma[4]
@@ -215,14 +227,8 @@ pub(super) fn compare_ridley_hdma(
 pub(super) fn compare_gameplay_tile_layout(
     room: &RoomVideo,
     record: &FrameRecord,
-    place: (&str, u64),
     cut: u64,
 ) -> Result<(), Outcome> {
-    if place != ("any-ceres-arrival", 2)
-        && !(place == ("chain-any-0011-DF45", 239) && room.standard_bg3().is_some())
-    {
-        return Ok(());
-    }
     let project = |registers: &game::state::video::Registers| {
         let [bg1, bg2, bg3, bg4] = registers.tilemaps;
         let [tiles12, tiles34] = registers.tile_bases;
@@ -278,12 +284,8 @@ pub(super) fn compare_gameplay_tile_layout(
 pub(super) fn compare_shaft_affine(
     room: &RoomVideo,
     record: &FrameRecord,
-    place: (&str, u64),
     cut: u64,
 ) -> Result<(), Outcome> {
-    if !matches!(place, ("chain-any-0011-DF45", 0..=239)) || room.standard_bg3().is_none() {
-        return Ok(());
-    }
     let (matrix, centre) = record.ppu.m7.split_at(4);
     let live = room.video.committed.mode7;
     if live.matrix != matrix || live.centre != centre {
@@ -553,12 +555,17 @@ fn arrival_produces_standard_background_before_hud() {
 /// The first requested publication after the shaft tile transfer compares the entire sheet.
 pub(super) fn compare_shaft_sheet(
     room: &RoomVideo,
-    record: &oracle_record::FrameRecord,
-    (row, local): (&str, u64),
-    cut: u64,
+    frame: &super::Frame<'_>,
+    trace: &RoomVideoWitnesses,
 ) -> Result<(), super::Outcome> {
+    let super::Frame {
+        current: record,
+        cut,
+        place,
+        ..
+    } = *frame;
     let sheet = ..0x4000;
-    if row == "chain-any-0010-DF8D" && (221..=224).contains(&local) {
+    if trace.shaft_sheet.contains(place) {
         let expected = record
             .vram
             .get(sheet)
@@ -570,7 +577,7 @@ pub(super) fn compare_shaft_sheet(
             });
         }
     }
-    if row == "chain-any-0010-DF8D" && (221..=278).contains(&local) {
+    if trace.bg2_shadow.contains(place) {
         let shadow = record
             .wram
             .get(0x3000..0x3800)
@@ -759,20 +766,32 @@ fn arrival_stages_enemies_and_initializes_idle_hdma() {
     }
 }
 
-fn held_overlay(oam: &game::state::video::Oam) -> Vec<u8> {
-    oam.low
-        .iter()
-        .take(12)
-        .flat_map(|entry| [entry.x, entry.y, entry.tile, entry.attributes])
-        .chain(oam.high.iter().take(3).copied())
-        .collect()
+// The aggregate receipt stores the low table followed by the packed two-bit attributes.
+fn overlay_prefix(raw: &[u8], pieces: u8, cut: u64) -> Result<Vec<u8>, Outcome> {
+    let bad = || super::data_failure(Some(cut), "shaft overlay OAM prefix");
+    let (low, high) = raw.split_at_checked(512).ok_or_else(bad)?;
+    let count = usize::from(pieces);
+    let mut prefix = low.get(..count.saturating_mul(4)).ok_or_else(bad)?.to_vec();
+    let flags = high.get(..count.div_ceil(4)).ok_or_else(bad)?;
+    prefix.extend(flags);
+    let used = (pieces % 4).wrapping_mul(2);
+    if used != 0
+        && let Some(last) = prefix.last_mut()
+    {
+        *last &= (1_u8 << used).wrapping_sub(1);
+    }
+    Ok(prefix)
 }
 
 fn platform_low(words: &[u16]) -> Vec<u8> {
     words.iter().map(|word| word.to_le_bytes()[0]).collect()
 }
 
-pub(super) fn held_shaft(room: &RoomVideo, cut: u64) -> Result<Vec<Observation>, Outcome> {
+pub(super) fn held_shaft(
+    room: &RoomVideo,
+    pieces: u8,
+    cut: u64,
+) -> Result<Vec<Observation>, Outcome> {
     let words = |span| {
         room.video
             .memory
@@ -803,84 +822,91 @@ pub(super) fn held_shaft(room: &RoomVideo, cut: u64) -> Result<Vec<Observation>,
         ),
         bytes(
             "room-video.shaft-overlay-prepared",
-            held_overlay(&room.video.batch.oam),
+            overlay_prefix(&oam_bytes(&room.video.batch.oam), pieces, cut)?,
         ),
         bytes(
             "room-video.shaft-overlay-published",
-            held_overlay(&room.video.memory.oam),
+            overlay_prefix(&oam_bytes(&room.video.memory.oam), pieces, cut)?,
         ),
     ])
 }
 
 fn compare_shaft_picture(
     room: &RoomVideo,
-    record: &oracle_record::FrameRecord,
-    (row, local): (&str, u64),
-    cut: u64,
+    frame: &super::Frame<'_>,
+    trace: &RoomVideoWitnesses,
     (expected, actual): Fields<'_>,
 ) -> Result<(), super::Outcome> {
-    let hall = row == "chain-any-0010-DF8D";
-    let shaft = row == "chain-any-0011-DF45";
-    if hall && (239..=240).contains(&local) {
-        let (oam, recorded, field) = if local == 239 {
-            let shadow = record
-                .wram
-                .get(super::super::ridley_warning_native::SHADOW_OAM)
-                .ok_or_else(|| super::data_failure(Some(cut), "shaft shadow OAM"))?;
-            (
-                &room.video.batch.oam,
-                shadow,
+    let super::Frame {
+        current: record,
+        cut,
+        place,
+        ..
+    } = *frame;
+    if let Some(&picture) = trace.picture(place) {
+        let (lane, slot, pieces, field) = match picture {
+            Picture::Prepare => (
+                Lane::Prepared,
+                0,
+                trace.overlay_pieces,
                 "room-video.shaft-overlay-prepared",
-            )
-        } else {
-            (
-                &room.video.memory.oam,
-                record.oam.as_ref(),
+            ),
+            Picture::Publish => (
+                Lane::Published,
+                0,
+                trace.overlay_pieces,
                 "room-video.shaft-overlay-published",
-            )
+            ),
+            Picture::FirstEffect { lane, slot } => {
+                (lane, slot, 1, "room-video.shaft-effects-first")
+            }
+            Picture::Overlay { slot } => (
+                Lane::Prepared,
+                slot,
+                trace.overlay_pieces,
+                "room-video.shaft-overlay-after-effects",
+            ),
         };
-        // The first actor work starts with an empty draw cursor. Every later
-        // figure can follow other owners’ draws.
-        let native_low = recorded
-            .get(..48)
-            .ok_or_else(|| super::data_failure(Some(cut), "shaft OAM low"))?;
-        let native_high = recorded
-            .get(512..515)
-            .ok_or_else(|| super::data_failure(Some(cut), "shaft OAM high"))?;
-        let native = native_low.iter().chain(native_high).copied().collect();
-        let played = held_overlay(oam);
-        record_pair(cut, field, native, played, (expected, actual))?;
-        record_pair(
-            cut,
-            "room-video.shaft-platform-pending",
-            vec![u8::from(local == 239)],
-            vec![u8::from(room.pending_platform().is_some())],
-            (expected, actual),
-        )?;
-    }
-    if hall && matches!(local, 241 | 243 | 256) {
-        let pending = local != 243;
-        let (actual, expected) = if pending {
-            let shadow = record
-                .wram
-                .get(super::super::ridley_warning_native::SHADOW_OAM)
-                .ok_or_else(|| super::data_failure(Some(cut), "shaft effect shadow OAM"))?;
-            (&room.video.batch.oam, shadow)
-        } else {
-            (&room.video.memory.oam, record.oam.as_ref())
+        let (oam, native) = match lane {
+            Lane::Prepared => (
+                &room.video.batch.oam,
+                record
+                    .wram
+                    .get(super::super::ridley_warning_native::SHADOW_OAM)
+                    .ok_or_else(|| super::data_failure(Some(cut), "shaft shadow OAM"))?,
+            ),
+            Lane::Published => (&room.video.memory.oam, record.oam.as_ref()),
         };
-        let prefix = |buffer: &[u8]| super::super::blackout::standing::packed_oam(buffer, 0..1);
-        if prefix(&super::super::blackout::observe::oam_bytes(actual)) != prefix(expected) {
-            return Err(super::Outcome::Difference {
+        let produced = oam_bytes(oam);
+        if matches!(picture, Picture::Prepare | Picture::Publish) {
+            record_pair(
                 cut,
-                field: "room-video.shaft-effects-first".into(),
-            });
+                field,
+                overlay_prefix(native, pieces, cut)?,
+                overlay_prefix(&produced, pieces, cut)?,
+                (expected, actual),
+            )?;
+            record_pair(
+                cut,
+                "room-video.shaft-platform-pending",
+                vec![u8::from(matches!(picture, Picture::Prepare))],
+                vec![u8::from(room.pending_platform().is_some())],
+                (expected, actual),
+            )?;
+        } else {
+            let start = usize::from(slot);
+            let span = start..start.saturating_add(usize::from(pieces));
+            let observed = packed_oam(native, span.clone())
+                .ok_or_else(|| super::data_failure(Some(cut), "shaft native OAM span"))?;
+            if packed_oam(&produced, span).as_ref() != Some(&observed) {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: field.into(),
+                });
+            }
         }
     }
-    if shaft {
-        compare_ordinary_overlay(room, record, local, cut)?;
-    }
-    if hall && (240..=278).contains(&local) || shaft && local <= 163 {
+    if trace.platform.iter().any(|window| window.contains(place)) {
         let span = 0x060e..0x0612;
         let native = record
             .vram
@@ -924,34 +950,6 @@ fn record_pair(
         field: field.into(),
         bytes: played,
     });
-    Ok(())
-}
-
-fn compare_ordinary_overlay(
-    room: &RoomVideo,
-    record: &oracle_record::FrameRecord,
-    local: u64,
-    cut: u64,
-) -> Result<(), super::Outcome> {
-    let start: usize = match local {
-        0 => 23,
-        1 => 24,
-        28 => 29,
-        _ => return Ok(()),
-    };
-    let native = record
-        .wram
-        .get(super::super::ridley_warning_native::SHADOW_OAM)
-        .ok_or_else(|| super::data_failure(Some(cut), "ordinary shaft overlay OAM"))?;
-    let owned = start..start.wrapping_add(12);
-    let packed = super::super::blackout::standing::packed_oam;
-    let bytes = super::super::blackout::observe::oam_bytes;
-    if packed(&bytes(&room.video.batch.oam), owned.clone()) != packed(native, owned) {
-        return Err(super::Outcome::Difference {
-            cut,
-            field: "room-video.shaft-overlay-after-effects".into(),
-        });
-    }
     Ok(())
 }
 

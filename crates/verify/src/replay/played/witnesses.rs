@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(in crate::replay) struct Witnesses {
+    room_video: Option<super::room_video::RoomVideoWitnesses>,
     samus_body: Vec<BodyTrace>,
     pub(super) ribs: Vec<RowWindow>,
 }
@@ -28,7 +29,7 @@ impl RowWindow {
         self.covers(row, cut, cut)
     }
 
-    const fn valid(&self) -> bool {
+    pub(super) const fn valid(&self) -> bool {
         !self.row.is_empty() && self.first <= self.last
     }
 }
@@ -67,7 +68,10 @@ impl BodyTrace {
 
 impl Witnesses {
     pub(in crate::replay) fn valid(&self) -> bool {
-        self.ribs.iter().all(RowWindow::valid)
+        self.room_video
+            .as_ref()
+            .is_none_or(super::room_video::RoomVideoWitnesses::valid)
+            && self.ribs.iter().all(RowWindow::valid)
             && self.samus_body.iter().enumerate().all(|(index, trace)| {
                 !trace.row.is_empty()
                     && trace.last().is_some()
@@ -81,6 +85,17 @@ impl Witnesses {
                             || trace.last().is_some_and(|cut| cut < other.first)
                     })
             })
+    }
+
+    pub(super) fn room_video(&self) -> Result<&super::room_video::RoomVideoWitnesses, Outcome> {
+        self.room_video
+            .as_ref()
+            .or_else(|| {
+                crate::replay::legacy_packets::played_witnesses()?
+                    .room_video
+                    .as_ref()
+            })
+            .ok_or_else(|| data_failure(None, "historical room video witnesses"))
     }
 
     pub(super) fn body(&self, row: &str, first: u64, last: u64) -> Option<&BodyTrace> {

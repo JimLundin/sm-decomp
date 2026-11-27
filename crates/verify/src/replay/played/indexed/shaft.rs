@@ -98,6 +98,7 @@ pub(super) fn run(
             frozen.push(frame::random_observation(run.state.frame.random));
             frozen.extend(super::super::room_video::held_shaft(
                 &run.state.room_video,
+                run.witnesses.room_video()?.overlay_pieces,
                 cut,
             )?);
             let pending = run.state.room_video.pending_platform().is_some();

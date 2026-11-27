@@ -9,6 +9,33 @@ ribs = [
     { row = "any-power-on", first = 10162, last = 11776 },
 ]
 
+[played_witnesses.room_video]
+ridley_dma = [
+    { row = "chain-any-0005-E06B", first = 214, last = 215 },
+    { row = "chain-any-0006-E0B5", first = 1659, last = 1660 },
+]
+ridley_reset = { row = "chain-any-0006-E0B5", first = 1661, last = 1664 }
+departure_layout = { row = "chain-any-0011-DF45", first = 239, last = 239 }
+shaft_transform = { row = "chain-any-0011-DF45", first = 0, last = 239 }
+overlay_placement = { row = "chain-any-0010-DF8D", first = 225, last = 225 }
+shaft_sheet = { row = "chain-any-0010-DF8D", first = 221, last = 224 }
+bg2_shadow = { row = "chain-any-0010-DF8D", first = 221, last = 278 }
+platform = [
+    { row = "chain-any-0010-DF8D", first = 240, last = 278 },
+    { row = "chain-any-0011-DF45", first = 0, last = 163 },
+]
+overlay_pieces = 12
+pictures = [
+    { row = "chain-any-0010-DF8D", cut = 239, picture = { kind = "prepare" } },
+    { row = "chain-any-0010-DF8D", cut = 240, picture = { kind = "publish" } },
+    { row = "chain-any-0010-DF8D", cut = 241, picture = { kind = "first-effect", lane = "prepared", slot = 0 } },
+    { row = "chain-any-0010-DF8D", cut = 243, picture = { kind = "first-effect", lane = "published", slot = 0 } },
+    { row = "chain-any-0010-DF8D", cut = 256, picture = { kind = "first-effect", lane = "prepared", slot = 0 } },
+    { row = "chain-any-0011-DF45", cut = 0, picture = { kind = "overlay", slot = 23 } },
+    { row = "chain-any-0011-DF45", cut = 1, picture = { kind = "overlay", slot = 24 } },
+    { row = "chain-any-0011-DF45", cut = 28, picture = { kind = "overlay", slot = 29 } },
+]
+
 # Body drawer writes attributed by the native trace, including the seed cut.
 [[played_witnesses.samus_body]]
 row = "chain-any-0006-E0B5"
