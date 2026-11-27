@@ -380,13 +380,6 @@ only saves time: any change to one of the three rebuilds it, and the content fin
 it. The cache holds only the vanilla import; overlays (D15's packs) apply after it loads. It is
 never committed, and the Quality check that refuses ROM bytes covers it.
 
-`import::cache::Cache` is that cache, one file per record set and ROM. A set names its file
-and its importer's revision (`Cached`); a file written from another ROM, by another revision or
-in another shape of the format, or whose records no longer have the fingerprint it was written
-with, is a miss, and the set is imported and the file replaced. A cache that can't be read or
-written never fails a load. The tilesets are the first set it keeps
-(`import::tileset::cached`). The verifier always imports, so no check reads a cached record.
-
 Loading time (T1) stays exact for vanilla content without the compressed layout leaving the
 edge: the importer gives each record a named load cost from the original's streams, and an
 edited record's cost comes from T1's fitted rule over its size.

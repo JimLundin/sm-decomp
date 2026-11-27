@@ -7,9 +7,11 @@ publish.workspace = true
 description = "The importers: the player's ROM, read once at the edge, into our own content formats"
 
 [dependencies]
-canonical = { path = "../canonical" }
 data = { path = "../data" }
 enum-map.workspace = true
+
+[dev-dependencies]
+canonical = { path = "../canonical" }
 
 [lints]
 workspace = true
