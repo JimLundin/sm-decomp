@@ -134,8 +134,7 @@ Each step names its owner, what it waits for, and its done-condition.
    refuses a non-private function the export's start didn't have that opens with an entry whose
    source is one routine. It applies the commits to a lane
    branch, takes the branch back if the export's crates break the capability rule (clippy's
-   forbidden lints), then runs both clippy configurations of `tools/lane/gate.sh` over every clean
-   crate in the workspace: an export holds one domain's model and `types`, so a change to
+   forbidden lints), then lints every clean crate in the workspace: an export holds one domain's model and `types`, so a change to
    `types` can break a crate its implementer never saw. Done when the import passes. A
    refusal goes back to the same implementer's export as a short follow-up session: the brief
    quotes each finding (file, line, the rule it breaks) in the coding standards' words, and the

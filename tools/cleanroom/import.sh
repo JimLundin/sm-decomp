@@ -16,12 +16,11 @@
 # into the engine is the integrator's next commit.
 #
 # Once applied, the export's crates must hold the capability rule (no files, network, processes,
-# environment or unsafe code): clippy with tools/cleanroom/clippy.toml and only the workspace's
+# environment or unsafe code): Clippy with the repository's crates/clean/.clippy.toml and only the workspace's
 # forbidden lints, which runs none of the code. A finding resets BRANCH to where it was: nothing
-# applied. Then every clean crate in the workspace is linted with both clippy configurations of
-# tools/lane/gate.sh: the workspace's lints, and tools/cleanroom/clippy.toml. An export holds one
+# applied. Then Clippy checks every clean crate in the workspace. An export holds one
 # domain's model and the shared types, so a change to the types can break a crate its implementer
-# never saw. If either run fails, the import fails naming the run and the crates, with the patches
+# never saw. If this run fails, the import fails naming the run and the crates, with the patches
 # left applied: the root commits a mechanical fix itself, or resets and sends the change back
 # (PROCESS, the import step). Override: CARGO (the cargo to run).
 set -euo pipefail
@@ -181,14 +180,13 @@ applied="$(git rev-parse --short "$before")..$(git rev-parse --short HEAD)"
 # those the workspace forbids (lib.sh). Clippy runs none of the code. A finding, or code that
 # doesn't compile, takes the branch back to where it was, as code_check.sh's refusal does.
 log=$(mktemp)
-if ! CLIPPY_CONF_DIR="$cleanroom_dir" "$cargo" clippy --locked -p types -p "$(model_package "$domain")" \
+if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/crates/clean" "$cargo" clippy --locked -p types -p "$(model_package "$domain")" \
     --all-targets --no-deps -- "${capability_lints[@]}" >"$log" 2>&1; then
   awk '/^error|-->/ && shown++ < 20' "$log"
   rm -f "$log"
   git reset -q --hard "$before"
   die "the capability rule refused the export's crates; nothing applied"
 fi
-rm -f "$log"
 
 # The clean crates, by package name: the workspace takes every folder of crates/clean.
 packages=()
@@ -201,23 +199,14 @@ done < <(for dir in crates/clean/*/; do [ -f "$dir/Cargo.toml" ] && echo "${dir%
 selected=()
 for p in "${packages[@]}"; do selected+=(-p "$p"); done
 
-lint_failed=0
-clean_clippy() { # NAME [VAR=VALUE...]: one clippy run over the clean crates, naming those it fails
-  name=$1; shift
-  log=$(mktemp)
-  if env "$@" "$cargo" clippy --locked --keep-going "${selected[@]}" --all-targets --no-deps -- -D warnings >"$log" 2>&1; then
-    echo "import: $name clippy clean: ${packages[*]}"
-  else
-    failed=$(sed -n 's/^error: could not compile `\([^`]*\)`.*/\1/p' "$log" | sort -u | tr '\n' ' ')
-    echo "IMPORT CLIPPY FAIL ($name): ${failed:-no crate named}"
-    # The first findings, read with no pipe: under pipefail a reader that stops early (head)
-    # would end the script by SIGPIPE before the other run.
-    awk '/^(error|warning)|-->/ && shown++ < 20' "$log"
-    lint_failed=1
-  fi
+if env -u CLIPPY_CONF_DIR "$cargo" clippy --locked --keep-going "${selected[@]}" --all-targets --no-deps -- -D warnings >"$log" 2>&1; then
+  echo "import: clean-room clippy clean: ${packages[*]}"
+else
+  failed=$(sed -n 's/^error: could not compile `\([^`]*\)`.*$/\1/p' "$log" | sort -u | tr '\n' ' ')
+  echo "IMPORT CLIPPY FAIL (clean-room): ${failed:-no crate named}"
+  awk '/^(error|warning)|-->/ && shown++ < 20' "$log"
   rm -f "$log"
-}
-clean_clippy workspace
-clean_clippy clean-room "CLIPPY_CONF_DIR=$(git rev-parse --show-toplevel)/tools/cleanroom"
-[ "$lint_failed" -eq 0 ] || die "clippy fails after the import; the patches are applied ($applied): commit a mechanical fix as the root, or git reset --hard $(git rev-parse --short "$before") and send the change back"
+  die "clippy fails after the import; the patches are applied ($applied): commit a mechanical fix as the root, or git reset --hard $(git rev-parse --short "$before") and send the change back"
+fi
+rm -f "$log"
 echo "IMPORT OK ${#commits[@]} commits onto $branch, $applied"

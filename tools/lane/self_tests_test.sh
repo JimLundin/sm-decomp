@@ -68,7 +68,7 @@ run HEAD; expect import_check
 unlink crates/clean/types/src/untracked.rs
 
 # A change to any shared import helper or build input keeps the import test.
-for path in tools/cleanroom/{lib.sh,export.sh,export_workspace.py,code_check.sh,check_manifest.py,allowlist.txt,shape_scan.awk,scan_tool.sh,clippy.toml} \
+for path in tools/cleanroom/{lib.sh,export.sh,export_workspace.py,code_check.sh,check_manifest.py,allowlist.txt,shape_scan.awk,scan_tool.sh} crates/clean/.clippy.toml \
     crates/tools/src/bin/cleanroom/scan.rs crates/clean/world_blocks/src/model.rs rust-toolchain.toml Cargo.toml Cargo.lock crates/clean/demo/Cargo.toml; do
   mkdir -p "$(dirname "$path")"
   echo change >>"$path"

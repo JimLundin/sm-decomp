@@ -13,8 +13,7 @@ fail() { echo "FAIL $*"; bad=1; }
 scratch=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-XXXXXX") || exit 1
 trap 'rm -rf "$scratch"' EXIT
 repo=$scratch/repo bin=$scratch/bin ran=$scratch/ran
-mkdir -p "$repo/tools/ci" "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
-cp "$here/../ci/lint_clean.sh" "$repo/tools/ci/"
+mkdir -p "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
 cp "$here"/{gate,changes}.sh "$repo/tools/lane/"
 # Run the real selector, mapping its /tmp result to a private stand-in for the fallback case.
 sed 's/^outside_home_temp() {/select_outside_home_temp() {/' "$here/../cleanroom/lib.sh" \

@@ -59,9 +59,6 @@ jobs:
       - name: Lint the rebuild's crates
         # Check mode covers oracle without linking its native emulator archive.
         run: cargo clippy --locked --workspace --all-targets --no-deps
-      - name: Lint the clean crates under the clean room's ceilings (G5)
-        # tools/cleanroom/clippy.toml, which export.sh writes as the export's clippy.toml.
-        run: bash tools/ci/lint_clean.sh
       - name: Test the rebuild's crates
         run: cargo test --locked --workspace --exclude oracle --no-fail-fast
       - name: "Report the compositor time per frame (A5 target: 0.3 ms)"

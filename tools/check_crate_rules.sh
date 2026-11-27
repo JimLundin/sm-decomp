@@ -3,7 +3,7 @@
 # K1, K8, K9) that no standard tool holds, over the new crates' sources. Exit 1 lists each
 # violation. The rest are standard tools: the dependency rules and build scripts are
 # `cargo deny check bans` (deny.toml); `#![feature]`, `allow`, `cfg(verify)` and the clean room's
-# capability rule are the workspace's forbidden lints (Cargo.toml, tools/cleanroom/clippy.toml).
+# capability rule are the workspace's forbidden lints (Cargo.toml, crates/clean/.clippy.toml).
 # Run from the repository root.
 set -uo pipefail
 engine="data game runtime app"
@@ -64,7 +64,7 @@ facing=$(
     allowed_entries "$(basename "$spec" .md)"
   done
   echo .agents/skills/blind-reviewer/SKILL.md
-  echo tools/cleanroom/clippy.toml
+  echo crates/clean/.clippy.toml
 )
 mapfile -t facing < <(sort -u <<<"$facing" | while IFS= read -r p; do [ -e "${p%/}" ] && echo "${p%/}"; done)
 out=$(bash tools/cleanroom/score_scan.sh "${facing[@]}" 2>&1) || fail "$out"

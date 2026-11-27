@@ -5,7 +5,7 @@
 # refuses one that adds a name scan.sh finds, naming it, with the branch untouched; refuses one
 # whose new function opens with an entry the spec sources from one routine, naming it, with the
 # branch untouched, and one whose spec is only an untracked file, not on the branch; imports a
-# harmless one, which passes both clippy runs, though the caller's environment carries such a
+# harmless one, which passes Clippy, though the caller's environment carries such a
 # rewrite and it changes the shared types' file, whose hits on the trunk (scan.sh's names among
 # them) stay; and fails an import whose change to the shared types breaks another clean crate,
 # naming that crate. Builds throwaway
@@ -134,7 +134,7 @@ else
   grep -q 'nothing applied' <<<"$out" || fail "refusal did not say nothing applied: $out"
 fi
 [ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused import moved the branch"
-if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/leaky" "$branch" 2>&1); then
+if out=$(cd "$tmp/wt" && CLIPPY_CONF_DIR="$tmp/wt" bash tools/cleanroom/import.sh "$tmp/leaky" "$branch" 2>&1); then
   fail "import accepted std::fs::read: $out"
 else
   grep -q 'std::fs::read' <<<"$out" || fail "refusal did not name std::fs::read: $out"
@@ -176,7 +176,6 @@ out=$(cd "$tmp/wt" && GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://elsewhere.
   GIT_CONFIG_VALUE_0=cleanroom-test: bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1) \
   || fail "harmless import refused: $out"
 grep -q 'IMPORT OK' <<<"$out" || fail "harmless import did not finish: $out"
-grep -q 'import: workspace clippy clean' <<<"$out" || fail "harmless import ran no workspace clippy: $out"
 grep -q 'import: clean-room clippy clean' <<<"$out" || fail "harmless import ran no clean-room clippy: $out"
 grep -q 'import: scan.sh finds nothing new in 2 changed files' <<<"$out" \
   || fail "harmless import did not scan the shared types and its crate: $out"
@@ -189,8 +188,6 @@ git -C "$tmp/wt" reset -q --hard "$before"
 if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/breaks" "$branch" 2>&1); then
   fail "import accepted a change to the shared types that breaks the other clean crates: $out"
 else
-  grep -q 'IMPORT CLIPPY FAIL (workspace):.*world_blocks' <<<"$out" \
-    || fail "the workspace run did not name world_blocks: $out"
   grep -q 'IMPORT CLIPPY FAIL (clean-room):.*world_blocks' <<<"$out" \
     || fail "the clean-room run did not name world_blocks: $out"
   ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"

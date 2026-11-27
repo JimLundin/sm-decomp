@@ -404,7 +404,7 @@ class Broker:
             checked = json.loads(self.run("code_check"))
             if checked["exit_code"] != 0:
                 return json.dumps(checked)
-        # The capability rule is clippy's (tools/cleanroom/clippy.toml, forbidden in the
+        # The capability rule is clippy's (crates/clean/.clippy.toml, forbidden in the
         # workspace's lints): no model-written test runs before it holds.
         if action in ("test", "runner"):
             capable = json.loads(self.run("capability"))

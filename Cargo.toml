@@ -21,7 +21,7 @@ toml = "=1.2.1"
 # Sites are never silenced with `allow` or `expect`. A forbidden lint is one no attribute may lift:
 # unstable features, a cfg no
 # crate declares (rule 4: no `cfg(verify)`), `allow` itself, and the clean room's capability rule
-# (the disallowed paths of tools/cleanroom/clippy.toml; elsewhere no path is disallowed).
+# (the disallowed paths of crates/clean/.clippy.toml; elsewhere no path is disallowed).
 # Tests may unwrap, expect, panic and index through clippy.toml's `allow-*-in-tests`.
 # `game` adds `float_arithmetic` in its crate root: the original has no floats.
 [workspace.lints.rust]

@@ -19,7 +19,7 @@
 #                                      allowed_deps.txt
 #   docs/behaviours/DOMAIN.md          the spec;  scenarios/vectors/DOMAIN.toml  its vectors
 #   CLEANROOM.md                       how to work and commit in the export
-#   clippy.toml                        generated: tools/cleanroom/clippy.toml, the G5 ceilings
+#   clippy.toml                        generated: the selected revision's clean Clippy configuration, the G5 ceilings
 #   Cargo.lock, .cargo/config.toml     generated: COMMIT's lock pruned to the export; offline
 #   vendor/crates-io/                  generated: the locked registry sources for offline builds
 # A clean crate absent from COMMIT is created empty. Nothing of today's model is copied.
@@ -106,7 +106,9 @@ if grep -q '^source = "registry+' "$dest/Cargo.lock"; then
     >>"$dest/.cargo/config.toml"
 fi
 # The clean crates' clippy configuration: the root's test allowances and the G5 ceilings.
-git show "$sha:tools/cleanroom/clippy.toml" >"$dest/clippy.toml"
+clippy=crates/clean/.clippy.toml
+if ! git cat-file -e "$sha:$clippy" 2>/dev/null; then clippy=tools/cleanroom/clippy.toml; fi
+git show "$sha:$clippy" >"$dest/clippy.toml"
 
 tests_bullet="- Run the tests with the one command your brief gives, a fixed runner outside this directory,
   exactly as written and with nothing added. It checks the module and argument rules

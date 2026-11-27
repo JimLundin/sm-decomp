@@ -32,7 +32,7 @@ Cargo.lock
 .cargo/config.toml
 vendor/crates-io/
 CLEANROOM.md
-# The clean crates' clippy configuration, tools/cleanroom/clippy.toml (G5).
+# The clean crates' clippy configuration, crates/clean/.clippy.toml (G5).
 clippy.toml
 
 [import]

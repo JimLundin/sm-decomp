@@ -24,16 +24,11 @@
 set -euo pipefail
 scratch=${TEMP:-${TMPDIR:-/tmp}}
 seed=${SM_SEED_DIR:-$scratch/sm-seed}
-# Lanes seed the test and clippy build directories.
-parts=(debug clean-clippy)
-
-# Links seed part $1 into target directory $2, with private copies of the files rewritten in
-# place; fails, leaving nothing, where the file system can't link.
-link_part() {
-  cp -al "$seed/target/$1" "$2/" 2>/dev/null || { rm -rf "${2:?}/$1"; return 1; }
-  # Extracting replaces each linked file with a new one, so the seed's stays as it was.
-  (cd "$seed/target" && find "$1" \( -path '*/.fingerprint/*' -o -name '*.d' \) -type f -print0) \
-    | tar -C "$seed/target" --null -T - -cf - | tar -C "$2" -xf -
+# Link the seed's debug build, copying the dep-info files that Cargo rewrites in place.
+link_debug() {
+  cp -al "$seed/target/debug" "$1/" 2>/dev/null || { rm -rf "${1:?}/debug"; return 1; }
+  (cd "$seed/target" && find debug \( -path '*/.fingerprint/*' -o -name '*.d' \) -type f -print0) \
+    | tar -C "$seed/target" --null -T - -cf - | tar -C "$1" -xf -
 }
 
 case "${1:-}" in
@@ -47,13 +42,10 @@ case "${1:-}" in
     fi
     mkdir -p "$path/target"
     how=linked
-    for part in "${parts[@]}"; do
-      [ -d "$seed/target/$part" ] || continue
-      if [ -n "${SM_SEED_COPY:-}" ] || ! link_part "$part" "$path/target"; then
-        cp -a "$seed/target/$part" "$path/target/"
-        how=copied
-      fi
-    done
+    if [ -d "$seed/target/debug" ] && { [ -n "${SM_SEED_COPY:-}" ] || ! link_debug "$path/target"; }; then
+      cp -a "$seed/target/debug" "$path/target/"
+      how=copied
+    fi
     # Cargo recreates profile locks on demand. Unlink the lane's entries so its builds can
     # run independently of the seed and other lanes.
     find "$path/target" -type f \( \

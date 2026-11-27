@@ -39,12 +39,12 @@ suite "$clean/canary_test.sh" "$clean"/{canary.sh,canary_plant_test.sh,lib.sh,al
 suite "$clean/score_scan_test.sh" "${brief[@]}" "$clean"/{score_scan_fixtures,move_budget.sh,move_budget_fixtures}
 suite "$lane/squash_test.sh" "$lane/squash.sh"
 suite "$lane/worktree_test.sh" "$lane/worktree.sh"
-suite "$lane/gate_test.sh" "$lane/gate.sh" tools/ci/lint_clean.sh "$clean/lib.sh"
+suite "$lane/gate_test.sh" "$lane/gate.sh" "$clean/lib.sh"
 suite "$clean/blind_copy_test.sh" "$clean"/{blind_copy.sh,lib.sh,allowlist.txt} .agents/skills/blind-reviewer/SKILL.md
 suite "$clean/adjusted_vectors_test.sh" "$clean"/{adjusted_vectors.sh,adjusted_vectors_fixtures}
 # The fixture changes shared types and requires the importer to name world_blocks when it breaks.
 suite "$clean/import_check_test.sh" "${scanner[@]}" "${source_checks[@]}" \
-  "$clean"/{import.sh,export.sh,export_workspace.py,lib.sh,allowlist.txt,clippy.toml} clippy.toml \
+  "$clean"/{import.sh,export.sh,export_workspace.py,lib.sh,allowlist.txt} crates/clean/.clippy.toml clippy.toml \
   crates/clean/{types,world_blocks,import_test} .gitattributes docs/cleanroom/DESIGN.md .agents/skills/implementer/SKILL.md \
   docs/behaviours/import-test.md docs/behaviours/import-test.decode.md scenarios/vectors/import-test.toml
 suite "$lane/self_tests_test.sh"

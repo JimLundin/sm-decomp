@@ -3,7 +3,7 @@
 # their own sources while it builds them, and the clean room's coding rules no lint holds (MODEL
 # §5; launch.sh cannot confine what cargo runs). Files, the network, processes, the environment,
 # include_bytes!, env!, assembly and unsafe code are clippy's: the workspace forbids
-# clippy::disallowed_* and unsafe_code, and tools/cleanroom/clippy.toml names the paths, which the
+# clippy::disallowed_* and unsafe_code, and crates/clean/.clippy.toml names the paths, which the
 # clean-room clippy run (gate.sh, Quality, import.sh) and the export's own clippy apply. This
 # check refuses a crate that would drop those lints. Each DIR is a crate directory (it holds a
 # Cargo.toml) or a root holding crates/clean/* (the shared types and the models): an export, a git

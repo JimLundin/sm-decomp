@@ -1,7 +1,4 @@
-# The clean crates' clippy configuration: the export's clippy.toml (export.sh writes it there) and
-# the trunk's check of its clean crates (CLIPPY_CONF_DIR=tools/cleanroom, gate.sh and Quality).
-# The root clippy.toml's test allowances, then the clean room's ceilings (G5, Jim 2026-11-07).
-#
+# Clean crates and isolated exports use these test allowances and structural limits.
 # Tests may unwrap, expect, panic and index (the project's testing principle). These only loosen
 # lints that the new crates deny through [workspace.lints].
 allow-expect-in-tests = true

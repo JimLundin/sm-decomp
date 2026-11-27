@@ -467,7 +467,7 @@ or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
     the call sites already price an interface's width.
 - **Gates refuse what no weight can price:** hard lints on the clean crates, ceilings that yield
   no score, so nothing is counted twice.
-  - **G5, the clean room's clippy configuration** (`tools/cleanroom/clippy.toml`, which
+  - **G5, the clean room's clippy configuration** (`crates/clean/.clippy.toml`, which
     `export.sh` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
     clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
     deep (`excessive_nesting`, denied in `[workspace.lints]` and off wherever no threshold is

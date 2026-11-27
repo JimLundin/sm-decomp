@@ -6,7 +6,6 @@
 # (tools/check_mutants.py plan, which runs no fault); and the adjusted vectors' rule owners
 # (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
-# The clean-room clippy pass has its own target directory (see below).
 
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
 # of the commit where the branch left BASE) and what it ran with: the toolchain, cargo-deny and
@@ -93,7 +92,7 @@ fi
 O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 O_resolved=$(cd "$O" && pwd -P)
-checks=(fmt clippy clean-clippy deny crate-rules self-tests doc-links verify-lib faults owners)
+checks=(fmt clippy deny crate-rules self-tests doc-links verify-lib faults owners)
 cleanup() {
   "${SM_PY:-python3}" - "$O" "$O_resolved" "${checks[@]}" <<'PY'
 import pathlib
@@ -128,12 +127,7 @@ skip() { echo skipped >"$O/$1.log"; echo 0 >"$O/$1.status"; }
 skipped() { [ "$(cat "$O/$1.log" 2>/dev/null)" = skipped ]; }
 
 start fmt "$R/cargo" fmt --all --check
-start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -D warnings
-# The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
-# Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
-# would re-check `types` and everything that depends on it in both passes on every run.
-CARGO="$R/cargo" start clean-clippy bash tools/ci/lint_clean.sh \
-  --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -- -D warnings
+start clippy env -u CLIPPY_CONF_DIR "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -D warnings
 if [ -n "$deny" ]; then
   PATH="$R:$PATH" start deny "$deny" --locked check bans
 else
@@ -173,10 +167,6 @@ fi
 if ! passed clippy; then
   fail "CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/clippy.log" | head -10 | reason clippy
-fi
-if ! passed clean-clippy; then
-  fail "CLEAN CLIPPY FAIL"
-  grep -E '^(error|warning)|-->' "$O/clean-clippy.log" | head -10 | reason clean-clippy
 fi
 [ -n "$deny" ] || echo "DENY SKIPPED: no cargo-deny here; CI's Quality runs cargo deny check bans"
 if ! passed deny; then

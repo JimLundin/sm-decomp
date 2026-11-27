@@ -8,7 +8,7 @@
 # whether its path is allowed depends on where the file and the export root sit on disk.
 #
 # Files, the network, processes, the environment, include_bytes!, env! and assembly are clippy's
-# (tools/cleanroom/clippy.toml), and unsafe code, extern blocks and link attributes the
+# (crates/clean/.clippy.toml), and unsafe code, extern blocks and link attributes the
 # workspace's forbidden `unsafe_code`. What stays here is what a lint can't say: which file an
 # include! may read, and the renames that would hide an include! from this scan (`std as x`,
 # `std::$name`, `core::include_str as x`), and #[path = ...].
