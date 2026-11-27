@@ -71,11 +71,10 @@ under the commit rules above.
 
 ## Guardrails and traps
 
-- The root alone updates `main` and publishes `land/*` branches. The designated
-  [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end) deletes
-  released branches. Never run `git stash` or change the shared git config.
-- Kill only processes you started, by PID. Delete your own build outputs. Releasing a worktree
-  in your handoff also authorizes the cleanup agent to remove its build outputs.
+- The root alone updates `main` and publishes `land/*` branches. Its landing removes a lane's
+  worktree and branches once all its commits are on `main`. Never run `git stash` or change the
+  shared git config.
+- Kill only processes you started, by PID. Delete your own build outputs.
 - The root alone uploads to ci-data and posts to issues.
 - `gh` can hang: wrap a short `gh` query in `timeout 120`.
 - Don't block on long work. Run builds, `gate.sh`, replays and `gh run watch` in the background
@@ -90,8 +89,7 @@ under the commit rules above.
 ## Resources
 
 - Keep about 30 GB of disk free (`df -h .`). Delete `target/` only for a finished or abandoned
-  lane; remove a finished worktree with `bash tools/lane/worktree.sh remove <path>`, which also
-  deletes its `target/`. For warm builds,
+  lane; the landing removes a landed lane's worktree with its `target/`. For warm builds,
   set `TEMP` to a folder on the same disk file system as your worktrees
   ([BUILDING](../../../docs/BUILDING.md#setting-up-on-linux)), so the seed's hard links work.
 - The seed is the one shared build state, about one lane's size. The root refreshes it at main
@@ -123,9 +121,8 @@ Link the batch report and its receipts where they already contain the proof.
 
 ## Close the lane
 
-Send the root the local and remote branch names and tips, worktrees and build outputs you
-release. Name the consumer of anything you hand over. The cleanup agent removes released
-items and verifies the remote branches are gone under [Cleanup at lane end](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end).
+Send the root your branch, its tip and your worktree's path. The landing removes them once your
+commits are on `main`. Name the consumer of anything else you leave.
 
 ## Land (root only)
 

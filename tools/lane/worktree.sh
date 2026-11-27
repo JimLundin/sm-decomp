@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Lane worktrees that start from a warm build, and their cleanup.
+# Lane worktrees that start from a warm build. tools/lane/land.py removes them once they land.
 #   worktree.sh add <branch> <path> <base>  a worktree on a new branch, its target/ seeded
-#   worktree.sh remove <path>               the worktree and its target/
 #   worktree.sh seed                        builds the one seed at origin/main (the root, off-hours)
 # The seed is one worktree at $SM_SEED_DIR (default $TEMP/sm-seed, $TEMP else $TMPDIR else /tmp),
 # built the way lanes build:
@@ -55,13 +54,6 @@ case "${1:-}" in
     git -C "$path" diff --name-only -z "$from" HEAD -- | (cd "$path" && xargs -0r touch -c --)
     echo "worktree: $how the build of seed $(git -C "$seed" rev-parse --short HEAD)"
     ;;
-  remove)
-    [ "$#" -eq 2 ] || { echo "usage: worktree.sh remove <path>" >&2; exit 2; }
-    path=$(cd "$2" && cd "$(git rev-parse --show-toplevel)" && pwd)
-    rm -rf "$path/target"
-    git worktree remove --force "$path"
-    git worktree prune
-    ;;
   seed)
     [ "$#" -eq 1 ] || { echo "usage: worktree.sh seed" >&2; exit 2; }
     git fetch -q origin
@@ -75,5 +67,5 @@ case "${1:-}" in
     touch "$seed/target/.seeded"
     echo "worktree: seed at $(git -C "$seed" rev-parse --short HEAD), $(du -sh "$seed/target" | cut -f1)"
     ;;
-  *) echo "usage: worktree.sh add <branch> <path> <base> | remove <path> | seed" >&2; exit 2 ;;
+  *) echo "usage: worktree.sh add <branch> <path> <base> | seed" >&2; exit 2 ;;
 esac

@@ -2,8 +2,7 @@
 # worktree_test.sh: worktree.sh add gives a new lane worktree the seed's build state, hard-linked
 # except for the dep-info files cargo rewrites in place, so the lane's rewrites leave the seed as
 # it was; it leaves newer than that state exactly the files that differ from the seed's commit;
-# SM_SEED_COPY=1 copies instead; without a seed the lane starts cold; remove deletes the worktree
-# and its target/. Builds a throwaway repository.
+# SM_SEED_COPY=1 copies instead; without a seed the lane starts cold. Builds a throwaway repository.
 set -u
 export GIT_AUTHOR_NAME=worktree-check GIT_AUTHOR_EMAIL=worktree-check@localhost
 export GIT_COMMITTER_NAME=worktree-check GIT_COMMITTER_EMAIL=worktree-check@localhost
@@ -67,8 +66,4 @@ for lane in linked copied; do
   newer "$tmp/$lane/same.rs" "$lane_built/deps/x.rlib" && fail "$lane: an unchanged source looks changed"
   [ -z "$(git -C "$tmp/$lane" status --porcelain)" ] || fail "$lane: the worktree is not clean"
 done
-
-bash "$worktree" remove "$tmp/linked" || fail "remove failed"
-[ -e "$tmp/linked" ] && fail "the worktree remains"
-[ "$(cat "$built/deps/x.rlib")" = built ] || fail "remove touched the seed"
 exit "$bad"

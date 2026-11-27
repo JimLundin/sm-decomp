@@ -31,7 +31,7 @@ and from oracle measurements made beforehand, not found by editing until the dif
 vectors before its code lands.
 
 **P3. Keep what is proven; rebuild what is not.** Independent oracle capture, pinned records, `[exact]` refactors,
-LEGACY, meaningful mutants and `land.sh` remain. Previous executable gameplay is removed;
+LEGACY, meaningful mutants and `land.py` remain. Previous executable gameplay is removed;
 reviewed services remain by responsibility. Indexed replay uses the actual production entry.
 
 **P4. Observable hardware behaviour is part of the model. Replay limits are explicit.** The Tick is

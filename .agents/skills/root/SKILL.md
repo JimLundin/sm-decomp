@@ -108,53 +108,57 @@ narrow a run) and the exact vector-runner command `launch.sh` appends. Before `l
 the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_brief.sh`; a
 `name` hit is usually an ordinary phrase that matches the lexicon, which rewording clears.
 
-## Lane closeout
-
-Send every final lane handoff to the [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end), including work that ends before a PR lands. Check the receipt for removed remote and local refs and worktrees. Carry retained items to the named consumer.
-
 ## Landing
 
 Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):
-update its domain registration and regenerate the README after review. Land by fast-forward
-through `tools/lane/land.sh` only after CI is green: Quality, content and replay.
-The commands below apply to rounds and other work.
+update its domain registration and regenerate the README after review. A lane's bundle goes up
+before its landing: check its SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data
+FILE`, confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted
+bundles.
 
 One landing PR may carry several independently reviewed changes (Jim, 2026-11-25), each kept as
 its own commits, in an order where each applies onto the one before, sharing the PR's one CI run.
-A batch holds at most one round. When that run fails:
+A batch holds at most one round.
+
+Land in the background, from the main checkout, with
+`python3 tools/lane/land.py NAME LANE... --title TITLE --body-file BODY`, the lanes in landing
+order and the body giving each change's commits, its review, evidence and ratchet deltas. It
+lands on `main` only by fast-forward, onto a head whose CI passed: Quality, content and replay.
+
+1. It picks each lane's commits that `origin/main` lacks onto `land/NAME`, in a worktree at
+   `$TEMP/collab/land-NAME`. At a conflict it stops with exit 2. Resolve the conflict there,
+   reading every hunk, run `git cherry-pick --continue`, then the same command again. It skips
+   a commit that `main` already has, as the same patch, under the same author, date and subject,
+   or as a pick that changes nothing.
+2. It runs `tools/lane/gate.sh` there. A gate that already passed the same tree over the same
+   base with the same tools, a lane's included, prints `GATE REUSED` and runs nothing, and the
+   landing may rest on that pass (Jim, 2026-11-25). The PR's CI still runs every check.
+3. It pushes `land/NAME`, opens its PR, retrying `gh pr create`, and stops when no PR opens. It
+   waits for the CI run on the pushed head, polling through gh and fetch failures until it times
+   out, then fast-forwards `main` to that head.
+4. It removes the worktree, local branch and remote branch of each lane and of the landing once
+   all their commits are on `main`, by hash or as the same patch. A worktree stays when it has
+   uncommitted changes or ignored files other than `target/` and Python caches, and so does a
+   branch with a commit `main` lacks; it names each. When `land/NAME` is already on `main`, the
+   same command again only does this step.
+
+It exits 0 when landed, 1 when a step fails, 2 at a conflict, 3 when `main` moved (land again
+under a new NAME), 4 when the CI run failed or was cancelled, and 5 when it timed out.
+`--dry-run` picks and gates, then names what a landing would remove, and pushes nothing.
+`--after SHA` stacks a landing on an earlier one whose head is SHA: it builds on SHA and lands
+only once SHA is on `main`.
+
+When a batch's run fails:
 
 - Find the failing change in its log. The changes before it are the green prefix; when it is the
   first, the prefix is empty and nothing lands.
-- Push the prefix as a new landing branch with its own PR (never force-push the old one), whose
-  body lists only its changes, and run `watch.sh` on that PR with the prefix's sha: it lands once
-  the prefix's own CI run passes.
+- Land the prefix's lanes under a new NAME, never force-pushing the old landing branch.
 - Send the failing change back to its lane. The changes after it haven't passed CI without it:
   re-batch them onto the landed prefix in a later landing, on their own CI run.
-- A cancelled run names no failing change: re-run it.
+- A cancelled run names no failing change: re-run it, then the same command again.
 
-1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
-2. `bash tools/lane/pick.sh <hash>...` in the lane's order, a round's included; for a batch,
-   each change's commits in turn. It stops at a conflict for you to resolve by
-   hand, reading every hunk, then `git cherry-pick --continue`.
-3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
-   each change's commits, its review, evidence and ratchet deltas. When a gate on this machine
-   already passed the same tree over the same base with the same tools (a lane based on
-   `origin/main`), it prints `GATE REUSED` naming that pass and runs nothing,
-   and the landing gate may rest on that recorded pass, a lane's included (Jim, 2026-11-25); the
-   PR's CI still runs every check. `SM_GATE_FRESH=1` runs the gate anyway.
-4. In the background: `bash tools/lane/watch.sh <pr> <sha>`, with the sha you pushed: it lands only
-   that head, so a push GitHub hasn't shown yet never lands the old head's green run. Exit 0
-   landed (via `land.sh`, fast-forward only); 3 main moved (rebase, re-gate, re-push); 4 a run
-   failed or was cancelled (read its log, land the green prefix as above, hand the failure to a
-   lane);
-   5 timed out; 6 timed out with the PR's head still not that sha. Never loop on `land.sh` by
-   hand: its exit 2 (not ready) never ends on a red run, which is its exit 4.
-5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,
-   confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted bundles.
-6. When the watcher reports a landing, hand its branches and worktrees to the session's
-   [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-after-landing). Check its receipt
-   in the coordination log. The root retires finished clean-room exports. A spec or import
-   branch can also be retired when the successor holds its patches and its lane has released it.
+The root retires finished clean-room exports, and removes an abandoned lane's worktree and
+branches itself.
 
 ## Jim
 

@@ -19,7 +19,7 @@ suites=(tools/cleanroom/{launch,launch_config,code_check,canary,blind_copy,adjus
 for suite in "${suites[@]}"; do
   printf '#!/bin/sh\ntouch "$RAN/%s"\n' "$(basename "$suite" _test.sh)" >"$suite"
 done
-for path in tools/lane/{gate,land}.sh tools/cleanroom/{import,lib}.sh; do touch "$path"; done
+for path in tools/lane/gate.sh tools/lane/land.py tools/cleanroom/{import,lib}.sh; do touch "$path"; done
 git add -A
 git commit -qm base
 base=$(git rev-parse HEAD)
@@ -48,10 +48,10 @@ git restore tools/lane/gate.sh
 git commit -qm 'Edit the gate'
 run "$base"; expect gate
 
-echo edited >>tools/lane/land.sh
+echo edited >>tools/lane/land.py
 run HEAD; expect
-echo "land.sh: $output"
-git restore tools/lane/land.sh
+echo "land.py: $output"
+git restore tools/lane/land.py
 
 echo edited >>tools/cleanroom/import.sh
 run HEAD; expect import_check

@@ -2,7 +2,7 @@
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tools/ci/retain_cargo_caches.py", "tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/check_mutants.py", "tools/selectable_faults.py", "tools/cleanroom/launch_stream.py", "tools/cleanroom/probe_check.py", "tools/cleanroom/check_manifest.py", "tools/cleanroom/export_workspace.py", "tools/cleanroom/responses_controller.py", "tools/cleanroom/responses_controller_test.py", "tools/cleanroom/adjusted_vectors_run.py", "tools/cleanroom/test_adjusted_vectors_run.py", "tools/oracle/relock_seed_state.py"]
-mypy_path = ["tools", "tools/cleanroom"]
+files = ["tools/ci/retain_cargo_caches.py", "tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/check_mutants.py", "tools/selectable_faults.py", "tools/cleanroom/launch_stream.py", "tools/cleanroom/probe_check.py", "tools/cleanroom/check_manifest.py", "tools/cleanroom/export_workspace.py", "tools/cleanroom/responses_controller.py", "tools/cleanroom/responses_controller_test.py", "tools/cleanroom/adjusted_vectors_run.py", "tools/cleanroom/test_adjusted_vectors_run.py", "tools/oracle/relock_seed_state.py", "tools/lane/land.py", "tools/lane/test_land.py"]
+mypy_path = ["tools", "tools/cleanroom", "tools/lane"]
 strict = true
 warn_unreachable = true

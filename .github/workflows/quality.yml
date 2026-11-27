@@ -95,6 +95,8 @@ jobs:
         run: SM_TOOLS="$PWD/target/debug/tools" python3 -m unittest discover -s tools/oracle -p "test_*.py"
       - name: Test clean cargo cache retention
         run: python3 -m unittest discover -s tools/ci -p test_retain_cargo_caches.py
+      - name: Test the landing tool
+        run: python3 -m unittest discover -s tools/lane -p test_land.py
       - name: Save the cargo registry and the build
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
