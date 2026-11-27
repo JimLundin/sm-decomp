@@ -169,6 +169,92 @@ pub fn normal(path: &Path) -> Option<PathBuf> {
 
 type Findings = Vec<(&'static str, String)>;
 
+/// The keys a clean crate's manifest may hold, by table. Cargo reads keys the structs above skip,
+/// such as a target's `crate-type`, so every other key is refused.
+const TOP_KEYS: &[&str] = &[
+    "package",
+    "lints",
+    "dependencies",
+    "dev-dependencies",
+    "dev_dependencies",
+    "build-dependencies",
+    "build_dependencies",
+    "target",
+    "lib",
+    "bin",
+    "test",
+    "example",
+    "bench",
+    "workspace",
+    "patch",
+    "replace",
+];
+const PACKAGE_KEYS: &[&str] = &[
+    "name",
+    "version",
+    "edition",
+    "license",
+    "publish",
+    "description",
+    "workspace",
+    "build",
+    "links",
+];
+const TARGET_KEYS: &[&str] = &[
+    "name",
+    "path",
+    "test",
+    "doctest",
+    "bench",
+    "harness",
+    "proc-macro",
+    "proc_macro",
+];
+const SCOPE_KEYS: &[&str] = &[
+    "dependencies",
+    "dev-dependencies",
+    "dev_dependencies",
+    "build-dependencies",
+    "build_dependencies",
+];
+const LINTS_KEYS: &[&str] = &["workspace"];
+
+/// Every key outside `TOP_KEYS` and the allow-list of its table, and every `crate-type`.
+fn keys(manifest: &toml::Table, out: &mut Findings) {
+    let mut unknown = |table: &toml::Table, allowed: &[&str], at: &str| {
+        for key in table.keys() {
+            if matches!(key.as_str(), "crate-type" | "crate_type") {
+                out.push(("crate-type", format!("{at}{key}")));
+            } else if !allowed.contains(&key.as_str()) {
+                out.push(("manifest-key", format!("{at}{key}")));
+            }
+        }
+    };
+    unknown(manifest, TOP_KEYS, "");
+    for (section, allowed) in [("package", PACKAGE_KEYS), ("lints", LINTS_KEYS)] {
+        if let Some(table) = manifest.get(section).and_then(toml::Value::as_table) {
+            unknown(table, allowed, &format!("{section}."));
+        }
+    }
+    for section in ["lib", "bin", "test", "example", "bench"] {
+        let targets = match manifest.get(section) {
+            Some(toml::Value::Array(list)) => list.iter().collect(),
+            Some(one) => vec![one],
+            None => Vec::new(),
+        };
+        for table in targets.into_iter().filter_map(toml::Value::as_table) {
+            unknown(table, TARGET_KEYS, &format!("{section}."));
+        }
+    }
+    if let Some(cfgs) = manifest.get("target").and_then(toml::Value::as_table) {
+        for (cfg, scope) in cfgs {
+            if let Some(table) = scope.as_table() {
+                unknown(table, SCOPE_KEYS, &format!("target.{cfg}."));
+            }
+        }
+    }
+}
+
 impl Checked<'_> {
     pub fn check(&self, manifest: &str, workspace: &str) -> Findings {
         let mut out = Vec::new();
@@ -179,6 +265,9 @@ impl Checked<'_> {
                     .map(|w| (m, w.workspace))
                     .map_err(|e| e.to_string())
             });
+        if let Ok(table) = toml::from_str::<toml::Table>(manifest) {
+            keys(&table, &mut out);
+        }
         match parsed {
             Ok((manifest, workspace)) => self.manifest(&manifest, &workspace, &mut out),
             Err(e) => out.push((
