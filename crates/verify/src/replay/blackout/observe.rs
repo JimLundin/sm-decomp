@@ -323,9 +323,9 @@ pub(in crate::replay) fn expected(
     let mut drawing = timer_oam(&boundary.oam)?;
     drawing.extend(ids(&boundary.oam));
     if prepared {
-        drawing.extend(ids(ram
-            .get(0x370..0x570)
-            .ok_or_else(|| data_failure(None, "prepared timer entries"))?));
+        drawing.extend(ids(crate::source::OAM_LOW_TABLE
+            .read(ram)
+            .map_err(|_| data_failure(None, "prepared timer entries"))?));
     }
     let req = if dispatched {
         let mut r = vec![11];

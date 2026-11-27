@@ -595,8 +595,10 @@ pub(super) fn populated(
         let length = usize::from(width)
             .saturating_mul(populated_rows)
             .saturating_mul(2);
-        let bytes = wram
-            .get(0x10002..0x10002usize.saturating_add(length))
+        let bytes = crate::source::LEVEL_DATA
+            .read(wram)
+            .ok()
+            .and_then(|level| level.get(..length))
             .ok_or_else(|| data_failure(None, "intro room installed rectangle"))?;
         expected.push(quantity("intro-room.width", i64::from(width)));
         expected.push(quantity("intro-room.height", i64::from(height)));

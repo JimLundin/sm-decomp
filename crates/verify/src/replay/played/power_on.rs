@@ -21,6 +21,7 @@ use super::{Report, Stop, rows::Rows, word};
 use crate::replay::compare::{CompareFault, Observation, compare};
 use crate::replay::{data_failure, result::Outcome};
 use crate::source;
+use crate::source::{NUM_DEMO_SETS, SAMUS_PROFILE};
 use data::rom::Rom;
 use front_end::{Cartridge, CartridgeFrame, Content, FrameEnd, Rules, Work};
 use game::exact::save_files::{Format, profile_bytes};
@@ -393,7 +394,7 @@ impl Run {
                         cut: Some(cut),
                         dependency: format!("cartridge startup {fault:?}"),
                     })?;
-            if record.wram.get(0x1f59).copied() != Some(report.demos.sets()) {
+            if NUM_DEMO_SETS.read(&record.wram).ok() != Some(report.demos.sets()) {
                 return Err(Outcome::Difference {
                     cut,
                     field: "save-files.demos".to_owned(),
@@ -403,7 +404,7 @@ impl Run {
         self.compare_carried_hardware(record, cut)?;
         if !was_started
             && let Some(run) = self.cartridge.started()
-            && record.wram.get(0x09a2..0x0a02) != Some(&profile_bytes(&run.profile))
+            && SAMUS_PROFILE.read(&record.wram).ok() != Some(&profile_bytes(&run.profile))
         {
             return Err(Outcome::Difference {
                 cut,

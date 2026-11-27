@@ -304,8 +304,15 @@ pub(super) fn picture(oam: Option<(DiscoveryOrder, Vec<u8>)>) -> Observation {
 }
 
 fn native_oam(r: &FrameRecord) -> Option<(DiscoveryOrder, Vec<u8>)> {
-    let low = r.wram.get(0x370..0x570)?.as_chunks::<4>().0;
-    visible(low.iter().copied(), r.wram.get(0x570..0x590)?)
+    let low = crate::source::OAM_LOW_TABLE
+        .read(&r.wram)
+        .ok()?
+        .as_chunks::<4>()
+        .0;
+    visible(
+        low.iter().copied(),
+        crate::source::OAM_HIGH_TABLE.read(&r.wram).ok()?,
+    )
 }
 
 fn visible(

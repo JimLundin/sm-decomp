@@ -1662,3 +1662,110 @@ pub const CINEMATIC_ACTIVE: WramWord = WramWord {
     name: "cinematic_function",
     offset: 0x1f51,
 };
+
+/// The OAM buffer's low table at $0370..$056F, four bytes a sprite.
+pub const OAM_LOW_TABLE: WramBlock = WramBlock {
+    name: "OAM_LOW",
+    offset: 0x0370,
+    len: 0x0200,
+};
+
+/// The OAM buffer's high table at $0570..$058F, two bits a sprite.
+pub const OAM_HIGH_TABLE: WramBlock = WramBlock {
+    name: "OAM_HIGH",
+    offset: 0x0570,
+    len: 0x0020,
+};
+
+/// The working profile a save slot keeps at $09A2..$0A01, which holds equipment, capacities,
+/// reserves, bindings and the play clock. The save-files decode calls it the player profile.
+pub const SAMUS_PROFILE: WramBlock = WramBlock {
+    name: "SAMUS_PROFILE",
+    offset: 0x09A2,
+    len: 0x0060,
+};
+
+/// The events and recorded progress a save slot keeps at $D820..$D913, as the save-files
+/// decode reads them.
+pub const SAVED_PROGRESS: WramBlock = WramBlock {
+    name: "SAVED_PROGRESS",
+    offset: 0xD820,
+    len: 0x00F4,
+};
+
+/// Each area's remembered explored map at $CD52..$D451, 100h bytes an area in area order,
+/// which the save-files decode reads as the explored map.
+pub const EXPLORED_MAPS: WramBlock = WramBlock {
+    name: "EXPLORED_MAPS",
+    offset: 0xCD52,
+    len: 0x0700,
+};
+
+/// Crateria's map station flag, the first of the areas' map bytes at $D908..$D90F.
+pub const CRATERIA_MAP_STATION: WramByte = WramByte {
+    name: "CRATERIA_MAP_STATION",
+    offset: 0xD908,
+};
+
+/// The movement type the pose before Samus's current one kept.
+pub const SAMUS_PREV_MOVEMENT_TYPE: WramByte = WramByte {
+    name: "SAMUS_PREV_MOVEMENT_TYPE",
+    offset: 0x0A11,
+};
+
+/// The demo sets the title has played, which the save-files decode's menu and startup
+/// answers read.
+pub const NUM_DEMO_SETS: WramByte = WramByte {
+    name: "NUM_DEMO_SETS",
+    offset: 0x1F59,
+};
+
+/// Sound library three's queue start, the index of its next request to send.
+pub const SOUND_3_QUEUE_START: WramByte = WramByte {
+    name: "SOUND_3_QUEUE_START",
+    offset: 0x0645,
+};
+
+/// Sound library three's queue end, the index its next request is written at.
+pub const SOUND_3_QUEUE_END: WramByte = WramByte {
+    name: "SOUND_3_QUEUE_END",
+    offset: 0x0648,
+};
+
+/// Bank $80 log, update IO registers `$80:91EE`: HDMAEN's mirror.
+pub const REG_HDMAEN: WramByte = WramByte {
+    name: "REG_HDMAEN",
+    offset: 0x0085,
+};
+
+/// The VRAM word address of a door's pending upload.
+pub const DOOR_VRAM_UPDATE_DEST: WramWord = WramWord {
+    name: "DOOR_VRAM_UPDATE_DEST",
+    offset: 0x05BE,
+};
+
+/// The size in bytes of a door's pending upload.
+pub const DOOR_VRAM_UPDATE_SIZE: WramWord = WramWord {
+    name: "DOOR_VRAM_UPDATE_SIZE",
+    offset: 0x05C3,
+};
+
+/// The room's enemy loading, $FFFE while its tiles load and $FFFF once its actors are placed.
+pub const ENEMY_LOAD_PROGRESS: WramWord = WramWord {
+    name: "ENEMY_LOAD_PROGRESS",
+    offset: 0x0E7C,
+};
+
+/// The tilemap buffer a room's background builds in, $4000..$47FF.
+pub const BG_TILEMAP_BUFFER: WramBlock = WramBlock {
+    name: "BG_TILEMAP_BUFFER",
+    offset: 0x4000,
+    len: 0x0800,
+};
+
+/// The BG2 tilemap buffer the shaft's background fills, $3000..$37FF.
+pub const BG2_TILEMAP_BUFFER: WramBlock = WramBlock {
+    name: "BG2_TILEMAP_BUFFER",
+    offset: 0x3000,
+    len: 0x0800,
+};

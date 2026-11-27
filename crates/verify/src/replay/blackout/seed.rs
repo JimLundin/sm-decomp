@@ -202,13 +202,14 @@ fn display(r: &FrameRecord) -> Result<Box<Video>, Outcome> {
     video.memory.oam = oam(&r.oam).ok_or_else(bad)?;
     video.committed = crate::ppu::registers(&r.ppu);
     video.batch.registers = video.committed;
-    video.batch.oam = oam(ram.get(0x370..0x590).ok_or_else(bad)?).ok_or_else(bad)?;
-    for (colour, bytes) in video
-        .batch
-        .cgram
-        .iter_mut()
-        .zip(ram.get(0xc000..0xc200).ok_or_else(bad)?.as_chunks::<2>().0)
-    {
+    video.batch.oam = oam(crate::source::OAM.read(ram).map_err(|_| bad())?).ok_or_else(bad)?;
+    for (colour, bytes) in video.batch.cgram.iter_mut().zip(
+        crate::source::PALETTE_BUFFER
+            .read(ram)
+            .map_err(|_| bad())?
+            .as_chunks::<2>()
+            .0,
+    ) {
         *colour = Colour(u16::from_le_bytes(*bytes));
     }
 

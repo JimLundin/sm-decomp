@@ -132,9 +132,9 @@ fn item(value: u16) -> Result<Option<SelectableItem>, Outcome> {
     })
 }
 fn bitmap(wram: &[u8]) -> Result<MapCellSet, Outcome> {
-    let bytes = wram
-        .get(0x07f7..0x08f7)
-        .ok_or_else(|| data_failure(None, "HUD explored bitmap"))?;
+    let bytes = crate::source::MAP_TILES_EXPLORED
+        .read(wram)
+        .map_err(|_| data_failure(None, "HUD explored bitmap"))?;
     let mut set = MapCellSet::default();
     for (index, byte) in bytes.iter().enumerate() {
         for bit in 0..8 {
@@ -469,16 +469,16 @@ pub(super) fn native_fields(wram: &[u8]) -> Result<Vec<Observation>, Outcome> {
     let mut fields = vec![
         Observation {
             field: "hud.grid".to_owned(),
-            bytes: wram
-                .get(0xc608..0xc6c8)
-                .ok_or_else(|| data_failure(None, "HUD raw tiles"))?
+            bytes: crate::source::HUD_TILEMAP
+                .read(wram)
+                .map_err(|_| data_failure(None, "HUD raw tiles"))?
                 .to_vec(),
         },
         Observation {
             field: "hud.explored".to_owned(),
-            bytes: wram
-                .get(0x07f7..0x08f7)
-                .ok_or_else(|| data_failure(None, "HUD raw explored"))?
+            bytes: crate::source::MAP_TILES_EXPLORED
+                .read(wram)
+                .map_err(|_| data_failure(None, "HUD raw explored"))?
                 .to_vec(),
         },
     ];
@@ -586,7 +586,11 @@ mod tests {
         assert!(restored.eq(&owner));
         let actual = game::production::hud::tilemap(&restored.0).unwrap();
         assert_eq!(actual.len(), 192);
-        assert!(actual.iter().eq(wram.get(0xc608..0xc6c8).unwrap()));
+        assert!(
+            actual
+                .iter()
+                .eq(crate::source::HUD_TILEMAP.read(&wram).unwrap())
+        );
         let mut changed_health = wram.clone();
         changed_health
             .get_mut(0x09c2..0x09c4)

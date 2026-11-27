@@ -107,8 +107,8 @@ pub(super) fn start(
         return Ok(Readiness::EnemyGraphics);
     }
     if super::finished(current)
-        && previous.wram.get(0xe7c..0xe7e) == Some(&0xfffe_u16.to_le_bytes())
-        && current.wram.get(0xe7c..0xe7e) == Some(&0xffff_u16.to_le_bytes())
+        && source::ENEMY_LOAD_PROGRESS.read(&previous.wram) == Ok(0xfffe)
+        && source::ENEMY_LOAD_PROGRESS.read(&current.wram) == Ok(0xffff)
     {
         return Ok(Readiness::EnemyActors);
     }
@@ -153,9 +153,13 @@ fn standard_objects_finished(record: &FrameRecord) -> bool {
 // The startup beam write is the sole entry in the normal VRAM queue while loading.
 fn startup_beam_published(previous: &FrameRecord, current: &FrameRecord) -> bool {
     super::finished(current)
-        && previous.wram.get(0x330..0x332) == Some(&7_u16.to_le_bytes())
-        && previous.wram.get(0xd0..0xd2) == Some(&0x100_u16.to_le_bytes())
-        && previous.wram.get(0xd5..0xd7) == Some(&0x6300_u16.to_le_bytes())
+        && source::VRAM_WRITE_QUEUE_TAIL.read(&previous.wram) == Ok(7)
+        && source::VRAM_WRITE_QUEUE
+            .read(&previous.wram)
+            .is_ok_and(|queue| {
+                queue.get(..2) == Some(&0x100_u16.to_le_bytes())
+                    && queue.get(5..7) == Some(&0x6300_u16.to_le_bytes())
+            })
 }
 
 // T1: enabling NMI for the second music service follows the room effects reset.

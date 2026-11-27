@@ -71,9 +71,9 @@ fn word(bytes: &[u8], at: usize) -> Result<u16, Outcome> {
 }
 
 fn camera_input(bytes: &[u8]) -> Result<CameraInputs, Outcome> {
-    let screens = bytes
-        .get(0xcd20..0xcd52)
-        .ok_or_else(|| data_failure(None, "connected camera screens"))?
+    let screens = crate::source::SCROLLS
+        .read(bytes)
+        .map_err(|_| data_failure(None, "connected camera screens"))?
         .iter()
         .map(|value| match value {
             0 => Screen::Closed,
@@ -170,16 +170,6 @@ fn step(
     if activities[samus_appearance::Activity::Cinematic] != (word(late, 0x1f51)? != 0) {
         return Err(data_failure(None, "connected cinematic lifetime"));
     }
-    let waiting = animation
-        .get(0x0648)
-        .copied()
-        .ok_or_else(|| data_failure(None, "connected queue source"))?
-        .wrapping_sub(
-            *animation
-                .get(0x0645)
-                .ok_or_else(|| data_failure(None, "connected queue source"))?,
-        )
-        & 0x0f;
     Ok(connected::inputs::Inputs {
         held: borrowed.held,
         pressed: borrowed.pressed,
@@ -187,8 +177,7 @@ fn step(
         parity: borrowed.parity,
         energy: word(animation, 0x09c2)?,
         liquid: samus_appearance::Liquid::NONE,
-        sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
-            .ok_or_else(|| data_failure(None, "connected queue occupancy"))?,
+        sounds_waiting: appearance::sounds_waiting(animation)?,
         activities,
         charge: appearance::charge(animation)?,
         geometry: borrowed.world,

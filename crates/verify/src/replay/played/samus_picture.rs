@@ -33,7 +33,7 @@ pub(super) fn compare(
     };
     compare_picture(
         &video.batch.oam,
-        frame.current.wram.get(0x370..0x590),
+        crate::source::OAM.read(&frame.current.wram).ok(),
         span.clone(),
         native.clone(),
     )
@@ -82,10 +82,9 @@ fn native_piece(bytes: &[u8], slot: usize) -> Option<([u8; 4], u8)> {
 }
 
 fn native_picture(record: &FrameRecord, slots: Range<usize>) -> Result<[Observation; 4], Outcome> {
-    let prepared = record
-        .wram
-        .get(0x370..0x590)
-        .ok_or_else(|| data_failure(Some(record.index), "ordinary body prepared OAM rectangle"))?;
+    let prepared = crate::source::OAM
+        .read(&record.wram)
+        .map_err(|_| data_failure(Some(record.index), "ordinary body prepared OAM rectangle"))?;
     if record.oam.len() != prepared.len() {
         return Err(data_failure(
             Some(record.index),

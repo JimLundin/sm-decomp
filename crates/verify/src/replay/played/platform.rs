@@ -106,8 +106,8 @@ pub(super) fn door_enemy_tiles(
     let ready = |record: &FrameRecord| {
         matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.interrupted_pc, 0x0082_e02c..=0x0082_e02f))
             && word(&record.wram, source::ROOM_PTR).is_ok_and(|room| room == 0xe0b5)
-            && record.wram.get(0x5be..0x5c0) == Some(&0x6d00_u16.to_le_bytes())
-            && record.wram.get(0x5c3..0x5c5) == Some(&0x0600_u16.to_le_bytes())
+            && word(&record.wram, source::DOOR_VRAM_UPDATE_DEST).is_ok_and(|at| at == 0x6d00)
+            && word(&record.wram, source::DOOR_VRAM_UPDATE_SIZE).is_ok_and(|size| size == 0x0600)
     };
     if ready(current) && !ready(previous) {
         EnemyTileTransfer::Published
@@ -282,7 +282,9 @@ pub(super) fn room_hdma(
     if level_decode && finished(previous) && word(&previous.wram, HANDLER)? == BUILD_ROOM {
         return Ok(RoomHdma::Reset);
     }
-    let armed = previous.wram.get(0x85).is_some_and(|mask| mask & 0x10 != 0);
+    let armed = source::REG_HDMAEN
+        .read(&previous.wram)
+        .is_ok_and(|mask| mask & 0x10 != 0);
     if finished(current)
         && armed
         && word(&previous.wram, CHANNEL_FOUR_TABLE)? == RIDLEY_MAIN_SCREEN_TABLE
@@ -305,7 +307,7 @@ pub(super) fn shaft_background(
     }
     match record.nmi().map(|nmi| nmi.interrupted_pc) {
         Some(0x0082_e06b | 0x0082_e06e)
-            if record.wram.get(0x05be..0x05c0) == Some(&[0x80, 0x58]) =>
+            if word(&record.wram, source::DOOR_VRAM_UPDATE_DEST).is_ok_and(|at| at == 0x5880) =>
         {
             ShaftBackground::EffectsPrepared
         }
@@ -328,10 +330,9 @@ pub(super) fn compare_shaft_background(
         field: format!("shaft-entry.{field}"),
     };
     if cut >= trace.effects_from && !trace.interrupted_shadow.contains(&cut) {
-        let shadow = record
-            .wram
-            .get(0x4000..0x4800)
-            .ok_or_else(|| data_failure(Some(cut), "shaft background shadow"))?;
+        let shadow = source::BG_TILEMAP_BUFFER
+            .read(&record.wram)
+            .map_err(|_| data_failure(Some(cut), "shaft background shadow"))?;
         let words = shadow
             .as_chunks::<2>()
             .0
@@ -419,7 +420,7 @@ mod shaft_background_tests {
                 );
             }
             if cut == 227 {
-                let prepared = current.wram.get(0x4000..0x4800).unwrap();
+                let prepared = source::BG_TILEMAP_BUFFER.read(&current.wram).unwrap();
                 let words: Vec<_> = prepared
                     .as_chunks::<2>()
                     .0

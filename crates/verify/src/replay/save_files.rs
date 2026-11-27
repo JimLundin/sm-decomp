@@ -57,19 +57,37 @@ impl Capture {
         };
         let area = *AREAS.get(usize::from(read(0x079f)?))?;
         let station = StationId(read(0x078b)?);
-        let profile = profile_from_bytes(record.wram.get(0x09a2..0x0a02)?.try_into().ok()?);
+        let profile = profile_from_bytes(
+            crate::source::SAMUS_PROFILE
+                .read(&record.wram)
+                .ok()?
+                .try_into()
+                .ok()?,
+        );
         let progress = progress_from_bytes(
-            record.wram.get(0xd820..0xd914)?.try_into().ok()?,
+            crate::source::SAVED_PROGRESS
+                .read(&record.wram)
+                .ok()?
+                .try_into()
+                .ok()?,
             read(0xd91a)?,
         );
         let mut maps = blank_maps();
-        for (area, bytes) in AREAS
-            .into_iter()
-            .zip(record.wram.get(0xcd52..0xd452)?.as_chunks::<MAP_BYTES>().0)
-        {
+        for (area, bytes) in AREAS.into_iter().zip(
+            crate::source::EXPLORED_MAPS
+                .read(&record.wram)
+                .ok()?
+                .as_chunks::<MAP_BYTES>()
+                .0,
+        ) {
             maps[area].as_mut_slice().copy_from_slice(bytes);
         }
-        let live_map = ExploredCells::new(record.wram.get(0x07f7..0x08f7)?.to_vec())?;
+        let live_map = ExploredCells::new(
+            crate::source::MAP_TILES_EXPLORED
+                .read(&record.wram)
+                .ok()?
+                .to_vec(),
+        )?;
         Some(Self {
             profile,
             progress,

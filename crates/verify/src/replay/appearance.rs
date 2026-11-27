@@ -164,9 +164,9 @@ fn animation(wram: &[u8], imported: &Imported) -> Result<Animation, Outcome> {
 /// these cases play is prepared before drawing reads the kept action, so the seed's value is
 /// carried and never read.
 fn kept_action(wram: &[u8], content: &Content, current: Action) -> Result<Action, Outcome> {
-    let kept = wram
-        .get(0x0a11)
-        .copied()
+    let kept = crate::source::SAMUS_PREV_MOVEMENT_TYPE
+        .read(wram)
+        .ok()
         .and_then(|kept| MovementType::try_from(kept).ok())
         .ok_or_else(|| data_failure(None, "kept movement type"))?;
     let movement = |pose| {
@@ -424,14 +424,13 @@ pub fn initial(state: Animation, _content: &Content) -> Vec<Observation> {
 
 /// Sound requests queued in library three at the start of the work frame.
 pub(super) fn sounds_waiting(prior: &[u8]) -> Result<samus_appearance::SoundsWaiting, Outcome> {
-    let waiting = prior
-        .get(0x0648)
-        .copied()
-        .ok_or_else(|| data_failure(None, "appearance sound queue write index"))?
+    let waiting = crate::source::SOUND_3_QUEUE_END
+        .read(prior)
+        .map_err(|_| data_failure(None, "appearance sound queue write index"))?
         .wrapping_sub(
-            *prior
-                .get(0x0645)
-                .ok_or_else(|| data_failure(None, "appearance sound queue read index"))?,
+            crate::source::SOUND_3_QUEUE_START
+                .read(prior)
+                .map_err(|_| data_failure(None, "appearance sound queue read index"))?,
         )
         & 0x0f;
     samus_appearance::SoundsWaiting::new(waiting)

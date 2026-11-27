@@ -135,7 +135,7 @@ fn native_entry(record: &FrameRecord) -> Result<Vec<u8>, Outcome> {
         .first_chunk::<7>()
         .filter(|&descriptor| *descriptor == DESCRIPTOR)
         .ok_or_else(bad)?;
-    let source = ram.get(0xc608..0xc6c8).ok_or_else(bad)?;
+    let source = crate::source::HUD_TILEMAP.read(ram).map_err(|_| bad())?;
     Ok(descriptor.iter().chain(source).copied().collect())
 }
 

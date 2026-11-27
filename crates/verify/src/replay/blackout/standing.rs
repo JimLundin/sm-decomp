@@ -246,10 +246,9 @@ pub(super) fn expected(record: &FrameRecord, rom: Lorom<'_>) -> Result<ExpectedC
         StandingStrips::default()
     };
     let fields = observe(
-        record
-            .wram
-            .get(0x370..0x590)
-            .ok_or_else(|| data_failure(Some(record.index), "standing body OAM buffer"))?,
+        crate::source::OAM
+            .read(&record.wram)
+            .map_err(|_| data_failure(Some(record.index), "standing body OAM buffer"))?,
         &record.oam,
         pending,
         serviced,
@@ -273,7 +272,7 @@ pub(in crate::replay) fn compare_live(
     cut: u64,
 ) -> Result<(), Outcome> {
     let bad = || data_failure(Some(cut), "live locked OAM");
-    let shadow = record.wram.get(0x370..0x590).ok_or_else(bad)?;
+    let shadow = crate::source::OAM.read(&record.wram).map_err(|_| bad())?;
     let batch = super::observe::oam_bytes(&video.batch.oam);
     let live = super::observe::oam_bytes(&video.memory.oam);
     let different = |field: &str| Outcome::Difference {

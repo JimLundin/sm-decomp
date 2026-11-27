@@ -65,11 +65,9 @@ pub(in crate::replay) fn placement_and_maps(
             },
             crateria: ExploredMap {
                 cells: cells(0xcd52)?,
-                available: record
-                    .wram
-                    .get(0xd908)
-                    .copied()
-                    .ok_or_else(|| data_failure(Some(record.index), "Crateria map flag"))?
+                available: crate::source::CRATERIA_MAP_STATION
+                    .read(&record.wram)
+                    .map_err(|_| data_failure(Some(record.index), "Crateria map flag"))?
                     != 0,
             },
         },

@@ -294,17 +294,18 @@ pub(super) fn compare_shaft_affine(
             field: "room-video.shaft-affine".into(),
         });
     }
-    let mirrors = record
-        .wram
-        .get(0x78..0x84)
-        .ok_or_else(|| super::data_failure(Some(cut), "shaft affine mirrors"))?;
+    let mirrors =
+        crate::source::REG_M7.map(|mirror| mirror.read(&record.wram).ok().map(u16::cast_signed));
     let pending = room.video.batch.registers.mode7;
     let matches = pending
         .matrix
         .into_iter()
         .chain(pending.centre)
-        .zip(mirrors.as_chunks::<2>().0)
-        .all(|(actual, &expected)| actual == i16::from_le_bytes(expected));
+        .zip(mirrors)
+        .all(|(actual, expected)| expected == Some(actual));
+    if mirrors.contains(&None) {
+        return Err(super::data_failure(Some(cut), "shaft affine mirrors"));
+    }
     if !matches {
         return Err(Outcome::Difference {
             cut,
@@ -578,10 +579,9 @@ pub(super) fn compare_shaft_sheet(
         }
     }
     if trace.bg2_shadow.contains(place) {
-        let shadow = record
-            .wram
-            .get(0x3000..0x3800)
-            .ok_or_else(|| super::data_failure(Some(cut), "shaft BG2 shadow extent"))?;
+        let shadow = crate::source::BG2_TILEMAP_BUFFER
+            .read(&record.wram)
+            .map_err(|_| super::data_failure(Some(cut), "shaft BG2 shadow extent"))?;
         let expected = shadow
             .as_chunks::<2>()
             .0

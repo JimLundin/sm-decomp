@@ -93,8 +93,9 @@ pub fn validate_step(prior: &[u8], current: &[u8]) -> Result<(), Outcome> {
     Ok(())
 }
 fn screens(wram: &[u8]) -> Result<&[u8], Outcome> {
-    wram.get(0xcd20..0xcd52)
-        .ok_or_else(|| data_failure(None, "camera scroll run"))
+    crate::source::SCROLLS
+        .read(wram)
+        .map_err(|_| data_failure(None, "camera scroll run"))
 }
 
 pub fn input(prior: &[u8], _content: &Content) -> Result<OwnedInput, Outcome> {
