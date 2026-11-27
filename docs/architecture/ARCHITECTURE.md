@@ -78,8 +78,8 @@ uses only `proc_macro` and the standard library.
 
 Quality checks the dependencies with `cargo deny check bans`: `deny.toml` denies each workspace
 crate to all but the crates [the table](../../crates/README.md) lets depend on it, which holds
-D1 through any path, and allows no build script. The workspace lints forbid `#![feature]`,
-`allow`, undeclared cfgs such as `cfg(verify)`, unsafe code and, with
+D1 through any path. Only the registry releases listed there can run build scripts. The workspace
+lints forbid `#![feature]`, `allow`, undeclared cfgs such as `cfg(verify)`, unsafe code and, with
 `tools/cleanroom/clippy.toml`, the clean crates' file, network, process and environment access.
 `tools/check_crate_rules.sh` greps what no tool sees: probe or observer names in the engine,
 SNES address literals (K1), `expect` in the engine (K8) and routine-label names (K9).

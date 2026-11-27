@@ -20,9 +20,6 @@ docs/cleanroom/DESIGN.md
 # Toolchain and lint configuration. The workspace lints are copied into the generated Cargo.toml.
 rust-toolchain.toml
 .gitattributes
-# The registry crates whose build scripts are baked in (tools/vendor_nobuild.sh), as the root
-# manifest's [patch.crates-io] names them; export.sh drops those the export doesn't use.
-vendor/
 
 # Entries for one domain only, as `[domain samus-movement]`.
 

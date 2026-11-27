@@ -38,9 +38,8 @@ reads() {
     docs/*.md) return 1 ;;
   esac
   case $job in
-    # cargo test -p data -p import: their sources, the workspace manifests and vendor/ under
-    # crates/, vendor/ and the root, and the ROM at run time. No data or import source or test
-    # names a file under these.
+    # The data and import tests read the crates and the workspace manifests. The ROM is
+    # a runtime input. No data or import source or test names a file under these directories.
     content) case $path in tools/* | scenarios/* | movies/* | docs/*) return 1 ;; esac ;;
   esac
   return 0

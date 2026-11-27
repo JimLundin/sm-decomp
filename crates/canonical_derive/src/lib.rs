@@ -18,8 +18,7 @@
 //! rename, a reorder or a changed field type anywhere below a type changes its schema.
 //!
 //! The macro reads its input with `proc_macro` alone. It keeps field types only as token text
-//! for `<Type as Canonical>::SCHEMA`, so it takes no `syn` or `quote`: their build scripts
-//! can't run on locked-down machines, and fewer dependencies keep the binary small. A generic
+//! for `<Type as Canonical>::SCHEMA`, so the macro needs no parser or quoting dependency. A generic
 //! type's impl bounds every type parameter by `Canonical`, as the standard derives do; const
 //! parameters pass through and lifetimes are refused.
 

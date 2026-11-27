@@ -3,8 +3,7 @@
 # `features`, `default-features` and `package`.
 #
 # The policy: a crate is listed when it is widely used and the standard choice for its job, std
-# doesn't cover that job, it helps model the domain, and it builds on the development machine
-# (a build script is baked in by tools/vendor_nobuild.sh and patched in the root Cargo.toml).
+# doesn't cover that job, it helps model the domain, and it builds on the pinned stable toolchain.
 # The root approves each line; an implementer may ask for a crate in its report.
 #
 # Columns: package; the exact version requirement the Cargo.toml must carry; the dependency kinds

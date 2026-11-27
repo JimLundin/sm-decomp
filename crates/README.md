@@ -66,6 +66,6 @@ lints (no `cfg(verify)`, `#![feature]` or `allow`) and `tools/check_crate_rules.
 observer in the engine, no SNES address literal in `game`, `runtime` or `app`, no `expect` in
 the engine, and no routine-label names). CI runs both in Quality.
 
-`vendor/` holds published registry crates with their build-script output baked in by `tools/vendor_nobuild.sh` and
-patched in by the root `Cargo.toml`. CI's `tools/vendor_nobuild_check.sh` runs the real scripts
-and fails if a copy's baked output differs.
+Cargo checks registry downloads against the checksums in `Cargo.lock`.
+[`deny.toml`](../deny.toml) lists the exact registry versions permitted to run a build script.
+Clean-room exports take their locked sources along for offline builds.

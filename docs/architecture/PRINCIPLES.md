@@ -167,8 +167,7 @@ types have no hand-written codec impls.
   `wildcard_enum_match_arm`, `print_stdout`, `print_stderr`, `dbg_macro`;
   `float_arithmetic` in `game` (the original has no floats); `missing_docs`. Forbidden, so no
   attribute lifts them: `allow_attributes` and `allow_attributes_without_reason`,
-  `unstable_features` (stable already refuses `#![feature]`, but CI's `RUSTC_BOOTSTRAP` would
-  not), `unexpected_cfgs`, `unsafe_code` and the clean room's `disallowed_*`. A nursery lint that
+  `unstable_features`, `unexpected_cfgs`, `unsafe_code` and the clean room's `disallowed_*`. A nursery lint that
   misfires is dropped from the workspace set with its reason recorded there, never silenced at a site.
 
 *Jim (2026-11-05):* "the strictest, most idiomatic Rust possible"; stable, because unstable features

@@ -15,10 +15,10 @@ for job in content replay faults-0; do
 done
 reads() { grep -qxF "$2" <<<"${has[$1]}"; }
 
-# Every job reads the workflows, this judge, the toolchain, the workspace, vendor/ and its crates.
+# Every job reads the workflows, this judge, the toolchain, the workspace and its crates.
 common=(.github/workflows/ci.yml .github/workflows/verify.yml .github/workflows/quality.yml
   tools/ci/verdict.sh rust-toolchain.toml Cargo.toml Cargo.lock crates/data/Cargo.toml
-  crates/import/src/lib.rs crates/clean/types/Cargo.toml "$(git ls-files vendor | head -1)")
+  crates/import/src/lib.rs crates/clean/types/Cargo.toml)
 # The replay and fault jobs also read the engine, the scenarios, the movies, the CI fetchers and
 # the fault manifest, and the docs their tests open.
 replay=(crates/game/src/lib.rs crates/verify/required-witnesses.toml scenarios/replay/index.toml

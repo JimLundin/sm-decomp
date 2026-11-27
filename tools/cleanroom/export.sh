@@ -21,8 +21,7 @@
 #   CLEANROOM.md                       how to work and commit in the export
 #   clippy.toml                        generated: tools/cleanroom/clippy.toml, the G5 ceilings
 #   Cargo.lock, .cargo/config.toml     generated: COMMIT's lock pruned to the export; offline
-#   vendor/                            the baked crates of the root's [patch.crates-io] the export
-#                                      uses, and vendor/crates-io (generated): the rest it locks
+#   vendor/crates-io/                  generated: the locked registry sources for offline builds
 # A clean crate absent from COMMIT is created empty. Nothing of today's model is copied.
 #
 # Run from the repository (any worktree). CARGO (default `cargo`) resolves and vendors the
@@ -108,7 +107,7 @@ $enum_tables" "$vector_parser"
 
 # The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
 {
-  printf '[workspace]\nresolver = "3"\nexclude = ["vendor"]\n'
+  printf '[workspace]\nresolver = "3"\n'
   printf 'members = ["crates/clean/types", "crates/clean/%s"]\n\n' "$crate"
   # The lint sections alone. A comment after their last line heads the next section (the
   # release profile's), which the export doesn't have, so it goes too.
@@ -120,8 +119,6 @@ $enum_tables" "$vector_parser"
       for (i = 1; i <= n; i++) print kept[i]
       print ""
     }'
-  # The registry crates whose build scripts can't run here, patched as the root manifest does.
-  git show "$sha:Cargo.toml" | awk '/^\[/ { on = ($0 == "[patch.crates-io]") } on'
 } >"$dest/Cargo.toml"
 printf '/target\n' >"$dest/.gitignore"
 
@@ -129,21 +126,11 @@ printf '/target\n' >"$dest/.gitignore"
 # locked: COMMIT's Cargo.lock, pruned to the export's crates, and every registry crate it then
 # names copied into vendor/crates-io by `cargo vendor`, which cargo checks against the lock's
 # checksums. Unlike cargo's download cache, the copies can't be cleaned away or differ between
-# machines. A patched copy the export doesn't use goes, with its [patch] line.
+# machines.
 cargo=${CARGO:-cargo}
 git show "$sha:Cargo.lock" >"$dest/Cargo.lock"
 (cd "$dest" && "$cargo" metadata -q --format-version 1 >/dev/null) \
   || die "cargo can't resolve the export from $sha's Cargo.lock"
-while IFS= read -r unused; do
-  sed -i "/^$unused = { path = /d" "$dest/Cargo.toml"
-  rm -rf -- "$dest/vendor/$unused-"[0-9]*
-done < <(awk '/^\[\[patch\.unused\]\]/ { on = 1; next } /^\[/ { on = 0 }
-  on && /^name = / { gsub(/"/, "", $3); print $3 }' "$dest/Cargo.lock")
-if ! grep -q '^[a-z_-]* = { path = "vendor/' "$dest/Cargo.toml"; then
-  sed -i '/^\[patch\.crates-io\]$/,$d' "$dest/Cargo.toml"
-  rm -rf -- "$dest/vendor"
-fi
-(cd "$dest" && "$cargo" metadata -q --format-version 1 >/dev/null) || die "cargo can't resolve the export"
 mkdir -p "$dest/.cargo"
 printf '# Cargo never reaches the network here: the lock and vendor/ hold every crate.\n[net]\noffline = true\n' \
   >"$dest/.cargo/config.toml"
@@ -195,9 +182,9 @@ EOF
 # vendor/crates-io is skipped: the registry's published crates, held to their checksums, aren't
 # this repository's words (a benchmark's "baseline").
 scanned=()
-for p in "$dest"/* "$dest"/.[!.]* "$dest"/vendor/*; do
+for p in "$dest"/* "$dest"/.[!.]*; do
   [ -e "$p" ] || continue
-  case ${p#"$dest"/} in .git|vendor|vendor/crates-io) ;; *) scanned+=("$p") ;; esac
+  case ${p#"$dest"/} in .git|vendor) ;; *) scanned+=("$p") ;; esac
 done
 bash "$cleanroom_dir/score_scan.sh" "${scanned[@]}" \
   || die "the export mentions the score or the budget (above); fix the source files, not the export"

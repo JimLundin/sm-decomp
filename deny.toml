@@ -65,9 +65,7 @@ deny = [
   { crate = "save_files", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
 ]
 
-# Build scripts: only the listed crates may have one. No workspace crate does, the clean crates
-# included; vendor/ holds the registry crates with baked build-script outputs
-# without one (tools/vendor_nobuild.sh).
+# Only these locked registry releases need a build script. This also checks workspace crates.
 [bans.build]
-allow-build-scripts = []
+allow-build-scripts = ["proc-macro2@=1.0.107", "quote@=1.0.47", "serde@=1.0.229", "serde_core@=1.0.229"]
 include-workspace = true

@@ -12,14 +12,6 @@ on:
 permissions:
   contents: read
 
-# Cargo's checksum freshness is unstable, so the pinned stable toolchain needs RUSTC_BOOTSTRAP
-# to accept it. It changes how cargo decides to rebuild, not what is built: no package the
-# workspace builds runs a build script, which is what could read RUSTC_BOOTSTRAP and turn
-# something on, because vendor/ bakes their outputs in (see the vendor step).
-env:
-  RUSTC_BOOTSTRAP: "1"
-  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
-
 jobs:
   quality:
     name: Quality
@@ -40,9 +32,9 @@ jobs:
         run: rustup toolchain install
       # Main pushes restore recent compatible builds and publish this clean revision.
       # Scheduled and manual-main producers stay cold. Other refs only restore.
-      # Cargo checksum freshness rebuilds changed sources; tests always execute.
       - name: Restore the cargo registry and the build
         if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        id: cargo_cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -53,6 +45,11 @@ jobs:
           restore-keys: |
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+      - &refresh_sources
+        name: Refresh source timestamps after restoring a build
+        if: steps.cargo_cache.outputs.cache-matched-key != ''
+        # Stable Cargo compares source mtimes to the previous build's dep-info.
+        run: git ls-files -z | xargs -0r touch -ch --
       - name: Format
         run: cargo fmt --check
       - name: Keep committed text files on LF line endings
@@ -84,13 +81,6 @@ jobs:
         run: |
           if [ "$GITHUB_REF" = refs/heads/main ]; then bash tools/lane/self_tests.sh
           else bash tools/lane/self_tests.sh origin/main; fi
-      - name: Test the vendor verifier's toolchain selection
-        run: python3 -m unittest discover -s tools -p test_vendor_toolchain.py
-      - name: Hold the crates in vendor/ to their real build scripts
-        # tools/vendor_nobuild.sh bakes each script's output in, for a machine that can't run it; here it runs.
-        # Without the workflow's RUSTC_BOOTSTRAP: a published build script that finds it turns on
-        # what the stable toolchain doesn't have, and the copies bake the stable answer.
-        run: env -u RUSTC_BOOTSTRAP -u CARGO_UNSTABLE_CHECKSUM_FRESHNESS bash tools/vendor_nobuild_check.sh
       - name: Keep every relative Markdown link and anchor valid
         run: sh tools/check_doc_links.sh
       - name: Keep README.md what tools report --write generates
@@ -133,6 +123,7 @@ jobs:
       # Restores the Quality job's build, which holds the clean crates' tests; saves nothing.
       - name: Restore the cargo registry and the build
         if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        id: cargo_cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -143,6 +134,7 @@ jobs:
           restore-keys: |
             cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+      - *refresh_sources
       - name: Test the adjusted-vector prover
         run: python3 -m unittest discover -s tools/cleanroom -p test_adjusted_vectors_run.py
       - name: Require each adjusted vector to fail at the reference rules
