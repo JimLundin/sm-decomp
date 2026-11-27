@@ -59,7 +59,7 @@ Set `SM_ROM`, `SM_CACHE` and `SM_AUDIO_NATIVE` to the same fixtures used by repl
 Run the full manifest locally with one build:
 
 ```sh
-uv run --no-project --with-requirements tools/fault-requirements.txt python tools/check_mutants.py selectable
+uv run --no-project --with-requirements tools/fault-requirements.txt python tools/check_mutants.py
 ```
 
 CI runs `worker N` for each partition printed by `python3 tools/check_mutants.py plan`.
@@ -82,12 +82,8 @@ private build evaluates those functions at runtime. Cargo checks the resulting
 call chain and the worker checks that only the pinned Gamma runtime was added
 to the replay build.
 
-To compare a partition against independent builds of the literal edits, run
-`python3 tools/check_mutants.py --literal worker N` in a dedicated checkout.
-With no arguments the command runs the full literal manifest and leaves a
-normal replay binary for direct use. Both methods print a `RECEIPTS` line after
-each kill and restoration. Compare sorted lines by fault name. The three SHA-256
-values cover the complete clean, faulty and restored receipts.
+Each `RECEIPTS` line names the fault and gives the SHA-256 hashes of its
+complete clean, faulty and restored receipts.
 
 ## Setting up on Linux
 

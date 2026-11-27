@@ -8,22 +8,16 @@ import tomllib
 import unittest
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 import check_mutants
-from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, check_fault, receipt,
-                           run_case, source_path, validate_coverage)
+from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, detected, receipt,
+                           replay_selectable, scratch_files, source_path, validate_coverage)
 
 def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str = "audio.reply0") -> str:
     text = f'format = 1\n[[cases]]\nid = "{case}"\nobservation_sha256 = "original"\n[cases.outcome]\nstatus = "{status}"\n'
     if status == "difference":
         text += f'cut = {cut}\nfield = "{field}"\n'
     return text + '[cases.counts]\ncuts = 3\nrestorations = 2\n'
-
-def pass_receipt() -> dict[str, Any]:
-    observed = receipt(outcome("pass"), "audio/example")
-    assert observed is not None
-    return observed
 
 class MutantCheck(unittest.TestCase):
     def test_rule_inventory_includes_entries_without_a_fault_or_case(self) -> None:
@@ -97,55 +91,26 @@ class MutantCheck(unittest.TestCase):
         self.assertEqual(report(["\n".join(contact + block(unassigned))]),
                          ["PuffTouches: killed through contact", *expected[1:]])
 
-    def test_success_leaves_normal_artifact_vanilla_for_direct_replay(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            source = root / "crates/game/src/production.rs"
-            source.parent.mkdir(parents=True)
-            original = b"let elapsed = measured;\n"
-            source.write_bytes(original)
-            config = root / "tools/mutants.toml"
-            config.parent.mkdir()
-            config.write_text('''[[fault]]
-name = "first"
-responsibility = "audio"
-file = "crates/game/src/production.rs"
-before = "measured"
-after = "zero"
-case = "audio/example"
-cut = 3
-field = "audio.reply0"
-[[fault]]
-name = "last"
-responsibility = "audio"
-file = "crates/game/src/production.rs"
-before = "measured"
-after = "zero"
-case = "audio/example"
-cut = 3
-field = "audio.reply0"
-''', encoding="utf-8", newline="\n")
-            target = root / "target/tools"
-            target.parent.mkdir()
-            inputs = FrozenInputs({source: original, config: config.read_bytes()})
-            def compile_source(build_root: Path) -> Path:
-                target.write_bytes(source.read_bytes())
-                return target
-            def execute(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-                vanilla = Path(command[0]).read_bytes() == original
-                text = outcome("pass" if vanilla else "difference")
-                return subprocess.CompletedProcess(command, 0 if vanilla else 1,
-                                                   text if vanilla else "", "" if vanilla else text)
-            with patch.object(check_mutants, "__file__", str(root / "tools/check_mutants.py")), \
-                 patch("check_mutants.validate_coverage"), \
-                 patch("check_mutants.FrozenInputs.capture", return_value=inputs), \
-                 patch("check_mutants.input_paths", return_value=set(inputs.files)), \
-                 patch("check_mutants.build_executable", side_effect=compile_source), \
-                 patch("check_mutants.subprocess.run", side_effect=execute):
-                self.assertEqual(check_mutants.main([]), 0)
-                self.assertEqual(source.read_bytes(), original)
-                self.assertTrue(check_mutants.passed(run_case(root, "audio/example", target), "audio/example"))
-                self.assertEqual(target.read_bytes(), original)
+    def test_full_manifest_and_workers_use_the_selectable_runner(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        manifest = root / "tools/mutants.toml"
+        raw = manifest.read_bytes()
+        data = tomllib.loads(raw.decode())
+        roster = tuple(Fault(**row) for row in data["fault"])
+        callers = check_mutants.runtime_callers(root, data["runtime_callers"])
+        frozen = FrozenInputs({manifest: raw})
+        workers = check_mutants.partition_faults(roster)
+        commands = [([], roster), (["selectable"], roster)] + [
+            (["worker", str(index)], worker) for index, worker in enumerate(workers)]
+        for args, expected in commands:
+            with (
+                self.subTest(args=args),
+                patch.object(FrozenInputs, "capture", return_value=frozen),
+                patch.object(check_mutants, "build_executable", side_effect=AssertionError),
+                patch.object(check_mutants, "run_selectable", return_value=1) as run,
+            ):
+                self.assertEqual(check_mutants.main(args), 1)
+                run.assert_called_once_with(root, frozen, expected, callers)
 
     def test_plan_and_worker_partition_exhaustive_rosters(self) -> None:
         template = Fault("fault", "audio", "crates/game/src/production.rs",
@@ -216,7 +181,7 @@ field = "audio.reply0"
     def test_invalid_worker_commands_fail_before_build(self) -> None:
         for args in [["worker"], ["worker", "-1"], ["worker", "4"], ["worker", "01"],
                      ["worker", "0", "0"], ["worker", "0", "worker", "1"],
-                     ["plan", "worker", "0"]]:
+                     ["plan", "worker", "0"], ["--literal", "worker", "0"]]:
             with self.subTest(args=args), redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
                 check_mutants.main(args)
             self.assertEqual(error.exception.code, 2)
@@ -229,9 +194,9 @@ field = "audio.reply0"
             artifact = json.dumps({"reason": "compiler-artifact", "target": {
                 "name": "tools", "kind": ["bin"]}, "executable": str(stale)})
             failed = subprocess.CompletedProcess([], 101, artifact, "")
-            with patch("check_mutants.subprocess.run", return_value=failed) as execute:
-                self.assertEqual(run_case(root, "audio/example"), (101, ""))
-                self.assertEqual(execute.call_count, 1)
+            with patch("check_mutants.subprocess.run", return_value=failed):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    build_executable(root, target=root / "build")
 
     def test_cargo_reported_artifact_is_required_and_respects_its_location(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -245,10 +210,10 @@ field = "audio.reply0"
                 result = subprocess.CompletedProcess([], 0, "\n".join(json.dumps(row) for row in rows), "")
                 with patch("check_mutants.subprocess.run", return_value=result):
                     with self.assertRaises(ValueError):
-                        build_executable(root)
+                        build_executable(root, target=root / "build")
             result = subprocess.CompletedProcess([], 0, json.dumps(artifact), "")
             with patch("check_mutants.subprocess.run", return_value=result):
-                self.assertEqual(build_executable(root), executable.resolve())
+                self.assertEqual(build_executable(root, target=root / "build"), executable.resolve())
 
     def test_frozen_inputs_preserve_dirty_missing_and_untracked_file_states(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -279,46 +244,14 @@ field = "audio.reply0"
             with self.assertRaises(ValueError):
                 inputs.check(root)
 
-    def test_concurrent_neighbour_edits_prevent_retained_replay_credit(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / "crates/game/src/production.rs"
-            path.parent.mkdir(parents=True)
-            original = b"let elapsed = measured;\n"
-            path.write_bytes(original)
-            neighbour = root / "model.rs"
-            neighbour.write_bytes(b"original\n")
-            inputs = FrozenInputs({path: original, neighbour: b"original\n"})
-            fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
-            for edit_during in [1, 2]:
-                calls = 0
-                neighbour.write_bytes(b"original\n")
-                def replay(*args: object) -> tuple[int, str]:
-                    nonlocal calls
-                    calls += 1
-                    if calls == edit_during:
-                        neighbour.write_bytes(b"changed\n")
-                    return (1, outcome("difference")) if calls == 1 else (0, outcome("pass"))
-                with self.subTest(edit_during=edit_during), \
-                     patch("check_mutants.input_paths", return_value={path, neighbour}), \
-                     patch("check_mutants.run_case", side_effect=replay) as execute:
-                    with self.assertRaises(ValueError):
-                        check_fault(root, fault, pass_receipt(), root / "vanilla", inputs)
-                    self.assertEqual(execute.call_count, edit_during)
-                self.assertEqual(path.read_bytes(), original)
-
     def exercise(self, result: tuple[int, str], restored: tuple[int, str] | None = None) -> bool:
+        fault = Fault("zero", "audio", "source.rs", "before", "after", "audio/example", 3, "audio.reply0")
+        healthy = (0, outcome("pass"))
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / "crates/game/src/production.rs"
-            path.parent.mkdir(parents=True)
-            original = b"let elapsed = measured;\n"
-            path.write_bytes(original)
-            fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
-            with patch("check_mutants.run_case", side_effect=[result, restored or (0, outcome("pass"))]):
-                killed = check_fault(root, fault, pass_receipt())
-            self.assertEqual(path.read_bytes(), original)
-            return killed
+            tree = Path(directory)
+            frozen = FrozenInputs.capture(tree, scratch_files)
+            with patch("check_mutants.run_case", side_effect=[healthy, result, restored or healthy]):
+                return replay_selectable(tree, (fault,), tree / "tools", frozen, {})
 
     def test_only_production_adapters_are_allowed(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -413,36 +346,15 @@ field = "audio.reply0"
             "status": "difference", "cut": 5, "field": "camera.x"}})
         for output in [report("End", row="row-2"), report("End") * 2, ""]:
             self.assertIsNone(receipt(output, case))
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / PLAYED_RUNNER
-            path.parent.mkdir(parents=True)
-            original = b"let held = controller.held;\n"
-            path.write_bytes(original)
-            fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held", case, 5, "camera.x")
-            for result, killed in [((0, stopped), True), ((1, stopped), False),
-                                   ((0, report('At(Difference { cut: 6, field: "camera.x" })')), False),
-                                   ((0, report('At(DataFailure { cut: Some(5), source: "pad" })')), False),
-                                   ((0, report('At(DataFailure { cut: Some(5), source: "camera.x" })')), True),
-                                   ((0, report('At(Unsupported { cut: Some(5), dependency: "camera.x" })')), False),
-                                   ((0, report("End")), False)]:
-                with self.subTest(result=result), \
-                     patch("check_mutants.run_case", side_effect=[result, (0, report("End"))]):
-                    self.assertEqual(check_fault(root, fault, ended), killed)
-                self.assertEqual(path.read_bytes(), original)
-
-    def test_source_restores_after_runner_exception(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / "crates/game/src/production.rs"
-            path.parent.mkdir(parents=True)
-            original = b"let elapsed = measured;\n"
-            path.write_bytes(original)
-            fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
-            with patch("check_mutants.run_case", side_effect=OSError):
-                with self.assertRaises(OSError):
-                    check_fault(root, fault, pass_receipt())
-            self.assertEqual(path.read_bytes(), original)
+        fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held", case, 5, "camera.x")
+        for result, killed in [((0, stopped), True), ((1, stopped), False),
+                               ((0, report('At(Difference { cut: 6, field: "camera.x" })')), False),
+                               ((0, report('At(DataFailure { cut: Some(5), source: "pad" })')), False),
+                               ((0, report('At(DataFailure { cut: Some(5), source: "camera.x" })')), True),
+                               ((0, report('At(Unsupported { cut: Some(5), dependency: "camera.x" })')), False),
+                               ((0, report("End")), False)]:
+            with self.subTest(result=result):
+                self.assertEqual(detected(fault, result) is not None, killed)
 
 if __name__ == "__main__":
     unittest.main()

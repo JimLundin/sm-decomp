@@ -89,26 +89,28 @@ fn main() { println!("{}", outer(3)); }
             3,
             "audio.reply0",
         )
-        with tempfile.TemporaryDirectory() as directory:
-            tree = Path(directory)
-            scenario = tree / "scenario.toml"
-            scenario.write_text("original")
-            frozen = FrozenInputs.capture(tree, scratch_files)
+        for edit_at in (1, 2, 3):
+            with self.subTest(edit_at=edit_at), tempfile.TemporaryDirectory() as directory:
+                tree = Path(directory)
+                scenario = tree / "scenario.toml"
+                scenario.write_text("original")
+                frozen = FrozenInputs.capture(tree, scratch_files)
+                launches = 0
 
-            def replay(
-                root: Path, _: str, exe: Path, *, env: dict[str, str]
-            ) -> tuple[int, str]:
-                if env.get("GAMMA_ACTIVE"):
-                    (root / scenario.name).write_text("changed")
-                    return 1, outcome("difference")
-                return 0, outcome("pass")
+                def replay(
+                    root: Path, _: str, exe: Path, *, env: dict[str, str]
+                ) -> tuple[int, str]:
+                    nonlocal launches
+                    launches += 1
+                    if launches == edit_at:
+                        scenario.write_text("changed")
+                    if env.get("GAMMA_ACTIVE"):
+                        return 1, outcome("difference")
+                    return 0, outcome("pass")
 
-            with (
-                patch("check_mutants.run_case", side_effect=replay) as calls,
-                self.assertRaises(ValueError),
-            ):
-                replay_selectable(tree, (fault,), tree / "tools", frozen, {})
-            self.assertEqual(calls.call_count, 2)
+                with patch("check_mutants.run_case", side_effect=replay), self.assertRaises(ValueError):
+                    replay_selectable(tree, (fault,), tree / "tools", frozen, {})
+                self.assertEqual(launches, edit_at)
 
     def test_shared_executable_restores_in_a_fresh_process_and_credits_each_rule(
         self,

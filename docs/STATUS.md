@@ -756,8 +756,8 @@ responsibility to its exact recorded Difference cut and field. CI builds one
 selectable replay executable per worker. Each case must first pass. The worker runs
 each fault in its own process, verifies its recorded stop, and requires a fresh
 fault-free process to reproduce the complete clean receipt, including its digest and
-counts. The [literal comparison](BUILDING.md#run-the-replay-faults) builds the source
-edits individually and emits the same receipt hashes. Each fault's `before` text must match its
+counts. The [worker](BUILDING.md#run-the-replay-faults) prints the hashes of all
+three receipts. Each fault's `before` text must match its
 file exactly once, so a refactor that moves or duplicates a patched line fails Quality's
 fault-runner test and the fault plan before any build. Full pull-request, scheduled and manual CI
 run every fault. A fast-forward to main reuses a successful pull-request verdict for the

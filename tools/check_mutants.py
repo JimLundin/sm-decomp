@@ -84,12 +84,12 @@ class FrozenInputs:
             raise ValueError("worktree inputs changed; coordinator must reconcile")
         print(f"TIMING input-check seconds={time.perf_counter() - started:.6f}", flush=True)
 
-def build_executable(root: Path, *, target: Path | None = None) -> Path:
+def build_executable(root: Path, *, target: Path) -> Path:
     """Use Cargo's artifact path, including custom target directories and triples."""
     started = time.perf_counter()
     result = subprocess.run([os.environ.get("CARGO", "cargo"), "build", "--locked",
                              "--profile", "verify", "-p", "tools", "--bin", "tools",
-                             "--message-format=json", *(["--target-dir", str(target)] if target else [])], cwd=root, capture_output=True,
+                             "--message-format=json", "--target-dir", str(target)], cwd=root, capture_output=True,
                             text=True, encoding="utf-8", errors="replace")
     print(f"TIMING compilation seconds={time.perf_counter() - started:.6f}", flush=True)
     if result.returncode:
@@ -113,22 +113,15 @@ def build_executable(root: Path, *, target: Path | None = None) -> Path:
         raise ValueError("reported tools executable is missing")
     return executable
 
-def run_case(root: Path, case: str, executable: Path | None = None, *,
-             env: Mapping[str, str] | None = None) -> tuple[int, str]:
-    if executable is None:
-        try:
-            executable = build_executable(root)
-        except subprocess.CalledProcessError as error:
-            return error.returncode, error.stderr
+def run_case(root: Path, case: str, executable: Path, *, env: Mapping[str, str]) -> tuple[int, str]:
     if case.startswith(PLAYED):
         command = [str(executable), "replay", *case.split(), "--lock", PLAYED_LOCK]
         sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM")]
     else:
         command = [str(executable), "replay", "run", "scenarios/replay/index.toml", "--case", case]
         sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]
-    environment = os.environ if env is None else env
     for flag, variable in sources:
-        if value := environment.get(variable):
+        if value := env.get(variable):
             command.extend([flag, value])
     started = time.perf_counter()
     result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True,
@@ -171,11 +164,6 @@ def receipt(output: str, case: str) -> dict[str, Any] | None:
                 return observed
     return None
 
-def passed(result: tuple[int, str], case: str) -> bool:
-    code, output = result
-    observed = receipt(output, case)
-    return code == 0 and observed is not None and observed.get("outcome") == {"status": "pass"}
-
 def require_unique_anchor(fault: Fault, source: bytes) -> int:
     """A refactor of the patched lines can drift an anchor; it must still name one place."""
     before = fault.before.encode()
@@ -187,33 +175,6 @@ def require_unique_anchor(fault: Fault, source: bytes) -> int:
 def validate_anchors(root: Path, faults: Sequence[Fault]) -> None:
     for fault in faults:
         require_unique_anchor(fault, source_path(root, fault.file).read_bytes())
-
-def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
-                vanilla: Path | None = None, inputs: FrozenInputs | None = None) -> bool:
-    if inputs is not None:
-        inputs.check(root)
-    path = source_path(root, fault.file)
-    original = path.read_bytes()
-    require_unique_anchor(fault, original)
-    mutated = original.replace(fault.before.encode(), fault.after.encode(), 1)
-    try:
-        path.write_bytes(mutated)
-        faulty = detected(fault, run_case(root, fault.case))
-    finally:
-        started = time.perf_counter()
-        if path.read_bytes() != mutated:
-            raise ValueError("fault source changed concurrently; coordinator must reconcile")
-        path.write_bytes(original)
-        if path.read_bytes() != original:
-            raise ValueError("source was not restored byte-for-byte")
-        print(f"TIMING restoration fault={fault.name} seconds={time.perf_counter() - started:.6f}", flush=True)
-    if inputs is not None:
-        inputs.check(root)
-    restored = run_case(root, fault.case, vanilla)
-    if inputs is not None:
-        inputs.check(root)
-    return restored_pass(fault, restored, baseline, faulty)
-
 
 def detected(fault: Fault, result: tuple[int, str]) -> dict[str, Any] | None:
     code, output = result
@@ -347,37 +308,6 @@ def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]
     return tuple(tuple(sorted(worker, key=order.__getitem__)) for worker in workers)
 
 
-def run_literal(root: Path, inputs: FrozenInputs, faults: Sequence[Fault]) -> int:
-    # Cargo's output is overwritten by mutant builds. The saved binary is private;
-    # every baseline/restored receipt still comes from a newly executed process.
-    with tempfile.TemporaryDirectory(prefix="sm-mutants-") as directory:
-        try:
-            built = build_executable(root)
-        except subprocess.CalledProcessError:
-            print("BASELINE BUILD FAILED", flush=True)
-            return 1
-        inputs.check(root)
-        vanilla = Path(directory) / built.name
-        shutil.copy2(built, vanilla)
-        baselines = {}
-        for case in dict.fromkeys(fault.case for fault in faults):
-            inputs.check(root)
-            result = run_case(root, case, vanilla)
-            inputs.check(root)
-            observed = receipt(result[1], case)
-            if not passed(result, case) or observed is None:
-                print(f"BASELINE FAILED {case}", flush=True)
-                return 1
-            baselines[case] = observed
-            print(f"BASELINE PASS {case}", flush=True)
-        results = [check_fault(root, fault, baselines[fault.case], vanilla, inputs) for fault in faults[:-1]]
-        # Direct replay scripts use Cargo's normal artifact. Build the last restored
-        # replay through Cargo so both that artifact and its fingerprints are vanilla.
-        last = faults[-1]
-        results.append(check_fault(root, last, baselines[last.case], inputs=inputs))
-    return 0 if all(results) else 1
-
-
 def runtime_callers(root: Path, raw: object) -> dict[str, tuple[str, ...]]:
     if not isinstance(raw, dict):
         raise ValueError("runtime_callers must be a table")
@@ -436,7 +366,7 @@ def replay_selectable(tree: Path, faults: Sequence[Fault], executable: Path,
         clean = run_case(tree, case, executable, env=env)
         frozen.check(tree)
         baseline = receipt(clean[1], case)
-        if not passed(clean, case) or baseline is None:
+        if clean[0] or baseline is None or baseline.get("outcome") != {"status": "pass"}:
             print(f"BASELINE FAILED {case}", flush=True)
             return False
         baselines[case] = baseline
@@ -481,7 +411,6 @@ def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check replay fault detection and restoration.", allow_abbrev=False)
-    parser.add_argument("--literal", action="store_true", help="compare with a separate Cargo build per literal edit")
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("selectable", help="run the complete manifest in one selectable build")
     commands.add_parser("plan", help="print the CI worker matrix")
@@ -524,8 +453,6 @@ def main(argv: list[str] | None = None) -> int:
     inputs = FrozenInputs.capture(root)
     if inputs.files.get(manifest) != raw_manifest:
         raise ValueError("fault manifest changed while planning")
-    if args.command is None or args.literal:
-        return run_literal(root, inputs, faults)
     return run_selectable(root, inputs, faults, callers)
 
 if __name__ == "__main__":
