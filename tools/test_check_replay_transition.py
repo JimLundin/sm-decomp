@@ -2,12 +2,9 @@
 
 import copy
 import hashlib
-from pathlib import Path
-import sys
 from typing import Any
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_replay_transition import InvalidTransition, validate
 
 

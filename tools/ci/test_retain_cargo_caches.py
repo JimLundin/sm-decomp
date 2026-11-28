@@ -2,9 +2,12 @@
 
 import unittest
 import os
+import sys
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from retain_cargo_caches import Api, Cache, candidates, main
 
 

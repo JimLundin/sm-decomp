@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict, artifacts,
                                   built_with, candidates, check_domains, check_domain_owners,
                                   completed_test, main, padded, parameter_entries, patched_runs,

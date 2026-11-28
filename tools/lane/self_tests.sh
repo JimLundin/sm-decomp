@@ -50,7 +50,7 @@ suite "$lane/test_self_tests.py"
 # These operator entrypoints have no self-test in this suite. New or unclassified tooling
 # files (including this selector and its change detector) run every suite. The landing tool,
 # the adjusted-vector prover and scanner fixtures have their own Python and Rust tests in Quality.
-for path in "$lane"/{played,run_tests}.sh "$lane"/{land,test_land}.py \
+for path in "$lane"/{played,run_tests}.sh "$lane"/{land,test_land,__init__}.py "$clean/__init__.py" \
     "$clean"/{adjusted_vectors_run.py,test_adjusted_vectors_run.py,adjusted_probe_tests.toml,adjusted_rule_owners,scan_fixtures}; do
   known+=(":(exclude)$path")
 done
