@@ -688,13 +688,11 @@ Its reachable HDMA graph excludes reverse-DMA producers `91:CB1C`, `91:CB57`, `9
 preserve the existing DMA control and target graph. Other offsets can alter later DMA
 controls, even though the direct hardware write cannot alias the camera receipt.
 Unknown interrupted suffixes and door loading are explicit defects, never retention masks.
-Exact numeric supplemental accounting, including defect totals and free-run unreached inputs,
-is pinned in `crates/verify/src/harness/camera/receipt_floors.toml`. Per-cause descriptions are
-diagnostics and do not participate in floor equality. Model and null share
-these admissions. The M0 check holds 183 supported cuts against constant-zero 100, and all 182 supported
-transitions against null 95. Its first unsupported interval ends at cut 183, where door loading
-and actor memory-write capabilities are unproved; the remaining 162 transitions receive no
-carried receipt credit. These counts add no full-view or whole-engine credit.
+Model and null share these admissions. The M0 check holds 183 supported cuts against
+constant-zero 100, and all 182 supported transitions against null 95. Its first unsupported
+interval ends at cut 183, where door loading and actor memory-write capabilities are unproved;
+the remaining 162 transitions receive no carried receipt credit. These counts add no full-view
+or whole-engine credit.
 
 Source: [bank 82](https://patrickjohnston.org/bank/82),
 [bank 90](https://patrickjohnston.org/bank/90) and
