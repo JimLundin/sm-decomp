@@ -419,8 +419,9 @@ The M0 row never shows a door blocking her: a fault that drops the doors' boxes 
 motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play; the door of
 Ridley's room locks behind her, out of her way. Only the unit
 test of a door that opens in the frame still blocking her catches it. Retiring the indexed
-case `movement-ceres/carried-position-proximity` left its fields to the played runs, which
-compare them at every cut as a required witness.
+case `movement-ceres/carried-position-proximity` left its fields to the played runs as a
+required witness. They compare her position at every cut, and each Ceres door's phase, wait,
+figure, shown and solid at every cut whose frame of work finished, cuts 7 to 10 among them.
 
 ### Scoped cases the played runs hold
 
