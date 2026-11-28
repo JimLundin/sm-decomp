@@ -1195,7 +1195,7 @@ mod tests {
                 &round.repo,
                 &format!("crates/clean/{krate}/Cargo.toml"),
                 &format!(
-                    "[package]\nname = \"{krate}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"A crate\"\n\n[lints]\nworkspace = true\n"
+                    "[package]\nname = \"{krate}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"A crate\"\n\n[lib]\ndoctest = false\n\n[lints]\nworkspace = true\n"
                 ),
             );
             write(

@@ -70,7 +70,7 @@ impl Workspace {
         fs::write(
             self.0.join("crates/clean/demo/Cargo.toml"),
             format!(
-                "[package]\nname = \"demo\"\nedition.workspace = true\n{package}\n\n[lints]\nworkspace = true\n\n[{section}]\n{deps}\n"
+                "[package]\nname = \"demo\"\nedition.workspace = true\n{package}\n\n[lib]\ndoctest = false\n\n[lints]\nworkspace = true\n\n[{section}]\n{deps}\n"
             ),
         )
         .unwrap();

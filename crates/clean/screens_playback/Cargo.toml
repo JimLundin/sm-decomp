@@ -14,5 +14,8 @@ enum-map.workspace = true
 serde = { workspace = true, features = ["derive"] }
 toml.workspace = true
 
+[lib]
+doctest = false
+
 [lints]
 workspace = true

@@ -68,6 +68,7 @@ struct Package {
 #[derive(Deserialize)]
 struct Target {
     path: Option<String>,
+    doctest: Option<toml::Value>,
     #[serde(rename = "proc-macro")]
     proc_macro: Option<toml::Value>,
     #[serde(rename = "proc_macro")]
@@ -320,6 +321,15 @@ impl Checked<'_> {
         if manifest.lints.as_ref().and_then(|l| l.workspace) != Some(true) {
             out.push(("lints-key", "no `[lints] workspace = true`".to_owned()));
         }
+        if !matches!(
+            &manifest.lib,
+            Some(Targets::One(Target {
+                doctest: Some(toml::Value::Boolean(false)),
+                ..
+            }))
+        ) {
+            out.push(("doctest", "no `[lib] doctest = false`".to_owned()));
+        }
         for (key, targets) in [
             ("lib", &manifest.lib),
             ("bin", &manifest.bin),
@@ -333,6 +343,13 @@ impl Checked<'_> {
                 None => &[],
             };
             for target in list {
+                if target
+                    .doctest
+                    .as_ref()
+                    .is_some_and(|d| *d != toml::Value::Boolean(false))
+                {
+                    out.push(("doctest", format!("{key}.doctest is not false")));
+                }
                 if target.proc_macro.is_some() || target.proc_macro_underscore.is_some() {
                     out.push(("proc-macro", key.to_owned()));
                 }

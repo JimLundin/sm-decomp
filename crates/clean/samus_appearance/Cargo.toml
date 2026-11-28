@@ -14,5 +14,8 @@ serde = { workspace = true, features = ["derive"] }
 [dev-dependencies]
 toml.workspace = true
 
+[lib]
+doctest = false
+
 [lints]
 workspace = true

@@ -275,7 +275,7 @@ fn scaffold(dest: &Path, name: &str, description: &str, deps: &str) -> Result<()
         dest,
         &format!("{folder}/Cargo.toml"),
         &format!(
-            "[package]\nname = \"{name}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"{description}\"\n\n{deps}\n[lints]\nworkspace = true\n"
+            "[package]\nname = \"{name}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"{description}\"\n\n{deps}\n[lib]\ndoctest = false\n\n[lints]\nworkspace = true\n"
         ),
     )?;
     write(
@@ -361,5 +361,43 @@ mod tests {
         assert_eq!(gc.unwrap(), "0\n");
         assert_eq!(maintenance.unwrap(), "false\n");
         assert_eq!(folders, [true, true]);
+    }
+
+    /// A scaffolded crate whose doc comment holds a code block that starts a process: `cargo
+    /// test` builds and passes it and never runs the block, which no clippy run lints.
+    #[test]
+    fn a_scaffolded_crate_runs_no_doctest() {
+        let dir = std::env::temp_dir().join(format!("cleanroom-doctest-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[workspace]\nresolver = \"3\"\nmembers = [\"crates/clean/types\"]\n\n[workspace.package]\nversion = \"0.0.0\"\nedition = \"2024\"\nlicense = \"MIT\"\npublish = false\n\n[workspace.lints.rust]\nunsafe_code = \"forbid\"\n",
+        )
+        .unwrap();
+        super::scaffold(&dir, "types", "Types", "[dependencies]\n").unwrap();
+        let ran = dir.join("ran");
+        fs::write(
+            dir.join("crates/clean/types/src/lib.rs"),
+            format!(
+                "//! Types.\n//!\n//! ```\n//! std::process::Command::new(\"touch\").arg({:?}).status().unwrap();\n//! ```\n",
+                ran.display().to_string()
+            ),
+        )
+        .unwrap();
+        let test = std::process::Command::new("cargo")
+            .current_dir(&dir)
+            .env("CARGO_TARGET_DIR", dir.join("target"))
+            .args(["test", "--offline", "-q"])
+            .output()
+            .unwrap();
+        let ran = ran.exists();
+        fs::remove_dir_all(&dir).unwrap();
+        assert!(
+            test.status.success(),
+            "{}",
+            String::from_utf8_lossy(&test.stderr)
+        );
+        assert!(!ran, "cargo test ran the doc comment's code block");
     }
 }

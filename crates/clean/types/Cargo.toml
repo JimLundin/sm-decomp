@@ -10,5 +10,8 @@ description = "The domain types the clean models share"
 enum-map = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 
+[lib]
+doctest = false
+
 [lints]
 workspace = true

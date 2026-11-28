@@ -15,5 +15,8 @@ serde-big-array.workspace = true
 [dev-dependencies]
 toml.workspace = true
 
+[lib]
+doctest = false
+
 [lints]
 workspace = true
