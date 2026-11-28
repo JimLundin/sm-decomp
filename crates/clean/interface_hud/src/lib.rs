@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The HUD model, built from its behaviour spec alone: the status bar at the top of the screen,
 //! the selected item and the mini-map.
 //!

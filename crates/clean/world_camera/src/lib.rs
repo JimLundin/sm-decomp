@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The camera model, built from its behaviour spec alone: the screen's view following Samus.
 //!
 //! A follow camera with a lead (Spec: FollowingHer, LeadingHer, AimingHeight). On each axis

@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Samus's current energy, her protection after an eligible hit in Ceres (Ridley's tail, or
 //! a steam puff in the escape), and the low-energy warning, played one whole frame at a
 //! time by [`State::play_frame`]. Which frames are admitted, each hitter's touch,

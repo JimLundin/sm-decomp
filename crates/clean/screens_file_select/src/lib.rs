@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-file-select model, built from its behaviour spec alone.
 //!
 //! File select's main menu, one frame end at a time: black while it loads, the menu fading in,

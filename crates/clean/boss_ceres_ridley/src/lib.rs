@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The boss-ceres-ridley model, built from its behaviour spec alone. The parts of the Ceres
 //! station so far: the doors, the shaft as she arrives, Ridley's room as she enters, Ridley's
 //! waking, his tail at rest and its hit, his take-off, flight and real retreat, and the escape's steam. Each

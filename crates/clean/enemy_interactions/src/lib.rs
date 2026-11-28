@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Ceres-door beam contact and shaft actor and effect pictures.
 //!
 //! The producer must establish this supported contract: ordinary left/right or

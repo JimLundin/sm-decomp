@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The save-files model, built from its behaviour spec alone.
 //!
 //! The cartridge holds the three player slots, the last file chosen and whether the game has

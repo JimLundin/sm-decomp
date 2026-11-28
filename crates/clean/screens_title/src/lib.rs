@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-title model, built from its behaviour spec alone.
 //!
 //! The title sequence, one frame end at a time: black while the title's pictures load, the

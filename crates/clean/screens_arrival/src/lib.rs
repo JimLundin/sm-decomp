@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Her arrival at Ceres as a new game begins: the screen stays dark while the start is made
 //! ready, she appears at the top of the station's shaft facing the screen, the picture comes up
 //! from black over a second, and then she plays.

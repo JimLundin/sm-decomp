@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-discovery model, built from its behaviour spec alone.
 //!
 //! In the intro's second played scene Samus approaches an egg. It rocks, cracks and scatters

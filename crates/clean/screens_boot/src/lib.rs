@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-boot model, built from its behaviour spec alone: the console's power-on, from a
 //! black screen through the logo brightening, held and dimming, and black while the sound driver
 //! loads and the game settles, until the title begins.

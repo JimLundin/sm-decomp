@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The world-doors model, built from its behaviour spec alone: the passage through a door to a
 //! room, from the frame after she touches it until play goes on in the next room.
 //!

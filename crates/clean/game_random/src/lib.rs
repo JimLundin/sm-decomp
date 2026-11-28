@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The numeric rules for the game's shared random sequence. Callers decide when to draw and
 //! what to do with the resulting number.
 

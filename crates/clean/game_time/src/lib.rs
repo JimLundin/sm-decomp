@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The game-time model, built from its behaviour spec alone.
 
 pub use types::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};

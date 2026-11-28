@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The single-colour Ceres backdrop haze during ordinary room time.
 
 mod catalogue;

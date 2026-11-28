@@ -126,6 +126,9 @@ is imported, so keep to them as you go:
   something your model needs and std lacks, ask for it in your report and say what it would
   model. Your own `cargo clippy` refuses the standard library's file, network, process,
   environment and terminal paths (the workspace's `clippy.toml`), and no attribute lifts that.
+- Each crate's `src/lib.rs` begins with the line `#![cfg(not(doctest))]`, which the export
+  writes. Keep it first and unchanged: it hides the crate from `cargo test --doc`, so no code
+  in a doc comment ever runs.
 
 ## What a modern developer would expect
 

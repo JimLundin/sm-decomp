@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Uncharged power beam and intro-fight missile model. Spec: ShotSpacing through
 //! CinematicMissilePictures.
 //! The caller owns State, imports content values, supplies World, and consumes requests.

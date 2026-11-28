@@ -1,3 +1,0 @@
-#![doc = r#"
-    assert!(true);
-"#]

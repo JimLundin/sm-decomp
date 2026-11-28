@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The blocks model, built from its behaviour spec alone: blocks that break and come back, the
 //! scroll cells that change which screens the view may show, and the stand-ins a room places.
 //!

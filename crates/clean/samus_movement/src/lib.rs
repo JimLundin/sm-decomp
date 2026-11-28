@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The samus-movement model, built from its behaviour spec alone: a character controller for
 //! Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels.
 //!

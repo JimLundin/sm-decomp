@@ -296,7 +296,7 @@ fn scaffold(dest: &Path, name: &str, description: &str, deps: &str) -> Result<()
     write(
         dest,
         &format!("{folder}/src/lib.rs"),
-        &format!("//! {description}.\n"),
+        &format!("{}//! {description}.\n", rules::DOCTEST_GUARD),
     )
 }
 
@@ -378,8 +378,6 @@ mod tests {
         assert_eq!(folders, [true, true]);
     }
 
-    /// A scaffolded crate whose doc comment holds a code block that starts a process: `cargo
-    /// test` builds and passes it and never runs the block, which no clippy run lints.
     #[test]
     fn a_scaffolded_crate_runs_no_doctest() {
         let dir = std::env::temp_dir().join(format!("cleanroom-doctest-{}", std::process::id()));
@@ -391,28 +389,31 @@ mod tests {
         )
         .unwrap();
         super::scaffold(&dir, "types", "Types", "[dependencies]\n").unwrap();
+        let lib = dir.join("crates/clean/types/src/lib.rs");
         let ran = dir.join("ran");
-        fs::write(
-            dir.join("crates/clean/types/src/lib.rs"),
-            format!(
-                "//! Types.\n//!\n//! ```\n//! std::process::Command::new(\"touch\").arg({:?}).status().unwrap();\n//! ```\n",
-                ran.display().to_string()
-            ),
-        )
-        .unwrap();
-        let test = std::process::Command::new("cargo")
+        let block = format!(
+            "//!\n//! ```\n//! std::fs::write({:?}, \"\").unwrap();\n//! ```\n",
+            ran.display().to_string()
+        );
+        fs::write(&lib, fs::read_to_string(&lib).unwrap() + &block).unwrap();
+        let doc = std::process::Command::new("cargo")
             .current_dir(&dir)
             .env("CARGO_TARGET_DIR", dir.join("target"))
-            .args(["test", "--offline", "-q"])
+            .args(["test", "--offline", "--doc"])
             .output()
             .unwrap();
         let ran = ran.exists();
         fs::remove_dir_all(&dir).unwrap();
         assert!(
-            test.status.success(),
+            doc.status.success(),
             "{}",
-            String::from_utf8_lossy(&test.stderr)
+            String::from_utf8_lossy(&doc.stderr)
         );
-        assert!(!ran, "cargo test ran the doc comment's code block");
+        assert!(
+            String::from_utf8_lossy(&doc.stdout).contains("running 0 tests"),
+            "{}",
+            String::from_utf8_lossy(&doc.stdout)
+        );
+        assert!(!ran, "cargo test --doc ran the doc comment's code block");
     }
 }

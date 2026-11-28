@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-explosion model, built from its behaviour spec alone.
 //!
 //! The station explosion is the cinematic between the escape from Ceres and the flight to

@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-playback model, built from its behaviour spec alone.
 //!
 //! In the intro's flashback to Zebes, two scenes play Samus from recorded controls: the battle,

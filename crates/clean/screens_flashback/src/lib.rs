@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-flashback model, built from its behaviour spec alone: Mother Brain in the Zebes
 //! flashback.
 //!

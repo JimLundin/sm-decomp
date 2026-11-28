@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-intro model, built from its behaviour spec alone: the intro from its start to the
 //! flight to Ceres.
 //!

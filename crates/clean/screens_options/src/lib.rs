@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-options model, built from its behaviour spec alone: the options menu from the
 //! dark frame that ends file select until the menu hands on, one frame end at a time.
 //!

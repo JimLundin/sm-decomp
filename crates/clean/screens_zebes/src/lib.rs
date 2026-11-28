@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-zebes model, built from its behaviour spec alone: the flight to Zebes (F4),
 //! from the station explosion's blackout to the cut that asks to load the Landing Site.
 //!

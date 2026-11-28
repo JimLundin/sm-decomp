@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! A room's quake: the shake under way, how starts and stops replace it, how each update counts
 //! it down, and how far it moves the room's layers and actors.
 //!

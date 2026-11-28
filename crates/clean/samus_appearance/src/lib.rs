@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Her appearance State ([`AppearanceState`]) holds all she remembers from one frame to the
 //! next: her step and the time left on it, the boost stage and the laps left, her kept action,
 //! the cannon selection delay, the visor delay, visor sequence position and charge-glow

@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The progress model, built from its behaviour spec alone: what the game remembers of her run
 //! besides where she is.
 //!

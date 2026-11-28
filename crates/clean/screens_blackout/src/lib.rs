@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The screens-blackout model, built from its behaviour spec alone.
 //!
 //! Samus reaches the elevator at the foot of the rotating shaft during the Ceres escape. The

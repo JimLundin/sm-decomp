@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The gunship's flight to Ceres, built from its behaviour spec alone.
 //!
 //! The screen is dark while the flight is made ready and its music loads; the gunship rushes in

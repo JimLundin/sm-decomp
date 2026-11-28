@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! The domain types the clean models share: quantities, poses and the world, in player terms.
 
 use core::num::Wrapping;

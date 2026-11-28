@@ -1,3 +1,4 @@
+#![cfg(not(doctest))]
 //! Audio transport, by frame or by sender service.
 //!
 //! The game offers sound cues to three sound queues; its sender service presents each group's

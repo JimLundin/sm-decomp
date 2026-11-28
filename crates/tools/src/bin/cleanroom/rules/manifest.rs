@@ -256,6 +256,56 @@ fn keys(manifest: &toml::Table, out: &mut Findings) {
     }
 }
 
+fn targets(manifest: &Manifest, out: &mut Findings) {
+    if !matches!(
+        &manifest.lib,
+        Some(Targets::One(Target {
+            doctest: Some(toml::Value::Boolean(false)),
+            ..
+        }))
+    ) {
+        out.push(("doctest", "no `[lib] doctest = false`".to_owned()));
+    }
+    for (key, targets) in [
+        ("lib", &manifest.lib),
+        ("bin", &manifest.bin),
+        ("test", &manifest.test),
+        ("example", &manifest.example),
+        ("bench", &manifest.bench),
+    ] {
+        let list = match targets {
+            Some(Targets::One(t)) => std::slice::from_ref(t),
+            Some(Targets::Many(ts)) => ts.as_slice(),
+            None => &[],
+        };
+        for target in list {
+            if target
+                .doctest
+                .as_ref()
+                .is_some_and(|d| *d != toml::Value::Boolean(false))
+            {
+                out.push(("doctest", format!("{key}.doctest is not false")));
+            }
+            if target.proc_macro.is_some() || target.proc_macro_underscore.is_some() {
+                out.push(("proc-macro", key.to_owned()));
+            }
+            if let Some(path) = &target.path {
+                let outside = Path::new(path).is_absolute()
+                    || Path::new(path)
+                        .components()
+                        .any(|c| c == Component::ParentDir)
+                    || path.get(1..2) == Some(":");
+                if outside {
+                    out.push(("target-path", path.clone()));
+                }
+                if key == "lib" && path != "src/lib.rs" {
+                    out.push(("doctest", format!("lib.path {path} is not src/lib.rs")));
+                }
+            }
+        }
+    }
+}
+
 impl Checked<'_> {
     pub fn check(&self, manifest: &str, workspace: &str) -> Findings {
         let mut out = Vec::new();
@@ -321,50 +371,7 @@ impl Checked<'_> {
         if manifest.lints.as_ref().and_then(|l| l.workspace) != Some(true) {
             out.push(("lints-key", "no `[lints] workspace = true`".to_owned()));
         }
-        if !matches!(
-            &manifest.lib,
-            Some(Targets::One(Target {
-                doctest: Some(toml::Value::Boolean(false)),
-                ..
-            }))
-        ) {
-            out.push(("doctest", "no `[lib] doctest = false`".to_owned()));
-        }
-        for (key, targets) in [
-            ("lib", &manifest.lib),
-            ("bin", &manifest.bin),
-            ("test", &manifest.test),
-            ("example", &manifest.example),
-            ("bench", &manifest.bench),
-        ] {
-            let list = match targets {
-                Some(Targets::One(t)) => std::slice::from_ref(t),
-                Some(Targets::Many(ts)) => ts.as_slice(),
-                None => &[],
-            };
-            for target in list {
-                if target
-                    .doctest
-                    .as_ref()
-                    .is_some_and(|d| *d != toml::Value::Boolean(false))
-                {
-                    out.push(("doctest", format!("{key}.doctest is not false")));
-                }
-                if target.proc_macro.is_some() || target.proc_macro_underscore.is_some() {
-                    out.push(("proc-macro", key.to_owned()));
-                }
-                if let Some(path) = &target.path {
-                    let outside = Path::new(path).is_absolute()
-                        || Path::new(path)
-                            .components()
-                            .any(|c| c == Component::ParentDir)
-                        || path.get(1..2) == Some(":");
-                    if outside {
-                        out.push(("target-path", path.clone()));
-                    }
-                }
-            }
-        }
+        targets(manifest, out);
         for scope in std::iter::once(&manifest.scope).chain(manifest.target.values()) {
             if scope.build_dependencies.is_some() || scope.build_dependencies_underscore.is_some() {
                 out.push(("build-deps", "build dependencies".to_owned()));

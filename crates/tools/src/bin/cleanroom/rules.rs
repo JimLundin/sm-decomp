@@ -1,4 +1,3 @@
-mod doc;
 mod lex;
 mod manifest;
 mod shape;
@@ -13,6 +12,8 @@ use serde::Deserialize;
 
 use manifest::{Approval, Checked, WorkspaceFile, normal};
 use source::Include;
+
+pub const DOCTEST_GUARD: &str = "#![cfg(not(doctest))]\n";
 
 pub struct Finding {
     pub path: String,
@@ -246,7 +247,6 @@ fn check_crate(
         push(rel.clone(), "extra-file", "no Cargo.toml".to_owned());
     }
     let mut library: Vec<(String, String)> = Vec::new();
-    let mut sources: Vec<(String, Vec<lex::Token>)> = Vec::new();
     for (path, link) in &files {
         let source_dir = path.starts_with("src/") || path.starts_with("tests/");
         if path != "Cargo.toml" && !source_dir {
@@ -260,9 +260,15 @@ fn check_crate(
             continue;
         }
         let text = read(&dir.join(path))?;
-        let (toks, comments) = lex::lex(&text, 0);
-        let mut found = source::check(lex::Toks(&toks), is_test_file(path), &policy.denied);
-        doc::check(lex::Toks(&toks), &comments, &mut found.hits);
+        if path == "src/lib.rs" && !text.starts_with(DOCTEST_GUARD) {
+            push(
+                format!("{rel}/{path}"),
+                "doctest",
+                format!("does not begin with {}", DOCTEST_GUARD.trim_end()),
+            );
+        }
+        let toks = lex::tokens(&text, 0);
+        let found = source::check(lex::Toks(&toks), is_test_file(path), &policy.denied);
         let file = format!("{rel}/{path}");
         for hit in found.hits {
             push(file.clone(), hit.tag, hit.detail);
@@ -293,16 +299,12 @@ fn check_crate(
                 }
             }
         }
-        sources.push((file, toks));
         if let Some(lib) = path
             .strip_prefix("src/")
             .filter(|p| !is_test_file(&format!("/{p}")))
         {
             library.push((lib.to_owned(), text));
         }
-    }
-    for (file, hit) in doc::macros(&sources) {
-        push(file, hit.tag, hit.detail);
     }
     let modules: Vec<String> = library.iter().map(|(p, _)| shape::module_of(p)).collect();
     let toks: Vec<lex::Token> = library
