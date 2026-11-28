@@ -344,7 +344,7 @@ delete themselves at the next pass (`$84:AAE3`), so they hold a place until it a
 | WhatTheScreenRedraws | Draw PLM `$84:8DAA` from `$84:861A` and `$84:8B50` only; the setups write level data without drawing |
 | Sounds | the queue sound instructions `$84:8C10`, `$84:8C46`, `$84:8C7C` (`$80:90CB`, `$80:90B7`, `$80:90C1`) |
 
-`scan.sh --mirror` finds 1 of 18 entries (5 %) single-routine, `PatternCells`, marked *: its
+`cleanroom mirror` finds 1 of 18 entries (5 %) single-routine, `PatternCells`, marked *: its
 content is the draw routine's, which the format names by what each cell becomes.
 
 ## Findings behind the spec's choices

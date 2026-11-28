@@ -166,9 +166,10 @@ the scratch `$12`..`$34`.
 | FirstColumnsShift | `$90:A991`..`$90:A99A` (the origin a byte back), `$90:A9F9`..`$90:AA29` with `$90:AB75` (the 8-bit `ADC #$7D`), `$90:AA6A` (no page correction on the left page) |
 | LastColumnsShift | `$90:AA0A`..`$90:AA25` (the 8-bit `SBC #$7C` lands on the left page's next row), `$90:AB3C` (the tile index's step past the right page: +7C0h bytes from a right-page row end leaves the map) |
 
-`scan.sh --mirror docs/behaviours/interface-hud.md docs/behaviours/interface-hud.decode.md` finds 4 of 19 entries
-(21 %, limit 30 %) single-routine, marked *: each is a branch or a stretch of one of the two big
-routines (`$80:9B44`, `$90:A91B`) or of the switch (`$90:C4B5`), not a routine of its own.
+`cleanroom mirror docs/behaviours/interface-hud.md docs/behaviours/interface-hud.decode.md` finds 4
+of 19 entries (21 %, limit 30 %) single-routine, marked *: each is a branch or a stretch of one of
+the two big routines (`$80:9B44`, `$90:A91B`) or of the switch (`$90:C4B5`), not a routine of its
+own.
 
 ## Findings behind the spec's choices
 
@@ -735,7 +736,7 @@ The spec gate of the Ceres delta (`$TEMP/collab/reviews/adversary-110.md`, its s
    item select or item cancel, so the opening stays outside play and can switch drops it (§Inputs,
    can switch). The opening's selection stays §7 question 2.
 6. **Adjusted vectors:** C-flash-adjusted (`n` = 4), C-blink-adjusted (`n` = 4) and
-   C-mm-boss-adjusted (Kraid's screens (2, 0) and (0, 2)); `adjusted_vectors.sh --gate
+   C-mm-boss-adjusted (Kraid's screens (2, 0) and (0, 2)); `adjusted_vectors_run.py --missing
    interface-hud` passes 3 of 3. The vector test's `rules` is the implementer's (§The harness).
 7. **The selection's writers:** §The selection's writers lists every store with its owner and
    whether it is compared. Its gameplay writers the spec lacked join `the selection dropped`: the
@@ -771,19 +772,19 @@ killed).
 
 ## Scan
 
-`tools/cleanroom/scan.sh docs/behaviours/interface-hud.md scenarios/vectors/interface-hud.toml`: 0 in every check
-(`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud3o`). The HUD added only multi-word player phrases to
-`tools/cleanroom/scan_allow.txt`: `x ray scope`, `ray scope`, `item select`, `item cancel`, `missile
-tank`, `pick up` and `mother brain` (the progress spec, landed first, holds `x ray scope`, `ray
-scope`, `missile tank` and `mother brain` too, so the HUD's own section keeps the other three). No
-single word: the spec is worded so that `hud`, `map`, `area`, `row`, `column` and the rest never
-join a lexicon phrase (the title's comma, the area named `minimap`, "second column, left to right",
-"cells drawn as a diagonal", "the game's opening" for the intro demo).
+`cargo cleanroom scan docs/behaviours/interface-hud.md scenarios/vectors/interface-hud.toml`: 0 in
+every check (`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud3o`). The HUD added only multi-word player
+phrases to `tools/cleanroom/scan_allow.txt`: `x ray scope`, `ray scope`, `item select`, `item
+cancel`, `missile tank`, `pick up` and `mother brain` (the progress spec, landed first, holds `x ray
+scope`, `ray scope`, `missile tank` and `mother brain` too, so the HUD's own section keeps the other
+three). No single word: the spec is worded so that `hud`, `map`, `area`, `row`, `column` and the
+rest never join a lexicon phrase (the title's comma, the area named `minimap`, "second column, left
+to right", "cells drawn as a diagonal", "the game's opening" for the intro demo).
 
 **The model's scans, ruled at round 1's gate (adversary 52).** The root accepted each hit below for
 this round; none is a leak.
 
-- **The mirror scan's one hit.** `scan.sh --mirror` on the model finds 1 of 3 tagged public
+- **The mirror scan's one hit.** `cleanroom mirror` on the model finds 1 of 3 tagged public
   functions mapping onto one routine: `mini_map::update`, whose first named entry, `Exploring`,
   resolves to `$90:A91B`. Accepted, because its boundary and order are the spec's own: "the
   mini-map updates" is `MiniMapStill`'s condition, and §5 gives the order (her cell explored, the
@@ -852,7 +853,7 @@ it shows 1'00"00 in the screen's middle, holds 16 frames, runs from cut 1,603, s
 | CountdownSlides | `$80:9E58` (x + E0h to DC00h, y − C1h (`ADC #$FF3F`) to 3000h, status 6 when both clamp) |
 | CountdownShown | `$90:E10A`..`$90:E10F` and `$90:E114` (draw when status ≠ 0); `$82:836A`, `$82:838B` (game states 20h, 21h draw before main gameplay, whose locked handler doesn't call `$90:E097`); `$80:9F6C`, `$80:9F95`, `$80:9FB3` (the place's high bytes, the TIME spritemap `$80:A060`, the digits `$80:9FD4` at −28, −4 and +20 from x, palette 5); the doors' `$82:E24A`, `$82:E292` |
 
-`scan.sh --mirror` finds 5 of the spec's 27 entries single-routine (18 %, limit 30 %): of these
+`cleanroom mirror` finds 5 of the spec's 27 entries single-routine (18 %, limit 30 %): of these
 seven, `CountdownWaits` (marked *), a branch of the countdown's step.
 
 ### State and inputs

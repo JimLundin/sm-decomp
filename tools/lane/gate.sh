@@ -8,7 +8,7 @@
 # and coverage (tools/check_mutants.py validate, which runs no fault); the adjusted vectors' rule
 # owners (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test); and, for each
 # domain whose spec or vectors change, an adjusted vector for every Parameter entry
-# (tools/cleanroom/adjusted_vectors.sh --gate). CI runs the other tests.
+# (tools/cleanroom/adjusted_vectors_run.py --missing). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
@@ -177,7 +177,7 @@ mapfile -t domains < <({
 } | sed -nE 's#^docs/behaviours/([^/.]+)\.md$#\1#p; s#^scenarios/vectors/([^/]+)\.toml$#\1#p' | sort -u |
   while read -r d; do [ -f "docs/behaviours/$d.md" ] && [ -f "scenarios/vectors/$d.toml" ] && echo "$d"; done)
 if [ ${#domains[@]} -gt 0 ]; then
-  start adjusted bash tools/cleanroom/adjusted_vectors.sh --gate "${domains[@]}"
+  start adjusted "${SM_PY:-python3}" -I tools/cleanroom/adjusted_vectors_run.py --missing "${domains[@]}"
 else skip adjusted; fi
 wait
 
@@ -224,7 +224,7 @@ if ! passed owners; then
   grep '^adjusted_vectors_run: ' "$O/owners.log" | reason owners
 fi
 if ! passed adjusted; then
-  fail "ADJUSTED FAIL: tools/cleanroom/adjusted_vectors.sh --gate"
+  fail "ADJUSTED FAIL: tools/cleanroom/adjusted_vectors_run.py --missing"
   grep ' has no adjusted vector$' "$O/adjusted.log" | reason adjusted
 fi
 for check in verify-lib faults owners adjusted; do

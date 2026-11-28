@@ -11,10 +11,11 @@
 //! first commit as LANE's baseline holds it. It prints each file's new hits' count and line
 //! numbers, never the words, and the bytes of its lines the baseline doesn't hold.
 //!
-//! `cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE
-//! --routes FILE`: the observer side. Builds the hashed lexicon from the bank logs, `verify`'s
-//! decoders and sources, the decode notes, a list of distinctive single words and a list of
-//! route markers. Nothing it reads is written out unhashed.
+//! `cleanroom lexicon LOGS_DIR... -- WORDS ROUTES`: the observer side, from the repository root.
+//! Rebuilds `tools/cleanroom/scan_lexicon` with a fresh salt from the bank logs (every `.txt`
+//! under each `LOGS_DIR`), `verify`'s decoders and sources, `data`'s pose list, the decode notes,
+//! a file of distinctive single words and a file of route markers, both kept outside the
+//! repository. Nothing it reads is written out unhashed.
 
 mod export;
 mod import;
@@ -44,7 +45,7 @@ const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN
                      cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
-                     cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE --routes FILE";
+                     cleanroom lexicon LOGS_DIR... -- WORDS ROUTES";
 
 const DEFAULT_LEXICON: &str = "tools/cleanroom/scan_lexicon";
 const DEFAULT_ALLOW: &str = "tools/cleanroom/scan_allow.txt";
@@ -223,54 +224,78 @@ fn run_mirror(args: &[String]) -> Result<(String, bool), String> {
     Ok((out, failed))
 }
 
+fn sorted(mut paths: Vec<PathBuf>) -> Vec<PathBuf> {
+    paths.sort_by_key(|path| path.display().to_string());
+    paths
+}
+
+fn salt() -> Result<String, String> {
+    let mut bytes = [0_u8; 8];
+    fs::File::open("/dev/urandom")
+        .and_then(|mut random| random.read_exact(&mut bytes))
+        .map_err(|e| format!("/dev/urandom: {e}"))?;
+    Ok(bytes.iter().fold(String::new(), |mut hex, byte| {
+        let _ = write!(hex, "{byte:02x}");
+        hex
+    }))
+}
+
 fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
-    let [out_dir, salt, rest @ ..] = args else {
+    let Some(split) = args.iter().position(|arg| arg == "--") else {
         return Err(USAGE.to_owned());
     };
-    let mut awaiting_input = false;
-    for arg in rest {
-        if arg.starts_with("--") {
-            if awaiting_input
-                || !matches!(
-                    arg.as_str(),
-                    "--logs" | "--rust" | "--notes" | "--words" | "--routes"
-                )
-            {
-                return Err(USAGE.to_owned());
-            }
-            awaiting_input = true;
-        } else {
-            awaiting_input = false;
-        }
-    }
-    if awaiting_input {
+    let (log_dirs, inputs) = args.split_at(split);
+    let [_, words, routes] = inputs else {
         return Err(USAGE.to_owned());
-    }
+    };
     let mut plain = Plain::default();
-    let mut mode = "";
-    for arg in rest {
-        if arg.starts_with("--") {
-            mode = arg.as_str();
-            continue;
-        }
-        let src = read(arg)?;
-        match mode {
-            "--logs" => plain.bank_log(&src),
-            "--rust" => plain.observer_rust(&src),
-            "--notes" => plain.decode_notes(&src),
-            "--words" => src
-                .lines()
-                .map(|l| l.split('#').next().unwrap_or_default().trim())
-                .filter(|w| !w.is_empty())
-                .for_each(|w| plain.distinctive(w)),
-            "--routes" => src
-                .lines()
-                .filter(|l| !l.is_empty())
-                .for_each(|marker| plain.route(marker)),
-            _ => return Err(USAGE.to_owned()),
+    for dir in log_dirs {
+        let mut found = Vec::new();
+        files(Path::new(dir), &mut found)?;
+        found.retain(|path| path.extension().is_some_and(|e| e == "txt"));
+        for log in sorted(found) {
+            plain.bank_log(&read(&log.display().to_string())?);
         }
     }
-    Ok((plain.write(Path::new(out_dir), salt)?, false))
+    let sources = Path::new("crates").join("verify").join("src");
+    let mut verify = Vec::new();
+    files(&sources, &mut verify)?;
+    verify.retain(|path| {
+        path.extension().is_some_and(|e| e == "rs")
+            && path.file_name().is_some_and(|n| n != "source.rs")
+    });
+    let rust = std::iter::once(sources.join("source.rs"))
+        .chain(sorted(verify))
+        .chain(std::iter::once(PathBuf::from("crates/data/src/pose.rs")));
+    for file in rust {
+        plain.observer_rust(&read(&file.display().to_string())?);
+    }
+    let mut notes = directory_entries(
+        fs::read_dir("docs/behaviours")
+            .map_err(|e| format!("docs/behaviours: {e}"))?
+            .map(|entry| entry.map(|entry| entry.path())),
+    )
+    .map_err(|e| format!("docs/behaviours: {e}"))?;
+    notes.retain(|path| {
+        path.extension().is_some_and(|e| e == "md")
+            && path
+                .file_stem()
+                .and_then(|stem| Path::new(stem).extension())
+                .is_some_and(|e| e == "decode")
+    });
+    for note in sorted(notes) {
+        plain.decode_notes(&read(&note.display().to_string())?);
+    }
+    read(words)?
+        .lines()
+        .map(|l| l.split('#').next().unwrap_or_default().trim())
+        .filter(|w| !w.is_empty())
+        .for_each(|w| plain.distinctive(w));
+    read(routes)?
+        .lines()
+        .filter(|l| !l.is_empty())
+        .for_each(|marker| plain.route(marker));
+    Ok((plain.write(Path::new(DEFAULT_LEXICON), &salt()?)?, false))
 }
 
 fn vocabulary(root: &Path) -> Result<(Lexicon, Allow), String> {
@@ -574,19 +599,12 @@ mod tests {
             let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
             assert!(options(&args, &["--lexicon", "--allow"]).is_err());
         }
-        for flag in [
-            "--logs",
-            "--rust",
-            "--notes",
-            "--words",
-            "--routes",
-            "--unknown",
+        for args in [
+            vec!["logs"],
+            vec!["logs", "--", "words"],
+            vec!["--", "words", "routes", "more"],
         ] {
-            let args = [
-                "unused-output".to_owned(),
-                "salt".to_owned(),
-                flag.to_owned(),
-            ];
+            let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
             assert!(run_lexicon(&args).is_err());
         }
     }

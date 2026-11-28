@@ -208,7 +208,7 @@ green, 1 blue; `Ahead`, `KeepLeft`, `KeepRight`, `Near` against 0, 4, 6, 2.
 
 ## Sources per entry
 
-Each entry lists the routines or branches that carry its content. `scan.sh --mirror` finds 2 of
+Each entry lists the routines or branches that carry its content. `cleanroom mirror` finds 2 of
 14 entries (14 %) single-routine, `LeadingHer` and `AimingHeight`; `DownwardLooksAhead` is one
 routine's two reads. All three are marked *. The name scan's 5 hits in the camera crate are prose
 (axis.rs, follow.rs, room.rs twice, tests/spec.rs), and the enum-order scan's one hit is the

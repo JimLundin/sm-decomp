@@ -11,6 +11,15 @@ pathlib.Path({ran!r}, "{name}").write_text("")
 print(os.environ.get("GATE_TEST_OUT_{name}", ""))
 sys.exit(int(os.environ.get("GATE_TEST_STATUS_{name}", "0")))
 """
+FAKE_ADJUSTED = """import os, pathlib, sys
+name = "adjusted" if sys.argv[1:2] == ["--missing"] else "owners"
+pathlib.Path({ran!r}, name).write_text(" ".join(sys.argv[1:]) + "\\n")
+if name == "adjusted":
+    print(f"adjusted: {{sys.argv[2]}}: Entry has no adjusted vector")
+    sys.exit(1)
+print(os.environ.get("GATE_TEST_OUT_owners", ""))
+sys.exit(int(os.environ.get("GATE_TEST_STATUS_owners", "0")))
+"""
 CARGO_INCLUDES = ('include = [{ path = "more.toml" }]', '"include" = ["more.toml"]', "'include' = [\"more.toml\"]",
                   '[[include]]\npath = "more.toml"')
 
@@ -34,9 +43,9 @@ class Gate(unittest.TestCase):
         self.fake("deny", self.bin / "cargo-deny")
         self.fake("self_tests", self.repo / "tools/lane/self_tests.sh")
         self.fake("verify_lib", self.repo / "tools/lane/run_tests.sh")
-        for name, script in (("faults", "tools/check_mutants.py"), ("owners", "tools/cleanroom/adjusted_vectors_run.py"),
-                             ("prereview", "tools/lane/prereview.py")):
+        for name, script in (("faults", "tools/check_mutants.py"), ("prereview", "tools/lane/prereview.py")):
             (self.repo / script).write_text(FAKE_PYTHON.format(ran=str(self.ran), name=name))
+        (self.repo / "tools/cleanroom/adjusted_vectors_run.py").write_text(FAKE_ADJUSTED.format(ran=str(self.ran)))
         self.git("init", "-q", "-b", "lane/test")
         self.commit("Invented tree", "-A")
 
@@ -221,9 +230,6 @@ class Gate(unittest.TestCase):
         self.assertIn("invented decode error", out.splitlines())
 
     def test_a_changed_domain_gates_its_adjusted_vectors(self) -> None:
-        self.executable(self.repo / "tools/cleanroom/adjusted_vectors.sh",
-                        f'#!/bin/sh\necho "$*" >"{self.ran}/adjusted"\n'
-                        'echo "adjusted: $2: Entry has no adjusted vector"\nexit 1\n')
         (self.repo / "docs/behaviours").mkdir(parents=True)
         (self.repo / "scenarios/vectors").mkdir()
         for path in ("docs/behaviours/demo.md", "docs/behaviours/alone.md"):
@@ -232,7 +238,7 @@ class Gate(unittest.TestCase):
             (self.repo / path).write_text("Invented vectors.\n")
         status, out = self.gate()
         self.assertNotEqual(status, 0, out)
-        self.assertEqual((self.ran / "adjusted").read_text(), "--gate demo\n")
+        self.assertEqual((self.ran / "adjusted").read_text(), "--missing demo\n")
         self.assertIn("adjusted: demo: Entry has no adjusted vector", out.splitlines())
 
 

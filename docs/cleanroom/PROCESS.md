@@ -90,13 +90,13 @@ Each step names its owner, what it waits for, and its done-condition.
      reference one: a vector that names the entry and overrides the reference rules (the
      vector's `rules` table), so adjusting the behaviour is proven, not assumed.
      `tools/lane/gate.sh` holds every domain whose spec or vectors a branch changes to this
-     rule, through `tools/cleanroom/adjusted_vectors.sh --gate`. Once the model exists,
+     rule, through `tools/cleanroom/adjusted_vectors_run.py --missing`. Once the model exists,
      `tools/cleanroom/adjusted_vectors_run.py` checks that each such vector depends on its
      rules. It builds the vector test once and runs it on probes of the file, each passed in
      `SM_VECTOR_FILE`;
    - `docs/behaviours/<domain>.decode.md` holds the sources and the harness note;
    - the observer's reference model agrees with every vector;
-   - `tools/cleanroom/scan.sh` finds 0 on the spec and vectors;
+   - `cargo cleanroom scan` finds 0 on the spec and vectors;
    - the doc links pass.
 2. **Brief** (root), after 1. Done when the brief:
    - names only spec entries and shape findings;

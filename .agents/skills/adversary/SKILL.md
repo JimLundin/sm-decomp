@@ -27,8 +27,9 @@ findings it resolves. For a re-gate, review the delta, and check each earlier fi
 2. **Completeness and boundary.** List what the original does in this domain that the spec
    misses, and every behaviour placed in the wrong domain. Done when each is confirmed covered or
    is a finding.
-3. **Leaks.** Run `tools/cleanroom/scan.sh` on the spec and vectors. Then read for **structure** the scans can't see: routine boundaries, call order, internal
-   flags and modes, enum orders that follow RAM codes, table indexing (the rule is in
+3. **Leaks.** Run `cargo cleanroom scan` on the spec and vectors. Then read for **structure** the
+   scans can't see: routine boundaries, call order, internal flags and modes, enum orders that
+   follow RAM codes, table indexing (the rule is in
    [MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned)). Review every phrase
    the observer added to the scan's allow list. Done when every entry has been read for structure.
 4. **Form and coverage.** Every rule is an arm citing vectors that exist.

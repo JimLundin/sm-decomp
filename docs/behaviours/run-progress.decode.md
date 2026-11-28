@@ -232,7 +232,7 @@ FFFFh would make the cleared slot load as a file. The spec names this P2's.
 | RoomStates | `$8F:E5D2`..`$8F:E689` (each condition its own routine), `$82:DED3` |
 | ItemPercentage* | `$8B:E627` |
 
-Entries marked * have a single routine as their source: `scan.sh --mirror` finds 2 of 14
+Entries marked * have a single routine as their source: `cleanroom mirror` finds 2 of 14
 (14 %). The spec's grouping is by what the player sees (an item, a beam, a tank, a map), not by
 routine: the item instructions, the tanks and the condition routines are merged or split by
 behaviour.

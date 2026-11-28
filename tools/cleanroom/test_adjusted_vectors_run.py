@@ -510,6 +510,19 @@ class AdjustedVectors(unittest.TestCase):
                 self.assertEqual([c.args[1] for c in owners_check.call_args_list], owners)
                 self.assertEqual([c.args[1] for c in probe_check.call_args_list], probed)
 
+    def test_missing_names_each_parameter_entry_no_vector_adjusts_and_fails(self) -> None:
+        printed = io.StringIO()
+        with contextlib.chdir(Path(__file__).resolve().with_name("adjusted_vectors_fixtures")), \
+                contextlib.redirect_stdout(printed):
+            status = main(["--missing", "demo"])
+        self.assertEqual(status, 1)
+        self.assertEqual(printed.getvalue().splitlines(), [
+            "adjusted: demo: Missing has no adjusted vector",
+            "adjusted: demo: EmptyInline has no adjusted vector",
+            "adjusted: demo: EmptyTable has no adjusted vector",
+            "adjusted: demo: 2 of 5 Parameter entries have an adjusted vector",
+        ])
+
     def test_a_toml_error_in_the_owners_or_the_vectors_is_a_refusal(self) -> None:
         owners = "tools/cleanroom/adjusted_rule_owners/demo.toml"
         valid = {"docs/behaviours/demo.md": SPEC,

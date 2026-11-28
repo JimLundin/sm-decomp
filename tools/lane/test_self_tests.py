@@ -6,9 +6,9 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SHELL_SUITES = {"adjusted_vectors": "tools/cleanroom/adjusted_vectors_test.sh"}
-PYTHON_SUITES = {name: f"tools/lane/test_{name}.py" for name in ("worktree", "gate", "self_tests")}
-EVERY_SUITE = sorted(SHELL_SUITES | PYTHON_SUITES)
+PYTHON_SUITES = {name: f"tools/lane/test_{name}.py" for name in ("worktree", "gate", "self_tests")} | {
+    "adjusted_vectors": "tools/cleanroom/test_adjusted_vectors_run.py"}
+EVERY_SUITE = sorted(PYTHON_SUITES)
 PYTHON_SUITE = """import os
 import pathlib
 import unittest
@@ -32,11 +32,9 @@ class SelfTestSelection(unittest.TestCase):
         for name in ("changes.sh", "self_tests.sh"):
             shutil.copy(HERE / name, self.repo / "tools/lane" / name)
         (self.repo / ".gitignore").write_text("__pycache__/\n")
-        for name, suite in SHELL_SUITES.items():
-            (self.repo / suite).write_text(f'#!/bin/sh\ntouch "$RAN/{name}"\n')
         for name, suite in PYTHON_SUITES.items():
             (self.repo / suite).write_text(PYTHON_SUITE.format(name=name))
-        for path in ("tools/lane/gate.sh", "tools/lane/land.py", "tools/cleanroom/adjusted_vectors.sh",
+        for path in ("tools/lane/gate.sh", "tools/lane/land.py", "tools/cleanroom/adjusted_vectors_run.py",
                      "tools/cleanroom/box_relay.py"):
             (self.repo / path).touch()
         self.git("init", "-q")
@@ -91,7 +89,7 @@ class SelfTestSelection(unittest.TestCase):
         self.assertEqual(self.run_selector("HEAD"), [])
 
     def test_an_adjusted_vector_input_runs_its_suite(self) -> None:
-        self.append("tools/cleanroom/adjusted_vectors.sh")
+        self.append("tools/cleanroom/adjusted_vectors_run.py")
         self.assertEqual(self.run_selector("HEAD"), ["adjusted_vectors"])
         self.append("tools/lane/gate.sh")
         self.git("commit", "-qam", "Edit the gate and the adjusted-vector prover")

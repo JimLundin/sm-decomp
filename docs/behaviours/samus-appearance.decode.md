@@ -143,7 +143,7 @@ Which inputs samus-movement's model doesn't yet report is §Requests to samus-mo
 | CountedLapHold | `$90:8587` (the boost timer still non-zero after its `DEC`: `BNE` to `$90:85DA`, which returns the control byte), then `$90:830B`..`$90:8315`: the control runs from the dispatch table, and a control that returns carry set takes its hold from the delay list `[$00],y` plus `0A9C`, not from `$90:84E3`'s pace; `$90:8344` (F0h-F5h) leaves the timer at 0 |
 | BoostingLap | `$90:85A6`..`$90:85B6`: the `JSL $80:914D` returns A from `$80:9155`, whose high byte (after `XBA` at `$90:85AA`) is library 3's queue count before the sound (`$80:9158`..`$80:9161`), or 3 when 6 or more wait (the early return keeps the sound in the high byte); that index picks both `$91:B61F` and `$91:B5DE` |
 
-`scan.sh --mirror` on the spec and these notes: 0 of 15 entries single-routine (§Scan).
+`cleanroom mirror` on the spec and these notes: 0 of 15 entries single-routine (§Scan).
 
 ## The importer: clips from the delay lists
 
@@ -422,9 +422,9 @@ graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old
 
 ## Scan
 
-`tools/cleanroom/scan.sh` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
+`cargo cleanroom scan` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
 enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0).
-`scan.sh --mirror` on the spec and these notes: 3 of 22 entries single-routine (13 %, limit
+`cleanroom mirror` on the spec and these notes: 3 of 22 entries single-routine (13 %, limit
 30 %), 1 unsourced. FootContact,
 CannonItemDelay and CannonReadinessReset each have one source mechanism; the spec states their
 observable rules and leaves the public API form to the implementer.

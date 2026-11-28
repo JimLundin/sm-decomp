@@ -451,7 +451,7 @@ shares one object store and every ref, so a sparse checkout is not enough. So:
   - names, against a lexicon drawn from the bank logs, with a reviewed allowlist of player vocabulary;
   - shape: enums whose variant order equals a RAM code's values, fields decoded as one word copied
     as-is;
-  - routine mirroring (`scan.sh --mirror`): the share of entries with a single routine as source
+  - routine mirroring (`cleanroom mirror`): the share of entries with a single routine as source
     (gated at 30 % or less), and entry points that map to one routine.
 - **Briefs are saved and scanned before the spawn.** The root and the observer are relays too.
 - **The clean crates.** The model, the catalogue and the domain types an implementer needs live

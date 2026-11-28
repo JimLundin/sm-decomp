@@ -1,7 +1,7 @@
 """Require each Parameter entry's adjusted vector to depend on the value it adjusts.
 
-adjusted_vectors.sh reads the vector file alone, so it can say only that a vector names an
-entry and carries rules. This runs the domain's own vector test (MODEL §1 decision 16): an
+--missing reads the vector file alone, so it can say only that a vector names an entry and
+carries rules. The rest runs the domain's own vector test (MODEL §1 decision 16): an
 adjusted vector proves its entry can be adjusted when the same case, run at the reference
 rules, no longer gives the vector's answer. For each candidate vector it replaces that case
 with two probes, one at a time, and runs the test on each:
@@ -35,12 +35,14 @@ cannot credit an override ignored by its ordinary vector. A selected run must co
 exactly one nonignored test with the declared name. Linked files lacking selection refuse
 probing. No dependent reference, expectation or override is edited.
 
-Usage: adjusted_vectors_run.py [--owners] [DOMAIN...], from the repository root; with no
-DOMAIN, every spec with a vector file and a clean crate. --owners checks only the ownership and
-test selection a probe needs, and runs no test: tools/lane/gate.sh's form. Exit 1 when an
-entry has adjusted vectors and none depends on its rules; 2 when a domain can't be probed (its
-test doesn't build, fails as committed or fails the control); else 0. An entry no vector adjusts is listed and left to adjusted_vectors.sh,
-which gates it at the domain's spec round.
+Usage: adjusted_vectors_run.py [--owners | --missing] [DOMAIN...], from the repository root;
+with no DOMAIN, every spec with a vector file and a clean crate. --owners checks only the
+ownership and test selection a probe needs, and runs no test: the gate's form. --missing lists
+each Parameter entry no vector adjusts, and needs a DOMAIN; the gate runs it on each domain whose
+spec or vectors a branch changes. Exit 1 when an entry has adjusted vectors and none depends on
+its rules, or under --missing when an entry has none; 2 when a domain can't be probed (its test
+doesn't build, fails as committed or fails the control); else 0. An entry no vector adjusts is
+listed and left to --missing, which gates it at the domain's spec round.
 """
 
 import functools
@@ -524,8 +526,33 @@ def check_domain_owners(root: Path, name: str) -> None:
     print(f"adjusted: {name}: every adjusted vector's overrides have a reviewed owner")
 
 
+def missing(root: Path, name: str) -> int:
+    spec = root / "docs/behaviours" / f"{name}.md"
+    if not spec.is_file():
+        raise CannotProbe(f"no spec {spec}")
+    entries = parameter_entries(spec.read_text(encoding="utf-8"))
+    vectors_file = root / "scenarios/vectors" / f"{name}.toml"
+    text = vectors_file.read_text(encoding="utf-8") if vectors_file.is_file() else ""
+    adjusted = {entry for candidate in candidates(text) for entry in candidate.entries}
+    without = [entry for entry in entries if entry not in adjusted]
+    for entry in without:
+        print(f"adjusted: {name}: {entry} has no adjusted vector")
+    print(f"adjusted: {name}: {len(entries) - len(without)} of {len(entries)} Parameter entries have an "
+          "adjusted vector")
+    return len(without)
+
+
 def main(arguments: list[str]) -> int:
     root = Path.cwd()
+    if arguments[:1] == ["--missing"]:
+        if len(arguments) == 1:
+            print("adjusted_vectors_run: --missing needs a DOMAIN", file=sys.stderr)
+            return 2
+        try:
+            return 1 if sum(missing(root, name) for name in arguments[1:]) else 0
+        except CannotProbe as error:
+            print(f"adjusted_vectors_run: {error}", file=sys.stderr)
+            return 2
     owners_only = arguments[:1] == ["--owners"]
     if owners_only:
         arguments = arguments[1:]

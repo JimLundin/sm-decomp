@@ -104,7 +104,7 @@ spin turned far: animation frame `0A96` ≥ 0B (≥ 1B in poses 81, 82); elevato
 
 Each entry lists only the routines or branches that carry its content, not the helpers it shares
 with others (adversary-2 §1's count): 2 of 18 entries (11 %) are single-routine, marked *,
-and `scan.sh --mirror` agrees.
+and `cleanroom mirror` agrees.
 
 | Entry | Source |
 | --- | --- |

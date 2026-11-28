@@ -22,7 +22,7 @@ suite() {
 
 suite "$lane/test_worktree.py" "$lane/worktree.sh"
 suite "$lane/test_gate.py" "$lane/gate.sh"
-suite "$clean/adjusted_vectors_test.sh" "$clean"/{adjusted_vectors.sh,adjusted_vectors_fixtures}
+suite "$clean/test_adjusted_vectors_run.py" "$clean"/{adjusted_vectors_run.py,adjusted_vectors_fixtures}
 suite "$lane/test_self_tests.py"
 
 # These operator entrypoints have no self-test in this suite. New or unclassified tooling
@@ -30,8 +30,8 @@ suite "$lane/test_self_tests.py"
 # the adjusted-vector prover, the box's relay and the `cleanroom` binary's inputs and fixtures
 # have their own Python and Rust tests in Quality.
 for path in "$lane"/{played,run_tests}.sh "$lane"/{land,test_land,prereview,test_prereview,__init__}.py "$clean/__init__.py" \
-    "$clean"/{adjusted_vectors_run.py,test_adjusted_vectors_run.py,adjusted_probe_tests.toml,adjusted_rule_owners} \
-    "$clean"/{box_relay.py,test_box_relay.py,scan.sh,scan_tool.sh,scan_lexicon.sh,scan_lexicon,scan_allow.txt} \
+    "$clean"/{adjusted_probe_tests.toml,adjusted_rule_owners} \
+    "$clean"/{box_relay.py,test_box_relay.py,scan_lexicon,scan_allow.txt} \
     "$clean"/{allowed_deps.txt,scan_fixtures,rule_fixtures}; do
   known+=(":(exclude)$path")
 done
