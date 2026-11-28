@@ -12,7 +12,8 @@ from typing import Protocol
 
 HERE = Path(__file__).resolve().parent
 PR_TRIES = 6
-POLLS = 90
+POLL_SECONDS = 15
+POLLS = 3 * 3600 // POLL_SECONDS
 CACHES = {"__pycache__", ".mypy_cache", ".ruff_cache", ".venv", "uv.lock"}
 
 
@@ -298,7 +299,7 @@ def main(argv: Sequence[str]) -> int:
     title = None if args.dry_run else args.title
     landing = Landing(repo, args.name, tuple(args.lanes), args.after, title, args.body_file)
     try:
-        land(landing, Gh(), [sys.executable, "tools/lane/gate.py"], lambda: time.sleep(120))
+        land(landing, Gh(), [sys.executable, "tools/lane/gate.py"], lambda: time.sleep(POLL_SECONDS))
     except Failed as error:
         print(error, file=sys.stderr)
         return error.code
