@@ -73,9 +73,10 @@ jobs:
       - name: Keep README.md what tools report --write generates
         run: cargo run --locked -q -p tools --bin tools -- report --check
       - name: Test the tools
-        # Every test*.py under tools/, in folders with an __init__.py. The oracle tests run the tools
-        # binary the report check built; the fault runner's tests need tree-sitter from the venv.
-        run: SM_TOOLS="$PWD/target/debug/tools" "$RUNNER_TEMP/fault-tools/bin/python" -m unittest discover -s tools
+        # Every test*.py under tools/, in folders with an __init__.py, one module per process across the
+        # cores. The oracle tests run the tools binary the report check built; the fault runner's tests
+        # need tree-sitter from the venv.
+        run: SM_TOOLS="$PWD/target/debug/tools" "$RUNNER_TEMP/fault-tools/bin/python" tools/run_tests.py
       - name: Save the cargo registry and the build
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
