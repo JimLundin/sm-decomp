@@ -17,10 +17,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "tools/ci"))
 sys.path.insert(0, str(ROOT / "tools/oracle"))
 from relock_seed_state import same_state
-from replay_data import CIPHER, cipher_env, normalized, sha256
+from sm_tools.ci.core.replay_data import CIPHER
+from sm_tools.ci.shell.replay_data import cipher_env, normalized, sha256
 from scenario_seeds import SCENARIOS, planned_words
 
 USAGE = """usage: relock.py plan NATIVE LADDERS

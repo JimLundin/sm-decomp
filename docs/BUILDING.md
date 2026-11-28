@@ -1,8 +1,8 @@
 # Building and checking
 
 You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`, whose
-SHA-256 is `ROM_SHA256` in [`tools/ci/replay_data.py`](../tools/ci/replay_data.py). No ROM or
-game data is in this repository.
+SHA-256 is `ROM_SHA256` in the [replay data pins](../tools/src/sm_tools/ci/core/replay_data.py).
+No ROM or game data is in this repository.
 Credits and licences for the tools and data the project uses are [below](#credits-and-licence).
 
 ```sh
@@ -63,15 +63,15 @@ gh workflow run ci.yml --ref BRANCH -f target=replay::native_search::tests::nati
 CI installs the pinned fixtures and checks the selected case against its reviewed baseline,
 or runs exactly one matching library test, including ignored tests. A failing job prints the
 command to rerun it on the same commit. An empty target runs full CI, where
-[`tools/ci/replay.py baseline`](../tools/ci/replay.py) runs the required witnesses beside
-three shards of the indexed check and `tools replay merge` joins the shard receipts into the one
+`uv run --locked --project tools replay baseline` runs the required witnesses beside three shards of
+the indexed check and `tools replay merge` joins the shard receipts into the one
 receipt an unsharded check writes.
 
-Locally, `python3 tools/ci/replay.py case ID` builds the verifier from the checkout.
+Locally, `uv run --locked --project tools replay case ID` builds the verifier from the checkout.
 Set `SM_CACHE`, `SM_ROM` and `SM_AUDIO_NATIVE` to the sources the case uses.
 For a library test, set its [fixture variables](../.github/workflows/ci.yml) to absolute
-paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the native search
-contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
+paths and run `uv run --locked --project tools required-witnesses TEST`. For example, the native
+search contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
 
 ## Run the replay faults
 
@@ -114,8 +114,7 @@ CI runs on Ubuntu 24.04. The following setup also supports local builds and repl
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
 (`build-essential`), git, [uv](https://docs.astral.sh/uv/) at the standards' `UV` pin,
-Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
-`SM_PY` overrides the one `tools/ci/replay.py` runs its helpers with), the
+Python 3.13 as `python3.13` or `python3` (the tools call `python3`), the
 [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
 `claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally
 `cargo-deny` 0.22.0, which the gate runs where it is installed.
@@ -132,13 +131,14 @@ mkdir -p "$TEMP/collab"
 
 **The ROM** goes at `rom/sm.smc` (above; `sha256sum rom/sm.smc` checks it).
 
-**The replay data** is CI's record cache and native fixtures, one encrypted asset that
-[`tools/ci/replay_data.py`](../tools/ci/replay_data.py) pins and decrypts with a key made from the
-ROM. It lives outside `/tmp`, so it survives a reboot; install it again when the pin changes:
+**The replay data** is CI's record cache and native fixtures, one encrypted asset that the
+`replay-data` tool [pins](../tools/src/sm_tools/ci/core/replay_data.py) and decrypts with a key
+made from the ROM. It lives outside `/tmp`, so it survives a reboot; install it again when the pin
+changes:
 
 ```sh
 rm -rf "$TEMP/collab/replay-data"
-python3 tools/ci/replay_data.py fetch rom/sm.smc "$TEMP/collab/replay-data"
+uv run --locked --project tools replay-data fetch rom/sm.smc "$TEMP/collab/replay-data"
 ```
 
 Then point the variables of the replay job's witness environment in `ci.yml` at it: `SM_CACHE`

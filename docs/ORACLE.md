@@ -242,7 +242,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | `tools/oracle/relock.py plan`, `cut`, `ppu-recut` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-check LOCK [BUNDLE CACHE ROW [[--carry-watches] WATCH_PCS]]` | checks that a cached row has the lock's pins, was recorded by the lsnes the oracle would run and the lock's server, and watched the addresses |
-| `python3 tools/ci/replay_data.py pack SOURCE ROM OUT` | packs `SOURCE/cache` and `SOURCE/native` as the replay data for ci-data |
+| `uv run --locked --project tools replay-data pack SOURCE ROM OUT` | packs `SOURCE/cache` and `SOURCE/native` as the replay data for ci-data |
 
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
 `relock-v2-lsnes/` directory. Capture checks each selected row's pad SHA-256 and length, then
@@ -283,10 +283,10 @@ a native seed in the format-2 bundle. They have no indexed replay cases.
 
 ## 7. Data: the ROM, bundles and the cipher
 
-- **ROM:** unheadered, at `rom/sm.smc` (ignored), pinned by `ROM_SHA256` in
-  [`tools/ci/replay_data.py`](../tools/ci/replay_data.py), which checks it. CI decrypts it from the
-  private `JimLundin/ci-data` repository with `SM_ROM_KEY`
-  (`openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000`).
+- **ROM:** unheadered, at `rom/sm.smc` (ignored), pinned by `ROM_SHA256` in the
+  [replay data pins](../tools/src/sm_tools/ci/core/replay_data.py), which the `replay-data` tool
+  checks it against. CI decrypts it from the private `JimLundin/ci-data` repository with
+  `SM_ROM_KEY` (`openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000`).
 - **The cipher of every data bundle:** AES-256-CBC, PBKDF2 with 200000 iterations and SHA-256; the
   passphrase is the hex SHA-256 of `"sm-decomp-seeds-v1"` followed by the ROM's bytes. Bundles are
   assets of the `ci-data` release; a pin is the ciphertext's SHA-256.
@@ -304,13 +304,14 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   indexed replay declares which seed and input formats its admission supports.
 - **The replay data** holds the lockstep record cache under `cache/` and the native fixtures
   under `native/`, one asset pinned by `ASSET` and `ASSET_SHA256` in
-  [`tools/ci/replay_data.py`](../tools/ci/replay_data.py). `replay_data.py fetch ROM DEST` installs
-  it. The cache retains independent recorded rows and watched causal traces.
+  the [replay data pins](../tools/src/sm_tools/ci/core/replay_data.py).
+  `uv run --locked --project tools replay-data fetch ROM DEST` installs it. The cache retains
+  independent recorded rows and watched causal traces.
   Replay case metadata selects required rows; admission checks source pins and record coverage.
   Required acceptance runs the complete index rather than former harness floor-file unions.
   Local selection can use the cases whose required sources are available; missing data fails
   the selected case, never silently skips it.
-  `replay_data.py pack` makes a new asset from a new cache or fixture; a new asset is a commit
+  `replay-data pack` makes a new asset from a new cache or fixture; a new asset is a commit
   that repins it.
 - Only the root uploads (`timeout 600 gh release upload ci-data FILE`). Nothing unencrypted and
   ROM-derived is ever committed or uploaded; logs carry ids, frames, field names and hashes.

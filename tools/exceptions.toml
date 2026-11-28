@@ -22,3 +22,68 @@ reason = "runs this interpreter's pytest with fixed arguments, one process per t
 path = "src/sm_tools/ci/shell/results_plugin.py"
 rule = "unused"
 reason = "pytest calls a plugin's hooks by name"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/check_replay_transition.py"
+rule = "banned-api"
+reason = "the replay transition check's shell reads the three ledger files and writes the core's verdict to stdout or stderr"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay.py"
+rule = "banned-api"
+reason = "the replay shell reads argv and the SM_ variables, runs the verifier, the witnesses and git by name and writes their logs for the core"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay.py"
+rule = "print"
+reason = "the replay shell prints the reproduce line, each part's labelled log and its usage"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay.py"
+rule = "suspicious-subprocess-import"
+reason = "runs git, the verifier and required-witnesses with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs git, the verifier and required-witnesses with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay_data.py"
+rule = "banned-api"
+reason = "the replay data's shell passes PATH to openssl and curl, which it runs by name, and removes its staging folder"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay_data.py"
+rule = "print"
+reason = "the replay data's shell prints the packed asset's name, digest, size and path"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay_data.py"
+rule = "suspicious-subprocess-import"
+reason = "runs openssl and curl with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/replay_data.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs openssl and curl with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/required_witnesses.py"
+rule = "banned-api"
+reason = "the witnesses' shell runs cargo and the verify test binary and writes failures to stderr"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/required_witnesses.py"
+rule = "print"
+reason = "the witnesses' shell prints each test's verdict and the count passed, never the test's own output"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/required_witnesses.py"
+rule = "suspicious-subprocess-import"
+reason = "runs cargo by name and the test binary cargo reports, with argument lists the core builds"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/required_witnesses.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs cargo by name and the test binary cargo reports, with argument lists the core builds"

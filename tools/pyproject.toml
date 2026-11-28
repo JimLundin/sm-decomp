@@ -10,6 +10,10 @@ dependencies = [
 ]
 
 [project.scripts]
+check-replay-transition = "sm_tools.ci.shell.check_replay_transition:main"
+replay = "sm_tools.ci.shell.replay:main"
+replay-data = "sm_tools.ci.shell.replay_data:main"
+required-witnesses = "sm_tools.ci.shell.required_witnesses:main"
 run-tests = "sm_tools.ci.shell.run_tests:main"
 
 [build-system]

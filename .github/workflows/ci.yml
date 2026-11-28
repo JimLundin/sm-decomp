@@ -177,6 +177,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/tools
       - uses: ./.github/actions/cargo-restore
         with:
           cache: replay
@@ -189,13 +190,13 @@ jobs:
           path: rom
           persist-credentials: false
       # The ignored rom folder keeps the ci-data checkout out of the faults' inputs.
-      # replay_data.py decrypts the ROM and checks it, then installs the record cache and the
+      # replay-data decrypts the ROM and checks it, then installs the record cache and the
       # native fixtures from their one pinned asset as replay-data/cache and replay-data/native.
       - &replay_data
         name: Decrypt the ROM and install the replay data
         env:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-        run: python3 tools/ci/replay_data.py fetch --sealed-rom rom/payload.enc rom/sm.smc "$RUNNER_TEMP/replay-data"
+        run: uv run --project tools --locked replay-data fetch --sealed-rom rom/payload.enc rom/sm.smc "$RUNNER_TEMP/replay-data"
       - name: Run one verification library test
         if: contains(inputs.target, '::')
         env: &witness_env
@@ -210,7 +211,7 @@ jobs:
           SM_CONNECTED_SOURCE: ${{ runner.temp }}/replay-data/native
           SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
           SM_AUDIO_NATIVE: ${{ runner.temp }}/replay-data/native
-        run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
+        run: uv run --project tools --locked required-witnesses "$VERIFY_TEST"
       - name: Build the shared replay command
         if: inputs.target == ''
         run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
@@ -226,7 +227,7 @@ jobs:
       - name: Check the required witnesses and indexed replay against the reviewed baseline
         if: inputs.target == ''
         env: *witness_env
-        run: python3 tools/ci/replay.py baseline "$RUNNER_TEMP/replay-receipt.toml"
+        run: uv run --project tools --locked replay baseline "$RUNNER_TEMP/replay-receipt.toml"
       - name: Check one indexed replay case against the reviewed baseline
         if: inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
         env:
@@ -235,7 +236,7 @@ jobs:
         run: |
           SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
-            python3 tools/ci/replay.py case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
+            uv run --project tools --locked replay case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
       # data::room's Morph Ball Room test returns early without the ROM, so the content tests run
       # in this job, after the replay steps so that a replay failure doesn't hide their results
       # and theirs doesn't hide the replay's.
@@ -262,6 +263,7 @@ jobs:
           cache: faults
           path: target/selectable-faults
       - *rom
+      - uses: ./.github/actions/tools
       - *replay_data
       - name: Install the Rust parser for selectable replay faults
         run: |
@@ -278,23 +280,3 @@ jobs:
         with:
           cache: faults
           path: target/selectable-faults
-
-  retain-caches:
-    # Only main runs receive cache deletion permission, after all proof passes. A failure here
-    # leaves old caches in place and does not fail the run.
-    needs: [rules, rust, python, adjusted, engine-size, replay, faults]
-    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && needs.rust.result == 'success' }}
-    continue-on-error: true
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      actions: write
-    concurrency:
-      group: cargo-cache-retention-main
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-      - name: Retain recent clean main builds
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/retain_cargo_caches.py
