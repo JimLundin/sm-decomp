@@ -55,7 +55,8 @@ const MIRROR_MAX_MB: u64 = 1024;
 /// Everything in an export's `.git` that a session's git work doesn't leave, one a line: a
 /// `.git` other than the folder `cleanroom export` made, a configuration other than the one it
 /// wrote, anything in `info` or `hooks`, an entry beyond `GIT_ENTRIES`, anything but files and
-/// folders, and alternates, which point git elsewhere.
+/// folders, alternates, which point git elsewhere, and a `.git` anywhere else in the export,
+/// which host git would take for a repository of its own.
 pub fn git_breaches(lane: &Lane) -> Result<Vec<String>, String> {
     let src = lane.export.join(".git");
     let meta = fs::symlink_metadata(&src).map_err(|e| format!("{}: {e}", src.display()))?;
@@ -112,6 +113,24 @@ pub fn git_breaches(lane: &Lane) -> Result<Vec<String>, String> {
                 "{} points git elsewhere",
                 src.join(pointer).display()
             ));
+        }
+    }
+    let mut stack = vec![lane.export.clone()];
+    while let Some(dir) = stack.pop() {
+        for entry in fs::read_dir(&dir).map_err(|e| format!("{}: {e}", dir.display()))? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path == src {
+                continue;
+            }
+            if entry.file_name() == ".git" {
+                found.push(format!(
+                    "{} is a .git other than the export's",
+                    path.display()
+                ));
+            } else if entry.file_type().map_err(|e| e.to_string())?.is_dir() {
+                stack.push(path);
+            }
         }
     }
     found.sort();
@@ -1076,6 +1095,25 @@ mod tests {
         fs::rename(&moved, &git).unwrap();
         std::os::unix::fs::symlink("/etc", git.join("refs/link")).unwrap();
         assert!(round.refusal().contains("is not a file or folder"));
+        fs::remove_file(git.join("refs/link")).unwrap();
+        let nested = round.lane.export.join(MODEL).join("src");
+        for (made, folder) in [("target/x/.git", true), ("src/.git", false)] {
+            let path = round.lane.export.join(MODEL).join(made);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            if folder {
+                fs::create_dir(&path).unwrap();
+            } else {
+                fs::write(&path, "gitdir: /etc\n").unwrap();
+            }
+            let refusal = round.refusal();
+            assert!(
+                refusal.contains(&format!("{} is a .git other than", path.display())),
+                "{made}: {refusal}"
+            );
+            let _ = fs::remove_dir(&path).or_else(|_| fs::remove_file(&path));
+        }
+        std::os::unix::fs::symlink("/etc", nested.join(".git")).unwrap();
+        assert!(round.refusal().contains("is a .git other than"));
     }
 
     #[test]
