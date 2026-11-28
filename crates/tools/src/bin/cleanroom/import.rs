@@ -643,17 +643,13 @@ impl Import {
         ))
     }
 
-    /// Writes the applied branch's clean crates into DIR as a workspace of their own, with
-    /// the allow-listed registry crates vendored beside them, and returns their package names.
+    /// Writes the applied branch's clean crates, and the files an export of each one's domain
+    /// carries, into DIR at their paths, as a workspace of its own with the allow-listed
+    /// registry crates vendored beside them, and returns the crates' package names.
     fn candidate(&self, dir: &Path) -> Result<Vec<String>, String> {
         let head = self.head()?;
         let branch = Mirror(self.repo.clone());
-        unpack(
-            &branch,
-            &head,
-            &["crates/clean", rules::VECTOR_FILE, "rust-toolchain.toml"],
-            dir,
-        )?;
+        unpack(&branch, &head, &["crates/clean"], dir)?;
         let mut packages = Vec::new();
         for entry in fs::read_dir(dir.join("crates/clean")).map_err(|e| e.to_string())? {
             let path = entry.map_err(|e| e.to_string())?.path();
@@ -664,6 +660,14 @@ impl Import {
             }
         }
         packages.sort();
+        let carried: std::collections::BTreeSet<String> = packages
+            .iter()
+            .filter(|p| *p != "types")
+            .flat_map(|p| export::entries(&export::domain_of(p), export::Role::Implementer))
+            .filter(|path| !path.starts_with("crates/clean/"))
+            .collect();
+        let carried: Vec<&str> = carried.iter().map(String::as_str).collect();
+        unpack(&branch, &head, &carried, dir)?;
         export::manifest(&self.repo, &head, &packages, dir)?;
         export::vendor(&self.repo, &head, dir)?;
         Ok(packages)
@@ -1238,9 +1242,7 @@ mod tests {
             write(
                 &round.repo,
                 &format!("crates/clean/{krate}/Cargo.toml"),
-                &format!(
-                    "[package]\nname = \"{krate}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"A crate\"\n\n[lib]\ndoctest = false\n\n[lints]\nworkspace = true\n"
-                ),
+                &manifest(krate),
             );
             write(
                 &round.repo,
@@ -1292,6 +1294,47 @@ mod tests {
             .unwrap();
         assert!(failed, "{lint}");
         assert!(lint.contains("missing documentation"), "{lint}");
+    }
+
+    fn manifest(krate: &str) -> String {
+        format!(
+            "[package]\nname = \"{krate}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"A crate\"\n\n[lib]\ndoctest = false\n\n[lints]\nworkspace = true\n"
+        )
+    }
+
+    fn spec_test(domain: &str) -> String {
+        format!(
+            "//! The spec.\n\n#[test]\nfn the_spec_names_the_domain() {{\n    assert!(include_str!(\"../../../../docs/behaviours/{domain}.md\").contains(\"World\"));\n}}\n"
+        )
+    }
+
+    #[test]
+    fn the_box_lints_crates_whose_tests_include_their_specs() {
+        let round = Round::new("spec");
+        let (import, before) = applied(
+            &round,
+            &[
+                ("docs/behaviours/world-haze.md", "# World haze\n"),
+                (&format!("{MODEL}/tests/spec.rs"), &spec_test("world-haze")),
+                ("docs/behaviours/world-mist.md", "# World mist\n"),
+                (
+                    "crates/clean/world_mist/Cargo.toml",
+                    &manifest("world_mist"),
+                ),
+                ("crates/clean/world_mist/src/lib.rs", "//! A crate.\n"),
+                (
+                    "crates/clean/world_mist/tests/spec.rs",
+                    &spec_test("world-mist"),
+                ),
+            ],
+        );
+        let scratch = round.base.join("scratch");
+        fs::create_dir_all(&scratch).unwrap();
+        let (lint, failed) = import
+            .clippy(&scratch, &before, 1, &mut String::new())
+            .unwrap();
+        assert!(!failed, "{lint}");
+        assert!(lint.contains("IMPORT OK 1 commits"), "{lint}");
     }
 
     /// The capability rule end to end: a model that reads a file or changes an owner, applied,

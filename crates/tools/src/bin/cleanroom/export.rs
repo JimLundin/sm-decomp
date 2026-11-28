@@ -36,6 +36,10 @@ fn crate_of(domain: &str) -> String {
     domain.replace('-', "_")
 }
 
+pub fn domain_of(krate: &str) -> String {
+    krate.replace('_', "-")
+}
+
 pub fn lane_name(domain: &str, role: Role) -> String {
     match role {
         Role::Implementer => domain.to_owned(),
@@ -43,29 +47,28 @@ pub fn lane_name(domain: &str, role: Role) -> String {
     }
 }
 
-impl Export<'_> {
-    fn entries(&self) -> Vec<String> {
-        let model = format!("crates/clean/{}", crate_of(self.domain));
-        let mut entries = vec![
-            "crates/clean/types".to_owned(),
-            model,
-            rules::VECTOR_FILE.to_owned(),
-            format!("scenarios/vectors/{}.toml", self.domain),
-            "rust-toolchain.toml".to_owned(),
-            "clippy.toml".to_owned(),
-            "crates/clean/.clippy.toml".to_owned(),
-        ];
-        entries.extend(match self.role {
-            Role::Implementer => vec![
-                format!("docs/behaviours/{}.md", self.domain),
-                "docs/cleanroom/DESIGN.md".to_owned(),
-                ".agents/skills/implementer/SKILL.md".to_owned(),
-            ],
-            Role::Reviewer => vec![".agents/skills/blind-reviewer/SKILL.md".to_owned()],
-        });
-        entries
-    }
+pub fn entries(domain: &str, role: Role) -> Vec<String> {
+    let mut entries = vec![
+        "crates/clean/types".to_owned(),
+        format!("crates/clean/{}", crate_of(domain)),
+        rules::VECTOR_FILE.to_owned(),
+        format!("scenarios/vectors/{domain}.toml"),
+        "rust-toolchain.toml".to_owned(),
+        "clippy.toml".to_owned(),
+        "crates/clean/.clippy.toml".to_owned(),
+    ];
+    entries.extend(match role {
+        Role::Implementer => vec![
+            format!("docs/behaviours/{domain}.md"),
+            "docs/cleanroom/DESIGN.md".to_owned(),
+            ".agents/skills/implementer/SKILL.md".to_owned(),
+        ],
+        Role::Reviewer => vec![".agents/skills/blind-reviewer/SKILL.md".to_owned()],
+    });
+    entries
+}
 
+impl Export<'_> {
     pub fn write(&self, brief: &Path) -> Result<String, String> {
         let repo = repo()?;
         let lane = Lane::of(&lane_name(self.domain, self.role))?;
@@ -124,7 +127,7 @@ impl Export<'_> {
 
     fn copy(&self, repo: &Path, sha: &str, dest: &Path) -> Result<(), String> {
         let mut present = Vec::new();
-        for entry in self.entries() {
+        for entry in entries(self.domain, self.role) {
             let listed =
                 output(host_git(repo).args(["ls-tree", "--name-only", sha, "--", &entry]))?;
             if !listed.trim().is_empty() {
