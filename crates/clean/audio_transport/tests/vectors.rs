@@ -19,7 +19,6 @@ use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::num::NonZeroU8;
 use toml::{Table, Value};
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/audio-transport.toml");
 const SPEC: &str = include_str!("../../../../docs/behaviours/audio-transport.md");
 /// Every vector family the file holds, each run below.
 const FAMILIES: [&str; 15] = [
@@ -896,7 +895,8 @@ fn run(family: &str, row: &Table, root: &Table) {
 }
 #[test]
 fn every_vector_runs_through_the_model() {
-    let root: Table = toml::from_str(VECTORS).expect("decode all supplied vectors");
+    let root: Table = toml::from_str(&vector_file::read("audio-transport").unwrap())
+        .expect("decode all supplied vectors");
     keys(&root, &format!("schema fixture_mix {}", FAMILIES.join(" ")));
     assert_eq!(text(&root, "schema"), "audio-transport-frames-v1");
     let mut seen = BTreeSet::new();
@@ -941,7 +941,8 @@ fn spec_entries() -> Vec<(String, String, Vec<String>)> {
 }
 #[test]
 fn catalogue_matches_the_spec_one_for_one() {
-    let root: Table = toml::from_str(VECTORS).expect("vectors");
+    let root: Table =
+        toml::from_str(&vector_file::read("audio-transport").unwrap()).expect("vectors");
     let family_of: BTreeMap<String, &str> = FAMILIES
         .iter()
         .flat_map(|family| {

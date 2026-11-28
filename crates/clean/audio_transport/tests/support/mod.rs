@@ -202,7 +202,8 @@ pub fn effect_vector(row: &Table, mix: &Value) {
 }
 #[test]
 fn shaft_explosion_plays_one_finite_ambient_part() {
-    let root: Table = toml::from_str(VECTORS).expect("fixture mix");
+    let root: Table =
+        toml::from_str(&vector_file::read("audio-transport").unwrap()).expect("fixture mix");
     let mut state = fresh_state(silent_song(&root["fixture_mix"]));
     let cue = CueId::ShaftExplosion;
     let clip = EffectClip {

@@ -15,8 +15,6 @@ mod tests {
     use types::power_on::{Level, ScreenLight};
     use types::{Set, set_of};
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-file-select.toml");
-
     /// The load step the menu's `LoadEnding` phase stands for.
     const LOAD_ENDING_STEP: u8 = 4;
     /// Where a vector leaves out whether copy and clear are offered, the frame end doesn't read it.
@@ -452,7 +450,7 @@ mod tests {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-file-select").unwrap())
             .expect("the vector file reads")
             .vector
     }

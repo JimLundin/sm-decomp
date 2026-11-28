@@ -13,8 +13,6 @@ mod vectors {
         TimerCentiseconds, TimerSprite, WaitPasses, WorkPass,
     };
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-blackout.toml");
-
     /// An invented escape time for fixtures that state none.
     const INVENTED_TIME: u32 = 4_321;
     /// The vectors' level for forced blank.
@@ -336,7 +334,7 @@ mod vectors {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-blackout").unwrap())
             .expect("the vector file reads")
             .vector
     }

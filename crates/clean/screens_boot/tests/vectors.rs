@@ -13,8 +13,6 @@ mod vectors {
     use serde::Deserialize;
     use types::Checked;
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-boot.toml");
-
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -154,7 +152,7 @@ mod vectors {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-boot").unwrap())
             .expect("the vector file reads")
             .vector
     }

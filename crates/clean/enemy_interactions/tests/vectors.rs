@@ -238,9 +238,7 @@ fn run_vector(vector: &Vector) {
 
 #[test]
 fn every_vector_and_catalogue_entry() -> Result<(), Box<dyn std::error::Error>> {
-    let suite: Suite = toml::from_str(include_str!(
-        "../../../../scenarios/vectors/enemy-interactions.toml"
-    ))?;
+    let suite: Suite = toml::from_str(&vector_file::read("enemy-interactions")?)?;
     assert_eq!(suite.vector.len(), 64);
     let mut covered: EnumMap<BehaviourId, bool> = EnumMap::default();
     for vector in &suite.vector {

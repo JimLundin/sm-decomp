@@ -19,6 +19,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -29,6 +30,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -60,6 +62,7 @@ dependencies = [
  "enum-map",
  "serde",
  "toml",
+ "vector_file",
 ]
 
 [[package]]
@@ -137,6 +140,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -147,6 +151,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -183,6 +188,7 @@ dependencies = [
  "serde-big-array",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -227,6 +233,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -250,6 +257,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -260,6 +268,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -270,6 +279,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -280,6 +290,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -290,6 +301,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -300,6 +312,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -310,6 +323,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -320,6 +334,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -330,6 +345,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -340,6 +356,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -350,6 +367,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -360,6 +378,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -370,6 +389,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -380,6 +400,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -390,6 +411,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -400,6 +422,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -410,6 +433,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -594,6 +618,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -610,6 +635,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -619,6 +645,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -629,6 +656,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -639,6 +667,7 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]
 
 [[package]]
@@ -649,4 +678,5 @@ dependencies = [
  "serde",
  "toml",
  "types",
+ "vector_file",
 ]

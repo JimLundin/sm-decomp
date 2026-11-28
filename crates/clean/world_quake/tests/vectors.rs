@@ -11,8 +11,6 @@ use world_quake::{
     QuakePhase, QuakeSize, Shake, ShakeOrder, State, Time, drawn_offset, start_or_stop, step,
 };
 
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-quake.toml");
-
 type TestResult = Result<(), Box<dyn Error>>;
 
 #[derive(Deserialize)]
@@ -215,7 +213,7 @@ fn starting_state(
 
 #[test]
 fn world_quake_vectors() -> TestResult {
-    let vectors: Vectors = toml::from_str(VECTORS)?;
+    let vectors: Vectors = toml::from_str(&vector_file::read("world-quake")?)?;
     let catalogue: BTreeMap<_, _> = CATALOGUE
         .iter()
         .map(|row| (row.id.as_str(), row.id))

@@ -10,7 +10,8 @@ fn find<'a>(root: &'a Table, family: &str, id: &str) -> &'a Table {
 }
 #[test]
 fn every_echo_subset_leaves_effect_ownership_alone() {
-    let root: Table = toml::from_str(VECTORS).expect("vectors");
+    let root: Table =
+        toml::from_str(&vector_file::read("audio-transport").unwrap()).expect("vectors");
     let mix = &root["fixture_mix"];
     let identities = [
         VoiceId::FirstMusic,

@@ -21,15 +21,21 @@ pub struct Hit {
     pub detail: String,
 }
 
+/// A use of the vector reader: the domain a `vector_file::read("..")` call names, or `None` for
+/// any other use of the crate, which could name another domain's file.
+pub type VectorRead = Option<String>;
+
 pub struct Source {
     pub hits: Vec<Hit>,
     pub includes: Vec<Include>,
+    pub vector_reads: Vec<VectorRead>,
 }
 
 pub fn check(toks: Toks<'_>, test_file: bool, denied: &BTreeSet<String>) -> Source {
     let mut out = Source {
         hits: Vec::new(),
         includes: Vec::new(),
+        vector_reads: vector_reads(toks),
     };
     renames(toks, &mut out.hits);
     out.includes = includes(toks);
@@ -110,6 +116,32 @@ fn includes(toks: Toks<'_>) -> Vec<Include> {
                 text: name == "include_str",
             },
         ));
+    }
+    out
+}
+
+/// Every `vector_file` word but a call of a local function by that name.
+fn vector_reads(toks: Toks<'_>) -> Vec<VectorRead> {
+    let mut out = Vec::new();
+    for i in 0..toks.len() {
+        if !toks.is(i, Kind::Word) || toks.text(i) != "vector_file" {
+            continue;
+        }
+        let at = |k: usize| i.saturating_add(k);
+        let local_fn = toks.text(at(1)) == "(" && !toks.punct(i.saturating_sub(1), "::");
+        if local_fn {
+            continue;
+        }
+        let call = toks.punct(at(1), "::")
+            && toks.text(at(2)) == "read"
+            && toks.text(at(3)) == "("
+            && toks.is(at(5), Kind::Close);
+        out.push(
+            toks.get(at(4))
+                .filter(|_| call)
+                .and_then(literal_path)
+                .map(str::to_owned),
+        );
     }
     out
 }

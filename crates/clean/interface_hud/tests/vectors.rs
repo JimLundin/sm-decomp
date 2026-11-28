@@ -679,8 +679,6 @@ mod convert {
         TileIn, VectorFile, VectorIn,
     };
 
-    /// The vector file.
-    const VECTOR_TEXT: &str = include_str!("../../../../scenarios/vectors/interface-hud.toml");
     /// The HUD's rows (Notation).
     const HUD_ROWS: i32 = 3;
     /// The HUD's columns.
@@ -735,13 +733,14 @@ mod convert {
 
     /// The file, read.
     pub fn load() -> Result<VectorFile, String> {
-        load_text(VECTOR_TEXT)
+        load_text(&vector_file::read("interface-hud")?)
     }
 
     /// The file's text with its first `from` replaced by `to`, read.
     pub fn load_changed(from: &str, to: &str) -> Result<VectorFile, String> {
-        assert!(VECTOR_TEXT.contains(from), "the file holds no {from}");
-        load_text(&VECTOR_TEXT.replacen(from, to, 1))
+        let text = vector_file::read("interface-hud")?;
+        assert!(text.contains(from), "the file holds no {from}");
+        load_text(&text.replacen(from, to, 1))
     }
 
     /// A vector file's text, read.

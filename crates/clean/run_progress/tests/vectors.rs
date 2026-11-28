@@ -11,15 +11,13 @@ use run_progress::{Condition, EnteredRoom, Progress, RoomStates, Rules, Version,
 use support::{Answers, Asks, Check, Named, State, Vector, VectorFile};
 use types::{Area, Checked, Entrance};
 
-const VECTOR_FILE: &str = include_str!("../../../../scenarios/vectors/run-progress.toml");
-
 /// The file's text, read into its shape.
 fn read(text: &str) -> Result<VectorFile, toml::de::Error> {
     toml::from_str(text)
 }
 
 fn vectors() -> Vec<Vector> {
-    read(VECTOR_FILE)
+    read(&vector_file::read("run-progress").unwrap())
         .unwrap_or_else(|error| panic!("the vector file doesn't read: {error}"))
         .vector
 }

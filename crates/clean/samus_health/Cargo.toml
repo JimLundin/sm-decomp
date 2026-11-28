@@ -13,6 +13,7 @@ enum-map.workspace = true
 
 [dev-dependencies]
 toml.workspace = true
+vector_file = { path = "../../vector_file" }
 
 [lib]
 doctest = false

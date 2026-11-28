@@ -46,8 +46,6 @@ mod vectors {
     use types::quake::{QuakeDirection, QuakeDuration, QuakeKind, QuakeReach, QuakeRequest};
     use types::{Checked, Colour, GameFrames, Hit, Pair, Picture, Px, Side};
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/boss-ceres-ridley.toml");
-
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -525,7 +523,7 @@ mod vectors {
     }
 
     fn vector_file() -> VectorFile {
-        toml::from_str(VECTORS)
+        toml::from_str(&vector_file::read("boss-ceres-ridley").unwrap())
             .unwrap_or_else(|error| panic!("the vector file must read: {}", error.message()))
     }
 

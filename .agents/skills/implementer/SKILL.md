@@ -37,8 +37,9 @@ report.
    bare name as words. Done when the model compiles and every spec entry has code that carries it
    out.
 4. **Vectors.** Write a test that runs every vector in the vector file through the model, and
-   fails on any key it doesn't know. Run it with `cleanroom test`. Done
-   when every vector passes, or each one that doesn't is a gap (below).
+   fails on any key it doesn't know. It reads the file with `vector_file::read("<domain>")`.
+   Run it with `cleanroom test`. Done when every vector passes, or each one that doesn't is a gap
+   (below).
 5. **The catalogue:** one behaviour per spec entry, with its kind, its switch and how it is
    checked, and a test that every entry checked by vectors has one. Done when the catalogue
    matches the spec one for one.

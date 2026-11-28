@@ -1306,10 +1306,8 @@ fn compare_complete(expected: &Value, actual: &Value, path: &str) -> Result<(), 
 }
 #[test]
 fn supplied_vectors_and_catalogue() -> Result<(), String> {
-    let suite: Suite = toml::from_str(include_str!(
-        "../../../../scenarios/vectors/weapons-projectiles.toml"
-    ))
-    .map_err(|e| e.to_string())?;
+    let suite: Suite =
+        toml::from_str(&vector_file::read("weapons-projectiles")?).map_err(|e| e.to_string())?;
     assert_eq!(suite.vector.len(), SUPPLIED_CASES);
     let catalogue = catalogue();
     let mut seen = EnumMap::<BehaviourId, bool>::default();

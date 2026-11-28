@@ -104,11 +104,8 @@ enum Suit {
     Gravity,
 }
 
-fn vectors() -> Result<Vec<Vector>, toml::de::Error> {
-    toml::from_str::<Vectors>(include_str!(
-        "../../../../scenarios/vectors/samus-health.toml"
-    ))
-    .map(|data| data.vector)
+fn vectors() -> Result<Vec<Vector>, Box<dyn std::error::Error>> {
+    Ok(toml::from_str::<Vectors>(&vector_file::read("samus-health")?)?.vector)
 }
 
 fn restored(state: State) -> Result<State, Box<dyn std::error::Error>> {

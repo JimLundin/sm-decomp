@@ -105,9 +105,10 @@ disallowed-methods = [
   { path = "std::io::stderr", reason = "a model writes no terminal" },
 ]
 # Build-time reach: what the compiler reads from the environment or the disk, or emits as
-# assembly. include! and include_str! stay with `cleanroom check`, which allows the domain's own
-# vector file, spec and sources by path and refuses a `use` that names either. Clippy can't hold
-# them: it never sees include!, and it can't tell an allowed include_str! from another.
+# assembly. include! and include_str! stay with `cleanroom check`, which allows include_str! of
+# the domain's own spec and the clean sources by path and refuses a `use` that names either.
+# Clippy can't hold them: it never sees include!, and it can't tell an allowed include_str! from
+# another.
 disallowed-macros = [
   { path = "std::env", reason = "a model reads no environment, even at build time" },
   { path = "std::option_env", reason = "a model reads no environment, even at build time" },

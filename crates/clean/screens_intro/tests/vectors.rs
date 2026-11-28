@@ -28,7 +28,6 @@ mod vectors {
     };
     use types::{Checked, Colour, PALETTE_SLOTS, Pair, Palette};
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-intro.toml");
     /// The vectors write colours in hex.
     const HEX: u32 = 16;
     /// No colour at all: the full colours a vector leaves out.
@@ -992,7 +991,7 @@ mod vectors {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-intro").unwrap())
             .expect("the vector file reads")
             .vector
     }

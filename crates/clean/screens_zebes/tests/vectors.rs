@@ -21,8 +21,6 @@ mod vectors {
         ZebesScene, ZebesStage, ZebesState,
     };
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-zebes.toml");
-
     /// Every content name the vectors use, and the invented ones this test adds, ending with a
     /// spare label no content uses; a name's id is its place here.
     const NAMES: [&str; 23] = [
@@ -482,7 +480,8 @@ mod vectors {
     }
 
     fn load() -> VectorFile {
-        toml::from_str(VECTORS).expect("the vector file parses")
+        toml::from_str(&vector_file::read("screens-zebes").unwrap())
+            .expect("the vector file parses")
     }
 
     fn run(sample: &SampleScene, vector: &Vector) {

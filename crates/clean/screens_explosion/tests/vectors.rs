@@ -23,8 +23,6 @@ mod runner {
     };
     use types::{Checked, Pair};
 
-    /// The vector file.
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-explosion.toml");
     /// Subpixels in a pixel, for reading the file's fractional pixels.
     const SUBPIXELS_PER_PIXEL: f64 = 65_536.0;
 
@@ -119,7 +117,9 @@ mod runner {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS).unwrap().vector
+        toml::from_str::<VectorFile>(&vector_file::read("screens-explosion").unwrap())
+            .unwrap()
+            .vector
     }
 
     fn subpixels(pixels: f64) -> Subpixels {

@@ -16,8 +16,6 @@ use types::flight::{
 };
 use types::{Checked, Colour, Fixed, Pair, fixed};
 
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-flight.toml");
-
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct VectorFile {
@@ -413,7 +411,7 @@ fn entry(name: &str) -> BehaviourId {
 }
 
 fn vectors() -> Vec<Vector> {
-    toml::from_str::<VectorFile>(VECTORS)
+    toml::from_str::<VectorFile>(&vector_file::read("screens-flight").unwrap())
         .expect("the vector file reads in its format")
         .vector
 }

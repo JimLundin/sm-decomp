@@ -20,8 +20,6 @@ mod runner {
     };
     use types::{Pair, Parity, Side};
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-flashback.toml");
-
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -522,7 +520,7 @@ mod runner {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-flashback").unwrap())
             .expect("the vector file parses")
             .vector
     }

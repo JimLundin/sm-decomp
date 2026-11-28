@@ -15,8 +15,6 @@ use types::options::{
 };
 use types::power_on::{Level, ScreenLight};
 
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-options.toml");
-
 /// The keys `after` may check, besides `requests` and `unsupported`.
 const STATE_KEYS: [&str; 9] = [
     "stage",
@@ -72,7 +70,7 @@ struct Before {
 }
 
 fn vectors() -> Vec<Vector> {
-    toml::from_str::<VectorFile>(VECTORS)
+    toml::from_str::<VectorFile>(&vector_file::read("screens-options").unwrap())
         .expect("the vector file parses")
         .vector
 }

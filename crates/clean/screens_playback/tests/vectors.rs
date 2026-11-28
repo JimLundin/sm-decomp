@@ -19,7 +19,6 @@ mod vectors {
         catalogue, play_turn,
     };
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-playback.toml");
     const SPEC: &str = include_str!("../../../../docs/behaviours/screens-playback.md");
 
     /// Invented holds, keyed by recorded vector id, for the timelines each one reads; `default`
@@ -327,7 +326,7 @@ watch = [
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("screens-playback").unwrap())
             .expect("the vector file reads")
             .vector
     }

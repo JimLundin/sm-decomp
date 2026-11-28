@@ -33,10 +33,8 @@ enum Source {
     Constructed,
 }
 
-fn vectors() -> Result<Vec<Vector>, toml::de::Error> {
-    let vectors: Vectors = toml::from_str(include_str!(
-        "../../../../scenarios/vectors/game-random.toml"
-    ))?;
+fn vectors() -> Result<Vec<Vector>, Box<dyn std::error::Error>> {
+    let vectors: Vectors = toml::from_str(&vector_file::read("game-random")?)?;
     Ok(vectors.vector)
 }
 
@@ -81,7 +79,7 @@ const fn entry_name(id: BehaviourId) -> &'static str {
 }
 
 #[test]
-fn catalogue_matches_vector_coverage() -> Result<(), toml::de::Error> {
+fn catalogue_matches_vector_coverage() -> Result<(), Box<dyn std::error::Error>> {
     let vectors = vectors()?;
     let mut catalogued = EnumMap::<BehaviourId, bool>::default();
     let mut entries = BTreeSet::new();

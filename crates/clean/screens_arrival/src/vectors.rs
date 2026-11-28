@@ -10,8 +10,6 @@ use types::arrival::{ArrivalStage, ArrivalState, FadeFrames};
 use types::brightness::{Blanking, Brightness, Level};
 use types::{Checked, Colour, Facing, PALETTE_SLOTS, Pair, Palette};
 
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-arrival.toml");
-
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct VectorFile {
@@ -291,14 +289,17 @@ fn run(vector: &Vector) -> Vec<String> {
 }
 
 fn vectors() -> Vec<Vector> {
-    toml::from_str::<VectorFile>(VECTORS).unwrap().vector
+    toml::from_str::<VectorFile>(&vector_file::read("screens-arrival").unwrap())
+        .unwrap()
+        .vector
 }
 
 #[test]
 fn every_vector_passes() {
     let vectors = vectors();
     assert!(!vectors.is_empty());
-    let tables = VECTORS
+    let tables = vector_file::read("screens-arrival")
+        .unwrap()
         .lines()
         .filter(|line| line.starts_with("[[vector]]"))
         .count();

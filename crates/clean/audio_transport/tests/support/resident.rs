@@ -35,7 +35,8 @@ pub fn resident_vector(row: &Table, mix: &Value) {
 }
 #[test]
 fn every_original_byte_is_published_as_supplied() {
-    let root: Table = toml::from_str(VECTORS).expect("vectors");
+    let root: Table =
+        toml::from_str(&vector_file::read("audio-transport").unwrap()).expect("vectors");
     let row = table(&array(&root, "resident_reply")[0]);
     let (song, tracks) = song(row, &root["fixture_mix"]);
     let content = content(BTreeMap::new(), tracks);

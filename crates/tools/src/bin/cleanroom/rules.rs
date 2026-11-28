@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use manifest::{Approval, Checked, WorkspaceFile, normal};
-use source::Include;
+use source::{Include, VectorRead};
 
 pub const DOCTEST_GUARD: &str = "#![cfg(not(doctest))]\n";
 pub const VECTOR_FILE: &str = "crates/vector_file";
@@ -153,18 +153,30 @@ fn include_allowed(target: &Path, text: bool, domain: Option<&str>) -> bool {
     let Some(target) = target.to_str() else {
         return false;
     };
-    if let Some(domain) = domain {
-        if target == format!("scenarios/vectors/{domain}.toml") {
-            return true;
-        }
-        if text && target == format!("docs/behaviours/{domain}.md") {
-            return true;
-        }
+    if text && domain.is_some_and(|domain| target == format!("docs/behaviours/{domain}.md")) {
+        return true;
     }
     text && Path::new(target).extension().is_some_and(|e| e == "rs")
         && target
             .strip_prefix("crates/clean/")
             .is_some_and(|rest| rest.contains("/src/"))
+}
+
+/// A finding for each use of the vector reader other than a read of the crate's own domain.
+fn out_of_domain_reads(
+    file: &str,
+    reads: Vec<VectorRead>,
+    domain: Option<&str>,
+    push: &mut impl FnMut(String, &'static str, String),
+) {
+    for read in reads {
+        if domain.is_none() || read.as_deref() != domain {
+            let call = read.map_or_else(|| "vector_file".to_owned(), |d| format!("\"{d}\""));
+            let own = domain.unwrap_or_default();
+            let detail = format!("{call} is not vector_file::read(\"{own}\")");
+            push(file.to_owned(), "vector-read", detail);
+        }
+    }
 }
 
 pub fn rust_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
@@ -285,7 +297,7 @@ fn check_crate(
                             file.clone(),
                             "include-path",
                             format!(
-                                "\"{lit}\" is not \"{}\"'s vector file, its spec or a clean crate's source",
+                                "\"{lit}\" is not \"{}\"'s spec or a clean crate's source",
                                 domain.as_deref().unwrap_or_default()
                             ),
                         );
@@ -300,6 +312,7 @@ fn check_crate(
                 }
             }
         }
+        out_of_domain_reads(&file, found.vector_reads, domain.as_deref(), &mut push);
         if let Some(lib) = path
             .strip_prefix("src/")
             .filter(|p| !is_test_file(&format!("/{p}")))

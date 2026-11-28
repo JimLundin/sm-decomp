@@ -24,8 +24,6 @@ mod discovery_vectors {
     };
     use types::{Checked, Pair, QueueAllowance};
 
-    /// The vector file.
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-discovery.toml");
     /// 65,536ths of a pixel in an eighth, the vectors' unit of position.
     const EIGHTH: i32 = 8_192;
     /// Samus's whole-pixel centre where a vector names none.
@@ -554,7 +552,8 @@ mod discovery_vectors {
     }
 
     fn load() -> (VectorFile, Encounter, Names) {
-        let file: VectorFile = toml::from_str(VECTORS).unwrap();
+        let file: VectorFile =
+            toml::from_str(&vector_file::read("screens-discovery").unwrap()).unwrap();
         let mut names = Names::default();
         let encounter = Encounter::new(scene(&file.scene, &mut names));
         (file, encounter, names)

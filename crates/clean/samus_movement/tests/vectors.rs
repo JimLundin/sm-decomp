@@ -145,8 +145,6 @@ fn push_started_is_reported_where_a_push_starts() {
     assert!(started > 0, "no vector starts a push");
 }
 
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-movement.toml");
-
 // ---- The file's shape.
 
 /// The vector file: its `[[vector]]` and `[[pose_step]]` tables.
@@ -2506,7 +2504,7 @@ fn every_jump_history() {
 
 /// The vector file, read into its shape: a key or a name the shape doesn't know fails here.
 fn file() -> VectorFile {
-    toml::from_str(VECTORS)
+    toml::from_str(&vector_file::read("samus-movement").unwrap())
         .unwrap_or_else(|error| panic!("vector file: {} at {:?}", error.message(), error.span()))
 }
 

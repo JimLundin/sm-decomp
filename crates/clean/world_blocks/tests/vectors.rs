@@ -21,9 +21,6 @@ use world_blocks::{
     Touched,
 };
 
-/// The vector file.
-const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-blocks.toml");
-
 /// A look's picture is written in hex.
 const HEX: u32 = 16;
 
@@ -258,8 +255,8 @@ impl<'de> Deserialize<'de> for True {
 
 /// The vector file, refusing a duplicate vector id.
 fn parse() -> VectorFile {
-    let file: VectorFile =
-        toml::from_str(VECTORS).expect("the vector file reads as the format its header gives");
+    let file: VectorFile = toml::from_str(&vector_file::read("world-blocks").unwrap())
+        .expect("the vector file reads as the format its header gives");
     let mut ids = BTreeSet::new();
     for vector in &file.vector {
         assert!(ids.insert(&vector.id), "duplicate vector id {}", vector.id);

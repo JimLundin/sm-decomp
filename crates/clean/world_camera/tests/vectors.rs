@@ -20,8 +20,6 @@ mod tests {
         Rules, Samus, ViewPosition,
     };
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-camera.toml");
-
     /// The file: its `[[vector]]` tables.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -307,7 +305,7 @@ mod tests {
 
     /// The file's vectors; a key or a name the shape doesn't know fails the read.
     fn vectors() -> VectorFile {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("world-camera").unwrap())
             .unwrap_or_else(|e| panic!("the vector file doesn't read: {e}"))
     }
 

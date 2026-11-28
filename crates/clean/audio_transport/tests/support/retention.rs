@@ -172,7 +172,8 @@ fn reselect_echo(row: &Table, state: &mut State, effects: BTreeMap<CueId, Effect
 }
 #[test]
 fn restoring_and_idle_frames_keep_caller_supplied_dormant_history() {
-    let root: Table = toml::from_str(VECTORS).expect("vectors");
+    let root: Table =
+        toml::from_str(&vector_file::read("audio-transport").unwrap()).expect("vectors");
     let content = content(BTreeMap::new(), Vec::new());
     for count in 0u8..=u8::MAX {
         let retained = NonZeroU8::new(count).map_or(ReleaseMemory::Inactive, ReleaseMemory::Active);

@@ -30,8 +30,6 @@ mod vectors {
     };
     use types::{fixed, set_of};
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-appearance.toml");
-
     /// The vector file: her State at initialization, the paces, the clips by name, the animation
     /// vectors, the sound opportunities, the combined frames, the cannon histories, the palette
     /// histories, the hurt colours frames and the body drawing opportunities.
@@ -677,7 +675,8 @@ mod vectors {
     }
 
     fn read_file() -> (VectorFile, Library) {
-        let file: VectorFile = toml::from_str(VECTORS).expect("expected the vector file to read");
+        let file: VectorFile = toml::from_str(&vector_file::read("samus-appearance").unwrap())
+            .expect("expected the vector file to read");
         let clips = file
             .clips
             .iter()

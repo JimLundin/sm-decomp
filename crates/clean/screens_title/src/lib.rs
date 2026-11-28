@@ -508,8 +508,6 @@ mod vectors {
 
     use super::*;
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/screens-title.toml");
-
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -562,7 +560,9 @@ mod vectors {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS).unwrap().vector
+        toml::from_str::<VectorFile>(&vector_file::read("screens-title").unwrap())
+            .unwrap()
+            .vector
     }
 
     fn rules(overrides: &RuleOverrides) -> Rules {

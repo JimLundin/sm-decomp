@@ -323,6 +323,14 @@ encoder rule).
 crates; the crate rules, `cleanroom test` in the box and the import run it. Test code is
 `#[cfg(test)]` items, `tests` directories and `tests.rs` files.
 
+A clean crate's `include_str!` takes only its domain's spec and the clean crates' sources, and
+`include!` takes nothing. Its vector test reads the vector file when it runs, through
+`vector_file::read("<domain>")` with its own domain's name as a literal, the only use of the
+reader `cleanroom check` allows. The reader is `crates/vector_file`, the one path dependency a
+clean crate may take besides the clean crates, and only for its tests. It reads the file
+`SM_VECTOR_FILE` names, or else `scenarios/vectors/<domain>.toml`, so decision 16's probes run
+the built test on other files.
+
 - **A value that holds behaviour is logic** (rule L3). A constant's or static's
   value is data when it is built only from literals (a minus on a literal included), other
   constants' names, paths to enum variants or unit structs, references to data, struct and

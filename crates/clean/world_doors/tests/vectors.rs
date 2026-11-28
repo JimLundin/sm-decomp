@@ -14,8 +14,6 @@ mod vectors {
         Scene, SlideScreen, WorkFrames, catalogue,
     };
 
-    const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-doors.toml");
-
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -694,7 +692,7 @@ mod vectors {
     }
 
     fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+        toml::from_str::<VectorFile>(&vector_file::read("world-doors").unwrap())
             .expect("the vector file reads")
             .vector
     }

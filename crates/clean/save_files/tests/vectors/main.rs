@@ -21,8 +21,6 @@ use types::{Area, Checked, StationId};
 
 use fixture::{Fixture, mark_of};
 
-const VECTORS: &str = include_str!("../../../../../scenarios/vectors/save-files.toml");
-
 /// The mark of a vector that names none: the fixture's other mark, neither completed nor
 /// incomplete.
 const DEFAULT_MARK: &str = "Other";
@@ -679,7 +677,9 @@ fn run_vector(vector: &Vector) -> Facts {
 }
 
 fn vectors() -> Vec<Vector> {
-    toml::from_str::<VectorFile>(VECTORS).unwrap().vector
+    toml::from_str::<VectorFile>(&vector_file::read("save-files").unwrap())
+        .unwrap()
+        .vector
 }
 
 #[test]

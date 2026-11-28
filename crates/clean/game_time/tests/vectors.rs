@@ -34,8 +34,7 @@ enum Source {
 
 #[test]
 fn play_time_vectors() -> Result<(), Box<dyn Error>> {
-    let vectors: Vectors =
-        toml::from_str(include_str!("../../../../scenarios/vectors/game-time.toml"))?;
+    let vectors: Vectors = toml::from_str(&vector_file::read("game-time")?)?;
     let mut completed = HashMap::new();
     let mut covered = HashSet::new();
 

@@ -184,9 +184,7 @@ fn check_restore(before: HazeState, step: HazeStep, id: &str) -> Result<(), Box<
 
 #[test]
 fn world_haze_vectors() -> Result<(), Box<dyn Error>> {
-    let vectors: Vectors = toml::from_str(include_str!(
-        "../../../../scenarios/vectors/world-haze.toml"
-    ))?;
+    let vectors: Vectors = toml::from_str(&vector_file::read("world-haze")?)?;
     let mut completed = BTreeMap::new();
     let mut exercised = EnumMap::default();
     for vector in vectors.vector {

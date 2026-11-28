@@ -298,7 +298,11 @@ fn strict_cannon_parser_rejects_unknown_fields_and_names() {
         "an unknown item: {refused}"
     );
     assert!(
-        toml::from_str::<VectorFile>(&format!("{}\nunknown=1", super::VECTORS)).is_err(),
+        toml::from_str::<VectorFile>(&format!(
+            "{}\nunknown=1",
+            vector_file::read("samus-appearance").unwrap()
+        ))
+        .is_err(),
         "an unknown key of the file: {refused}"
     );
 }
