@@ -250,14 +250,19 @@ class Relay(unittest.TestCase):
         self.assertEqual(self.seen, [])
 
 
-# A scanner that answers as `cleanroom names` does, one line a file, and adds a word to its line
-# for a file whose path holds "leak".
-FAKE_SCANNER = """import sys, tomllib
-for f in tomllib.loads(sys.stdin.read())["file"]:
+# A scanner that answers as `cleanroom names LANE` does, one line a file, with the bytes of the
+# head's lines that LANE/baseline/PATH doesn't hold, and adds a word to its line for a file whose
+# path holds "leak".
+FAKE_SCANNER = """import pathlib, sys, tomllib
+body = sys.stdin.read()
+for f in tomllib.loads(body)["file"]:
+    start = pathlib.Path(sys.argv[2], "baseline", f["path"])
+    held = set(start.read_text().splitlines()) if start.exists() else set()
+    new = sum(len(l.encode()) + 1 for l in f["head"].splitlines() if l not in held)
     hits = f["head"].count("quux")
     lines = ",".join(str(i + 1) for i, l in enumerate(f["head"].splitlines()) if "quux" in l)
-    print(f["path"] + "\\t" + str(hits) + "\\t" + lines + ("\\tquux" if "leak" in f["path"] else ""))
-sys.exit(1 if "quux" in sys.stdin.read() else 0)
+    print(f["path"] + "\\t" + str(hits) + "\\t" + lines + "\\t" + str(new) + ("\\tquux" if "leak" in f["path"] else ""))
+sys.exit(1 if "quux" in body else 0)
 """
 
 
@@ -302,11 +307,32 @@ class Scan(Relay):
             self.assertEqual(status, 200)
         self.assertEqual(self.send(scan_request(("crates/clean/a/src/f0.rs", part))), 200)
         self.assertEqual(self.send(scan_request(("crates/clean/a/src/f10.rs", part))), 429)
-        body = f'[[file]]\npath = "crates/clean/a/src/old.rs"\nstart = """{part}"""\nhead = """{part}y\n"""\n'.encode()
-        self.assertEqual(self.send(b"POST /cleanroom/scan HTTP/1.1\r\nContent-Length: %d\r\n\r\n" % len(body) + body), 200)
+        old = pathlib.Path(self.dir.name, "baseline/crates/clean/a/src/old.rs")
+        old.parent.mkdir(parents=True)
+        old.write_text(part)
+        self.assertEqual(self.send(scan_request(("crates/clean/a/src/old.rs", f"{part}y\n"))), 200)
         log = pathlib.Path(self.dir.name, "scan.log").read_text()
         self.assertIn("over 262144 a call", log)
         self.assertIn("2048000 new this session", log)
+        self.assertIn("2 new, 2048002 new this session", log)
+
+    def test_a_request_names_no_start_and_pays_for_each_file_it_sends(self):
+        w = "let guess = 1;\n" * 10_000
+        body = f'[[file]]\npath = "crates/clean/a/src/w.rs"\nstart = """{w}"""\nhead = """{w}"""\n'.encode()
+        self.assertEqual(self.send(b"POST /cleanroom/scan HTTP/1.1\r\nContent-Length: %d\r\n\r\n" % len(body) + body), 400)
+        twice = scan_request(("crates/clean/a/src/w.rs", w), ("crates/clean/a/src/w.rs", w))
+        self.assertEqual(self.send(twice), 413)
+        self.assertEqual(self.send(scan_request(("crates/clean/a/src/w.rs", w))), 200)
+        self.assertIn(f"{2 * len(w)} new bytes, over", pathlib.Path(self.dir.name, "scan.log").read_text())
+
+    def test_a_call_and_a_session_get_capped_files(self):
+        def files(call: int, count: int) -> bytes:
+            return scan_request(*[(f"crates/clean/a/src/f{call}_{i}.rs", "x\n") for i in range(count)])
+        self.assertEqual(self.send(files(0, box_relay.SCAN_FILES + 1)), 413)
+        for call in range(box_relay.SCAN_SESSION_FILES // box_relay.SCAN_FILES):
+            self.assertEqual(self.send(files(call, box_relay.SCAN_FILES)), 200)
+        self.assertEqual(self.send(files(0, 1)), 200)
+        self.assertEqual(self.send(files(99, 1)), 429)
 
     def test_an_answer_that_holds_more_than_counts_and_lines_never_reaches_the_box(self):
         reply = self.exchange(scan_request(("crates/clean/a/src/leak.rs", "quux\n")))

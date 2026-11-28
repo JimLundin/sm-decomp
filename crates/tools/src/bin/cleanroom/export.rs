@@ -110,6 +110,7 @@ impl Export<'_> {
         ]))?;
         let root = output(git(&lane.export).args(["rev-parse", "HEAD"]))?;
         fs::write(lane.export_root(), root).map_err(|e| e.to_string())?;
+        baseline(&lane)?;
         Ok(format!(
             "EXPORT OK {} from {} into {}\n",
             self.domain,
@@ -256,6 +257,20 @@ pub fn init(export: &Path) -> Result<(), String> {
     output(git(export).args(["config", "gc.auto", "0"]))?;
     output(git(export).args(["config", "maintenance.auto", "false"]))?;
     Ok(())
+}
+
+/// Copies the export's objects, just committed, to the lane's baseline, before any session
+/// can change them.
+pub fn baseline(lane: &Lane) -> Result<(), String> {
+    output(
+        git(Path::new("."))
+            .args(["init", "-q", "--bare", "--template="])
+            .arg(lane.baseline()),
+    )?;
+    crate::import::copy_files(
+        &lane.export.join(".git/objects"),
+        &lane.baseline().join("objects"),
+    )
 }
 
 fn write(dest: &Path, path: &str, text: &str) -> Result<(), String> {

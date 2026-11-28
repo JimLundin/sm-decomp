@@ -126,6 +126,12 @@ impl Lane {
         self.dir.join("export-root")
     }
 
+    /// A bare copy of the export's objects as `cleanroom export` committed them, outside the
+    /// box: the name scan reads each file's start from it, never from the box.
+    pub fn baseline(&self) -> PathBuf {
+        self.dir.join("baseline.git")
+    }
+
     /// The export's `.git` folder as `cleanroom export` made it, by device and inode.
     pub fn git_inode(&self) -> PathBuf {
         self.dir.join("git-inode")

@@ -6,9 +6,10 @@
 //! `cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...`: check 4, on a spec, its decode notes
 //! (or `-` for none) and the model's Rust files or directories.
 //!
-//! `cleanroom names`: the name scan `cleanroom test` asks the relay for, run outside the box on
-//! the files a TOML request on standard input holds. It prints each file's new hits' count and
-//! line numbers, never the words.
+//! `cleanroom names LANE`: the name scan `cleanroom test` asks the relay for, run outside the box
+//! on the files a TOML request on standard input holds, each against its text at the export's
+//! first commit as LANE's baseline holds it. It prints each file's new hits' count and line
+//! numbers, never the words, and the bytes of its lines the baseline doesn't hold.
 //!
 //! `cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE`: the
 //! observer side. Builds the hashed lexicon from the bank logs, `verify`'s decoders and
@@ -39,7 +40,7 @@ const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN
                      cleanroom run --probe NAME\n       \
                      cleanroom import NAME\n       \
                      cleanroom test\n       \
-                     cleanroom names\n       \
+                     cleanroom names LANE\n       \
                      cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
@@ -338,7 +339,9 @@ fn main() -> ExitCode {
         [command, name, brief] if command == "run" => run::run(name, Some(Path::new(brief))),
         [command, name] if command == "import" => import::run(name),
         [command] if command == "test" => run::test(),
-        [command] if command == "names" => read("-").and_then(|r| run::names(&r, Path::new("."))),
+        [command, lane] if command == "names" => {
+            read("-").and_then(|r| run::names(&r, Path::new("."), Path::new(lane)))
+        }
         [command, rest @ ..] if command == "check" => run_check(rest),
         [command, rest @ ..] if command == "scan" => run_scan(rest),
         [command, rest @ ..] if command == "mirror" => run_mirror(rest),

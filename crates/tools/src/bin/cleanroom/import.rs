@@ -199,7 +199,7 @@ impl Mirror {
     }
 }
 
-fn copy_files(from: &Path, to: &Path) -> Result<(), String> {
+pub fn copy_files(from: &Path, to: &Path) -> Result<(), String> {
     fs::create_dir_all(to).map_err(|e| e.to_string())?;
     for entry in fs::read_dir(from).map_err(|e| format!("{}: {e}", from.display()))? {
         let entry = entry.map_err(|e| e.to_string())?;

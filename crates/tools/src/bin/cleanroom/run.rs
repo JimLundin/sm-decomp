@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::import::{GIT_READ_ONLY, git_breaches};
 use crate::lexicon::Lexicon;
-use crate::process::{Lane, exports_root, output, repo};
+use crate::process::{Lane, exports_root, git, output, repo};
 use crate::scan::Allow;
 use crate::{rules, scan, vocabulary};
 
@@ -535,35 +535,75 @@ fn print_now(text: &str) {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScanFile {
     path: String,
-    start: Option<String>,
     head: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScanRequest {
     file: Vec<ScanFile>,
 }
 
-/// The host side of the box's name scan: per file of a request, its new hits' count and lines,
-/// a tab between each, and never the words that hit.
-pub fn names(request: &str, trusted: &Path) -> Result<(String, bool), String> {
+/// The host side of the box's name scan: per file of a request, its new hits' count and lines
+/// and the bytes of its lines the export's first commit doesn't hold, a tab between each, and
+/// never the words that hit. Each file's start is read from LANE's baseline, which the box
+/// can't reach, so a request can't name what a file started as.
+pub fn names(request: &str, trusted: &Path, lane: &Path) -> Result<(String, bool), String> {
     let (lex, allow) = vocabulary(trusted)?;
-    names_in(&lex, &allow, request)
+    let lane = Lane {
+        export: PathBuf::new(),
+        dir: lane.to_owned(),
+    };
+    let root = fs::read_to_string(lane.export_root())
+        .map_err(|e| format!("{}: {e}", lane.export_root().display()))?;
+    let baseline = lane.baseline();
+    names_in(&lex, &allow, request, |path| {
+        let out = git(&baseline)
+            .args(["cat-file", "blob", &format!("{}:{path}", root.trim())])
+            .stdin(Stdio::null())
+            .output()
+            .ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8(out.stdout).ok())
+            .flatten()
+    })
 }
 
-fn names_in(lex: &Lexicon, allow: &Allow, request: &str) -> Result<(String, bool), String> {
+fn names_in(
+    lex: &Lexicon,
+    allow: &Allow,
+    request: &str,
+    start: impl Fn(&str) -> Option<String>,
+) -> Result<(String, bool), String> {
     let request: ScanRequest = toml::from_str(request).map_err(|e| e.to_string())?;
     let mut out = String::new();
     let mut total = 0usize;
     for file in &request.file {
-        let found = scan::added(lex, allow, &file.path, file.start.as_deref(), &file.head);
+        let start = start(&file.path);
+        let found = scan::added(lex, allow, &file.path, start.as_deref(), &file.head);
         let mut lines: Vec<usize> = found.iter().map(|f| f.line).collect();
         lines.sort_unstable();
         lines.dedup();
         let lines: Vec<String> = lines.iter().map(usize::to_string).collect();
-        let _ = writeln!(out, "{}\t{}\t{}", file.path, found.len(), lines.join(","));
+        let held: std::collections::BTreeSet<&str> =
+            start.as_deref().unwrap_or_default().lines().collect();
+        let new = file
+            .head
+            .lines()
+            .filter(|line| !held.contains(line))
+            .map(|line| line.len().saturating_add(1))
+            .fold(0usize, usize::saturating_add);
+        let _ = writeln!(
+            out,
+            "{}\t{}\t{}\t{new}",
+            file.path,
+            found.len(),
+            lines.join(",")
+        );
         total = total.saturating_add(found.len());
     }
     Ok((out, total > 0))
@@ -627,8 +667,7 @@ fn new_names(socket: &Path, out: &mut String) -> Result<usize, String> {
     let mut files = Vec::new();
     for path in changed {
         let head = fs::read_to_string(&path).map_err(|e| format!("{path}: {e}"))?;
-        let start = git(&["show", &format!("{root}:{path}")]).ok();
-        files.push(ScanFile { path, start, head });
+        files.push(ScanFile { path, head });
     }
     let mut added = 0usize;
     for line in scan_remote(socket, files)?.lines() {
@@ -663,7 +702,7 @@ mod tests {
     use super::{
         Sandbox, ScanFile, check_probed, image, names_in, probe_at, scan_remote, session_argv,
     };
-    use crate::process::Lane;
+    use crate::process::{Lane, output};
 
     fn repo() -> &'static Path {
         Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -745,14 +784,70 @@ mod tests {
     }
 
     #[test]
-    fn the_name_scan_answers_counts_and_lines_and_never_the_words() {
+    fn the_name_scan_answers_counts_lines_and_new_bytes_and_never_the_words() {
         let mut lex = Lexicon::default();
         lex.names.insert(crate::text::hash(&lex.salt, "u:quux"));
         let request = "[[file]]\npath = \"a.rs\"\nhead = \"fn f() {}\\nlet quux = 1;\\n\"\n\n\
-                       [[file]]\npath = \"b.rs\"\nstart = \"quux\"\nhead = \"quux\"\n";
-        let (out, failed) = names_in(&lex, &Allow::parse(""), request).unwrap();
-        assert_eq!(out, "a.rs\t1\t2\nb.rs\t0\t\n");
+                       [[file]]\npath = \"b.rs\"\nhead = \"quux\\nnew\\n\"\n";
+        let start = |path: &str| (path == "b.rs").then(|| "quux\n".to_owned());
+        let (out, failed) = names_in(&lex, &Allow::parse(""), request, start).unwrap();
+        assert_eq!(out, "a.rs\t1\t2\t24\nb.rs\t0\t\t4\n");
         assert!(failed);
+    }
+
+    /// The attack the third review found: a request that names its own start W and sends W as
+    /// the head, twice, to have W scanned for free. The start is the host's, so W is new.
+    #[test]
+    fn a_request_cannot_name_a_file_s_start_and_pays_for_every_line_the_export_did_not_hold() {
+        let lex = Lexicon::default();
+        let w = "let guess = 1;\n".repeat(20_000);
+        let named = format!(
+            "[[file]]\npath = \"crates/clean/a/src/w.rs\"\nstart = '''{w}'''\nhead = '''{w}'''\n"
+        );
+        assert!(names_in(&lex, &Allow::parse(""), &named, |_| None).is_err());
+        let twice = format!(
+            "[[file]]\npath = \"crates/clean/a/src/w.rs\"\nhead = '''{w}'''\n\n\
+             [[file]]\npath = \"crates/clean/a/src/w.rs\"\nhead = '''{w}'''\n"
+        );
+        let (out, _) = names_in(&lex, &Allow::parse(""), &twice, |_| None).unwrap();
+        let charged: Vec<usize> = out
+            .lines()
+            .map(|l| l.rsplit('\t').next().unwrap().parse().unwrap())
+            .collect();
+        assert_eq!(charged, [w.len(), w.len()]);
+    }
+
+    #[test]
+    fn the_name_scan_reads_the_start_from_the_lane_s_baseline_alone() {
+        let base = std::env::temp_dir().join(format!("cleanroom-baseline-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let lane = Lane {
+            export: base.join("haze"),
+            dir: base.join("haze.lane"),
+        };
+        for dir in [&lane.export, &lane.dir] {
+            fs::create_dir_all(dir).unwrap();
+        }
+        crate::export::init(&lane.export).unwrap();
+        let path = "crates/clean/haze/src/lib.rs";
+        fs::create_dir_all(lane.export.join("crates/clean/haze/src")).unwrap();
+        fs::write(lane.export.join(path), "//! Haze.\n").unwrap();
+        let git = |args: &[&str]| output(crate::process::git(&lane.export).args(args)).unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "export"]);
+        fs::write(lane.export_root(), git(&["rev-parse", "HEAD"])).unwrap();
+        crate::export::baseline(&lane).unwrap();
+        fs::remove_dir_all(&lane.export).unwrap();
+        let request = format!(
+            "[[file]]\npath = \"{path}\"\nhead = \"//! Haze.\\nx\\n\"\n\n\
+             [[file]]\npath = \"crates/clean/haze/src/new.rs\"\nhead = \"//! Haze.\\n\"\n"
+        );
+        let answer = super::names(&request, repo(), &lane.dir);
+        fs::remove_dir_all(&base).unwrap();
+        assert_eq!(
+            answer.unwrap().0,
+            format!("{path}\t0\t\t2\ncrates/clean/haze/src/new.rs\t0\t\t10\n")
+        );
     }
 
     #[test]
@@ -774,7 +869,6 @@ mod tests {
             &socket,
             vec![ScanFile {
                 path: "a.rs".to_owned(),
-                start: None,
                 head: "x".to_owned(),
             }],
         );
