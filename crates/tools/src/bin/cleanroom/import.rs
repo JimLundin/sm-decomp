@@ -470,8 +470,13 @@ impl Import {
         let spec_path = format!("docs/behaviours/{}.md", self.domain);
         let spec = show(&spec_path)
             .map_err(|_| format!("no spec {spec_path} on the branch; nothing applied"))?;
-        let decode =
-            show(&format!("docs/behaviours/{}.decode.md", self.domain)).unwrap_or_default();
+        let decode = show(
+            &Path::new(&spec_path)
+                .with_extension("decode.md")
+                .display()
+                .to_string(),
+        )
+        .unwrap_or_default();
         let (lex, _) = vocabulary(&self.repo)?;
         let entry_points = |rev: &str| -> Result<Vec<(String, String)>, String> {
             let mut failed = false;

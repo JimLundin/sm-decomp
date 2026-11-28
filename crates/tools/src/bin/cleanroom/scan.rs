@@ -517,9 +517,8 @@ pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<F
         addresses(lex, line, |class, detail| {
             push(n.saturating_add(1), class, detail);
         });
-        let lower = line.to_lowercase();
-        for marker in ROUTES.iter().filter(|m| lower.contains(*m)) {
-            push(n.saturating_add(1), Class::Route, (*marker).to_owned());
+        for marker in routes(&line.to_lowercase()) {
+            push(n.saturating_add(1), Class::Route, marker);
         }
     }
     let rust = std::path::Path::new(path)
@@ -567,24 +566,110 @@ pub fn added(
 }
 
 /// Where the original and the observer's notes are: text that points an implementer at them.
-const ROUTES: &[&str] = &[
-    "patrickjohnston",
-    "bank log",
-    "c4a/logs",
-    ".decode.md",
-    "decode notes",
-    "09486a2fd",
-    "sm/src",
-    "ram_map",
-    "collab/reviews",
-    "verify/src",
-    "rom/sm.smc",
+/// Each marker is held as its length and its hash under `ROUTE_SALT`, as the lexicon holds its
+/// names, so the binary the box mounts holds no readable pointer.
+const ROUTE_SALT: &str = "route";
+const ROUTES: &[(usize, u64)] = &[
+    (15, 0xa155_5901_ab37_4d77),
+    (8, 0xdcb5_601a_be29_3ea6),
+    (8, 0x1295_e291_959b_efaa),
+    (10, 0x214c_3b6d_d5da_34a1),
+    (12, 0x378e_a055_db84_cdf9),
+    (9, 0xe8a7_1e37_860f_17c0),
+    (6, 0x65f5_b813_6399_98ab),
+    (7, 0x7b2d_4b5c_6936_dc67),
+    (14, 0xa57c_6364_bee1_b3ed),
+    (10, 0x7764_93d3_98f2_6342),
+    (10, 0xee20_8aa8_85d3_91ce),
 ];
+
+/// The route markers LOWER holds, each once, in `ROUTES` order.
+fn routes(lower: &str) -> Vec<String> {
+    ROUTES
+        .iter()
+        .filter_map(|&(len, hash)| {
+            (0..=lower.len().saturating_sub(len))
+                .filter_map(|at| lower.get(at..at.saturating_add(len)))
+                .find(|window| window.len() == len && text::hash(ROUTE_SALT, window) == hash)
+                .map(str::to_owned)
+        })
+        .collect()
+}
 
 #[cfg(test)]
 mod tests {
-    use super::{Allow, Class, added, file};
+    use super::{Allow, Class, ROUTE_SALT, ROUTES, added, file};
     use crate::{lexicon::Lexicon, text};
+
+    /// The route markers in plain text, which only the tests hold.
+    const PLAIN_ROUTES: &[&str] = &[
+        "patrickjohnston",
+        "bank log",
+        "c4a/logs",
+        ".decode.md",
+        "decode notes",
+        "09486a2fd",
+        "sm/src",
+        "ram_map",
+        "collab/reviews",
+        "verify/src",
+        "rom/sm.smc",
+    ];
+
+    #[test]
+    fn every_route_is_found_by_its_hash() {
+        assert_eq!(PLAIN_ROUTES.len(), ROUTES.len());
+        for (plain, (len, hash)) in PLAIN_ROUTES.iter().zip(ROUTES) {
+            assert_eq!((plain.len(), text::hash(ROUTE_SALT, plain)), (*len, *hash));
+            let mut out = Vec::new();
+            let line = format!("Ünïcode first: see {}.", plain.to_uppercase());
+            file(
+                &Lexicon::default(),
+                &Allow::parse(""),
+                "x.md",
+                &line,
+                &mut out,
+            );
+            assert_eq!(
+                out.iter()
+                    .map(|f| (f.class, f.detail.as_str()))
+                    .collect::<Vec<_>>(),
+                [(Class::Route, *plain)]
+            );
+        }
+    }
+
+    /// The cleanroom binary, as the box mounts it, holds no route marker as text.
+    #[test]
+    fn the_binary_holds_no_route_in_plain_text() {
+        let exe = std::env::current_exe().unwrap();
+        let profile = exe.parent().and_then(std::path::Path::parent).unwrap();
+        let built = std::process::Command::new(env!("CARGO"))
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .env("CARGO_TARGET_DIR", profile.parent().unwrap())
+            .args([
+                "build",
+                "-q",
+                "--offline",
+                "-p",
+                "tools",
+                "--bin",
+                "cleanroom",
+            ])
+            .args((profile.file_name().unwrap() == "release").then_some("--release"))
+            .status()
+            .unwrap();
+        assert!(built.success());
+        let binary = std::fs::read(profile.join("cleanroom")).unwrap();
+        for plain in PLAIN_ROUTES {
+            assert!(
+                !binary
+                    .windows(plain.len())
+                    .any(|w| w.eq_ignore_ascii_case(plain.as_bytes())),
+                "the binary holds {plain}"
+            );
+        }
+    }
 
     #[test]
     fn only_a_hit_the_start_did_not_hold_is_added() {
