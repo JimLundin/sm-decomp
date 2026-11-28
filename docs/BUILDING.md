@@ -23,6 +23,9 @@ The Python tools are one uv project in `tools/`, on the Python the
 [standards](https://github.com/JimLundin/standards)' `tools.env` pins, which uv installs.
 `tools/pyproject.toml` names each tool's command, and `uv run --locked --project tools run-tests`
 runs their tests with pytest, each test module in its own process.
+CI's python job holds them to the standards' Python rules with `python/check.sh commit tools`,
+run from the repository root with the standards' checkout at the commit `tools/pyproject.toml`
+takes `ordered` from; only shell modules take entries in `tools/exceptions.toml`.
 
 The application currently refuses power-on with an explicit missing-production-owner result.
 Building it does not imply playable boot or whole-movie support. Use indexed scoped cases to
@@ -114,7 +117,7 @@ CI runs on Ubuntu 24.04. The following setup also supports local builds and repl
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
 (`build-essential`), git, [uv](https://docs.astral.sh/uv/) at the standards' `UV` pin,
-Python 3.13 as `python3.13` or `python3` (the tools call `python3`), the
+Python 3.12 or later as `/usr/bin/python3`, which runs the confined box's first process, the
 [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
 `claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally
 `cargo-deny` 0.22.0, which the gate runs where it is installed.

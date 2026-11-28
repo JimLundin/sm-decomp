@@ -8,7 +8,7 @@ name: CI
 # job cold. A dispatched run with a target runs only that replay case or verify library test.
 #   rules     formatting, the dependency, crate and clean-room rules, doc links and the README.
 #   rust      clippy and the workspace tests.
-#   python    the Python tooling's type check and tests.
+#   python    the standards' Python commit tier on the tools, and their tests.
 #   adjusted  each Parameter entry's adjusted vector at the reference rules.
 #   engine    the release app's size against its baseline, in the job summary.
 #   replay    the required witnesses, indexed replay and the content tests against the ROM.
@@ -120,6 +120,10 @@ jobs:
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
+      - name: Hold the tools to the Python standard
+        # The standards' commit tier at the pins of its tools.env: exceptions, format, lint, types,
+        # immutability, purity, unused code and the import layers.
+        run: '"$STANDARDS/python/check.sh" commit tools'
       - name: Build the tools binary the oracle tests run
         run: cargo build --locked -p tools --bin tools
       - name: Test the tools

@@ -40,7 +40,7 @@ PROCESS = "tools/src/sm_tools/shell/process.py"
 TOOLS_PROJECT = FrozenList((
     "tools/pyproject.toml",
     "tools/uv.lock",
-    "tools/conftest.py",
+    "tools/tests/conftest.py",
 ))
 SCRATCH = f"{LANE}/shell/scratch.py"
 

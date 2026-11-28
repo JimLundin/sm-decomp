@@ -58,7 +58,7 @@ exhaustive = true
 
 [tool.pytest]
 strict = true
-testpaths = ["."]
+testpaths = ["tests"]
 addopts = ["--hypothesis-profile=fast", "-m", "not slow"]
 markers = ["slow: runs only in the full profile"]
 

@@ -1,12 +1,8 @@
 /target
-# Python tooling caches.
+# The tools project's caches, environment and mutation copies.
 __pycache__/
-.mypy_cache/
-# uv environments made by `uv run` in a checkout.
-/.venv/
 /tools/.venv/
 /tools/mutants/
-/uv.lock
 # Never commit the ROM or anything derived from it.
 /rom/
 *.sfc
