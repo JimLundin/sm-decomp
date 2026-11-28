@@ -243,10 +243,10 @@ and belongs to the lane that integrates that owner. The two loop files, the orde
 its faults, and its call in the order. So does the played tests' shared fixture
 (`production/played/tests.rs`), with the field's starting value; each owner's tests are in its
 own module. The root settles the order of those lines at landing.
-When two pieces of work need the same file, they run one after the other in a
-single lane, or the second starts from the first's branch and lands after it. The lane with the
-most work in flight lands first, and shorter lanes start from it. The generated README is
-regenerated at landing, never merged by hand.
+Lanes whose expected changed files overlap don't run side by side. The later one stacks on the
+earlier one's branch and lands after it, or both run one after the other in a single lane. The
+lane with the most work in flight lands first, and shorter lanes start from it. The generated
+README is regenerated at landing, never merged by hand.
 
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
