@@ -276,10 +276,11 @@ class LandTest(unittest.TestCase):
     def test_ignored_files_outside_target_keep_a_worktree(self) -> None:
         kept = self.lane("lane/a", "main", "a.txt")
         removed = self.lane("lane/b", "main", "b.txt")
-        (self.repo / ".git" / "info" / "exclude").write_text("*.sfc\n/target\n__pycache__/\n", encoding="utf-8")
+        (self.repo / ".git" / "info" / "exclude").write_text("*.sfc\n/target\n__pycache__/\n/.venv/\n/uv.lock\n", encoding="utf-8")
         (kept / "game.sfc").write_bytes(b"rom")
-        for path in (removed / "target" / "debug" / "out", removed / "tools" / "__pycache__" / "x.pyc"):
-            path.parent.mkdir(parents=True)
+        for path in (removed / "target" / "debug" / "out", removed / "tools" / "__pycache__" / "x.pyc",
+                     removed / ".venv" / "bin" / "python", removed / "uv.lock"):
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"build")
         code, out = self.run_land("ignored", ("lane/a", "lane/b"), FakeGitHub(self.repo))
         self.assertEqual(code, 0, out)

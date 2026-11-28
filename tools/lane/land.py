@@ -13,7 +13,7 @@ from typing import Protocol
 HERE = Path(__file__).resolve().parent
 PR_TRIES = 6
 POLLS = 90
-CACHES = {"__pycache__", ".mypy_cache", ".ruff_cache"}
+CACHES = {"__pycache__", ".mypy_cache", ".ruff_cache", ".venv", "uv.lock"}
 
 
 class Failed(Exception):
