@@ -4,6 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ci"))
+from mtimes import date_since
+
 USAGE = """usage: worktree.py add <branch> <path> <base> | seed
 
 add: a lane worktree on a new branch, its target/ taking the build of the seed, one worktree at
@@ -13,17 +16,11 @@ are copied. The lane's tracked files are dated 2000-01-01 and those that differ 
 commit are touched, so only what they feed rebuilds.
 
 seed: builds the one seed at origin/main (the root, off-hours)."""
-OLD = 946684800
 LOCKS = (".cargo-lock", ".cargo-build-lock", ".cargo-artifact-lock")
 
 
 def git(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=False)
-
-
-def tracked(path: Path, *args: str) -> list[Path]:
-    listed = git(*args[:1], "-z", *args[1:], cwd=path).stdout
-    return [path / name for name in listed.split("\0") if name]
 
 
 def link_debug(seed: Path, target: Path) -> bool:
@@ -59,12 +56,7 @@ def add(branch: str, path: Path, base: str, seed: Path) -> int:
     for lock in target.rglob("*"):
         if lock.name in LOCKS and lock.is_file():
             lock.unlink()
-    for file in tracked(path, "ls-files"):
-        if file.is_symlink() or file.exists():
-            os.utime(file, (OLD, OLD), follow_symlinks=False)
-    for file in tracked(path, "diff", "--name-only", seeded.stdout.strip(), "HEAD", "--"):
-        if file.exists():
-            os.utime(file)
+    date_since(path, seeded.stdout.strip())
     print(f"worktree: {how} the build of seed {git('rev-parse', '--short', 'HEAD', cwd=seed).stdout.strip()}")
     return 0
 

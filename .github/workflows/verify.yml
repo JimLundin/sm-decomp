@@ -39,10 +39,11 @@ jobs:
           restore-keys: |
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
-      - name: Refresh source timestamps after restoring a build
+      - name: Date the sources the restored build compiled
         if: steps.cargo_cache.outputs.cache-matched-key != ''
-        # Stable Cargo compares source mtimes to the previous build's dep-info.
-        run: git ls-files -z | xargs -0r touch -ch --
+        # Stable Cargo compares source mtimes to the previous build's dep-info, so only the files
+        # changed since the build's recorded commit are touched.
+        run: python3 tools/ci/mtimes.py restore
       - &rom
         name: Fetch the encrypted ROM
         uses: actions/checkout@v4
@@ -111,6 +112,9 @@ jobs:
       - name: Reproduce a verification failure on this revision
         if: failure()
         run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
+      - name: Record the commit the build comes from
+        if: inputs.target == '' && github.ref == 'refs/heads/main'
+        run: python3 tools/ci/mtimes.py record
       - name: Save the cargo registry and the build
         if: inputs.target == '' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4

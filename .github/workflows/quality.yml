@@ -46,11 +46,12 @@ jobs:
           restore-keys: |
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
-      - &refresh_sources
-        name: Refresh source timestamps after restoring a build
+      - &date_sources
+        name: Date the sources the restored build compiled
         if: steps.cargo_cache.outputs.cache-matched-key != ''
-        # Stable Cargo compares source mtimes to the previous build's dep-info.
-        run: git ls-files -z | xargs -0r touch -ch --
+        # Stable Cargo compares source mtimes to the previous build's dep-info, so only the files
+        # changed since the build's recorded commit are touched.
+        run: python3 tools/ci/mtimes.py restore
       - name: Format
         run: cargo fmt --check
       - name: Lint the rebuild's crates
@@ -77,6 +78,9 @@ jobs:
         # cores. The oracle tests run the tools binary the report check built; the fault runner's tests
         # need tree-sitter from the venv.
         run: SM_TOOLS="$PWD/target/debug/tools" "$RUNNER_TEMP/fault-tools/bin/python" tools/run_tests.py
+      - name: Record the commit the build comes from
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        run: python3 tools/ci/mtimes.py record
       - name: Save the cargo registry and the build
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
@@ -123,7 +127,7 @@ jobs:
           restore-keys: |
             cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
-      - *refresh_sources
+      - *date_sources
       - name: Require each adjusted vector to fail at the reference rules
         # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
         # answer depends on the value it changes.
@@ -167,7 +171,7 @@ jobs:
           restore-keys: |
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
-      - *refresh_sources
+      - *date_sources
       - name: Report the engine's size against its baseline
         # The report never fails the run. The tools binary builds in the dev profile, which takes
         # half the time a fat-LTO release build of it would.
@@ -175,6 +179,9 @@ jobs:
         run: |
           cargo build --locked --release -p app
           cargo run --locked -q -p tools --bin tools -- engine-size target/release/super-metroid scenarios/engine-size.toml >>"$GITHUB_STEP_SUMMARY"
+      - name: Record the commit the build comes from
+        if: steps.inputs.outputs.unchanged != 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        run: python3 tools/ci/mtimes.py record
       - name: Save the cargo registry and the build
         if: steps.inputs.outputs.unchanged != 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
