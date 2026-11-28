@@ -176,12 +176,13 @@ native state files.
 ### Step a1: the cut plan
 
 `tools/oracle/relock_cut.sh PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]` runs one
-`movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first, `JOBS`
-(8) at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their movie but
-some follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut a step on.
+`movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first, `JOBS` (8)
+at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their movie but some
+follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut a step on.
 `check`: each seed's room and frame counter equal its table's, and its WRAM equals its capture's
 outside the stack page. `derive-seed` checks that each written word stuck: one step on it reads the
-written value, or something other than the plain base's step (physics moves Samus's position in that step).
+written value, or something other than the plain base's step (physics moves Samus's position in that
+step).
 
 ### Step b1: frame pads
 
