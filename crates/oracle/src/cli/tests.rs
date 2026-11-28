@@ -12,9 +12,7 @@ const fn room_seed(room_index: u32, room: u32, movie_frame: u64) -> RoomSeed {
         next_input_index: None,
         movie_subframe_index: None,
         seed_sha256: None,
-        registers_sha256: None,
         observation_sha256: None,
-        cpu_pc: None,
         nmi: None,
     }
 }

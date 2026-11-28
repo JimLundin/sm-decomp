@@ -106,7 +106,8 @@ it outlasts the frame: N + 1 lines.
   the movies, named `CAPTURE:INDEX` and stored as `DIR/CAPTURE/NNNN.lss` (the state before step
   N) and `NNNN.record` (the raw record of step N-1, always with the memories). A **derived seed**
   adds `NNNN.words`: word edits on a base state, no emulation (`oracle derive-seed`).
-- An lsnes **room capture** (`target/seeds/<capture>/<NNNN>-<ROOM>-*`) is no start: it holds no
+- An lsnes **room capture** (`target/seeds/<capture>/<NNNN>-<ROOM>-<memory>.bin`, one file for each
+  of WRAM, SRAM, VRAM, CGRAM, OAM and APU RAM) is no start: it holds no CPU registers and no
   SPC700, DSP or timer state. `movie --seeds` compares a movie's work RAM with its `-wram.bin`.
 
 **Ladders.** Long emulator runs are the exception. Each movie keeps lsnes states every 10000
@@ -138,7 +139,8 @@ python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inpu
 
 `movies/room-seeds-*.toml` list the room captures each movie's seeds come from
 (`oracle_record::room_seeds`, read by `relock_plan.sh`, `relock_cut.sh`, `oracle --seeds` and the
-README report). An lsnes capture writes its own as `rooms.toml`. Movies, inputs, states and logs are
+README report). An lsnes capture writes its own as `rooms.toml`. A seed's `seed_sha256` and
+`observation_sha256` are 64 lowercase hex digits. Movies, inputs, states and logs are
 ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows start
 from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
 

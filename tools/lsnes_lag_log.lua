@@ -28,7 +28,6 @@ local seed_pending = false
 local seed_count = 0
 local seed_origin_frame = nil
 local seed_origin_subframe = nil
-local seed_io_writes = {}
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
@@ -63,29 +62,6 @@ local function capture_room(frame, boundary)
     frame = seed_origin_frame
     assert(movie.readonly(), "seed capture must remain read-only")
     seed_count = seed_count + 1
-    local register_file = string.format("%04d-%04X-registers.toml", seed_count, room)
-    local existing = io.open(seed_dir .. "/" .. register_file, "rb")
-    if existing then existing:close(); error("refusing to overwrite seed: " .. register_file) end
-    local registers = assert(memory.getregisters(), "core has no register observations")
-    registers.seed_boundary_pc = 0x808348
-    -- DMAP..NTRL are passive readable registers in the pinned bsnes core.
-    for channel = 0, 7 do
-        for offset = 0, 10 do
-            registers[string.format("dma_%d_%d", channel, offset)] =
-                memory.readbyte(0x1004300 + channel * 16 + offset)
-        end
-    end
-    for name, value in pairs(seed_io_writes) do registers[name] = value end
-    local names = {}
-    for name, _ in pairs(registers) do names[#names + 1] = name end
-    table.sort(names)
-    local output = assert(io.open(seed_dir .. "/" .. register_file, "wb"))
-    for _, name in ipairs(names) do
-        local value = registers[name]
-        if type(value) == "boolean" then value = value and 1 or 0 end
-        output:write(string.format("%s = %d\n", name, value))
-    end
-    assert(output:close())
     -- This is after the first gameplay frame; frame is the next zero-based input.
     for _, region in ipairs(seed_regions) do
         local name, base, size = region[1], region[2], region[3]
@@ -148,25 +124,9 @@ on_frame_emulated = guarded(on_frame_emulated)
 if seed_dir then
     -- The video callback can suspend in the middle of a CPU opcode. Observe
     -- the next normal wait's PLB fetch instead, before its stack effects.
-    -- bsnes has incremented PC for this fetch; retain both observed PC and
-    -- the explicit hook address so the importer need not guess a PC shift.
     memory.registerexec(0x1808348, guarded(function()
         capture_room(movie.currentframe(), true)
     end))
-    -- These write-only registers cannot be reconstructed by reading the bus.
-    -- Observe every CPU-bank mirror, without changing the original write.
-    for _, address in ipairs({0x4200, 0x4201, 0x4207, 0x4208, 0x4209, 0x420A, 0x420D}) do
-        local name = string.format("io_%04X", address)
-        for bank = 0, 0xBF do
-            if bank < 0x40 or bank >= 0x80 then
-                memory.registerwrite(0x1000000 + bank * 0x10000 + address,
-                    guarded(function(_, value)
-                        assert(movie.readonly(), "register observation must remain read-only")
-                        seed_io_writes[name] = value
-                    end))
-            end
-        end
-    end
 end
 exec("set-speed turbo")
 exec("clear-pause-on-end")

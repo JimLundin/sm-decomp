@@ -28,13 +28,9 @@ pub struct RoomSeed {
     /// The movie subframe the capture's room began on.
     pub movie_subframe_index: Option<u64>,
     /// The SHA-256 of the captured seed.
-    pub seed_sha256: Option<String>,
-    /// The SHA-256 of the captured registers.
-    pub registers_sha256: Option<String>,
+    pub seed_sha256: Option<Sha256>,
     /// The SHA-256 of the capture's observation.
-    pub observation_sha256: Option<String>,
-    /// The CPU's program counter at the capture.
-    pub cpu_pc: Option<Hex<6>>,
+    pub observation_sha256: Option<Sha256>,
     /// The game's frame counter (`$7E:05B6`) at the capture.
     pub nmi: Option<u16>,
 }
@@ -60,6 +56,34 @@ impl<const DIGITS: usize> TryFrom<String> for Hex<DIGITS> {
             .filter(|_| digits)
             .map(Self)
             .ok_or_else(|| format!("{text:?} is not {DIGITS} uppercase hexadecimal digits"))
+    }
+}
+
+/// A SHA-256, written as 64 lowercase hexadecimal digits.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(try_from = "String")]
+pub struct Sha256(pub [u8; 32]);
+
+impl TryFrom<String> for Sha256 {
+    type Error = String;
+
+    fn try_from(text: String) -> Result<Self, String> {
+        let refuse = || format!("{text:?} is not 64 lowercase hexadecimal digits");
+        let digits = text
+            .bytes()
+            .map(|byte| match byte {
+                b'0'..=b'9' => Some(byte - b'0'),
+                b'a'..=b'f' => Some(byte - b'a' + 10),
+                _ => None,
+            })
+            .collect::<Option<Vec<u8>>>()
+            .filter(|digits| digits.len() == 64)
+            .ok_or_else(refuse)?;
+        let mut bytes = [0; 32];
+        for (byte, [high, low]) in bytes.iter_mut().zip(digits.as_chunks::<2>().0) {
+            *byte = high << 4 | low;
+        }
+        Ok(Self(bytes))
     }
 }
 
@@ -117,6 +141,54 @@ mod tests {
     fn an_index_given_twice_is_refused() {
         let error = RoomSeeds::parse(&format!("{SEED}\n{SEED}")).unwrap_err();
         assert_eq!(error, "seed 7 given twice");
+    }
+
+    #[test]
+    fn a_seed_reads_its_hashes() {
+        let digest = "0123456789abcdef".repeat(4);
+        let table = RoomSeeds::parse(&format!("{SEED}seed_sha256 = \"{digest}\"\n")).unwrap();
+        let mut bytes = [0; 32];
+        for (byte, value) in bytes.iter_mut().zip(
+            [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]
+                .iter()
+                .cycle(),
+        ) {
+            *byte = *value;
+        }
+        assert_eq!(table.seed[0].seed_sha256, Some(Sha256(bytes)));
+    }
+
+    #[test]
+    fn a_hash_of_other_than_64_lowercase_digits_is_refused() {
+        let digest = "0123456789abcdef".repeat(4);
+        let upper = digest.to_uppercase();
+        for hash in [
+            &digest[1..],
+            &format!("{digest}0"),
+            &upper,
+            &digest.replace('f', "g"),
+            "",
+        ] {
+            for field in ["seed_sha256", "observation_sha256"] {
+                let error = RoomSeeds::parse(&format!("{SEED}{field} = \"{hash}\"\n")).unwrap_err();
+                assert!(error.contains("64 lowercase"), "{field} {hash}: {error}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_committed_table_parses() {
+        let movies = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../movies");
+        let mut tables = 0;
+        for entry in std::fs::read_dir(&movies).unwrap() {
+            let path = entry.unwrap().path();
+            let name = path.file_name().unwrap().to_string_lossy().into_owned();
+            if name.starts_with("room-seeds-") && name.ends_with(".toml") {
+                assert!(!RoomSeeds::read(&path).unwrap().seed.is_empty(), "{name}");
+                tables += 1;
+            }
+        }
+        assert_eq!(tables, 10);
     }
 
     #[test]
