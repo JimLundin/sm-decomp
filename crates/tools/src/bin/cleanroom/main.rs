@@ -24,8 +24,13 @@ mod mirror;
 mod process;
 mod rules;
 mod run;
+mod salted;
 mod scan;
 mod text;
+
+#[cfg(test)]
+#[path = "../../../tests/cleanroom_binary/routes.rs"]
+mod routes;
 
 use std::fmt::Write as _;
 use std::fs;
@@ -508,7 +513,7 @@ mod tests {
     #[test]
     fn identity_masking_preserves_utf8_offsets_and_finding_lines() {
         let mut lex = Lexicon::default();
-        lex.names.insert(crate::text::hash(&lex.salt, "u:ptr"));
+        lex.names.insert(crate::salted::hash(&lex.salt, "u:ptr"));
         let src = "// café\n::core::ptr::eq(left, right);\n// naïve\n::\ncore::ptr::eq(left, right);\nptr\n";
         let mut out = Vec::new();
         scan::file(&lex, &Allow::parse(""), "x.rs", src, &mut out);

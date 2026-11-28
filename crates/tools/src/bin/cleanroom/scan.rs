@@ -5,6 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use crate::lexicon::{self, Lexicon};
+use crate::salted;
 use crate::text::{self, Tok};
 
 /// What a finding is.
@@ -280,7 +281,7 @@ fn enum_order(lex: &Lexicon, variants: &[(String, Option<u32>)]) -> Option<Strin
         .map(|(v, explicit)| {
             let code = explicit.unwrap_or(implied);
             implied = code.saturating_add(1);
-            (text::hash(&lex.salt, &text::normalise(v)), code)
+            (salted::hash(&lex.salt, &text::normalise(v)), code)
         })
         .collect();
     let mut best: Option<(usize, bool)> = None;
@@ -573,7 +574,7 @@ fn routes(lex: &Lexicon, lower: &str) -> Vec<String> {
         .filter_map(|&(len, hash)| {
             (0..=lower.len().saturating_sub(len))
                 .filter_map(|at| lower.get(at..at.saturating_add(len)))
-                .find(|window| window.len() == len && text::hash(&lex.salt, window) == hash)
+                .find(|window| window.len() == len && salted::hash(&lex.salt, window) == hash)
                 .map(str::to_owned)
         })
         .collect()
@@ -582,7 +583,8 @@ fn routes(lex: &Lexicon, lower: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::{Allow, Class, added, file};
-    use crate::{lexicon::Lexicon, text};
+    use crate::routes::PLAIN_ROUTES;
+    use crate::{lexicon::Lexicon, salted, text};
 
     fn repo_lexicon() -> Lexicon {
         Lexicon::load(
@@ -592,27 +594,12 @@ mod tests {
         .unwrap()
     }
 
-    /// The route markers in plain text, which only the tests hold.
-    const PLAIN_ROUTES: &[&str] = &[
-        "patrickjohnston",
-        "bank log",
-        "c4a/logs",
-        ".decode.md",
-        "decode notes",
-        "09486a2fd",
-        "sm/src",
-        "ram_map",
-        "collab/reviews",
-        "verify/src",
-        "rom/sm.smc",
-    ];
-
     #[test]
     fn every_route_is_found_by_the_lexicons_hash() {
         let lex = repo_lexicon();
         assert_eq!(PLAIN_ROUTES.len(), lex.routes.len());
         for (plain, (len, hash)) in PLAIN_ROUTES.iter().zip(&lex.routes) {
-            assert_eq!((plain.len(), text::hash(&lex.salt, plain)), (*len, *hash));
+            assert_eq!((plain.len(), salted::hash(&lex.salt, plain)), (*len, *hash));
             let mut out = Vec::new();
             let line = format!("Ünïcode first: see {}.", plain.to_uppercase());
             file(&lex, &Allow::parse(""), "x.md", &line, &mut out);
@@ -625,63 +612,10 @@ mod tests {
         }
     }
 
-    /// The cleanroom binary, as the box mounts it.
-    fn binary() -> Vec<u8> {
-        let exe = std::env::current_exe().unwrap();
-        let profile = exe.parent().and_then(std::path::Path::parent).unwrap();
-        let built = std::process::Command::new(env!("CARGO"))
-            .current_dir(env!("CARGO_MANIFEST_DIR"))
-            .env("CARGO_TARGET_DIR", profile.parent().unwrap())
-            .args([
-                "build",
-                "-q",
-                "--offline",
-                "-p",
-                "tools",
-                "--bin",
-                "cleanroom",
-            ])
-            .args((profile.file_name().unwrap() == "release").then_some("--release"))
-            .status()
-            .unwrap();
-        assert!(built.success());
-        std::fs::read(profile.join("cleanroom")).unwrap()
-    }
-
-    #[test]
-    fn the_binary_holds_no_route_in_plain_text() {
-        let binary = binary();
-        for plain in PLAIN_ROUTES {
-            assert!(
-                !binary
-                    .windows(plain.len())
-                    .any(|w| w.eq_ignore_ascii_case(plain.as_bytes())),
-                "the binary holds {plain}"
-            );
-        }
-    }
-
-    /// Neither the lexicon's hash of a marker nor its hash under the salt the binary once held.
-    #[test]
-    fn the_binary_holds_no_route_hash() {
-        let binary = binary();
-        let lex = repo_lexicon();
-        for plain in PLAIN_ROUTES {
-            for hash in [text::hash(&lex.salt, plain), text::hash("route", plain)] {
-                for bytes in [hash.to_le_bytes(), hash.to_be_bytes()] {
-                    assert!(
-                        !binary.windows(bytes.len()).any(|w| w == bytes),
-                        "the binary holds the hash of {plain}"
-                    );
-                }
-            }
-        }
-    }
-
     #[test]
     fn only_a_hit_the_start_did_not_hold_is_added() {
         let mut lex = Lexicon::default();
-        lex.names.insert(text::hash(&lex.salt, "u:ptr"));
+        lex.names.insert(salted::hash(&lex.salt, "u:ptr"));
         let allow = Allow::parse("");
         let start = "fn a() {}\nptr\n";
         assert!(added(&lex, &allow, "x.rs", Some(start), "fn b() {}\n\nptr\n").is_empty());
@@ -697,15 +631,15 @@ mod tests {
     fn identity_exception_preserves_known_addresses_and_shapes() {
         // All lexicon entries here are invented checker witnesses.
         let mut lex = Lexicon::default();
-        lex.addresses.insert(text::hash(&lex.salt, "w:AB12"));
+        lex.addresses.insert(salted::hash(&lex.salt, "w:AB12"));
         lex.fields
-            .insert(text::hash(&lex.salt, "f:Example.payload"));
+            .insert(salted::hash(&lex.salt, "f:Example.payload"));
         lex.codes.insert(
             0,
             ["Alpha", "Bravo", "Charlie"]
                 .into_iter()
                 .zip(0..)
-                .map(|(name, code)| (text::hash(&lex.salt, &text::normalise(name)), code))
+                .map(|(name, code)| (salted::hash(&lex.salt, &text::normalise(name)), code))
                 .collect(),
         );
         let leak = "0xAB12; struct Example { payload: u16 } enum Kind { Alpha, Bravo, Charlie }";
@@ -730,7 +664,7 @@ mod tests {
     fn name_lines(path: &str, src: &str) -> Vec<usize> {
         let mut lex = Lexicon::default();
         for name in ["non zero", "read wait"] {
-            lex.names.insert(text::hash(
+            lex.names.insert(salted::hash(
                 &lex.salt,
                 &format!("n:{}", text::normalise(name)),
             ));

@@ -15,6 +15,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
+use crate::salted;
 use crate::text::{self, Tok};
 
 const FILES: [&str; 4] = ["addresses", "names", "codes", "fields"];
@@ -34,7 +35,7 @@ pub struct Lexicon {
 
 impl Lexicon {
     pub fn has(&self, set: &HashSet<u64>, item: &str) -> bool {
-        set.contains(&text::hash(&self.salt, item))
+        set.contains(&salted::hash(&self.salt, item))
     }
 
     pub fn load(dir: &Path) -> Result<Self, String> {
@@ -331,7 +332,7 @@ impl Plain {
     pub fn write(&self, dir: &Path, salt: &str) -> Result<String, String> {
         fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
         let hashed = |set: &BTreeSet<String>| {
-            let mut v: Vec<u64> = set.iter().map(|s| text::hash(salt, s)).collect();
+            let mut v: Vec<u64> = set.iter().map(|s| salted::hash(salt, s)).collect();
             v.sort_unstable();
             v.dedup();
             v.iter().fold(String::new(), |mut out, h| {
@@ -344,7 +345,7 @@ impl Plain {
         for (names, table) in self.tables.values().filter(|t| t.len() >= 2).zip(0u32..) {
             kept = kept.saturating_add(1);
             for (name, code) in names {
-                let _ = writeln!(codes, "{table} {code} {:016x}", text::hash(salt, name));
+                let _ = writeln!(codes, "{table} {code} {:016x}", salted::hash(salt, name));
             }
         }
         let contents = [
@@ -357,7 +358,7 @@ impl Plain {
             fs::write(dir.join(file), body).map_err(|e| format!("{file}: {e}"))?;
         }
         let routes = self.routes.iter().fold(String::new(), |mut out, marker| {
-            let _ = writeln!(out, "{} {:016x}", marker.len(), text::hash(salt, marker));
+            let _ = writeln!(out, "{} {:016x}", marker.len(), salted::hash(salt, marker));
             out
         });
         fs::write(dir.join("routes"), routes).map_err(|e| format!("routes: {e}"))?;

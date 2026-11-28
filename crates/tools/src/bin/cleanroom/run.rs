@@ -786,7 +786,7 @@ mod tests {
     #[test]
     fn the_name_scan_answers_counts_lines_and_new_bytes_and_never_the_words() {
         let mut lex = Lexicon::default();
-        lex.names.insert(crate::text::hash(&lex.salt, "u:quux"));
+        lex.names.insert(crate::salted::hash(&lex.salt, "u:quux"));
         let request = "[[file]]\npath = \"a.rs\"\nhead = \"fn f() {}\\nlet quux = 1;\\n\"\n\n\
                        [[file]]\npath = \"b.rs\"\nhead = \"quux\\nnew\\n\"\n";
         let start = |path: &str| (path == "b.rs").then(|| "quux\n".to_owned());
