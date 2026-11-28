@@ -64,6 +64,7 @@ import time
 import tomllib
 import urllib.parse
 from http.server import BaseHTTPRequestHandler
+from typing import NamedTuple, TypedDict
 
 DEFAULT_BASE = "https://api.anthropic.com"
 PLACEHOLDER = "cleanroom-relay"
@@ -111,7 +112,12 @@ SCAN_PATH = re.compile(r"crates/clean/[A-Za-z0-9_./-]+")
 SCAN_ANSWER = re.compile(r"(\S+)\t([0-9]+)\t([0-9]+(?:,[0-9]+)*)?\t([0-9]+)")
 
 
-def scan_files(body: bytes) -> list[dict] | None:
+class ScanFile(TypedDict):
+    path: str
+    head: str
+
+
+def scan_files(body: bytes) -> list[ScanFile] | None:
     """The files of a scan request, or None when it is not one."""
     try:
         request = tomllib.loads(body.decode("utf-8"))
@@ -125,10 +131,10 @@ def scan_files(body: bytes) -> list[dict] | None:
                 or not all(isinstance(v, str) for v in f.values()) \
                 or not SCAN_PATH.fullmatch(f["path"]) or ".." in f["path"].split("/"):
             return None
-    return files
+    return [ScanFile(path=f["path"], head=f["head"]) for f in files]
 
 
-def asked(f: dict) -> str:
+def asked(f: ScanFile) -> str:
     return hashlib.sha256(json.dumps([f["path"], f["head"]]).encode()).hexdigest()
 
 
@@ -163,8 +169,8 @@ class Scanner:
                               capture_output=True, timeout=300)
         lines = done.stdout.decode("utf-8", "replace").splitlines()
         paths = [f["path"] for f in files]
-        answers = [SCAN_ANSWER.fullmatch(line) for line in lines]
-        if done.returncode not in (0, 1) or not all(answers) or [a[1] for a in answers] != paths:
+        answers = [a for line in lines if (a := SCAN_ANSWER.fullmatch(line))]
+        if done.returncode not in (0, 1) or len(answers) != len(lines) or [a[1] for a in answers] != paths:
             self.note(f"call {call}: the scanner failed: {done.stderr.decode('utf-8', 'replace')[:200]}")
             return 500, "the name scan failed"
         with self.lock:
@@ -222,7 +228,7 @@ class Repeated(ValueError):
     """A JSON object names a member twice."""
 
 
-def unique(pairs: list[tuple[str, object]]) -> dict:
+def unique(pairs: list[tuple[str, object]]) -> dict[str, object]:
     """A JSON object, refused when a member repeats: the relay checks the last value and the
     API might read the first."""
     keys = [k for k, _ in pairs]
@@ -277,12 +283,20 @@ def load_auth(path: str) -> tuple[dict[str, str], str | None]:
     return env, auth.get("apiKeyHelper")
 
 
-def upstream(env: dict[str, str]) -> urllib.parse.SplitResult:
+class Upstream(NamedTuple):
+    scheme: str
+    host: str
+    port: int | None
+    netloc: str
+    path: str
+
+
+def upstream(env: dict[str, str]) -> Upstream:
     url = urllib.parse.urlsplit(env.get("ANTHROPIC_BASE_URL", DEFAULT_BASE))
     if url.scheme not in ("https", "http") or not url.hostname or url.query or url.fragment \
             or url.username or url.password:
         sys.exit("box_relay: the base URL is not a plain http(s) URL")
-    return url
+    return Upstream(url.scheme, url.hostname, url.port, url.netloc, url.path)
 
 
 def box_env(auth: str, port: int) -> dict[str, str]:
@@ -381,7 +395,7 @@ def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str, s
                 self.send_error(400, "a folded header")
                 return
             if scanner and self.path == SCAN_TARGET:
-                self.scan()
+                self.scan(scanner)
                 return
             if self.command != "POST":
                 self.send_error(405, "not a method of the API")
@@ -411,7 +425,7 @@ def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str, s
             if dropped:
                 sys.stderr.write(f"box_relay: dropped headers {', '.join(dropped)}\n")
             headers.update(credential.headers())
-            conn = conn_type(base.hostname, base.port, timeout=600)
+            conn = conn_type(base.host, base.port, timeout=600)
             try:
                 # The request line holds the checked origin-form target alone, and Host is the
                 # configured host's, whatever the box wrote.
@@ -440,7 +454,7 @@ def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str, s
             finally:
                 conn.close()
 
-        def scan(self) -> None:
+        def scan(self, scanner: Scanner) -> None:
             length = int(self.headers.get("content-length") or 0)
             if self.command != "POST" or length < 0 or length > SCAN_BYTES or "transfer-encoding" in self.headers:
                 self.send_error(400, "a POST of a scan request of an explicit length only")
@@ -540,8 +554,8 @@ def image_ok(name: str, want: list[str]) -> bool:
     if seen.returncode != 0:
         return False
     layers, _, config = seen.stdout.partition("\n")
-    config = json.loads(config or "null") or {}
-    return json.loads(layers or "null") == want and not any(config.values())
+    settings = json.loads(config or "null") or {}
+    return json.loads(layers or "null") == want and not any(settings.values())
 
 
 def image(name: str) -> int:
