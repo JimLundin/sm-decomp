@@ -1293,6 +1293,45 @@ mod tests {
         assert!(lint.contains("missing documentation"), "{lint}");
     }
 
+    /// The capability rule end to end: a model that reads a file or changes an owner, applied,
+    /// linted in the box under the real `crates/clean/.clippy.toml`, and taken back.
+    #[test]
+    fn the_boxed_clippy_refuses_a_model_that_reaches_outside_its_process() {
+        for (tag, call, path) in [
+            (
+                "read",
+                "std::fs::read(\"/etc/passwd\").map_or(0, |b| b.len())",
+                "std::fs::read",
+            ),
+            (
+                "chown",
+                "usize::from(std::os::unix::fs::chown(\"/tmp/x\", Some(0), None).is_ok())",
+                "std::os::unix::fs::chown",
+            ),
+        ] {
+            let round = Round::new(&format!("capability-{tag}"));
+            let lib = format!(
+                "//! A crate.\n\n/// Reaches outside.\n#[must_use]\npub fn reach() -> usize {{\n    {call}\n}}\n"
+            );
+            let model = format!("{MODEL}/src/lib.rs");
+            let (import, before) = applied(&round, &[(&model, &lib)]);
+            let scratch = round.base.join("scratch");
+            fs::create_dir_all(&scratch).unwrap();
+            let refusal = import
+                .clippy(&scratch, &before, 1, &mut String::new())
+                .unwrap_err();
+            assert!(
+                refusal.contains("the capability rule refused"),
+                "{tag}: {refusal}"
+            );
+            assert!(
+                refusal.contains(&format!("disallowed method `{path}`")),
+                "{tag}: {refusal}"
+            );
+            assert_eq!(run(&round.repo, &["rev-parse", "HEAD"]).trim(), before);
+        }
+    }
+
     #[test]
     fn a_build_script_the_rules_miss_runs_in_the_box_and_writes_nothing_on_the_host() {
         let round = Round::new("escape");

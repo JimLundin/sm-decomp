@@ -64,6 +64,8 @@ disallowed-methods = [
   { path = "std::fs::remove_dir", reason = "a model writes no files" },
   { path = "std::fs::remove_dir_all", reason = "a model writes no files" },
   { path = "std::fs::set_permissions", reason = "a model writes no files" },
+  { path = "std::os::unix::fs::chown", reason = "a model writes no files" },
+  { path = "std::os::unix::fs::lchown", reason = "a model writes no files" },
   { path = "std::path::Path::exists", reason = "a model reads no files" },
   { path = "std::path::Path::try_exists", reason = "a model reads no files" },
   { path = "std::path::Path::is_file", reason = "a model reads no files" },

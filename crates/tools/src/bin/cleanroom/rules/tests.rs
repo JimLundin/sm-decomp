@@ -205,6 +205,8 @@ fn the_capability_rule_refuses_unix_sockets_symlinks_and_raw_descriptors() {
          let _ = std::os::unix::net::UnixDatagram::unbound();\n\
          let _ = std::os::unix::fs::symlink(\"/\", \"/tmp/b\");\n\
          let _ = std::fs::soft_link(\"/\", \"/tmp/c\");\n\
+         let _ = std::os::unix::fs::chown(\"/tmp/d\", Some(0), None);\n\
+         let _ = std::os::unix::fs::lchown(\"/tmp/e\", None, Some(0));\n\
          }\n\
          pub fn adopt<T: std::os::fd::FromRawFd>() -> T {\n\
          unsafe { T::from_raw_fd(3) }\n\
@@ -216,6 +218,8 @@ fn the_capability_rule_refuses_unix_sockets_symlinks_and_raw_descriptors() {
         "type `std::os::unix::net::UnixDatagram`",
         "method `std::os::unix::fs::symlink`",
         "method `std::fs::soft_link`",
+        "method `std::os::unix::fs::chown`",
+        "method `std::os::unix::fs::lchown`",
         "type `std::os::fd::FromRawFd`",
     ] {
         assert!(
