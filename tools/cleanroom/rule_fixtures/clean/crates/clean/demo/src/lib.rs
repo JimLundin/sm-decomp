@@ -104,3 +104,35 @@ mod tests {
         assert_eq!(super::TILE + 4, 20);
     }
 }
+
+/// Prose may quote `code` inline and wrap a list:
+/// - an item that runs on
+///   to a second line.
+// A plain comment may hold a fence:
+// ```
+//     indented();
+// ```
+//// So may a comment of four slashes:
+//// ```
+/*** And a block comment of three stars.
+    ```
+*/
+#[doc = "A plain doc attribute.\n\nIts second paragraph."]
+#[doc(hidden)]
+pub const FENCE: &str = "```";
+
+/// Steps, as a list:
+/// 1. The first, whose text runs on
+///    to a second line.
+///
+///    And a paragraph of its own.
+/// 2. The second.
+pub const STEPS: u8 = 2;
+
+macro_rules! documented {
+    ($name:ident, $text:literal) => {
+        #[doc = $text]
+        pub const $name: u8 = 0;
+    };
+}
+documented!(NONE, "No code here.\n\nNor here.");

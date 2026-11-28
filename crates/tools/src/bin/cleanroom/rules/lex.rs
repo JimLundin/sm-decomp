@@ -174,7 +174,17 @@ impl Cursor<'_> {
     }
 }
 
+/// A comment as written, delimiters included, with the line it starts on.
+pub struct Comment {
+    pub text: String,
+    pub line: usize,
+}
+
 pub fn tokens(src: &str, file: usize) -> Vec<Token> {
+    lex(src, file).0
+}
+
+pub fn lex(src: &str, file: usize) -> (Vec<Token>, Vec<Comment>) {
     let mut cur = Cursor {
         chars: src.chars().collect(),
         src,
@@ -187,17 +197,23 @@ pub fn tokens(src: &str, file: usize) -> Vec<Token> {
         line: 1,
     };
     let mut out: Vec<Token> = Vec::new();
+    let mut comments = Vec::new();
     while let Some(c) = cur.peek(0) {
         let start = cur.at;
         let line = cur.line;
         let kind = if c.is_whitespace() {
             cur.bump();
             continue;
-        } else if cur.starts_with("//") {
-            cur.line_comment();
-            continue;
-        } else if cur.starts_with("/*") {
-            cur.block_comment();
+        } else if cur.starts_with("//") || cur.starts_with("/*") {
+            if cur.starts_with("//") {
+                cur.line_comment();
+            } else {
+                cur.block_comment();
+            }
+            comments.push(Comment {
+                text: cur.slice(start).to_owned(),
+                line,
+            });
             continue;
         } else if let Some(prefix) = cur.raw_prefix() {
             cur.raw(prefix);
@@ -245,7 +261,7 @@ pub fn tokens(src: &str, file: usize) -> Vec<Token> {
             file,
         });
     }
-    out
+    (out, comments)
 }
 
 #[derive(Clone, Copy)]

@@ -1,0 +1,5 @@
+/*!
+A demo.
+
+    assert!(true);
+*/
