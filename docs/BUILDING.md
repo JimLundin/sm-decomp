@@ -11,13 +11,13 @@ cargo build --profile verify -p tools     # the verifiers: target/verify/tools
 python3 tools/lane/gate.py   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
 ```
 
-The tests are Quality's `cargo nextest run --locked --workspace --no-fail-fast`
-(`.github/workflows/quality.yml`), at the cargo-nextest version the home standards' `tools.env`
+The tests are CI's rust job's `cargo nextest run --locked --workspace --no-fail-fast`
+(`.github/workflows/ci.yml`), at the cargo-nextest version the home standards' `tools.env`
 pins. Nextest runs the test binaries and their tests at once across the cores, where `cargo test
 --workspace` runs the same tests one binary after another. `.config/nextest.toml` starts the
 longest test first, verify's check of the committed runs against the lock. The workspace has no
 doctests, which nextest would skip, so a crate that adds one also adds `cargo test --doc` to
-Quality.
+the rust job.
 
 The application currently refuses power-on with an explicit missing-production-owner result.
 Building it does not imply playable boot or whole-movie support. Use indexed scoped cases to
@@ -36,13 +36,14 @@ The oracle drives lsnes rr2-beta23 as a separate process and links no emulator c
 `tools engine-size target/release/super-metroid scenarios/engine-size.toml` reports the release
 binary's file size, its approximate stripped size and its section sizes against the committed
 baseline, with the largest crates and functions by code bytes. `--write` records the build as the
-new baseline. The Engine size job beside Quality builds `app` in its release profile and puts that
+new baseline. CI's engine-size job builds `app` in its release profile and puts that
 report in its job summary when the engine's inputs change and on scheduled and dispatched runs.
 No size fails it.
 
-CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
-the README) and verification jobs for the ROM content tests and the complete indexed replay
-baseline. [STATUS](STATUS.md) shows how to run them locally.
+CI (`.github/workflows/ci.yml`) runs the rules, rust and python jobs (format, the crate rules, doc
+links, the README, lints, tests and the Python tooling) and the replay and faults jobs for the ROM
+content tests, the complete indexed replay baseline and the planted faults, each when a path it
+reads changes. [STATUS](STATUS.md) shows how to run them locally.
 
 ## Run one verification check
 
@@ -63,7 +64,7 @@ receipt an unsharded check writes.
 
 Locally, `python3 tools/ci/replay.py case ID` builds the verifier from the checkout.
 Set `SM_CACHE`, `SM_ROM` and `SM_AUDIO_NATIVE` to the sources the case uses.
-For a library test, set its [fixture variables](../.github/workflows/verify.yml) to absolute
+For a library test, set its [fixture variables](../.github/workflows/ci.yml) to absolute
 paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the native search
 contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
 
@@ -134,8 +135,8 @@ rm -rf "$TEMP/collab/replay-data"
 python3 tools/ci/replay_data.py fetch rom/sm.smc "$TEMP/collab/replay-data"
 ```
 
-Then point the variables of `verify.yml`'s witness environment at it: `SM_CACHE` at its
-`cache` folder, `SM_AUDIO_NATIVE` and `SM_CONNECTED_SOURCE` at its `native` folder,
+Then point the variables of the replay job's witness environment in `ci.yml` at it: `SM_CACHE`
+at its `cache` folder, `SM_AUDIO_NATIVE` and `SM_CONNECTED_SOURCE` at its `native` folder,
 `SM_SEARCH_PACKET` at `native/native-search-inputs-v1`, `SM_TOUCH_PACKET` at
 `native/native-search-order-v1`, and the rest as that list names them.
 
@@ -164,7 +165,7 @@ request, so it never enters the box.
   group). The box needs nothing else changed on the host.
 - **The box is proven.** `cargo test -p tools --no-default-features --bin cleanroom the_box`
   runs the box on a probe export: it reads the export and nothing beside it, the checkout or the
-  decode notes. Quality runs the same test. Before each round the root runs
+  decode notes. CI's rust job runs the same test. Before each round the root runs
   `cargo cleanroom run --probe DOMAIN` on the real export and CLI.
 
 ### First run on the box
@@ -199,8 +200,8 @@ The tests hold each listed run to the lock and the stretches to the milestone's 
 moves a played run, its own commits change the run there and regenerate the README, and the root
 reviews the figures at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to
 the file.
-Quality runs `cargo run --locked -q -p tools --bin tools -- report --check`. The local source gate
-also checks the generated README through verify's library tests when its inputs change.
+CI's rules job runs `cargo run --locked -q -p tools --bin tools -- report --check`. The local
+source gate also checks the generated README through verify's library tests when its inputs change.
 
 ## Credits and licence
 

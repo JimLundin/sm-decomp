@@ -378,7 +378,7 @@ build is the authority. A cache of it, written with the `Canonical` codec to the
 directory and keyed by the ROM's SHA-256, the format's schema hash and the importer's revision,
 only saves time: any change to one of the three rebuilds it, and the content fingerprint checks
 it. The cache holds only the vanilla import; overlays (D15's packs) apply after it loads. It is
-never committed, and the Quality check that refuses ROM bytes covers it.
+never committed, and the CI check that refuses ROM bytes covers it.
 
 Loading time (T1) stays exact for vanilla content without the compressed layout leaving the
 edge: the importer gives each record a named load cost from the original's streams, and an

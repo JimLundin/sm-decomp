@@ -76,12 +76,12 @@ uses only `proc_macro` and the standard library.
 
 ### 4.2 Dependency rules (checked in CI)
 
-Quality checks the dependencies with `cargo deny check bans`: `deny.toml` denies each workspace
-crate to all but the crates [the table](../../crates/README.md) lets depend on it, which holds
-D1 through any path. Only the registry releases listed there can run build scripts. The workspace
-lints forbid `#![feature]`, `allow`, undeclared cfgs such as `cfg(verify)`, unsafe code and, with
-`crates/clean/.clippy.toml`, the clean crates' file, network, process and environment access.
-`cargo checks crate-rules` finds what no tool sees: probe or observer names in the engine,
+CI's rules job checks the dependencies with `cargo deny check bans`: `deny.toml` denies each
+workspace crate to all but the crates [the table](../../crates/README.md) lets depend on it, which
+holds D1 through any path. Only the registry releases listed there can run build scripts. The
+workspace lints forbid `#![feature]`, `allow`, undeclared cfgs such as `cfg(verify)`, unsafe code
+and, with `crates/clean/.clippy.toml`, the clean crates' file, network, process and environment
+access. `cargo checks crate-rules` finds what no tool sees: probe or observer names in the engine,
 SNES address literals (K1), `expect` in the engine (K8) and routine-label names (K9).
 
 ### 4.3 The trait budget

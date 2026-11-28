@@ -125,7 +125,7 @@ A batch holds at most one round.
 Land in the background, from the main checkout, with
 `python3 tools/lane/land.py NAME LANE... --title TITLE --body-file BODY`, the lanes in landing
 order and the body giving each change's commits, its review, evidence and ratchet deltas. It
-lands on `main` only by fast-forward, onto a head whose CI passed: Quality, content and replay.
+lands on `main` only by fast-forward, onto a head whose CI passed: every job its changes started.
 
 1. It picks each lane's commits that `origin/main` lacks onto `land/NAME`, in a worktree at
    `$TEMP/collab/land-NAME`. At a conflict it stops with exit 2. Resolve the conflict there,

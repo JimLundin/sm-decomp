@@ -1,18 +1,22 @@
 name: CI
 
-# The only entry point. Events call reusable proof workflows, then trusted main producers
-# retain recent clean caches after both workflows pass.
-#   quality.yml  formatting, lints, tests, the crate rules, the doc links and the engine's size (no ROM).
-#   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Full runs start Quality and verification independently. Manual runs can select one check.
-# Main pushes run Quality only, to refresh its clean build cache. tools/lane/land.py fast-forwards
-# main to a pull request head whose verification passed. verify/** runs verification only.
-# The nightly run does every job cold.
-# Called jobs report as "<caller job> / <job>", for example "verify / replay".
+# The only workflow. The changes job prints which path groups a pull request changed since main,
+# by tools/lane/changes.py's table, and each job runs only when its group changed. Scheduled and
+# dispatched runs start every job. Main pushes run rust, rules and python to refresh the clean
+# build cache. tools/lane/land.py fast-forwards main to a pull request head whose run passed; jobs
+# skipped by their condition leave the run's conclusion a success. The nightly run does every
+# job cold. A dispatched run with a target runs only that replay case or verify library test.
+#   rules     formatting, the dependency, crate and clean-room rules, doc links and the README.
+#   rust      clippy and the workspace tests.
+#   python    the Python tooling's type check and tests.
+#   adjusted  each Parameter entry's adjusted vector at the reference rules.
+#   engine    the release app's size against its baseline, in the job summary.
+#   replay    the required witnesses, indexed replay and the content tests against the ROM.
+#   faults    every planted replay fault in one selectable build.
 on:
   pull_request:
   push:
-    branches: [main, 'verify/**']
+    branches: [main]
   schedule:
     - cron: '17 2 * * *'
   workflow_dispatch:
@@ -31,28 +35,253 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  quality:
-    if: inputs.target == '' && (github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/'))
-    permissions:
-      contents: read
-    uses: ./.github/workflows/quality.yml
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      rust: ${{ steps.groups.outputs.rust }}
+      python: ${{ steps.groups.outputs.python }}
+      rom: ${{ steps.groups.outputs.rom }}
+      adjusted: ${{ steps.groups.outputs.adjusted }}
+      engine: ${{ steps.groups.outputs.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Find the path groups changed since main
+        id: groups
+        run: python3 tools/lane/changes.py ${{ github.event_name == 'pull_request' && 'origin/main' || '' }} >>"$GITHUB_OUTPUT"
 
-  verify:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/verify.yml
-    with:
-      target: ${{ inputs.target || '' }}
-    secrets:
-      SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
-      SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+  rules:
+    needs: changes
+    if: inputs.target == ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: quality
+      - name: Format
+        run: cargo fmt --check
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.22.0
+      - name: Hold the crate plan's dependency rules and build scripts
+        # ARCHITECTURE §4.2 and D1: deny.toml, from crates/README.md's table.
+        run: cargo deny --locked check bans
+      - name: Hold the crate plan's source rules
+        run: cargo checks crate-rules
+      - name: Hold the clean room's crate rules
+        run: cargo cleanroom check
+      - name: Keep every relative Markdown link and anchor valid
+        run: cargo checks doc-links
+      - name: Keep README.md what tools report --write generates
+        run: cargo run --locked -q -p tools --bin tools -- report --check
+
+  rust:
+    needs: changes
+    if: inputs.target == '' && (github.event_name == 'push' || needs.changes.outputs.rust == 'true')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: quality
+      - name: Lint the rebuild's crates
+        run: cargo clippy --locked --workspace --all-targets --no-deps
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest@0.9.152
+      - name: Test the rebuild's crates
+        run: cargo nextest run --locked --workspace --no-fail-fast
+      - name: Build the binaries the rules and python jobs run from this cache
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cargo build --locked -p tools --bin tools
+          cargo build --locked --profile verify -p tools --no-default-features --bin checks --bin cleanroom
+      - uses: ./.github/actions/cargo-save
+        with:
+          cache: quality
+
+  python:
+    needs: changes
+    if: inputs.target == '' && (github.event_name == 'push' || needs.changes.outputs.python == 'true')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the Python tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fault-tools"
+          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: mypy==2.4.1 -r tools/fault-requirements.txt
+      - name: Type-check the Python tooling
+        run: |
+          "$RUNNER_TEMP/fault-tools/bin/mypy"
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: quality
+      - name: Build the tools binary the oracle tests run
+        run: cargo build --locked -p tools --bin tools
+      - name: Test the tools
+        run: SM_TOOLS="$PWD/target/debug/tools" "$RUNNER_TEMP/fault-tools/bin/python" tools/run_tests.py
+
+  adjusted:
+    needs: changes
+    if: inputs.target == '' && github.event_name != 'push' && needs.changes.outputs.adjusted == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: quality
+      - name: Require each adjusted vector to fail at the reference rules
+        # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
+        # answer depends on the value it changes.
+        run: python3 tools/cleanroom/adjusted_vectors_run.py
+
+  engine-size:
+    needs: changes
+    if: inputs.target == '' && github.event_name != 'push' && needs.changes.outputs.engine == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: engine-size
+      - name: Report the engine's size against its baseline
+        # The report never fails the run. The tools binary builds in the dev profile, which takes
+        # half the time a fat-LTO release build of it would.
+        run: |
+          cargo build --locked --release -p app
+          cargo run --locked -q -p tools --bin tools -- engine-size target/release/super-metroid scenarios/engine-size.toml >>"$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cargo-save
+        with:
+          cache: engine-size
+
+  replay:
+    needs: changes
+    if: github.event_name != 'push' && needs.changes.outputs.rom == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: replay
+      - &rom
+        name: Fetch the encrypted ROM
+        uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: rom
+          persist-credentials: false
+      # The ignored rom folder keeps the ci-data checkout out of the faults' inputs.
+      # replay_data.py decrypts the ROM and checks it, then installs the record cache and the
+      # native fixtures from their one pinned asset as replay-data/cache and replay-data/native.
+      - &replay_data
+        name: Decrypt the ROM and install the replay data
+        env:
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: python3 tools/ci/replay_data.py fetch --sealed-rom rom/payload.enc rom/sm.smc "$RUNNER_TEMP/replay-data"
+      - name: Run one verification library test
+        if: contains(inputs.target, '::')
+        env: &witness_env
+          VERIFY_TEST: ${{ inputs.target }}
+          SM_ROM: ${{ github.workspace }}/rom/sm.smc
+          SM_SEARCH_PACKET: ${{ runner.temp }}/replay-data/native/native-search-inputs-v1
+          SM_SEARCH_RECEIPT: ${{ runner.temp }}/search-receipt.toml
+          SM_SEARCH_FAULT_RECEIPT: ${{ runner.temp }}/search-fault-control.toml
+          SM_TOUCH_PACKET: ${{ runner.temp }}/replay-data/native/native-search-order-v1
+          SM_TOUCH_RECEIPT: ${{ runner.temp }}/search-touch-receipt.toml
+          SM_CACHE: ${{ runner.temp }}/replay-data/cache
+          SM_CONNECTED_SOURCE: ${{ runner.temp }}/replay-data/native
+          SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
+          SM_AUDIO_NATIVE: ${{ runner.temp }}/replay-data/native
+        run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
+      - name: Build the shared replay command
+        if: inputs.target == ''
+        run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
+      - name: Play the M0 room alone from its seed
+        # Diagnostic: prints the cuts held and where the run stopped, by cut and field name only.
+        if: inputs.target == 'played'
+        run: |
+          for start in 0 6; do
+            cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
+              chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/replay-data/cache" --rom rom/sm.smc \
+              --lock scenarios/locks/lsnes.toml
+          done
+      - name: Check the required witnesses and indexed replay against the reviewed baseline
+        if: inputs.target == ''
+        env: *witness_env
+        run: python3 tools/ci/replay.py baseline "$RUNNER_TEMP/replay-receipt.toml"
+      - name: Check one indexed replay case against the reviewed baseline
+        if: inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
+        env:
+          CARGO_INCREMENTAL: "1"
+          REPLAY_CASE: ${{ inputs.target }}
+        run: |
+          SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
+            python3 tools/ci/replay.py case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
+      # data::room's Morph Ball Room test returns early without the ROM, so the content tests run
+      # in this job, after the replay steps so that a replay failure doesn't hide their results
+      # and theirs doesn't hide the replay's.
+      - name: Test the rebuild's content decoders and importers against the ROM
+        if: ${{ !cancelled() && inputs.target == '' }}
+        run: cargo test --locked -p data -p import --no-fail-fast
+      - name: Reproduce a verification failure on this revision
+        if: failure()
+        run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
+      - uses: ./.github/actions/cargo-save
+        with:
+          cache: replay
+
+  faults:
+    needs: changes
+    if: inputs.target == '' && github.event_name != 'push' && needs.changes.outputs.rom == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      # tools/check_mutants.py rewrites only the copied sources that differ, so Cargo rebuilds what changed.
+      - uses: ./.github/actions/cargo-restore
+        with:
+          cache: faults
+          path: target/selectable-faults
+      - *rom
+      - *replay_data
+      - name: Install the Rust parser for selectable replay faults
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fault-tools"
+          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: -r tools/fault-requirements.txt
+      - name: Build one selectable replay binary and check every fault
+        env:
+          CARGO_INCREMENTAL: "1"
+        run: |
+          SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
+            "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
+      - uses: ./.github/actions/cargo-save
+        with:
+          cache: faults
+          path: target/selectable-faults
 
   retain-caches:
     # Only main runs receive cache deletion permission, after all proof passes. A failure here
     # leaves old caches in place and does not fail the run.
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.verify.result) }}
-    needs: [quality, verify]
+    needs: [rules, rust, python, adjusted, engine-size, replay, faults]
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && needs.rust.result == 'success' }}
     continue-on-error: true
     runs-on: ubuntu-24.04
     permissions:

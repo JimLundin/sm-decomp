@@ -670,11 +670,12 @@ does not say where a fault is caught, so a fault caught at another cut or field 
 still counts. A fresh fault-free process must then reproduce the complete clean receipt,
 including its digest and counts. The [fault checker](BUILDING.md#run-the-replay-faults) prints the hashes of all
 three receipts. Each fault's `before` text must match its
-file exactly once, so a refactor that moves or duplicates a patched line fails Quality's
-fault-runner test and local manifest validation before any fault build. Full pull-request, scheduled and manual CI
-run every fault. A push to main runs none, because the landing fast-forwards main to a
-pull-request head whose faults passed. The supported responsibility
-inventory comes from the index and reviewed baseline, so omitting an owner fails the check.
+file exactly once, so a refactor that moves or duplicates a patched line fails the python job's
+fault-runner test and local manifest validation before any fault build. Scheduled and manual
+CI, and pull requests that change a path the faults read, run every fault. A push to main runs
+none, because the landing fast-forwards main to a pull-request head whose faults passed. The
+supported responsibility inventory comes from the index and reviewed baseline, so omitting an owner
+fails the check.
 Weapons and contact have separate faults in their shared case. The played run's faults are
 listed under Frames played alone.
 

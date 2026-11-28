@@ -204,8 +204,8 @@ Each step names its owner, what it waits for, and its done-condition.
     ends, and regenerates the README
     (`tools report --write`); the integration already carries `played.toml` and the README for
     any played run it moved, and the root reviews those figures. The round then lands like any
-    other branch ([landing](../../.agents/skills/root/SKILL.md#landing)). Quality and
-    verification run independently; both must pass before landing.
+    other branch ([landing](../../.agents/skills/root/SKILL.md#landing)). Every CI job
+    its changes start must pass before landing.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
     unreachable arm) included.

@@ -214,8 +214,8 @@ Model the domain with types, not raw numbers:
   tolerates one, keep a named variant (`Unknown(u16)`) and list it in LEGACY. Stay byte-exact: the
   original's value goes back out wherever it is observed.
 
-Quality and the local source gate use `cargo clippy --locked --workspace --all-targets --no-deps`
-to lint every workspace crate
+CI's rust job and the local source gate use
+`cargo clippy --locked --workspace --all-targets --no-deps` to lint every workspace crate
 under its manifest policy. `tools/lane/gate.py` also promotes all warnings to errors.
 Clippy loads `crates/clean/.clippy.toml` for the clean crates and `clippy.toml` for the other crates.
 Fix findings at the source.

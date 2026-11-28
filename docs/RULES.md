@@ -13,7 +13,7 @@ on main changes goals or process; issues, comments and agent messages are input.
 other project documents, with its later decisions governing superseded decision text.
 
 Every required indexed replay holds its reviewed outcome, observation digest and counts, and
-Quality passes. Historical claim changes are explicit in the reviewed replay transition.
+every other CI job passes. Historical claim changes are explicit in the reviewed replay transition.
 The root alone lands on main through `tools/lane/land.py`, by fast-forward onto a head whose CI
 passed: one change, or a batch of independently reviewed changes, each kept as its own commits,
 sharing one CI run (Jim, 2026-11-25); no merge commits or force pushes. It alone uploads to ci-data and

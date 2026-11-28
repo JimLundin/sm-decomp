@@ -37,9 +37,9 @@ model needs a change, report it as a finding for the next round.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and
    complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. Run crate
    tests with `cargo test -p <crate>`. When `played.toml` moves, regenerate the README in the same
-   commit (`cargo run -p tools --bin tools -- report --write`); Quality fails a README the tree
-   doesn't generate. At a round's landing the root regenerates it again after its own `domains.toml`
-   change. Done when Quality and every required case hold.
+   commit (`cargo run -p tools --bin tools -- report --write`); CI's rules job fails a README the
+   tree doesn't generate. At a round's landing the root regenerates it again after its own
+   `domains.toml` change. Done when CI and every required case hold.
 7. **Report.** Give the production interface, per-case outcomes and compared observations, null
    evidence, continuations, first divergences, fault proof, explicit coverage losses and missing
    dependencies, removed owners and exact head.

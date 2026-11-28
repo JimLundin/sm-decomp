@@ -1,0 +1,27 @@
+name: Save the cargo build
+description: >-
+  On main runs with no single target, records the commit the build comes from and saves the
+  cargo registry and the build as the family's cache for this revision.
+inputs:
+  cache:
+    description: The cache family the job's cargo-restore named
+    required: true
+  path:
+    description: The build folder the family holds
+    default: target
+runs:
+  using: composite
+  steps:
+    - name: Record the commit the build comes from
+      if: github.ref == 'refs/heads/main' && !github.event.inputs.target
+      shell: bash
+      run: python3 tools/ci/mtimes.py record
+    - name: Save the cargo registry and the build
+      if: github.ref == 'refs/heads/main' && !github.event.inputs.target
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ${{ inputs.path }}
+        key: cargo-${{ inputs.cache }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}

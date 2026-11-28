@@ -65,7 +65,8 @@ crate takes its line there. The source rules of
 [§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci) are the workspace
 lints (no `cfg(verify)`, `#![feature]` or `allow`) and `cargo checks crate-rules` (no probe or
 observer in the engine, no SNES address literal in `game`, `runtime` or `app`, no `expect` in
-the engine, and no routine-label names). CI runs both in Quality.
+the engine, and no routine-label names). CI runs the lints in its rust job and the crate rules
+in its rules job.
 
 Cargo checks registry downloads against the checksums in `Cargo.lock`.
 [`deny.toml`](../deny.toml) lists the versions permitted to run a build script.
