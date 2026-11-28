@@ -34,8 +34,6 @@ class Gate(unittest.TestCase):
         self.fake("deny", self.bin / "cargo-deny")
         self.fake("self_tests", self.repo / "tools/lane/self_tests.sh")
         self.fake("verify_lib", self.repo / "tools/lane/run_tests.sh")
-        self.fake("crate_rules", self.repo / "tools/check_crate_rules.sh")
-        self.fake("doc_links", self.repo / "tools/check_doc_links.sh")
         for name, script in (("faults", "tools/check_mutants.py"), ("owners", "tools/cleanroom/adjusted_vectors_run.py"),
                              ("prereview", "tools/lane/prereview.py")):
             (self.repo / script).write_text(FAKE_PYTHON.format(ran=str(self.ran), name=name))
@@ -47,6 +45,12 @@ class Gate(unittest.TestCase):
         path.chmod(0o755)
 
     def fake(self, name: str, path: Path) -> None:
+        if name == "cargo":
+            name = '$(case "$*" in *crate-rules*) echo crate_rules ;; *doc-links*) echo doc_links ;; *) echo cargo ;; esac)'
+            self.executable(path, f'#!/bin/sh\nname={name}\necho >"{self.ran}/$name"\n'
+                                  'eval "out=\\${GATE_TEST_OUT_$name-} status=\\${GATE_TEST_STATUS_$name:-0}"\n'
+                                  '[ -z "$out" ] || echo "$out"\nexit "$status"\n')
+            return
         self.executable(path, f'#!/bin/sh\necho >"{self.ran}/{name}"\n'
                               f'[ -z "${{GATE_TEST_OUT_{name}-}}" ] || echo "$GATE_TEST_OUT_{name}"\n'
                               f'exit "${{GATE_TEST_STATUS_{name}:-0}}"\n')

@@ -63,11 +63,12 @@ set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float a
 between workspace crates, so `data`, `game` and `runtime` reach no `import` by any path. A new
 crate takes its line there. The source rules of
 [§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci) are the workspace
-lints (no `cfg(verify)`, `#![feature]` or `allow`) and `tools/check_crate_rules.sh` (no probe or
+lints (no `cfg(verify)`, `#![feature]` or `allow`) and `cargo checks crate-rules` (no probe or
 observer in the engine, no SNES address literal in `game`, `runtime` or `app`, no `expect` in
 the engine, and no routine-label names). CI runs both in Quality.
 
 Cargo checks registry downloads against the checksums in `Cargo.lock`.
 [`deny.toml`](../deny.toml) lists the versions permitted to run a build script.
-[`check_crate_rules.sh`](../tools/check_crate_rules.sh) checks that those scripts come from crates.io.
+[`cargo checks crate-rules`](tools/src/bin/checks/crate_rules.rs) checks that those scripts come
+from crates.io.
 Clean-room exports take their locked sources along for offline builds.

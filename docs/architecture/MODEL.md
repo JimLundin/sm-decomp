@@ -460,7 +460,7 @@ shares one object store and every ref, so a sparse checkout is not enough. So:
   crate's `Cargo.toml`. They contain **no address, bank, RAM, ROM-code or original routine name
   anywhere, comments included**; the scans refuse one. `data` stays on the observer side and
   turns ROM bytes into the clean types at the edge. `deny.toml` holds the dependency rule and
-  `tools/check_crate_rules.sh` refuses SNES address literals in `game`, `runtime` and `app`,
+  `cargo checks crate-rules` refuses SNES address literals in `game`, `runtime` and `app`,
   both in CI.
 - **No addresses where an implementer can see them.** `Source:` lines live only in the observer's
   decode notes. The spec carries behaviour ids, rules, parameters and vectors. The catalogue

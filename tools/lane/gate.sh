@@ -144,12 +144,12 @@ if [ -n "$deny" ]; then
 else
   deny=; echo 0 >"$O/deny.status"
 fi
-start crate-rules bash tools/check_crate_rules.sh
+start crate-rules sh -c '"$0" cleanroom check && "$0" checks crate-rules' "$R/cargo"
 # The self-tests of the clean-room and lane tools, only for what this branch changes since main.
 # They run beside the builds, not after them: most of their load is their own (the import test's
 # cold build), so waiting for the builds only adds the builds' time; their timeouts allow for it.
 CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh "$BASE"
-start doc-links sh tools/check_doc_links.sh
+start doc-links "$R/cargo" checks doc-links
 # What verify's lib tests read: the README and the report it measures (the crates, the specs and
 # their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
 # The tools crate's tests run with them, since its replay code map must name the index's rules.

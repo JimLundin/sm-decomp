@@ -65,7 +65,9 @@ jobs:
         # ARCHITECTURE §4.2 and D1: deny.toml, from crates/README.md's table.
         run: cargo deny --locked check bans
       - name: Hold the crate plan's source rules
-        run: bash tools/check_crate_rules.sh
+        run: cargo checks crate-rules
+      - name: Hold the clean room's crate rules
+        run: cargo cleanroom check
       - name: Test the clean-room and lane tools
         # Main pushes, scheduled and dispatched main runs test them all; any other ref only those
         # whose subject it changes since main (tools/lane/self_tests.sh).
@@ -73,7 +75,7 @@ jobs:
           if [ "$GITHUB_REF" = refs/heads/main ]; then bash tools/lane/self_tests.sh
           else bash tools/lane/self_tests.sh origin/main; fi
       - name: Keep every relative Markdown link and anchor valid
-        run: sh tools/check_doc_links.sh
+        run: cargo checks doc-links
       - name: Keep README.md what tools report --write generates
         run: cargo run --locked -q -p tools --bin tools -- report --check
       - name: Test the tools

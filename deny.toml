@@ -67,7 +67,7 @@ deny = [
   { crate = "vector_file", wrappers = ["audio_transport", "boss_ceres_ridley", "enemy_interactions", "game_random", "game_time", "interface_hud", "run_progress", "samus_appearance", "samus_health", "samus_movement", "save_files", "screens_arrival", "screens_blackout", "screens_boot", "screens_discovery", "screens_explosion", "screens_file_select", "screens_flashback", "screens_flight", "screens_intro", "screens_options", "screens_playback", "screens_title", "screens_zebes", "weapons_projectiles", "world_blocks", "world_camera", "world_doors", "world_haze", "world_quake"], reason = "MODEL §4: the clean models' vector tests read their vector files through it" },
 ]
 
-# Only these versions may run a build script. check_crate_rules.sh requires a crates.io source.
+# Only these versions may run a build script. `cargo checks crate-rules` requires a crates.io source.
 [bans.build]
 allow-build-scripts = ["proc-macro2@1.0.107", "quote@1.0.47", "serde@1.0.229", "serde_core@1.0.229"]
 include-workspace = true

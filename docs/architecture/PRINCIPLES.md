@@ -49,7 +49,7 @@ every Tick and kept the engine RAM-shaped.)
 decoded typed State. Engine code has no probes, observers or verify cfgs, and no field exists only
 because the oracle has a byte.
 *How we know:* `deny.toml` (no engine crate reaches `verify`), the forbidden `unexpected_cfgs`,
-`check_crate_rules.sh`'s name scan; and for a new field, "which engine rule reads this?"
+`cargo checks crate-rules`'s name scan; and for a new field, "which engine rule reads this?"
 
 **P7. One mechanism per job, and one path per responsibility.** One interpreter, one State schema,
 one Checkpoint codec, one projection per stream, one digest, one decoder, one encoder, one runner. A
@@ -124,7 +124,8 @@ landing (ARCHITECTURE D24). Every TAS movie syncs with all behaviours on.
 
 **K1. No addresses in engine code.** Program places are labels, and content is referred to by ID. ROM
 and RAM addresses appear only in `data`'s import tables and in verification.
-*How we know:* `tools/check_crate_rules.sh` rejects SNES address literals in `game`, `runtime` and `app`.
+*How we know:* `cargo checks crate-rules` rejects SNES address literals in `game`, `runtime` and
+`app`.
 
 **K2. Make invalid states unrepresentable, including progress through time.** A routine that spans
 Ticks is an explicit typed cursor: no async, no generators, no flag that means "half done".
@@ -169,7 +170,7 @@ types have no hand-written codec impls.
   misfires is dropped from the workspace set with its reason recorded there, never silenced at a site.
 
 *Jim (2026-11-05):* "the strictest, most idiomatic Rust possible"; stable, because unstable features
-churn. *How we know:* `Cargo.toml`, `rust-toolchain.toml` and `tools/check_crate_rules.sh` (no
+churn. *How we know:* `Cargo.toml`, `rust-toolchain.toml` and `cargo checks crate-rules` (no
 `expect` in the engine), in CI.
 
 **K9. A modern reader can understand the code without the original.** Names come from the domain:

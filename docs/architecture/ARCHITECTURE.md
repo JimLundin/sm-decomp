@@ -81,7 +81,7 @@ crate to all but the crates [the table](../../crates/README.md) lets depend on i
 D1 through any path. Only the registry releases listed there can run build scripts. The workspace
 lints forbid `#![feature]`, `allow`, undeclared cfgs such as `cfg(verify)`, unsafe code and, with
 `crates/clean/.clippy.toml`, the clean crates' file, network, process and environment access.
-`tools/check_crate_rules.sh` greps what no tool sees: probe or observer names in the engine,
+`cargo checks crate-rules` finds what no tool sees: probe or observer names in the engine,
 SNES address literals (K1), `expect` in the engine (K8) and routine-label names (K9).
 
 ### 4.3 The trait budget

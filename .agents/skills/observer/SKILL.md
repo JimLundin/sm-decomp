@@ -48,7 +48,7 @@ engine's current code for your domain.
    integrator could locate the records and wire the declared replay comparisons from the note.
 7. **Read it as the adversary will.** Look for routine-named headings, a step list that follows
    a routine, an enum ordered like a RAM code, and a word the lexicon flags. Run
-   `bash tools/cleanroom/scan.sh` on the spec and vectors, and `bash tools/check_doc_links.sh`.
+   `bash tools/cleanroom/scan.sh` on the spec and vectors, and `cargo checks doc-links`.
    Done when both report 0.
 8. **Commit** and push your branch. Report: scope, units, the
    vectors (recorded and constructed), the reference model's agreement, the scan, open questions,
