@@ -70,36 +70,30 @@ class ReplayEntrypoints(unittest.TestCase):
         }
 
     def run_script(self, *args: str, **statuses: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(["bash", *args], cwd=ROOT, env=self.env | statuses, capture_output=True,
+        return subprocess.run([sys.executable, "tools/ci/replay.py", *args], cwd=ROOT, env=self.env | statuses, capture_output=True,
                               text=True, check=False)
 
     def calls(self) -> list[list[str]]:
         return [line.split(SEPARATOR) for line in self.log.read_text().splitlines()]
 
 
-class SharedEntrypoint(ReplayEntrypoints):
-    def test_checks_the_baseline_after_the_transition_claims(self) -> None:
-        self.assertEqual(self.run_script("tools/ci/replay.sh").returncode, 0)
-        self.assertEqual(self.calls(), [TRANSITION, [*CHECK, "--all", *INPUTS]])
+class CaseEntrypoint(ReplayEntrypoints):
+    def test_checks_one_case_after_the_transition_claims(self) -> None:
+        case = "blocks/missing-requests"
+        self.assertEqual(self.run_script("case", case).returncode, 0)
+        self.assertEqual(self.calls(), [TRANSITION, [*CHECK, "--case", case, *INPUTS]])
 
     def test_propagates_the_check_status(self) -> None:
-        self.assertEqual(self.run_script("tools/ci/replay.sh", REPLAY_STATUS="17").returncode, 17)
+        self.assertEqual(self.run_script("case", "blocks/missing-requests", REPLAY_STATUS="19").returncode, 19)
 
     def test_stops_at_a_failed_transition_check(self) -> None:
-        self.assertEqual(self.run_script("tools/ci/replay.sh", TRANSITION_STATUS="23").returncode, 23)
+        self.assertEqual(self.run_script("case", "blocks/missing-requests", TRANSITION_STATUS="23").returncode, 23)
         self.assertEqual(self.calls(), [TRANSITION])
-
-    def test_checks_one_case(self) -> None:
-        case = "blocks/missing-requests"
-        self.assertEqual(self.run_script("tools/ci/replay.sh", "--case", case).returncode, 0)
-        self.assertEqual(self.calls(), [TRANSITION, [*CHECK, "--case", case, *INPUTS]])
-        failed = self.run_script("tools/ci/replay.sh", "--case", case, REPLAY_STATUS="19")
-        self.assertEqual(failed.returncode, 19)
 
 
 class ParallelEntrypoint(ReplayEntrypoints):
     def run_parallel(self, **statuses: str) -> subprocess.CompletedProcess[str]:
-        return self.run_script("tools/ci/replay_parallel.sh", str(self.receipt), **statuses)
+        return self.run_script("baseline", str(self.receipt), **statuses)
 
     def test_merges_every_shard_after_one_transition_check(self) -> None:
         self.assertEqual(self.run_parallel().returncode, 0)

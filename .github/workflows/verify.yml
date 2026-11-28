@@ -92,7 +92,7 @@ jobs:
       - name: Check the required witnesses and indexed replay against the reviewed baseline
         if: inputs.target == ''
         env: *witness_env
-        run: bash tools/ci/replay_parallel.sh "$RUNNER_TEMP/replay-receipt.toml"
+        run: python3 tools/ci/replay.py baseline "$RUNNER_TEMP/replay-receipt.toml"
       - name: Check one indexed replay case against the reviewed baseline
         if: inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
         env:
@@ -101,7 +101,7 @@ jobs:
         run: |
           SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
-            bash tools/ci/replay.sh --case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
+            python3 tools/ci/replay.py case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
       # data::room's Morph Ball Room test returns early without the ROM, so the content tests run
       # in this job, after the replay steps so that a replay failure doesn't hide their results
       # and theirs doesn't hide the replay's.
