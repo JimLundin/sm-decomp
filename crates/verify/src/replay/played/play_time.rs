@@ -109,6 +109,7 @@ mod continuous {
     ) -> BTreeMap<&'a str, (u64, u64)> {
         let root = sources.lock.ancestors().nth(3).unwrap();
         let mut rows = open_rows(sources, lock, BOOT).unwrap();
+        let mut seeds = crate::report::seeds::Seeds::new(root);
         let mut bounds = BTreeMap::new();
         let mut previous_end: Option<u64> = None;
         for pinned in pinned_rows {
@@ -121,7 +122,7 @@ mod continuous {
             assert_eq!(pinned.cuts[0], 0);
             assert!(pinned.cuts[1] < row.frames.0);
             Cache::open(&sources.cache, row).unwrap();
-            let first = crate::report::seeds::first_frame(root, row).unwrap();
+            let first = seeds.first_frame(row).unwrap();
             let last = first.checked_add(pinned.cuts[1]).unwrap();
             if let Some(previous_end) = previous_end {
                 assert_eq!(first, previous_end.checked_add(1).unwrap());

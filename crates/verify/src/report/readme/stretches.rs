@@ -152,7 +152,7 @@ mod tests {
     use super::{Issue, STRETCHES, Stretch, stretches, table};
     use crate::report::readme::milestone::{Milestone, seed};
     use crate::report::readme::{Run, from_start, passing};
-    use crate::report::seeds::seed_frame;
+    use crate::report::seeds::Seeds;
 
     /// The repository root, from this crate's manifest.
     fn root() -> &'static std::path::Path {
@@ -167,7 +167,7 @@ mod tests {
                     .end()
                     .map(|(capture, index)| (capture.to_owned(), index))
             })
-            .and_then(|(capture, index)| seed_frame(root(), &capture, index));
+            .and_then(|(capture, index)| Seeds::new(root()).frame(&capture, index));
         assert!(ends.is_ok(), "{ends:?}");
         ends.unwrap_or_default()
     }
@@ -279,8 +279,8 @@ mod tests {
             ("Rooms 1 to 5", "any-boundary:1"),
             ("Ridley's room", "any-boundary:6"),
         ] {
-            let seeded =
-                seed(opened_by).and_then(|(capture, index)| seed_frame(root(), capture, index));
+            let seeded = seed(opened_by)
+                .and_then(|(capture, index)| Seeds::new(root()).frame(capture, index));
             let first = all
                 .iter()
                 .find(|stretch| stretch.name == name)

@@ -14,7 +14,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use self::milestone::Milestone;
-use super::seeds::{first_frame, following, row_movie, seed_frame};
+use super::seeds::{Seeds, row_movie};
 use super::{COMMAND, read};
 use crate::lock::{Lock, Row, RowId, Start};
 use crate::replay::played::declarations::{Listed, Listing, PATH as PLAYED};
@@ -59,39 +59,44 @@ impl Run {
 /// # Errors
 ///
 /// Why the file, the lock or a seed can't be read, or the first run the lock contradicts.
-fn runs(root: &Path, movie: &str) -> Result<Vec<Run>, String> {
-    listed(root, &Listed::read(root)?, movie)
+fn runs(root: &Path, seeds: &mut Seeds, movie: &str) -> Result<Vec<Run>, String> {
+    let runs = Listed::read(root)?;
+    listed(&lock(root)?, seeds, &runs, movie)
 }
 
-/// Checks the reviewed runs against the lock under `root`.
-fn listed(root: &Path, listed: &Listed, movie: &str) -> Result<Vec<Run>, String> {
+/// The lock under `root`.
+fn lock(root: &Path) -> Result<Lock, String> {
+    Lock::parse(&read(&root.join(LOCK))?).map_err(|e| format!("{LOCK}: {e}"))
+}
+
+/// Checks the reviewed runs against `lock`.
+fn listed(
+    lock: &Lock,
+    seeds: &mut Seeds,
+    listed: &Listed,
+    movie: &str,
+) -> Result<Vec<Run>, String> {
     if listed.movie != movie {
         return Err(format!(
             "{PLAYED}: the runs play {}, not the milestone's {movie}",
             listed.movie
         ));
     }
-    let lock = Lock::parse(&read(&root.join(LOCK))?).map_err(|e| format!("{LOCK}: {e}"))?;
     listed
         .run
         .iter()
-        .map(|listing| checked(root, &lock, movie, listing))
+        .map(|listing| checked(lock, seeds, movie, listing))
         .collect()
-}
-
-/// The movie frame of the seed `index` of `capture`.
-fn frame_at(root: &Path, (capture, index): (&str, u32)) -> Result<u64, String> {
-    seed_frame(root, capture, index)
 }
 
 /// The cuts that follow `row`'s cut 0 back to back, reached as far as past cut `wanted`: its
 /// own, and those of the rows that follow it with no frame between, from whichever capture of
 /// the movie.
-fn reach(root: &Path, lock: &Lock, row: &Row, wanted: u64) -> Result<u64, String> {
+fn reach(lock: &Lock, seeds: &mut Seeds, row: &Row, wanted: u64) -> Result<u64, String> {
     let mut cuts = row.frames.0;
     let mut last = row;
     while cuts <= wanted
-        && let Some(next) = following(root, lock, last)?
+        && let Some(next) = seeds.following(lock, last)?
     {
         cuts = cuts.saturating_add(next.frames.0);
         last = next;
@@ -100,7 +105,7 @@ fn reach(root: &Path, lock: &Lock, row: &Row, wanted: u64) -> Result<u64, String
 }
 
 /// `listing` as a run, when the lock agrees with every figure it states.
-fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<Run, String> {
+fn checked(lock: &Lock, seeds: &mut Seeds, movie: &str, listing: &Listing) -> Result<Run, String> {
     let wrong = |what: String| {
         format!(
             "{PLAYED}: {} from cut {}: {what}",
@@ -113,8 +118,8 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
     if row_movie(row) != Some(movie) {
         return Err(wrong(format!("not a row of the {movie} movie")));
     }
-    let first = first_frame(root, row)?;
-    let cuts = reach(root, lock, row, listing.end)?;
+    let first = seeds.first_frame(row)?;
+    let cuts = reach(lock, seeds, row, listing.end)?;
     if listing.end >= cuts {
         return Err(wrong(format!(
             "asks for cuts {} to {}, outside the {cuts} it can play back to back",
@@ -271,8 +276,10 @@ fn headline(runs: &[Run], total: u64, started: u64) -> String {
 /// contradicts.
 pub(super) fn page(root: &Path) -> Result<String, String> {
     let milestone = Milestone::read(root)?;
-    let total = frame_at(root, milestone.end()?)?;
-    let runs = runs(root, &milestone.movie)?;
+    let mut seeds = Seeds::new(root);
+    let (capture, index) = milestone.end()?;
+    let total = seeds.frame(capture, index)?;
+    let runs = runs(root, &mut seeds, &milestone.movie)?;
     let stretches = stretches::stretches(
         &read(&root.join(stretches::STRETCHES))?,
         &milestone.movie,
@@ -310,7 +317,7 @@ pub(super) fn page(root: &Path) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        Listed, MOVIE, PLAYED, Run, cell_frames, from_start, headline, passing, percent,
+        Listed, MOVIE, PLAYED, Run, Seeds, cell_frames, from_start, headline, passing, percent,
         power_on_bar,
     };
 
@@ -354,14 +361,14 @@ mod tests {
         Some(())
     }
 
-    fn listed(root: &std::path::Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
-        super::listed(root, &Listed::parse(text)?, movie)
-    }
-
     #[test]
     fn the_committed_runs_agree_with_the_lock() {
         let (root, text, file) = committed();
-        let runs = listed(&root, &text, "any");
+        let lock = super::lock(&root).unwrap();
+        let mut seeds = Seeds::new(&root);
+        let mut listed =
+            |text: &str| super::listed(&lock, &mut seeds, &Listed::parse(text)?, "any");
+        let runs = listed(&text);
         assert!(runs.as_ref().is_ok_and(|runs| !runs.is_empty()), "{runs:?}");
         let count = file
             .get("run")
@@ -369,7 +376,7 @@ mod tests {
             .map_or(0, Vec::len);
         assert_eq!(runs.as_ref().map(Vec::len), Ok(count));
         // The file written back unchanged lists the same runs, so a fault below is its figure.
-        assert_eq!(listed(&root, &file.to_string(), "any"), runs);
+        assert_eq!(listed(&file.to_string()), runs);
         // Each fault changes one declaration. The shared reader checks outcome consistency,
         // and the report checks the row and movie coordinates against the lock.
         let faults: [(&str, Fault); 10] = [
@@ -425,10 +432,7 @@ mod tests {
                 .collect();
             assert_ne!(planted, [], "{fault} fits no run");
             for (index, planted) in planted {
-                assert!(
-                    listed(&root, &planted, "any").is_err(),
-                    "run {index}: {fault}"
-                );
+                assert!(listed(&planted).is_err(), "run {index}: {fault}");
             }
         }
         let mut other = file;
@@ -436,7 +440,7 @@ mod tests {
             String::from("movie"),
             toml::Value::String(String::from("100")),
         );
-        assert!(listed(&root, &other.to_string(), "any").is_err());
+        assert!(listed(&other.to_string()).is_err());
     }
 
     #[test]

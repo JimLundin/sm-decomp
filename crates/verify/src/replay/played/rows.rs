@@ -16,6 +16,8 @@ struct Chain<'a> {
     lock: &'a Lock,
     /// The repository, whose tables of seeds give their movie frames.
     root: &'a Path,
+    /// The movie frames of the repository's seeds.
+    seeds: seeds::Seeds<'a>,
     /// Each row reached so far, with the run's cut its own cut 0 is.
     reached: Vec<(u64, &'a Row)>,
 }
@@ -28,6 +30,7 @@ impl<'a> Chain<'a> {
         Ok(Self {
             lock,
             root,
+            seeds: seeds::Seeds::new(root),
             reached: vec![(0, row)],
         })
     }
@@ -48,7 +51,9 @@ impl<'a> Chain<'a> {
                     .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
                 return Ok((place, own));
             }
-            let following = seeds::following(self.root, self.lock, row)
+            let following = self
+                .seeds
+                .following(self.lock, row)
                 .map_err(|_| data_failure(Some(cut), "played seed frames"))?
                 .ok_or_else(|| data_failure(Some(cut), "played row continuing the last row"))?;
             self.reached.push((next, following));

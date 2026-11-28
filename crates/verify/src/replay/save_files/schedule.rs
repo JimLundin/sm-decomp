@@ -137,7 +137,8 @@ impl SaveSchedule {
                     .ancestors()
                     .nth(3)
                     .ok_or_else(|| data_failure(None, "battery lock path"))?;
-                first = seeds::first_frame(root, row)
+                first = seeds::Seeds::new(root)
+                    .first_frame(row)
                     .map_err(|_| data_failure(Some(step.cut), "battery seed frame"))?;
                 cache = open(row)?;
             }
