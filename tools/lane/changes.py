@@ -23,11 +23,15 @@ GROUPS: dict[str, tuple[str, ...]] = {
     "rom": (
         "crates", "!crates/app", "!crates/vector_file", *BUILD, ".cargo", "scenarios", "movies", "tools/ci",
         "tools/check_mutants.py", "tools/selectable_faults.py", "tools/mutants.toml", "tools/fault-requirements.txt",
-        "docs/architecture/domains.toml",
+        "docs/architecture/domains.toml", "docs/behaviours", "tools/check_replay_transition.py",
     ),
-    "adjusted": ("docs/behaviours", "scenarios/vectors", "crates/clean", *BUILD, "tools/cleanroom/adjusted_*"),
+    "adjusted": (
+        "docs/behaviours", "scenarios/vectors", "crates/clean", "crates/vector_file", *BUILD,
+        "tools/cleanroom/adjusted_*",
+    ),
     "engine": (
-        "crates/app", "crates/game", "crates/runtime", "crates/data", "crates/clean", *BUILD,
+        "crates/app", "crates/game", "crates/runtime", "crates/data", "crates/clean", "crates/canonical",
+        "crates/canonical_derive", *BUILD,
         "crates/tools/src/engine_size*", "scenarios/engine-size.toml",
     ),
 }
