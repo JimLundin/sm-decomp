@@ -1,5 +1,5 @@
 //! The lag log `tools/lsnes_lag_log.lua` writes: after a magic and a version, one record a movie
-//! frame, in order from frame 1, of little-endian words. A log runs to hundreds of thousands of
+//! frame, at least one, in order from frame 1, of little-endian words. A log runs to hundreds of thousands of
 //! frames, too many for a TOML table a frame. A diagnostic names a record, never its contents.
 
 const MAGIC: &[u8; 8] = b"SMLAGLOG";
@@ -40,6 +40,9 @@ pub(super) fn parse(bytes: &[u8]) -> Result<Vec<LagFrame>, String> {
     if !rest.is_empty() {
         return Err(format!("{} bytes after the last whole record", rest.len()));
     }
+    if records.is_empty() {
+        return Err("no frames".to_owned());
+    }
     records
         .iter()
         .zip(1u32..)
@@ -48,29 +51,41 @@ pub(super) fn parse(bytes: &[u8]) -> Result<Vec<LagFrame>, String> {
 }
 
 fn decode(record: &[u8; RECORD], expected: u32) -> Result<LagFrame, String> {
-    let (frame, words) = record.split_first_chunk::<4>().ok_or("short record")?;
-    if u32::from_le_bytes(*frame) != expected {
+    let [
+        f0,
+        f1,
+        f2,
+        f3,
+        c0,
+        c1,
+        n0,
+        n1,
+        l0,
+        l1,
+        g0,
+        g1,
+        r0,
+        r1,
+        x0,
+        x1,
+        y0,
+        y1,
+    ] = *record;
+    if u32::from_le_bytes([f0, f1, f2, f3]) != expected {
         return Err(format!("record {expected}: not movie frame {expected}"));
     }
-    let word = |index: usize| {
-        words
-            .as_chunks::<2>()
-            .0
-            .get(index)
-            .map_or(0, |pair| u16::from_le_bytes(*pair))
-    };
-    let lagged = match word(2) {
+    let lagged = match u16::from_le_bytes([l0, l1]) {
         0 => false,
         1 => true,
         _ => return Err(format!("record {expected}: lag flag is neither 0 nor 1")),
     };
     Ok(LagFrame {
-        frame_counter: word(0),
-        nmi_counter: word(1),
+        frame_counter: u16::from_le_bytes([c0, c1]),
+        nmi_counter: u16::from_le_bytes([n0, n1]),
         lagged,
-        game_state: word(3),
-        room: word(4),
-        x: word(5),
-        y: word(6),
+        game_state: u16::from_le_bytes([g0, g1]),
+        room: u16::from_le_bytes([r0, r1]),
+        x: u16::from_le_bytes([x0, x1]),
+        y: u16::from_le_bytes([y0, y1]),
     })
 }

@@ -349,6 +349,7 @@ fn a_lag_log_of_another_version_order_or_length_is_refused_without_its_contents(
         (&order[..], "record 1: not movie frame 1"),
         (&lag[..], "record 1: lag flag is neither 0 nor 1"),
         (short, "17 bytes after the last whole record"),
+        (&good[..10], "no frames"),
     ] {
         assert_eq!(lag_log::parse(bytes).unwrap_err(), expected);
     }
