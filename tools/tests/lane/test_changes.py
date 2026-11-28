@@ -71,6 +71,16 @@ KINDS = FrozenOrderedDict({
         FrozenList((".github/actions/cargo-restore/action.yml",)),
         EVERY_GROUP,
     ),
+    "the tools lock": (FrozenList(("tools/uv.lock",)), EVERY_GROUP),
+    "the tools project": (FrozenList(("tools/pyproject.toml",)), EVERY_GROUP),
+    "the tools action": (
+        FrozenList((".github/actions/tools/action.yml",)),
+        EVERY_GROUP,
+    ),
+    "the build dating tool": (
+        FrozenList(("tools/src/sm_tools/ci/shell/mtimes.py",)),
+        EVERY_GROUP,
+    ),
     "this table": (
         FrozenList(("tools/src/sm_tools/lane/core/changes.py",)),
         EVERY_GROUP,

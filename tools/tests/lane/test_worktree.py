@@ -145,3 +145,16 @@ def test_a_lane_links_the_seed_build(fixture: Fixture) -> None:
 def test_sm_seed_copy_copies_the_seed_build(fixture: Fixture) -> None:
     check_lane(fixture, "copied", {"SM_SEED_COPY": "1"})
 
+
+def test_a_changed_build_configuration_rebuilds_everything(
+    fixture: Fixture,
+) -> None:
+    (fixture.seed / "target/.seeded").touch()
+    _ = (fixture.repo / "Cargo.toml").write_text("[workspace]\n")
+    _ = fixture.git("add", "Cargo.toml")
+    _ = fixture.git("commit", "-q", "-m", "configure")
+    out = fixture.add("configured", "main", {})
+    assert "Cargo.toml changed since" in out
+    path = fixture.tmp / "configured"
+    rlib = path / "target/debug/deps/x.rlib"
+    assert newer(path / "same.rs", rlib), "an unchanged source looks built"

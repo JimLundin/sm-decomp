@@ -8,7 +8,8 @@ USAGE = """usage: changes [BASE]
 Prints GROUP=true or GROUP=false for each path group of CI's jobs: true when a path of the group
 changed since BASE, committed or in the working tree. Without BASE every group is true. A pattern
 is a path, the folder it names, or a glob; one starting with ! leaves its paths out of the group.
-The workflow, its actions and this tool count for every group."""
+The workflow, its actions, this tool, the build dating tool and the tools project count for every
+group, since every job that builds installs the tools to date its sources."""
 
 LANE = "tools/src/sm_tools/lane"
 EVERY = FrozenList((
@@ -16,6 +17,10 @@ EVERY = FrozenList((
     f"{LANE}/core/changes.py",
     f"{LANE}/shell/changes.py",
     "tools/src/sm_tools/shell/process.py",
+    "tools/src/sm_tools/ci/core/mtimes.py",
+    "tools/src/sm_tools/ci/shell/mtimes.py",
+    "tools/pyproject.toml",
+    "tools/uv.lock",
 ))
 BUILD = FrozenList(("Cargo.toml", "Cargo.lock", "rust-toolchain.toml"))
 RUST = FrozenList((
@@ -50,12 +55,9 @@ GROUPS = FrozenOrderedDict({
         ".cargo",
         "scenarios",
         "movies",
-        "tools/ci",
         "tools/src/sm_tools/ci",
         "tools/src/sm_tools/faults",
         "tools/mutants.toml",
-        "tools/pyproject.toml",
-        "tools/uv.lock",
         "docs/architecture/domains.toml",
         "docs/behaviours",
     )),
@@ -67,8 +69,6 @@ GROUPS = FrozenOrderedDict({
         *BUILD,
         "tools/cleanroom/adjusted_*",
         "tools/src/sm_tools/cleanroom/*/adjusted_vectors_run.py",
-        "tools/pyproject.toml",
-        "tools/uv.lock",
     )),
     "engine": FrozenList((
         "crates/app",

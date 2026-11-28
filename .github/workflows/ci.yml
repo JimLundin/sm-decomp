@@ -117,7 +117,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/tools
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
@@ -138,7 +137,6 @@ jobs:
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
-      - uses: ./.github/actions/tools
       - name: Require each adjusted vector to fail at the reference rules
         # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
         # answer depends on the value it changes.
@@ -172,7 +170,6 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/tools
       - uses: ./.github/actions/cargo-restore
         with:
           cache: replay
@@ -258,7 +255,6 @@ jobs:
           cache: faults
           path: target/selectable-faults
       - *rom
-      - uses: ./.github/actions/tools
       - *replay_data
       - name: Build one selectable replay binary and check every fault
         env:

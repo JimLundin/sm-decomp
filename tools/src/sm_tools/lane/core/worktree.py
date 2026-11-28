@@ -8,10 +8,10 @@ add: a lane worktree on a new branch, its target/ taking the build of the seed, 
 $SM_SEED_DIR (default $TEMP/sm-seed) built at main the way lanes build. The build is hard-linked
 (copied where links fail or with SM_SEED_COPY=1), and the dep-info files cargo rewrites in place
 are copied. The lane's tracked files are dated 2000-01-01 and those that differ from the seed's
-commit are touched, so only what they feed rebuilds.
+commit are touched, so only what they feed rebuilds. When a build configuration file differs, such
+as a Cargo.toml, Cargo.lock or build.rs, every tracked file is touched, as mtimes restore does.
 
 seed: builds the one seed at origin/main (the root, off-hours)."""
-OLD = 946684800
 LOCKS = FrozenList((".cargo-lock", ".cargo-build-lock", ".cargo-artifact-lock"))
 SEEDED = "target/.seeded"
 SEED_FOLDER = "sm-seed"
@@ -27,10 +27,6 @@ SEED_BUILD = FrozenList((
     "verify",
     "--no-run",
 ))
-
-
-def names(listing: str) -> FrozenList[str]:
-    return FrozenList(name for name in listing.split("\0") if name)
 
 
 def rewritten_in_place(parts: Sequence[str], suffix: str) -> bool:

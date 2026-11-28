@@ -55,6 +55,8 @@ SUITES = FrozenOrderedDict({
         FrozenList((
             f"{LANE}/core/worktree.py",
             f"{LANE}/shell/worktree.py",
+            "tools/src/sm_tools/ci/core/mtimes.py",
+            "tools/src/sm_tools/ci/shell/mtimes.py",
             PROCESS,
             SCRATCH,
         ))

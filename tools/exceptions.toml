@@ -352,3 +352,28 @@ reason = "runs docker by name from PATH, as cleanroom run does"
 path = "src/sm_tools/cleanroom/shell/box_relay.py"
 rule = "unused"
 reason = "http.server and socketserver read the handler's hooks and settings and the server's daemon_threads by name"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/mtimes.py"
+rule = "banned-api"
+reason = "the build dating shell reads argv and the working directory, runs git and dates the checkout's files for the core"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/mtimes.py"
+rule = "print"
+reason = "the build dating shell prints the line the core makes for what it touched"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/mtimes.py"
+rule = "suspicious-subprocess-import"
+reason = "runs git by name from PATH with fixed arguments to list, compare and fetch commits"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/mtimes.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs git by name from PATH with fixed arguments to list, compare and fetch commits"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/mtimes.py"
+rule = "start-process-with-partial-path"
+reason = "runs git by name from PATH with fixed arguments to list, compare and fetch commits"

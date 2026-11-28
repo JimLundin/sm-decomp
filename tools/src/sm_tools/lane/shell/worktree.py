@@ -5,29 +5,21 @@ import sys
 from pathlib import Path
 lazy from collections.abc import Sequence
 
-from ordered import FrozenList
-
+from sm_tools.ci.shell.mtimes import date_since
 from sm_tools.lane.core.worktree import (
     GATE,
     LOCKS,
-    OLD,
     SEED_BUILD,
     SEED_FOLDER,
     SEEDED,
     USAGE,
     cold,
-    names,
     rewritten_in_place,
     seed_built,
     seeded,
 )
 from sm_tools.lane.shell.scratch import scratch
 from sm_tools.shell.process import git, git_out
-
-
-def tracked(path: Path, *arguments: str) -> FrozenList[Path]:
-    listed = git(*arguments[:1], "-z", *arguments[1:], cwd=path).stdout
-    return FrozenList(path / name for name in names(listed))
 
 
 def link_debug(seed: Path, target: Path) -> bool:
@@ -67,15 +59,6 @@ def take_build(seed: Path, target: Path) -> str:
     return how
 
 
-def date_sources(path: Path, seed_commit: str) -> None:
-    for file in tracked(path, "ls-files"):
-        if file.is_symlink() or file.exists():
-            os.utime(file, (OLD, OLD), follow_symlinks=False)
-    for file in tracked(path, "diff", "--name-only", seed_commit, "HEAD", "--"):
-        if file.exists():
-            os.utime(file)
-
-
 def add(branch: str, path: Path, base: str, seed: Path, repo: Path) -> int:
     added = git(
         "worktree", "add", "-q", "-b", branch, str(path), base, cwd=repo
@@ -96,9 +79,10 @@ def add(branch: str, path: Path, base: str, seed: Path, repo: Path) -> int:
         print(cold(str(seed)))
         return 0
     how = take_build(seed, path / "target")
-    date_sources(path, commit.stdout.strip())
+    dated = date_since(path, commit.stdout.strip())
     short = git("rev-parse", "--short", "HEAD", cwd=seed).stdout.strip()
     print(seeded(how, short))
+    print(dated)
     return 0
 
 

@@ -1,8 +1,9 @@
 name: Restore the cargo build
 description: >-
-  Installs the repository toolchain and restores the cargo registry and a build cache family,
-  then dates the sources so Cargo rebuilds only what changed since the build's recorded commit.
-  A build folder other than target compiles its own copy of the sources, so they stay undated.
+  Installs the Python tools and the repository toolchain and restores the cargo registry and a
+  build cache family, then dates the sources so Cargo rebuilds only what changed since the build's
+  recorded commit. A build folder other than target compiles its own copy of the sources, so they
+  stay undated. Later steps of the job can run the tools.
   Scheduled and dispatched main runs with no single target stay cold, so the build they save is clean.
 inputs:
   cache:
@@ -14,6 +15,7 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: ./.github/actions/tools
     - name: Install the repository toolchain
       shell: bash
       run: rustup toolchain install
@@ -33,4 +35,4 @@ runs:
     - name: Date the sources the restored build compiled
       if: steps.cache.outputs.cache-matched-key != '' && inputs.path == 'target'
       shell: bash
-      run: python3 tools/ci/mtimes.py restore
+      run: uv run --project tools --locked mtimes restore
