@@ -8,7 +8,7 @@ Credits and licences for the tools and data the project uses are [below](#credit
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
-python3 tools/lane/gate.py   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
+uv run --locked --project tools gate     # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
 ```
 
 The tests are CI's rust job's `cargo nextest run --locked --workspace --no-fail-fast`
@@ -146,8 +146,8 @@ at its `cache` folder, `SM_AUDIO_NATIVE` and `SM_CONNECTED_SOURCE` at its `nativ
 `SM_SEARCH_PACKET` at `native/native-search-inputs-v1`, `SM_TOUCH_PACKET` at
 `native/native-search-order-v1`, and the rest as that list names them.
 
-**The seed** is the warm build new lanes start from: `python3 tools/lane/worktree.py seed` once, and
-again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
+**The seed** is the warm build new lanes start from: `uv run --locked --project tools worktree seed`
+once, and again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
 **The clean room.** `cargo cleanroom export` writes exports under `$CLEANROOM_ROOT` (default
 `/cleanroom`, outside the home), and `cargo cleanroom run` starts a session on one in a box: a
@@ -176,15 +176,15 @@ request, so it never enters the box.
 
 ### First run on the box
 
-1. `python3 tools/lane/gate.py` prints `GATE OK`, and `python3 -m unittest discover -s tools/lane`
-   passes.
-2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.py` plays them
-   all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree has no `rom/`).
-   Each `PLAYED` line shows the observed and reviewed counts and outcomes. The test passes
-   when every run holds:
+1. `uv run --locked --project tools gate` prints `GATE OK`, and
+   `uv run --locked --project tools pytest tools/tests/lane` passes.
+2. The played runs reproduce `scenarios/replay/played.toml`: `uv run --locked --project tools
+   played` plays them all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree
+   has no `rom/`). Each `PLAYED` line shows the observed and reviewed counts and outcomes. The test
+   passes when every run holds:
 
    ```sh
-   SM_ROM=$PWD/rom/sm.smc python3 tools/lane/played.py
+   SM_ROM=$PWD/rom/sm.smc uv run --locked --project tools played
    ```
 
 ## The README

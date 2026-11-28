@@ -11,11 +11,12 @@ for startup reading. Engineering tasks do not load the round procedure unless th
 
 ## Set up
 
-1. `git fetch -q origin && python3 tools/lane/worktree.py add <branch> <path> <base>`, with the base
-   your brief names. It hard-links the build state of the seed, one worktree at `$TEMP/sm-seed`
-   built at main, so your first build compiles only what your base changes since the seed, and
-   your `target/` costs disk only for what you rebuild. Without a seed it says so and your first
-   build is cold. It dates your tracked files 2000-01-01; that is how unchanged ones stay built.
+1. `git fetch -q origin && uv run --locked --project tools worktree add <branch> <path> <base>`,
+   with the base your brief names. It hard-links the build state of the seed, one worktree at
+   `$TEMP/sm-seed` built at main, so your first build compiles only what your base changes since
+   the seed, and your `target/` costs disk only for what you rebuild. Without a seed it says so
+   and your first build is cold. It dates your tracked files 2000-01-01; that is how unchanged
+   ones stay built.
 2. Done when `git log -1` shows your base and `git status` is clean.
 
 ## Your role
@@ -39,14 +40,14 @@ role skill your brief names. For engineering work, follow the task route in AGEN
 
 ## Prove it
 
-- For every commit, run `python3 tools/lane/gate.py` until it prints `GATE OK <hash> <branch>`. It
-  runs verify's lib tests (the report, the README and the played runs), the planted faults' manifest validation,
-  the rule owners and the clean-room and lane tools' self-tests only when your branch changes their
-  subject since `SM_GATE_BASE` (origin/main unless set; a stacked branch sets its base), and
-  `cargo deny` where cargo-deny is installed. A failing check names its finding. When a gate on
-  this machine already passed the same tree over the same base with the same tools, it prints
-  `GATE REUSED` naming that pass and runs only the review findings; `SM_GATE_FRESH=1` runs it
-  anyway.
+- For every commit, run `uv run --locked --project tools gate` until it prints
+  `GATE OK <hash> <branch>`. It runs verify's lib tests (the report, the README and the played
+  runs), the planted faults' manifest validation, the rule owners and the clean-room and lane tools'
+  self-tests only when your branch changes their subject since `SM_GATE_BASE` (origin/main unless
+  set; a stacked branch sets its base), and `cargo deny` where cargo-deny is installed. A failing
+  check names its finding. When a gate on this machine already passed the same tree over the same
+  base with the same tools, it prints `GATE REUSED` naming that pass and runs only the review
+  findings; `SM_GATE_FRESH=1` runs it anyway.
 - Tests: `cargo test -p <crate>... [-- <libtest args>]` runs the named crates' tests. The replay
   tests execute recorded cases, so build them optimised with `CARGO_PROFILE_TEST_OPT_LEVEL=3`.
 - Behaviour: run the affected indexed cases, then the complete required replay baseline as
@@ -77,7 +78,7 @@ under the commit rules above.
 - Kill only processes you started, by PID. Delete your own build outputs.
 - The root alone uploads to ci-data and posts to issues.
 - `gh` can hang: wrap a short `gh` query in `timeout 120`.
-- Don't block on long work. Run builds, `gate.py`, replays and `gh run watch` in the background
+- Don't block on long work. Run builds, the gate, replays and `gh run watch` in the background
   (the shell tool's background mode): the harness notifies you when the command exits. For "wait
   until X", run one background `until <check>; do sleep 30; done` covering success and failure
   (and a log line, a finished run or an exited PID). Never `sleep` in the foreground or poll in a
@@ -93,9 +94,9 @@ under the commit rules above.
   set `TEMP` to a folder on the same disk file system as your worktrees
   ([BUILDING](../../../docs/BUILDING.md#setting-up-on-linux)), so the seed's hard links work.
 - The seed is the one shared build state, about one lane's size. The root refreshes it at main
-  off-hours with `python3 tools/lane/worktree.py seed`, when no lane is being set up and no lane's
-  tests are running. Artifacts a refresh replaces stay on disk while a lane still links them, so
-  remove finished lanes. Never point two worktrees at one target directory: cargo judges
+  off-hours with `uv run --locked --project tools worktree seed`, when no lane is being set up and
+  no lane's tests are running. Artifacts a refresh replaces stay on disk while a lane still links
+  them, so remove finished lanes. Never point two worktrees at one target directory: cargo judges
   freshness by each worktree's source times, so one lane can run what the other built.
 - Never judge liveness by file age or wipe a shared scratch folder.
 - GitHub Free runs 20 jobs at once across all repositories. Push a head once and let its CI finish

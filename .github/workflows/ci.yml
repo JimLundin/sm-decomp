@@ -1,9 +1,9 @@
 name: CI
 
 # The only workflow. The changes job prints which path groups a pull request changed since main,
-# by tools/lane/changes.py's table, and each job runs only when its group changed. Scheduled and
+# by the changes tool's table, and each job runs only when its group changed. Scheduled and
 # dispatched runs start every job. Main pushes run rust, rules and python to refresh the clean
-# build cache. tools/lane/land.py fast-forwards main to a pull request head whose run passed; jobs
+# build cache. The land tool fast-forwards main to a pull request head whose run passed; jobs
 # skipped by their condition leave the run's conclusion a success. The nightly run does every
 # job cold. A dispatched run with a target runs only that replay case or verify library test.
 #   rules     formatting, the dependency, crate and clean-room rules, doc links and the README.
@@ -47,9 +47,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: ./.github/actions/tools
       - name: Find the path groups changed since main
         id: groups
-        run: python3 tools/lane/changes.py ${{ github.event_name == 'pull_request' && 'origin/main' || '' }} >>"$GITHUB_OUTPUT"
+        run: uv run --project tools --locked changes ${{ github.event_name == 'pull_request' && 'origin/main' || '' }} >>"$GITHUB_OUTPUT"
 
   rules:
     needs: changes

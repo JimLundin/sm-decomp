@@ -123,8 +123,8 @@ its own commits, in an order where each applies onto the one before, sharing the
 A batch holds at most one round.
 
 Land in the background, from the main checkout, with
-`python3 tools/lane/land.py NAME LANE... --title TITLE --body-file BODY`, the lanes in landing
-order and the body giving each change's commits, its review, evidence and ratchet deltas. It
+`uv run --locked --project tools land NAME LANE... --title TITLE --body-file BODY`, the lanes in
+landing order and the body giving each change's commits, its review, evidence and ratchet deltas. It
 lands on `main` only by fast-forward, onto a head whose CI passed: every job its changes started.
 
 1. It picks each lane's commits that `origin/main` lacks onto `land/NAME`, in a worktree at
@@ -132,9 +132,9 @@ lands on `main` only by fast-forward, onto a head whose CI passed: every job its
    reading every hunk, run `git cherry-pick --continue`, then the same command again. It skips
    a commit that `main` already has, as the same patch, under the same author, date and subject,
    or as a pick that changes nothing.
-2. It runs `tools/lane/gate.py` there. A gate that already passed the same tree over the same
-   base with the same tools, a lane's included, prints `GATE REUSED` and runs nothing, and the
-   landing may rest on that pass (Jim, 2026-11-25). The PR's CI still runs every check.
+2. It runs `uv run --locked --project tools gate` there. A gate that already passed the same tree
+   over the same base with the same tools, a lane's included, prints `GATE REUSED` and runs nothing,
+   and the landing may rest on that pass (Jim, 2026-11-25). The PR's CI still runs every check.
 3. It pushes `land/NAME`, opens its PR, retrying `gh pr create`, and stops when no PR opens. It
    waits for the CI run on the pushed head, polling through gh and fetch failures until it times
    out, then fast-forwards `main` to that head.

@@ -31,7 +31,7 @@ and from oracle measurements made beforehand, not found by editing until the dif
 vectors before its code lands.
 
 **P3. Keep what is proven; rebuild what is not.** Independent oracle capture, pinned records, `[exact]` refactors,
-LEGACY, meaningful mutants and `land.py` remain. Previous executable gameplay is removed;
+LEGACY, meaningful mutants and the land tool remain. Previous executable gameplay is removed;
 reviewed services remain by responsibility. Indexed replay uses the actual production entry.
 
 **P4. Observable hardware behaviour is part of the model. Replay limits are explicit.** The Tick is
@@ -216,8 +216,8 @@ Model the domain with types, not raw numbers:
 
 CI's rust job and the local source gate use
 `cargo clippy --locked --workspace --all-targets --no-deps` to lint every workspace crate
-under its manifest policy. `tools/lane/gate.py` also promotes all warnings to errors.
-Clippy loads `crates/clean/.clippy.toml` for the clean crates and `clippy.toml` for the other crates.
-Fix findings at the source.
+under its manifest policy. `uv run --locked --project tools gate` also promotes all warnings to
+errors. Clippy loads `crates/clean/.clippy.toml` for the clean crates and `clippy.toml` for the
+other crates. Fix findings at the source.
 
 Shared check, documentation and data rules are in [RULES](../RULES.md#authority-and-shared-guardrails).

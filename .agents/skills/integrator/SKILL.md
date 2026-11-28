@@ -26,12 +26,12 @@ model needs a change, report it as a finding for the next round.
 4. **Prove them.** Run each required case through its declared end, including the null control and
    available complete checkpoint continuations. Use role-authorised fault tooling to demonstrate
    the exact first failing cut and field. Play every reviewed played run in one call,
-   `python3 tools/lane/played.py` (or name the runs: `<row>` or `<row>/<start>-<end>`): one build,
-   one load, each run's held cuts and stop checked against `scenarios/replay/played.toml`, and a
-   nonzero exit naming any that differs. When your work moves a run, change its `held` and `stop`
-   there in your own commit (Jim, 2026-11-25): full CI holds every run to the file, and the root
-   reviews the figures at landing. Record measured results for the reviewed baseline;
-   approval of changed requirements is separate from generating them.
+   `uv run --locked --project tools played` (or name the runs: `<row>` or `<row>/<start>-<end>`):
+   one build, one load, each run's held cuts and stop checked against
+   `scenarios/replay/played.toml`, and a nonzero exit naming any that differs. When your work moves
+   a run, change its `held` and `stop` there in your own commit (Jim, 2026-11-25): full CI holds
+   every run to the file, and the root reviews the figures at landing. Record measured results for
+   the reviewed baseline; approval of changed requirements is separate from generating them.
 5. **Remove replaced execution.** Delete redundant owners, State copies, fallbacks and tests in
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and

@@ -14,10 +14,10 @@ other project documents, with its later decisions governing superseded decision 
 
 Every required indexed replay holds its reviewed outcome, observation digest and counts, and
 every other CI job passes. Historical claim changes are explicit in the reviewed replay transition.
-The root alone lands on main through `tools/lane/land.py`, by fast-forward onto a head whose CI
-passed: one change, or a batch of independently reviewed changes, each kept as its own commits,
-sharing one CI run (Jim, 2026-11-25); no merge commits or force pushes. It alone uploads to ci-data and
-posts to issues; lanes publish only their own branch
+The root alone lands on main with `uv run --locked --project tools land`, by fast-forward onto a
+head whose CI passed: one change, or a batch of independently reviewed changes, each kept as its own
+commits, sharing one CI run (Jim, 2026-11-25); no merge commits or force pushes. It alone uploads to
+ci-data and posts to issues; lanes publish only their own branch
 ([landing](../.agents/skills/root/SKILL.md#landing)). The landing removes the landed lanes'
 worktrees and branches. Text is UTF-8/LF.
 

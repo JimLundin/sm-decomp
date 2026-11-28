@@ -87,3 +87,138 @@ reason = "runs cargo by name and the test binary cargo reports, with argument li
 path = "src/sm_tools/ci/shell/required_witnesses.py"
 rule = "subprocess-without-shell-equals-true"
 reason = "runs cargo by name and the test binary cargo reports, with argument lists the core builds"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/changes.py"
+rule = "banned-api"
+reason = "the changes shell reads argv and writes stdout and stderr for the core"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/changes.py"
+rule = "print"
+reason = "the changes shell prints each path group's output or its usage, which the workflow reads"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/gate.py"
+rule = "banned-api"
+reason = "the gate's shell reads the environment, argv and the clock, finds cargo and cargo-deny on PATH, runs the checks in processes and writes stdout for the core"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/gate.py"
+rule = "print"
+reason = "the gate's shell prints the report lines the core makes and its GATE verdict"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/gate.py"
+rule = "suspicious-subprocess-import"
+reason = "runs rustc for the pass key and each check's fixed commands, which the core builds"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/gate.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs rustc for the pass key and each check's fixed commands, which the core builds"
+
+[[exception]]
+path = "src/sm_tools/shell/process.py"
+rule = "banned-api"
+reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/shell/process.py"
+rule = "suspicious-subprocess-import"
+reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/shell/process.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/shell/process.py"
+rule = "start-process-with-partial-path"
+reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/land.py"
+rule = "banned-api"
+reason = "the landing shell reads argv and the environment, runs gh and the gate, removes landed worktrees and waits between polls of CI"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/land.py"
+rule = "print"
+reason = "the landing shell prints each pick, poll and removal as it happens"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/land.py"
+rule = "suspicious-subprocess-import"
+reason = "runs gh by name from PATH and the gate in the landing worktree, with fixed arguments"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/land.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs gh by name from PATH and the gate in the landing worktree, with fixed arguments"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/land.py"
+rule = "start-process-with-partial-path"
+reason = "runs gh by name from PATH, as the owner's shell does"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/played.py"
+rule = "banned-api"
+reason = "the played shell reads argv and the environment and streams the cargo test's output to stdout"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/played.py"
+rule = "print"
+reason = "the played shell streams the cargo test's lines and prints its usage and refusals"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/played.py"
+rule = "suspicious-subprocess-import"
+reason = "runs one fixed cargo test by name from PATH"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/played.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs one fixed cargo test by name from PATH"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/prereview.py"
+rule = "banned-api"
+reason = "the prereview shell reads argv and writes its findings and errors to stdout and stderr"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/prereview.py"
+rule = "print"
+reason = "the prereview shell prints the findings the core makes"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/scratch.py"
+rule = "banned-api"
+reason = "reads TEMP, the scratch folder the lane tools share"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/worktree.py"
+rule = "banned-api"
+reason = "the worktree shell reads argv and the environment, links or copies the seed's build and runs the gate and cargo for the seed"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/worktree.py"
+rule = "print"
+reason = "the worktree shell prints how a lane took the seed's build"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/worktree.py"
+rule = "suspicious-subprocess-import"
+reason = "runs the gate, cargo and du by name from PATH with fixed arguments to build the seed"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/worktree.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs the gate, cargo and du by name from PATH with fixed arguments to build the seed"
+
+[[exception]]
+path = "src/sm_tools/lane/shell/worktree.py"
+rule = "start-process-with-partial-path"
+reason = "runs uv, cargo and du by name from PATH, as the owner's shell does"
