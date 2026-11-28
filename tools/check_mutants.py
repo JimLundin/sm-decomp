@@ -337,7 +337,7 @@ def plant_selectors(tree: Path, faults: Sequence[Fault], callers: Mapping[str, S
 
 
 def scratch_files(tree: Path) -> set[Path]:
-    return {path for path in tree.rglob("*") if path.is_file() or path.is_symlink()}
+    return {Path(directory, name) for directory, _, names in os.walk(tree) for name in names}
 
 
 Verdict = TypeVar("Verdict")
