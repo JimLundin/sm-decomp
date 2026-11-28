@@ -3,6 +3,7 @@
 import hashlib
 import io
 import lzma
+import os
 import subprocess
 import sys
 import tarfile
@@ -58,15 +59,27 @@ class ReplayDataTests(unittest.TestCase):
                        env=env, check=True)
         return asset
 
-    def fetch(self, asset: Path) -> None:
+    def fetch(self, asset: Path, sealed: Path | None = None) -> None:
         with patch.object(replay_data, "ASSET_SHA256", replay_data.sha256(asset)):
-            replay_data.fetch(self.rom, self.destination, asset)
+            replay_data.fetch(self.rom, self.destination, asset, sealed)
 
     def test_good_asset_installs_its_trees(self) -> None:
         self.fetch(self.packed())
         self.assertEqual((self.destination / "cache/nested/file.txt").read_text(), "a record")
         self.assertEqual((self.destination / "native/nested/file.txt").read_text(), "a fixture")
         self.assertEqual([path.name for path in self.destination.parent.iterdir()], ["replay-data"])
+
+    def test_sealed_rom_is_decrypted_with_its_key_before_the_install(self) -> None:
+        asset = self.packed()
+        sealed = self.root / "payload.enc"
+        key = {"PATH": os.environ["PATH"], "SM_ROM_KEY": "a test key"}
+        subprocess.run([*replay_data.ROM_CIPHER, "-salt", "-in", str(self.rom),
+                        "-out", str(sealed)], env=key, check=True)
+        self.rom.unlink()
+        with patch.dict(os.environ, key):
+            self.fetch(asset, sealed)
+        self.assertEqual(self.rom.read_bytes(), ROM)
+        self.assertEqual((self.destination / "cache/nested/file.txt").read_text(), "a record")
 
     def test_wrong_rom_is_refused_before_any_key_use(self) -> None:
         asset = self.packed()
@@ -79,7 +92,7 @@ class ReplayDataTests(unittest.TestCase):
     def test_wrong_asset_is_refused_before_decrypting(self) -> None:
         asset = self.packed()
         with patch("subprocess.run") as run, self.assertRaisesRegex(SystemExit, "differs from the pin"):
-            replay_data.fetch(self.rom, self.destination, asset)
+            replay_data.fetch(self.rom, self.destination, asset, None)
         run.assert_not_called()
         self.assertFalse(self.destination.exists())
 

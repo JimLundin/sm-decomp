@@ -15,6 +15,7 @@ RELEASE = "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/"
 PARTS = ("cache", "native")
 CIPHER = ["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "200000", "-md", "sha256",
           "-pass", "env:SM_SEED_PASSPHRASE"]
+ROM_CIPHER = ["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "600000", "-pass", "env:SM_ROM_KEY"]
 
 
 def sha256(path: Path) -> str:
@@ -63,9 +64,17 @@ def checked(archive: tarfile.TarFile) -> tarfile.TarFile:
     return archive
 
 
-def fetch(rom: Path, destination: Path, local: Path | None) -> None:
+def unseal(sealed: Path, rom: Path) -> None:
+    rom.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([*ROM_CIPHER, "-d", "-in", str(sealed), "-out", str(rom)],
+                   env={"PATH": os.environ["PATH"], "SM_ROM_KEY": os.environ["SM_ROM_KEY"]}, check=True)
+
+
+def fetch(rom: Path, destination: Path, local: Path | None, sealed: Path | None) -> None:
     if destination.exists():
         raise SystemExit(f"{destination} already exists; delete it to install the replay data again")
+    if sealed is not None:
+        unseal(sealed, rom)
     env = cipher_env(rom)
     with tempfile.TemporaryDirectory() as scratch:
         asset = local or Path(scratch) / ASSET
@@ -96,13 +105,14 @@ def main() -> None:
     fetching.add_argument("rom", type=Path)
     fetching.add_argument("destination", type=Path)
     fetching.add_argument("--asset", type=Path, help="a local copy instead of the ci-data release's")
+    fetching.add_argument("--sealed-rom", type=Path, help="decrypt this with SM_ROM_KEY into ROM first")
     packing = commands.add_parser("pack", help="encrypt SOURCE/cache and SOURCE/native into OUT")
     packing.add_argument("source", type=Path)
     packing.add_argument("rom", type=Path)
     packing.add_argument("out", type=Path)
     args = parser.parse_args()
     if args.command == "fetch":
-        fetch(args.rom, args.destination, args.asset)
+        fetch(args.rom, args.destination, args.asset, args.sealed_rom)
     else:
         pack(args.source, args.rom, args.out)
 
