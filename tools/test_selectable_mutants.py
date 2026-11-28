@@ -1,5 +1,6 @@
 import subprocess
 import tempfile
+import threading
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -9,6 +10,8 @@ from unittest.mock import patch
 from check_mutants import (
     Fault,
     FrozenInputs,
+    receipt,
+    receipt_digest,
     replay_selectable,
     report_rule_coverage,
     require_unique_anchor,
@@ -87,7 +90,7 @@ fn main() { println!("{}", outer(3)); }
             "new",
             case,
         )
-        for edit_at in (1, 2, 3):
+        for edit_at, phase in ((1, "baseline phase"), (2, "fault phase"), (3, "fault phase")):
             with self.subTest(edit_at=edit_at), tempfile.TemporaryDirectory() as directory:
                 tree = Path(directory)
                 scenario = tree / "scenario.toml"
@@ -96,7 +99,7 @@ fn main() { println!("{}", outer(3)); }
                 launches = 0
 
                 def replay(
-                    root: Path, _: str, exe: Path, *, env: dict[str, str]
+                    root: Path, _: str, exe: Path, *, env: dict[str, str], log: list[str]
                 ) -> tuple[int, str]:
                     nonlocal launches
                     launches += 1
@@ -106,9 +109,13 @@ fn main() { println!("{}", outer(3)); }
                         return 1, outcome("difference")
                     return 0, outcome("pass")
 
-                with patch("check_mutants.run_case", side_effect=replay), self.assertRaises(ValueError):
+                with (
+                    patch("check_mutants.run_case", side_effect=replay),
+                    redirect_stdout(StringIO()),
+                    self.assertRaisesRegex(ValueError, f"^{phase}: worktree inputs changed"),
+                ):
                     replay_selectable(tree, (fault,), tree / "tools", frozen, {})
-                self.assertEqual(launches, edit_at)
+                self.assertEqual(launches, 1 if phase == "baseline phase" else 3)
 
     def test_shared_executable_restores_in_a_fresh_process_and_credits_each_rule(
         self,
@@ -129,11 +136,11 @@ fn main() { println!("{}", outer(3)); }
         requests = []
 
         def replay(
-            root: Path, case: str, exe: Path, *, env: dict[str, str]
+            root: Path, case: str, exe: Path, *, env: dict[str, str], log: list[str]
         ) -> tuple[int, str]:
             selected = env.get("GAMMA_ACTIVE")
             requests.append((exe, selected))
-            print(f"TIMING replay case={case} seconds=0.100000")
+            log.append(f"TIMING replay case={case} seconds=0.100000")
             return (
                 (1, outcome("difference")) if selected else (0, outcome("pass"))
             )
@@ -145,6 +152,7 @@ fn main() { println!("{}", outer(3)); }
             log = StringIO()
             with (
                 patch("check_mutants.run_case", side_effect=replay),
+                patch("check_mutants.os.sched_getaffinity", return_value={0}),
                 redirect_stdout(log),
             ):
                 self.assertTrue(
@@ -167,3 +175,78 @@ fn main() { println!("{}", outer(3)); }
                     "Unassigned faults: 0",
                 ],
             )
+
+    def test_parallel_faults_report_each_verdict_whole_in_manifest_order(self) -> None:
+        case = "audio/example"
+        results = {
+            "1": (1, outcome("difference")),
+            "2": (0, outcome("pass")),
+            "3": (1, outcome("unsupported")),
+            "4": (-11, ""),
+        }
+        faults = [
+            Fault(name, "audio", "source.rs", "old", "new", case)
+            for name in ("kill", "survivor", "invalid", "crash")
+        ]
+        last_fault_ran = threading.Event()
+        waited = []
+
+        def replay(
+            root: Path, case: str, exe: Path, *, env: dict[str, str], log: list[str]
+        ) -> tuple[int, str]:
+            selected = env.get("GAMMA_ACTIVE")
+            if selected == "1":
+                waited.append(last_fault_ran.wait(timeout=30))
+            if selected == "4":
+                last_fault_ran.set()
+            log.append(f"TIMING replay case={case} active={selected}")
+            return results[selected] if selected else (0, outcome("pass"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            tree = Path(directory)
+            frozen = FrozenInputs.capture(tree, scratch_files)
+            printed = StringIO()
+            with (
+                patch("check_mutants.run_case", side_effect=replay),
+                patch("check_mutants.os.sched_getaffinity", return_value={0, 1, 2, 3}),
+                redirect_stdout(printed),
+            ):
+                self.assertFalse(
+                    replay_selectable(tree, faults, tree / "tools", frozen, {})
+                )
+        self.assertEqual(waited, [True])
+        lines = [
+            line
+            for line in printed.getvalue().splitlines()
+            if not line.startswith("TIMING input-check ")
+        ]
+        started = f"TIMING replay case={case} active="
+        restored = [f"{started}None", f"RESTORED PASS {case}"]
+        digest = receipt_digest(receipt(outcome("pass"), case) or {})
+        difference = receipt_digest(receipt(outcome("difference"), case) or {})
+        crash = receipt_digest({"id": case, "outcome": {"status": "crash", "exit": -11}})
+        self.assertEqual(
+            lines,
+            [
+                f"{started}None",
+                f"BASELINE PASS {case}",
+                f"{started}1",
+                f"KILLED kill: {case} difference",
+                "SELECTOR OFF fault=kill",
+                *restored,
+                f"RECEIPTS kill {digest} {difference} {digest}",
+                f"{started}2",
+                f"SURVIVED survivor: {case} status=pass exit=0",
+                "SELECTOR OFF fault=survivor",
+                *restored,
+                f"{started}3",
+                f"INVALID invalid: {case} status=unsupported exit=1",
+                "SELECTOR OFF fault=invalid",
+                *restored,
+                f"{started}4",
+                f"KILLED crash: {case} crash exit=-11",
+                "SELECTOR OFF fault=crash",
+                *restored,
+                f"RECEIPTS crash {digest} {crash} {digest}",
+            ],
+        )

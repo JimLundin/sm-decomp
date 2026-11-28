@@ -171,7 +171,8 @@ class MutantCheck(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             tree = Path(directory)
             frozen = FrozenInputs.capture(tree, scratch_files)
-            with patch("check_mutants.run_case", side_effect=[healthy, result, restored or healthy]):
+            with patch("check_mutants.run_case", side_effect=[healthy, result, restored or healthy]), \
+                 redirect_stdout(StringIO()):
                 return replay_selectable(tree, (fault,), tree / "tools", frozen, {})
 
     def test_only_production_adapters_are_allowed(self) -> None:
@@ -290,16 +291,15 @@ case = "audio/example"
                                ((0, report('At(Unsupported { cut: Some(5), dependency: "camera.x" })')), False),
                                ((0, report("End")), False)]:
             with self.subTest(result=result):
-                self.assertEqual(detected(fault, result) is not None, killed)
+                self.assertEqual(detected(fault, result, []) is not None, killed)
 
     def test_a_played_startup_result_other_than_a_data_failure_is_invalid(self) -> None:
         fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held",
                       "played row-1 0 9")
         startup = 'tools: replay played: Unsupported { cut: None, dependency: "pad" }'
-        printed = StringIO()
-        with redirect_stdout(printed):
-            self.assertIsNone(detected(fault, (1, startup)))
-        self.assertTrue(printed.getvalue().startswith("INVALID stale: "), printed.getvalue())
+        log: list[str] = []
+        self.assertIsNone(detected(fault, (1, startup), log))
+        self.assertTrue(log[0].startswith("INVALID stale: "), log)
 
 if __name__ == "__main__":
     unittest.main()

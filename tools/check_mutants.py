@@ -1,4 +1,6 @@
 import argparse
+import contextlib
+import functools
 import hashlib
 import json
 import os
@@ -10,10 +12,11 @@ import sys
 import tempfile
 import time
 import tomllib
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 # A case that starts with this is a lock row played alone, `played ROW START END` as
 # `tools replay played` takes it; any other case is an indexed replay case.
@@ -72,15 +75,15 @@ class FrozenInputs:
                 copied.parent.mkdir(parents=True, exist_ok=True)
                 copied.write_bytes(original)
                 shutil.copymode(path, copied)
-        self.check(root)
+        print(self.check(root), flush=True)
 
-    def check(self, root: Path) -> None:
+    def check(self, root: Path) -> str:
         started = time.perf_counter()
         if (self.listing or input_paths)(root) != self.files.keys() or any(
             input_bytes(path) != original for path, original in self.files.items()
         ):
             raise ValueError("worktree inputs changed; coordinator must reconcile")
-        print(f"TIMING input-check seconds={time.perf_counter() - started:.6f}", flush=True)
+        return f"TIMING input-check seconds={time.perf_counter() - started:.6f}"
 
 def build_executable(root: Path, *, target: Path) -> Path:
     """Use Cargo's artifact path, including custom target directories and triples."""
@@ -111,7 +114,8 @@ def build_executable(root: Path, *, target: Path) -> Path:
         raise ValueError("reported tools executable is missing")
     return executable
 
-def run_case(root: Path, case: str, executable: Path, *, env: Mapping[str, str]) -> tuple[int, str]:
+def run_case(root: Path, case: str, executable: Path, *, env: Mapping[str, str],
+             log: list[str]) -> tuple[int, str]:
     if case.startswith(PLAYED):
         command = [str(executable), "replay", *case.split(), "--lock", PLAYED_LOCK]
         sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM")]
@@ -124,7 +128,7 @@ def run_case(root: Path, case: str, executable: Path, *, env: Mapping[str, str])
     started = time.perf_counter()
     result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True,
                             encoding="utf-8", errors="replace")
-    print(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}", flush=True)
+    log.append(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}")
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
 def played_receipt(output: str, case: str) -> dict[str, Any] | None:
@@ -177,18 +181,18 @@ CRASHES = (101, *(-number for number in (signal.SIGSEGV, signal.SIGABRT, signal.
                                          signal.SIGBUS, signal.SIGFPE)))
 
 
-def detected(fault: Fault, result: tuple[int, str]) -> dict[str, Any] | None:
+def detected(fault: Fault, result: tuple[int, str], log: list[str]) -> dict[str, Any] | None:
     code, output = result
     observed = receipt(output, fault.case)
     status = observed["outcome"].get("status") if observed is not None else None
     if code in CRASHES:
-        print(f"KILLED {fault.name}: {fault.case} crash exit={code}", flush=True)
+        log.append(f"KILLED {fault.name}: {fault.case} crash exit={code}")
         return {"id": fault.case, "outcome": {"status": "crash", "exit": code}}
     if code in (0, 1) and status in DETECTIONS:
-        print(f"KILLED {fault.name}: {fault.case} {status}", flush=True)
+        log.append(f"KILLED {fault.name}: {fault.case} {status}")
         return observed
     verdict = "SURVIVED" if status == "pass" else "INVALID"
-    print(f"{verdict} {fault.name}: {fault.case} status={status} exit={code}", flush=True)
+    log.append(f"{verdict} {fault.name}: {fault.case} status={status} exit={code}")
     return None
 
 
@@ -197,15 +201,15 @@ def receipt_digest(observed: Mapping[str, Any]) -> str:
 
 
 def restored_pass(fault: Fault, result: tuple[int, str], baseline: Mapping[str, Any],
-                  faulty: Mapping[str, Any] | None) -> bool:
+                  faulty: Mapping[str, Any] | None, log: list[str]) -> bool:
     restored = receipt(result[1], fault.case)
     if result[0] or restored != baseline or restored is None or restored.get("outcome") != {"status": "pass"}:
-        print(f"RESTORED BASELINE FAILED {fault.case}", flush=True)
+        log.append(f"RESTORED BASELINE FAILED {fault.case}")
         return False
-    print(f"RESTORED PASS {fault.case}", flush=True)
+    log.append(f"RESTORED PASS {fault.case}")
     if faulty is None:
         return False
-    print(f"RECEIPTS {fault.name} {receipt_digest(baseline)} {receipt_digest(faulty)} {receipt_digest(restored)}", flush=True)
+    log.append(f"RECEIPTS {fault.name} {receipt_digest(baseline)} {receipt_digest(faulty)} {receipt_digest(restored)}")
     return True
 
 
@@ -336,29 +340,72 @@ def scratch_files(tree: Path) -> set[Path]:
     return {path for path in tree.rglob("*") if path.is_file() or path.is_symlink()}
 
 
+Verdict = TypeVar("Verdict")
+
+
+def in_order(jobs: Sequence[Callable[[list[str]], Verdict]]) -> Generator[Verdict, None, None]:
+    logs: list[list[str]] = [[] for _ in jobs]
+    with ThreadPoolExecutor(len(os.sched_getaffinity(0))) as pool:
+        futures = [pool.submit(job, log) for job, log in zip(jobs, logs, strict=True)]
+        try:
+            for future, log in zip(futures, logs, strict=True):
+                try:
+                    result = future.result()
+                finally:
+                    for line in log:
+                        print(line, flush=True)
+                yield result
+        finally:
+            pool.shutdown(cancel_futures=True)
+
+
+def check_baseline(tree: Path, case: str, executable: Path,
+                   env: Mapping[str, str], log: list[str]) -> dict[str, Any] | None:
+    clean = run_case(tree, case, executable, env=env, log=log)
+    baseline = receipt(clean[1], case)
+    if clean[0] or baseline is None or baseline.get("outcome") != {"status": "pass"}:
+        log.append(f"BASELINE FAILED {case}")
+        return None
+    log.append(f"BASELINE PASS {case}")
+    return baseline
+
+
+def check_fault(tree: Path, ordinal: int, fault: Fault, executable: Path,
+                env: Mapping[str, str], baseline: Mapping[str, Any], log: list[str]) -> bool:
+    selected = {**env, "GAMMA_ACTIVE": str(ordinal)}
+    faulty = detected(fault, run_case(tree, fault.case, executable, env=selected, log=log), log)
+    log.append(f"SELECTOR OFF fault={fault.name}")
+    restored = run_case(tree, fault.case, executable, env=env, log=log)
+    return restored_pass(fault, restored, baseline, faulty, log)
+
+
+def check_phase(tree: Path, frozen: FrozenInputs, phase: str) -> None:
+    try:
+        print(frozen.check(tree), flush=True)
+    except ValueError as error:
+        raise ValueError(f"{phase}: {error}") from error
+
+
 def replay_selectable(tree: Path, faults: Sequence[Fault], executable: Path,
                       frozen: FrozenInputs, env: Mapping[str, str]) -> bool:
+    cases = list(dict.fromkeys(fault.case for fault in faults))
     baselines = {}
-    for case in dict.fromkeys(fault.case for fault in faults):
-        clean = run_case(tree, case, executable, env=env)
-        frozen.check(tree)
-        baseline = receipt(clean[1], case)
-        if clean[0] or baseline is None or baseline.get("outcome") != {"status": "pass"}:
-            print(f"BASELINE FAILED {case}", flush=True)
-            return False
-        baselines[case] = baseline
-        print(f"BASELINE PASS {case}", flush=True)
-    success = True
-    for ordinal, fault in enumerate(faults, 1):
-        selected = {**env, "GAMMA_ACTIVE": str(ordinal)}
-        faulty = detected(fault, run_case(tree, fault.case, executable, env=selected))
-        print(f"SELECTOR OFF fault={fault.name}", flush=True)
-        frozen.check(tree)
-        restored = run_case(tree, fault.case, executable, env=env)
-        frozen.check(tree)
-        if not restored_pass(fault, restored, baselines[fault.case], faulty):
-            success = False
-    return success
+    with contextlib.closing(in_order([
+        functools.partial(check_baseline, tree, case, executable, env) for case in cases
+    ])) as results:
+        for case, baseline in zip(cases, results, strict=True):
+            if baseline is None:
+                break
+            baselines[case] = baseline
+    check_phase(tree, frozen, "baseline phase")
+    if len(baselines) != len(cases):
+        return False
+    verdicts = list(in_order([
+        functools.partial(check_fault, tree, ordinal, fault, executable, env, baselines[fault.case])
+        for ordinal, fault in enumerate(faults, 1)
+    ]))
+    check_phase(tree, frozen, "fault phase")
+    return all(verdicts)
 
 
 def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
@@ -379,9 +426,9 @@ def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
         plant_selectors(tree, faults, callers)
         frozen = FrozenInputs.capture(tree, scratch_files)
         executable = build_executable(tree, target=scratch / "build")
-        frozen.check(tree)
+        print(frozen.check(tree), flush=True)
         success = replay_selectable(tree, faults, executable, frozen, env)
-        inputs.check(root)
+        print(inputs.check(root), flush=True)
     print(f"TIMING selectable faults={len(faults)} seconds={time.perf_counter() - started:.6f}", flush=True)
     return 0 if success else 1
 

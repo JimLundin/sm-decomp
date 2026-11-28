@@ -662,7 +662,8 @@ historical evidence.
 [`tools/mutants.toml`](../tools/mutants.toml) plants at least one production wiring fault per
 supported responsibility in a case that witnesses it. CI builds one
 selectable replay executable for the full manifest. Each case must first pass. The checker runs
-each fault in its own process. The fault is killed when its case reports a difference, a data
+each fault in its own process, as many at once as the cores it may use, and prints each
+fault's log whole in manifest order. The fault is killed when its case reports a difference, a data
 failure or a failed checkpoint continuation, or when the replay crashes. It survives when its
 case passes, and a surviving fault fails the check, as does an Unsupported result. The manifest
 does not say where a fault is caught, so a fault caught at another cut or field than before
