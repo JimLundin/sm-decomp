@@ -293,8 +293,7 @@ fn targets(manifest: &Manifest, out: &mut Findings) {
                 let outside = Path::new(path).is_absolute()
                     || Path::new(path)
                         .components()
-                        .any(|c| c == Component::ParentDir)
-                    || path.get(1..2) == Some(":");
+                        .any(|c| c == Component::ParentDir);
                 if outside {
                     out.push(("target-path", path.clone()));
                 }
