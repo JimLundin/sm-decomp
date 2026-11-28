@@ -15,8 +15,11 @@ check-mutants = "sm_tools.faults.shell.check_mutants:main"
 check-replay-transition = "sm_tools.ci.shell.check_replay_transition:main"
 gate = "sm_tools.lane.shell.gate:main"
 land = "sm_tools.lane.shell.land:main"
+movie-inputs = "sm_tools.oracle.shell.movie_inputs:main"
 played = "sm_tools.lane.shell.played:main"
 prereview = "sm_tools.lane.shell.prereview:main"
+record-caches = "sm_tools.oracle.shell.record_caches:main"
+relock = "sm_tools.oracle.shell.relock:main"
 replay = "sm_tools.ci.shell.replay:main"
 replay-data = "sm_tools.ci.shell.replay_data:main"
 required-witnesses = "sm_tools.ci.shell.required_witnesses:main"
@@ -46,7 +49,7 @@ root_package = "sm_tools"
 [[tool.importlinter.contracts]]
 name = "core is the bottom layer"
 type = "layers"
-containers = ["sm_tools.ci", "sm_tools.faults", "sm_tools.lane"]
+containers = ["sm_tools.ci", "sm_tools.faults", "sm_tools.lane", "sm_tools.oracle"]
 layers = ["(__main__)", "shell", "core"]
 exhaustive = true
 

@@ -134,11 +134,12 @@ rr2-beta23, bsnes v085 compatibility core) and ROM SHA-256. Download the ZIP, ex
 `.lsmv`, check its SHA-256, then import one controller word per video frame:
 
 ```sh
-python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inputs --rom rom/sm.smc
+uv run --locked --project tools movie-inputs movies/super-metroid-any-3653.lsmv movies/any.inputs \
+  --rom rom/sm.smc
 ```
 
 `movies/room-seeds-*.toml` list the room captures each movie's seeds come from
-(`oracle_record::room_seeds`, read by `tools/oracle/relock.py`, `oracle --seeds` and the README
+(`oracle_record::room_seeds`, read by `relock`, `oracle --seeds` and the README
 report). An lsnes capture writes its own as `rooms.toml`, with the frame counter at each capture as
 `nmi`. Movies, inputs, states and logs are ROM-derived and stay local (`.gitignore`) or in encrypted
 bundles. The Mother Brain phase rows start from the `100-mb-phases` captures (her form word
@@ -176,12 +177,12 @@ native state files.
 
 ### Step a1: the cut plan
 
-`python3 tools/oracle/relock.py plan NATIVE LADDERS` writes the plan. Then
-`python3 tools/oracle/relock.py cut PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]`
-runs one `movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first,
-`JOBS` (8) at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their
-movie but some follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut
-a step on.
+`uv run --locked --project tools relock plan NATIVE LADDERS` writes the plan. Then
+`uv run --locked --project tools relock cut PLAN OUT LOGS [cut|realign|derive|check|all]
+[MOVIE-RUNG...]` runs one `movie --from RUNG --native-seeds ... --no-memories --ppu` job per window,
+longest first, `JOBS` (8) at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1
+of their movie but some follow step F (the record's `$05B6` one short of the table's `nmi`); those
+are re-cut a step on.
 `check`: each seed's room and frame counter equal its table's, and its WRAM equals its capture's
 outside the stack page. A table without `nmi` takes the counter from the capture's WRAM.
 `derive-seed` checks that each written word stuck: one step on it reads the written value, or
@@ -209,15 +210,15 @@ are re-cut and re-locked the same way (§9).
 
 `oracle movie --ppu` asks lsnes for the PPU tier alone (`T 0 0 1`); the record is the lean record
 followed by `OHS1`, flag 4 and the 146 PPU bytes, and the emulation is unchanged.
-`python3 tools/oracle/relock.py ppu-recut OLD PLAN WORK [ROW...]` re-cuts the records of a
+`uv run --locked --project tools relock ppu-recut OLD PLAN WORK [ROW...]` re-cuts the records of a
 decrypted bundle, checks each against the old, packs deterministically, encrypts and prints the
 new `bundles` line. The native states must have the same members and identical contents except for
 `rrdata` and its derived `rerecords` history count. The lsnes manual §§10.22–10.23 defines these as
 load-history metadata; the bundled lsnes source, `src/core/moviedata.cpp`, adds a load ID even on
 a read-only load. The
-[native-state check](../tools/oracle/relock_seed_state.py) keeps `projectid`, inputs and every
-machine-state member exact. The new bundle keeps the old `.lss` files, whose SHA-256 values are
-the `seed_record` pins, so only the `bundles` line changes.
+[native-state check](../tools/src/sm_tools/oracle/core/relock.py) keeps `projectid`, inputs and
+every machine-state member exact. The new bundle keeps the old `.lss` files, whose SHA-256 values
+are the `seed_record` pins, so only the `bundles` line changes.
 
 ### Engineering answers
 
@@ -239,7 +240,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | `oracle corpus ROM LOCK BUNDLE [--cache OUT] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
 | `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
-| `tools/oracle/relock.py plan`, `cut`, `ppu-recut` | cutting seeds |
+| `uv run --locked --project tools relock plan`, `cut`, `ppu-recut` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-check LOCK [BUNDLE CACHE ROW [[--carry-watches] WATCH_PCS]]` | checks that a cached row has the lock's pins, was recorded by the lsnes the oracle would run and the lock's server, and watched the addresses |
 | `uv run --locked --project tools replay-data pack SOURCE ROM OUT` | packs `SOURCE/cache` and `SOURCE/native` as the replay data for ci-data |
@@ -267,8 +268,8 @@ recorded again with watches has the same records byte for byte, and
 
 **Making the record cache.** `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW` plays
 the row's frame pads from its native seed and writes `lean.txt` last.
-`python3 tools/oracle/record_caches.py ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list
-of rows with eight lsnes processes by default. It builds the default `tools` cache reader and
+`uv run --locked --project tools record-caches ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a
+list of rows with eight lsnes processes by default. It builds the default `tools` cache reader and
 skips a row when `tools cache-check` accepts the existing cache for the lsnes the oracle would
 run, found as section 2 says. A row another batch is recording waits for it. Set `WATCH_PCS`
 to record the `hits.txt` read by independent causal input providers. `ORACLE` names the oracle

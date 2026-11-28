@@ -232,3 +232,48 @@ reason = "the fault runner's shell reads argv, the environment and the clock, an
 path = "src/sm_tools/faults/shell/check_mutants.py"
 rule = "print"
 reason = "the fault runner's shell prints the timings, each fault's log in manifest order and the rule coverage the core makes"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/movie_inputs.py"
+rule = "print"
+reason = "the movie import's shell prints how many controller frames it wrote"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/record_caches.py"
+rule = "banned-api"
+reason = "the cache recorder's shell reads argv, standard input, the clock and the ORACLE, SM_ and WATCH_PCS variables, finds the cache reader on PATH and runs cargo, the reader and the oracle"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/record_caches.py"
+rule = "print"
+reason = "the cache recorder's shell prints each row's verdict and its usage and refusals"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/record_caches.py"
+rule = "suspicious-subprocess-import"
+reason = "runs cargo, the cache reader and the oracle with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/record_caches.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs cargo, the cache reader and the oracle with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/relock.py"
+rule = "banned-api"
+reason = "the re-lock's shell reads argv, the clock and its environment, staggers the oracle jobs, runs the oracle and openssl and copies the bundle tree"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/relock.py"
+rule = "print"
+reason = "the re-lock's shell prints the plan, each job's exit, the check summaries and the new bundle's pin"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/relock.py"
+rule = "suspicious-subprocess-import"
+reason = "runs the oracle and openssl with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/oracle/shell/relock.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs the oracle and openssl with argument lists the core builds, never through a shell"

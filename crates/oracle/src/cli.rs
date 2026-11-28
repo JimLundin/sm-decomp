@@ -340,8 +340,8 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
 /// written, or when it reads other than the plain run (the write landed and
 /// the game moved it on, as physics moves Samus's position). It was lost when
 /// it reads the plain run's value and not the written one. The work-RAM bytes
-/// differing from the plain run are reported. `tools/scenario_seeds.py
-/// native-args` gives a scenario's arguments.
+/// differing from the plain run are reported. A `derive` line of
+/// `relock plan` gives a scenario's arguments.
 fn derive_seed(arguments: &[String]) {
     use crate::lsnes::NativeSeed;
     let [rom, base, out, rest @ ..] = arguments else {

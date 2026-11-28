@@ -2,8 +2,8 @@
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tools/ci/mtimes.py", "tools/ci/test_mtimes.py", "tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/cleanroom/box_relay.py", "tools/cleanroom/adjusted_vectors_run.py", "tools/cleanroom/test_adjusted_vectors_run.py", "tools/oracle/relock_seed_state.py", "tools/oracle/record_caches.py", "tools/oracle/relock.py", "tools/oracle/test_relock.py"]
-mypy_path = ["tools", "tools/ci", "tools/cleanroom", "tools/oracle"]
+files = ["tools/ci/mtimes.py", "tools/ci/test_mtimes.py", "tools/cleanroom/box_relay.py", "tools/cleanroom/adjusted_vectors_run.py", "tools/cleanroom/test_adjusted_vectors_run.py"]
+mypy_path = ["tools/ci", "tools/cleanroom"]
 explicit_package_bases = true
 strict = true
 warn_unreachable = true

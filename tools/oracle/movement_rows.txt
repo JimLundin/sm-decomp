@@ -1,4 +1,4 @@
-# Rows for the Samus-movement harness's record cache (tools/oracle/record_caches.py), each under
+# Rows for the Samus-movement harness's record cache (record-caches), each under
 # 3,000 frames. The reason follows each row; frame counts are the lock's.
 area-brinstar              # 477: held row (CI cache); elevator ride, then a short walk
 item-morph-ball            # 1428: held row (CI cache); running, jumps, morphing, the message box

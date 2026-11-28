@@ -34,7 +34,7 @@ RUST = FrozenList((
     "tools/cleanroom",
     "tools/oracle",
     "tools/lsnes_lag_log.lua",
-    "tools/scenario_seeds.py",
+    "tools/src/sm_tools/oracle",
     ".agents/skills/implementer",
     ".agents/skills/blind-reviewer",
 ))
