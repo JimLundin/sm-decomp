@@ -46,7 +46,28 @@ fn which(name: &str) -> Result<PathBuf, String> {
 }
 
 impl Sandbox {
+    /// The box on an export: the export writable at its own path, but for the parts of its
+    /// `.git` a session may not change.
     pub fn new(export: &Path, repo: &Path, lane: &Path) -> Result<Self, String> {
+        let mut cell = Self::bare(export, repo, lane)?;
+        cell.mount(export, export, true)?;
+        for name in GIT_READ_ONLY {
+            let path = export.join(".git").join(name);
+            let meta =
+                fs::symlink_metadata(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+            if meta.file_type().is_symlink() {
+                return Err(format!("{} is a symlink", path.display()));
+            }
+            cell.mount(&path, &path, false)?;
+        }
+        Ok(cell)
+    }
+
+    /// The box with no network, no capabilities and a read-only root, holding the system, the
+    /// toolchain, this binary and the trusted files read-only, a fresh `/tmp` as `HOME` and
+    /// `CARGO_HOME`, and nothing of the host's beyond what the caller mounts. It starts in
+    /// WORKDIR; LANE holds the box's passwd and group files.
+    pub fn bare(workdir: &Path, repo: &Path, lane: &Path) -> Result<Self, String> {
         let uid = output(Command::new("id").arg("-u"))?;
         let gid = output(Command::new("id").arg("-g"))?;
         let (uid, gid) = (uid.trim(), gid.trim());
@@ -82,19 +103,9 @@ impl Sandbox {
             "--user".to_owned(),
             format!("{uid}:{gid}"),
             "--workdir".to_owned(),
-            export.display().to_string(),
+            workdir.display().to_string(),
         ]);
         let mut cell = Self { args };
-        cell.mount(export, export, true)?;
-        for name in GIT_READ_ONLY {
-            let path = export.join(".git").join(name);
-            let meta =
-                fs::symlink_metadata(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-            if meta.file_type().is_symlink() {
-                return Err(format!("{} is a symlink", path.display()));
-            }
-            cell.mount(&path, &path, false)?;
-        }
         for system in ["/usr", "/etc/alternatives", "/etc/ld.so.cache"] {
             cell.mount(Path::new(system), Path::new(system), false)?;
         }

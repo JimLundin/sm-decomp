@@ -3,9 +3,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use crate::process::{Lane, git, host_git, inode, output, repo};
+use crate::run::{self, Sandbox};
 use crate::scan::Class;
-use crate::{mirror, rules, scan, vocabulary};
+use crate::{export, mirror, rules, scan, vocabulary};
 
 const CAPABILITY: &[&str] = &[
     "-A",
@@ -325,7 +328,7 @@ fn run_at(repo: &Path, lane: &Lane, name: &str) -> Result<(String, bool), String
     import.rules(&scratch.0.join("head"), &mut out)?;
     import.names(&mut out)?;
     import.mirror_scan(&mut out)?;
-    import.apply(commits, &mut out)
+    import.apply(&scratch.0, commits, &mut out)
 }
 
 fn refuse(out: &str, why: &str) -> Result<(), String> {
@@ -520,7 +523,12 @@ impl Import {
             .to_owned())
     }
 
-    fn apply(&self, commits: usize, out: &mut String) -> Result<(String, bool), String> {
+    fn apply(
+        &self,
+        scratch: &Path,
+        commits: usize,
+        out: &mut String,
+    ) -> Result<(String, bool), String> {
         let before = self.head()?;
         let missing: Vec<&str> = ["crates/clean/types", self.model.as_str()]
             .into_iter()
@@ -575,7 +583,7 @@ impl Import {
             ));
         }
         self.applied(&before, &scaffolded, out)?;
-        self.clippy(&before, commits, out)
+        self.clippy(scratch, &before, commits, out)
     }
 
     /// Checks what `git am` left: no path outside the clean crates, and the code rules over the
@@ -611,39 +619,19 @@ impl Import {
         ))
     }
 
-    fn clippy(
-        &self,
-        before: &str,
-        commits: usize,
-        out: &mut String,
-    ) -> Result<(String, bool), String> {
-        let package = self.model.trim_start_matches("crates/clean/");
-        let capability = self
-            .cargo()
-            .env("CLIPPY_CONF_DIR", self.repo.join("crates/clean"))
-            .args([
-                "clippy",
-                "--locked",
-                "-p",
-                "types",
-                "-p",
-                package,
-                "--all-targets",
-                "--no-deps",
-                "--",
-            ])
-            .args(CAPABILITY)
-            .output()
-            .map_err(|e| e.to_string())?;
-        if !capability.status.success() {
-            out.push_str(&errors(&capability.stderr));
-            output(self.repo_git().args(["reset", "-q", "--hard", before]))?;
-            return Err(format!(
-                "{out}the capability rule refused the export's crates; nothing applied"
-            ));
-        }
+    /// Writes the applied branch's clean crates into DIR as a workspace of their own, with
+    /// the allow-listed registry crates vendored beside them, and returns their package names.
+    fn candidate(&self, dir: &Path) -> Result<Vec<String>, String> {
+        let head = self.head()?;
+        let branch = Mirror(self.repo.clone());
+        unpack(
+            &branch,
+            &head,
+            &["crates/clean", "rust-toolchain.toml"],
+            dir,
+        )?;
         let mut packages = Vec::new();
-        for entry in fs::read_dir(self.repo.join("crates/clean")).map_err(|e| e.to_string())? {
+        for entry in fs::read_dir(dir.join("crates/clean")).map_err(|e| e.to_string())? {
             let path = entry.map_err(|e| e.to_string())?.path();
             if path.join("Cargo.toml").exists()
                 && let Some(name) = path.file_name()
@@ -652,21 +640,93 @@ impl Import {
             }
         }
         packages.sort();
-        let mut cmd = self.cargo();
-        cmd.env_remove("CLIPPY_CONF_DIR").args([
+        export::manifest(&self.repo, &head, &packages, dir)?;
+        export::vendor(&self.repo, &head, dir)?;
+        Ok(packages)
+    }
+
+    /// Runs cargo with ARGS on the candidate workspace in the box, never on the host: a build
+    /// script or proc macro the commits hold runs there, with no network, the candidate
+    /// read-only and only the target folder writable. Cargo builds `--frozen` from the vendored
+    /// crates, and its home is the box's own `/tmp`, so it needs nothing of the host's.
+    fn cargo_boxed(
+        &self,
+        scratch: &Path,
+        env: &[(&str, &str)],
+        args: &[&str],
+    ) -> Result<std::process::Output, String> {
+        static RUNS: AtomicUsize = AtomicUsize::new(0);
+        let (candidate, target) = (scratch.join("candidate"), scratch.join("target"));
+        fs::create_dir_all(&target).map_err(|e| e.to_string())?;
+        let mut cell = Sandbox::bare(&candidate, &self.repo, scratch)?;
+        cell.mount(&candidate, &candidate, false)?;
+        cell.mount(&target, &target, true)?;
+        cell.env("CARGO_TARGET_DIR", &target.display().to_string());
+        for (key, value) in env {
+            cell.env(key, value);
+        }
+        let name = format!(
+            "cleanroom-import-{}-{}",
+            std::process::id(),
+            RUNS.fetch_add(1, Ordering::Relaxed)
+        );
+        let mut command = vec!["cargo"];
+        command.extend(args);
+        cell.command(&name, &command)
+            .stdin(Stdio::null())
+            .output()
+            .map_err(|e| e.to_string())
+    }
+
+    fn clippy(
+        &self,
+        scratch: &Path,
+        before: &str,
+        commits: usize,
+        out: &mut String,
+    ) -> Result<(String, bool), String> {
+        let package = self.model.trim_start_matches("crates/clean/");
+        run::image(&self.repo)?;
+        let packages = self.candidate(&scratch.join("candidate"))?;
+        let conf = scratch.join("candidate/crates/clean").display().to_string();
+        let capability = self.cargo_boxed(
+            scratch,
+            &[("CLIPPY_CONF_DIR", &conf)],
+            &[
+                &[
+                    "clippy",
+                    "--frozen",
+                    "-p",
+                    "types",
+                    "-p",
+                    package,
+                    "--all-targets",
+                    "--no-deps",
+                    "--",
+                ][..],
+                CAPABILITY,
+            ]
+            .concat(),
+        )?;
+        if !capability.status.success() {
+            out.push_str(&errors(&capability.stderr));
+            output(self.repo_git().args(["reset", "-q", "--hard", before]))?;
+            return Err(format!(
+                "{out}the capability rule refused the export's crates; nothing applied"
+            ));
+        }
+        let mut args = vec![
             "clippy",
-            "--locked",
+            "--frozen",
             "--keep-going",
             "--all-targets",
             "--no-deps",
-        ]);
+        ];
         for p in &packages {
-            cmd.args(["-p", p]);
+            args.extend(["-p", p]);
         }
-        let lint = cmd
-            .args(["--", "-D", "warnings"])
-            .output()
-            .map_err(|e| e.to_string())?;
+        args.extend(["--", "-D", "warnings"]);
+        let lint = self.cargo_boxed(scratch, &[], &args)?;
         let applied = format!(
             "{}..{}",
             before.get(..9).unwrap_or(before),
@@ -1103,6 +1163,114 @@ mod tests {
             .unwrap_err();
         assert!(refusal.contains("build.rs"), "{refusal}");
         assert_eq!(run(&round.repo, &["rev-parse", "HEAD"]), before);
+    }
+
+    /// The lane branch of ROUND with the trusted files cargo reads and the clean crates `types`
+    /// and the model, with FILES over them, committed as if `git am` had applied them; and an
+    /// import of it, with the commit before them.
+    fn applied(round: &Round, files: &[(&str, &str)]) -> (Import, String) {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(Path::parent)
+            .unwrap();
+        for path in [
+            "Cargo.toml",
+            "Cargo.lock",
+            "rust-toolchain.toml",
+            "tools/cleanroom/allowed_deps.txt",
+            "crates/clean/.clippy.toml",
+            "tools/cleanroom/box_relay.py",
+        ] {
+            write(
+                &round.repo,
+                path,
+                &fs::read_to_string(repo.join(path)).unwrap(),
+            );
+        }
+        run(&round.repo, &["add", "-A"]);
+        run(&round.repo, &["commit", "-q", "-m", "trusted"]);
+        let before = run(&round.repo, &["rev-parse", "HEAD"]).trim().to_owned();
+        for krate in ["types", "world_haze"] {
+            write(
+                &round.repo,
+                &format!("crates/clean/{krate}/Cargo.toml"),
+                &format!(
+                    "[package]\nname = \"{krate}\"\nversion.workspace = true\nedition.workspace = true\nlicense.workspace = true\npublish.workspace = true\ndescription = \"A crate\"\n\n[lints]\nworkspace = true\n"
+                ),
+            );
+            write(
+                &round.repo,
+                &format!("crates/clean/{krate}/src/lib.rs"),
+                "//! A crate.\n",
+            );
+        }
+        for (path, text) in files {
+            write(&round.repo, path, text);
+        }
+        run(&round.repo, &["add", "-A"]);
+        run(&round.repo, &["commit", "-q", "-m", "applied"]);
+        let import = Import {
+            repo: round.repo.clone(),
+            domain: "world-haze".to_owned(),
+            model: MODEL.to_owned(),
+            mirror: Mirror::of(&round.lane, &round.base.join("mirror.git"), 1024).unwrap(),
+            root: String::new(),
+        };
+        (import, before)
+    }
+
+    fn found(dir: &Path, name: &str) -> bool {
+        fs::read_dir(dir).into_iter().flatten().flatten().any(|e| {
+            let path = e.path();
+            e.file_name() == name || (path.is_dir() && found(&path, name))
+        })
+    }
+
+    #[test]
+    fn the_import_lints_a_model_in_the_box() {
+        let round = Round::new("lint");
+        let (import, before) = applied(&round, &[]);
+        let scratch = round.base.join("scratch");
+        fs::create_dir_all(&scratch).unwrap();
+        let (clean, failed) = import
+            .clippy(&scratch, &before, 1, &mut String::new())
+            .unwrap();
+        assert!(!failed, "{clean}");
+        assert!(clean.contains("IMPORT OK 1 commits"), "{clean}");
+        write(
+            &round.repo,
+            &format!("{MODEL}/src/lib.rs"),
+            "//! A crate.\npub fn f() {}\n",
+        );
+        run(&round.repo, &["commit", "-q", "-am", "undocumented"]);
+        let (lint, failed) = import
+            .clippy(&scratch, &before, 1, &mut String::new())
+            .unwrap();
+        assert!(failed, "{lint}");
+        assert!(lint.contains("missing documentation"), "{lint}");
+    }
+
+    #[test]
+    fn a_build_script_the_rules_miss_runs_in_the_box_and_writes_nothing_on_the_host() {
+        let round = Round::new("escape");
+        let escaped = round.base.join("escaped");
+        let script = format!(
+            "//! Writes outside the build.\nfn main() {{\n    let _ = std::fs::write({:?}, \"escaped\");\n    if let Some(out) = std::env::var_os(\"OUT_DIR\") {{\n        let _ = std::fs::write(std::path::Path::new(&out).join(\"ran\"), \"ran\");\n    }}\n}}\n",
+            escaped.display().to_string()
+        );
+        let build = format!("{MODEL}/build.rs");
+        let (import, before) = applied(
+            &round,
+            &[(&build, &script), ("crates/clean/.clippy.toml", "")],
+        );
+        let scratch = round.base.join("scratch");
+        fs::create_dir_all(&scratch).unwrap();
+        let (out, failed) = import
+            .clippy(&scratch, &before, 1, &mut String::new())
+            .unwrap();
+        assert!(!failed, "{out}");
+        assert!(found(&scratch.join("target"), "ran"), "{out}");
+        assert!(!escaped.exists());
     }
 
     #[test]

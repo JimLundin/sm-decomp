@@ -143,7 +143,12 @@ Each step names its owner, what it waits for, and its done-condition.
    It applies the commits to the lane branch, takes the branch back if the export's crates break
    the capability rule (clippy's forbidden lints), then lints every clean crate in the workspace:
    an export holds one domain's model and `types`, so a change to `types` can break a crate its
-   implementer never saw. Done on `IMPORT OK`. A refusal goes back to the same implementer's
+   implementer never saw. Both lints run in the box, never on the host, since compiling runs
+   any build script or proc macro the commits hold. The import writes the branch's clean crates
+   to a workspace of their own in the lane folder, with the allow-listed registry crates
+   vendored into it as the export does, and cargo builds it `--frozen` with no network, the
+   workspace read-only, a fresh `CARGO_HOME` in the box's `/tmp` and only the target folder
+   writable. Done on `IMPORT OK`. A refusal goes back to the same implementer's
    export as a short follow-up session (`cargo cleanroom run DOMAIN BRIEF`): the brief quotes
    each finding (file, line, the rule it breaks) in the coding standards' words, and the import
    runs again. A scan hit that is a word a player uses may instead become a reviewed entry in

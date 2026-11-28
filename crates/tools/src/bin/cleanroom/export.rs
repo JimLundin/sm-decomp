@@ -150,39 +150,8 @@ impl Export<'_> {
     }
 
     fn workspace(&self, repo: &Path, sha: &str, dest: &Path) -> Result<(), String> {
-        let show = |path: &str| output(host_git(repo).args(["show", &format!("{sha}:{path}")]));
-        let root: Root = toml::from_str(&show("Cargo.toml")?).map_err(|e| e.to_string())?;
-        let ws = root.workspace;
         let model = crate_of(self.domain);
-        let approved = show("tools/cleanroom/allowed_deps.txt")?;
-        let mut dependencies = toml::Table::new();
-        for name in approved
-            .lines()
-            .filter_map(|l| l.split('#').next()?.split_whitespace().next())
-        {
-            let version = ws
-                .dependencies
-                .get(name)
-                .ok_or_else(|| format!("{name} is approved but not a workspace dependency"))?;
-            dependencies.insert(name.to_owned(), version.clone());
-        }
-        let mut workspace = toml::Table::new();
-        workspace.insert("resolver".to_owned(), ws.resolver.into());
-        workspace.insert(
-            "members".to_owned(),
-            vec![
-                "crates/clean/types".to_owned(),
-                format!("crates/clean/{model}"),
-            ]
-            .into(),
-        );
-        workspace.insert("package".to_owned(), ws.package.into());
-        workspace.insert("dependencies".to_owned(), dependencies.into());
-        workspace.insert("lints".to_owned(), ws.lints.into());
-        let mut root = toml::Table::new();
-        root.insert("workspace".to_owned(), workspace.into());
-        let manifest = toml::to_string(&root).map_err(|e| e.to_string())?;
-        write(dest, "Cargo.toml", &manifest)?;
+        manifest(repo, sha, &["types".to_owned(), model.clone()], dest)?;
         scaffold(
             dest,
             "types",
@@ -196,29 +165,84 @@ impl Export<'_> {
             "[dependencies]\ntypes = { path = \"../types\" }\nenum-map.workspace = true\n\n[dev-dependencies]\nserde = { workspace = true, features = [\"derive\"] }\ntoml.workspace = true\n",
         )?;
         write(dest, ".gitignore", "/target\n/vendor\n")?;
-        write(dest, "Cargo.lock", &show("Cargo.lock")?)?;
-        write(dest, "clippy.toml", &show("crates/clean/.clippy.toml")?)?;
-        output(Command::new("cargo").current_dir(dest).args([
-            "metadata",
-            "-q",
-            "--format-version",
-            "1",
-        ]))?;
-        let mut config = "[net]\noffline = true\n".to_owned();
-        let lock = fs::read_to_string(dest.join("Cargo.lock")).map_err(|e| e.to_string())?;
-        if lock.contains("source = \"registry+") {
-            output(Command::new("cargo").current_dir(dest).args([
-                "vendor",
-                "-q",
-                "--locked",
-                "vendor/crates-io",
-            ]))?;
-            config.push_str(
-                "\n[source.crates-io]\nreplace-with = \"vendored\"\n\n[source.vendored]\ndirectory = \"vendor/crates-io\"\n",
-            );
-        }
-        write(dest, ".cargo/config.toml", &config)
+        write(
+            dest,
+            "clippy.toml",
+            &output(host_git(repo).args(["show", &format!("{sha}:crates/clean/.clippy.toml")]))?,
+        )?;
+        vendor(repo, sha, dest)
     }
+}
+
+/// Writes DEST's root manifest: a workspace of the clean crates MEMBERS with the repository's
+/// workspace settings at SHA and only the allow-listed registry dependencies.
+pub fn manifest(repo: &Path, sha: &str, members: &[String], dest: &Path) -> Result<(), String> {
+    let show = |path: &str| output(host_git(repo).args(["show", &format!("{sha}:{path}")]));
+    let root: Root = toml::from_str(&show("Cargo.toml")?).map_err(|e| e.to_string())?;
+    let ws = root.workspace;
+    let approved = show("tools/cleanroom/allowed_deps.txt")?;
+    let mut dependencies = toml::Table::new();
+    for name in approved
+        .lines()
+        .filter_map(|l| l.split('#').next()?.split_whitespace().next())
+    {
+        let version = ws
+            .dependencies
+            .get(name)
+            .ok_or_else(|| format!("{name} is approved but not a workspace dependency"))?;
+        dependencies.insert(name.to_owned(), version.clone());
+    }
+    let mut workspace = toml::Table::new();
+    workspace.insert("resolver".to_owned(), ws.resolver.into());
+    workspace.insert(
+        "members".to_owned(),
+        members
+            .iter()
+            .map(|m| format!("crates/clean/{m}"))
+            .collect::<Vec<_>>()
+            .into(),
+    );
+    workspace.insert("package".to_owned(), ws.package.into());
+    workspace.insert("dependencies".to_owned(), dependencies.into());
+    workspace.insert("lints".to_owned(), ws.lints.into());
+    let mut root = toml::Table::new();
+    root.insert("workspace".to_owned(), workspace.into());
+    write(
+        dest,
+        "Cargo.toml",
+        &toml::to_string(&root).map_err(|e| e.to_string())?,
+    )
+}
+
+/// Gives DEST, whose manifests are written, the repository's lock at SHA trimmed to its
+/// workspace, the registry crates it locks in `vendor/`, and a cargo configuration that builds
+/// offline from them alone. Cargo reads manifests here and runs nothing it builds.
+pub fn vendor(repo: &Path, sha: &str, dest: &Path) -> Result<(), String> {
+    write(
+        dest,
+        "Cargo.lock",
+        &output(host_git(repo).args(["show", &format!("{sha}:Cargo.lock")]))?,
+    )?;
+    output(Command::new("cargo").current_dir(dest).args([
+        "metadata",
+        "-q",
+        "--format-version",
+        "1",
+    ]))?;
+    let mut config = "[net]\noffline = true\n".to_owned();
+    let lock = fs::read_to_string(dest.join("Cargo.lock")).map_err(|e| e.to_string())?;
+    if lock.contains("source = \"registry+") {
+        output(Command::new("cargo").current_dir(dest).args([
+            "vendor",
+            "-q",
+            "--locked",
+            "vendor/crates-io",
+        ]))?;
+        config.push_str(
+            "\n[source.crates-io]\nreplace-with = \"vendored\"\n\n[source.vendored]\ndirectory = \"vendor/crates-io\"\n",
+        );
+    }
+    write(dest, ".cargo/config.toml", &config)
 }
 
 /// The export's git, with the `info` and `hooks` folders the box mounts read-only, and a
