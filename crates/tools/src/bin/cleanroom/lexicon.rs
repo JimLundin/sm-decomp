@@ -7,6 +7,8 @@
 //! - `names`: hashes of `n:<2-4 word n-gram>` and `u:<word>` (distinctive single words).
 //! - `codes`: `TABLE CODE HASH`, a code table's value and the hash of its normalised name.
 //! - `fields`: hashes of `f:Struct.field`, a field the decoder fills from one word as is.
+//! - `routes`: `LENGTH HASH`, a route marker's length in bytes and the hash of its lower case,
+//!   text that points at the original or the observer's notes.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt::Write as _;
@@ -26,6 +28,8 @@ pub struct Lexicon {
     /// Per table, each value's name hash and its code.
     pub codes: BTreeMap<u32, BTreeMap<u64, u32>>,
     pub fields: HashSet<u64>,
+    /// Each route marker's length and hash, in the order the build was given them.
+    pub routes: Vec<(usize, u64)>,
 }
 
 impl Lexicon {
@@ -57,12 +61,26 @@ impl Lexicon {
                 codes.entry(table).or_default().insert(parse(h)?, code);
             }
         }
+        let routes = read("routes")?
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|line| {
+                let (len, h) = line
+                    .split_once(' ')
+                    .ok_or_else(|| format!("bad route {line}"))?;
+                Ok((
+                    len.parse().map_err(|e| format!("bad length {len}: {e}"))?,
+                    parse(h)?,
+                ))
+            })
+            .collect::<Result<_, String>>()?;
         Ok(Self {
             salt: read("salt")?.trim().to_owned(),
             addresses: set("addresses")?,
             names: set("names")?,
             codes,
             fields: set("fields")?,
+            routes,
         })
     }
 }
@@ -76,6 +94,7 @@ pub struct Plain {
     fields: BTreeSet<String>,
     /// The WRAM source constants seen so far; feed `source.rs` first.
     sources: BTreeSet<String>,
+    routes: Vec<String>,
 }
 
 impl Plain {
@@ -297,6 +316,13 @@ impl Plain {
         }
     }
 
+    pub fn route(&mut self, marker: &str) {
+        let marker = marker.to_lowercase();
+        if !self.routes.contains(&marker) {
+            self.routes.push(marker);
+        }
+    }
+
     pub fn distinctive(&mut self, word: &str) {
         self.names.insert(format!("u:{}", text::normalise(word)));
     }
@@ -330,12 +356,18 @@ impl Plain {
         for (file, body) in FILES.iter().zip(&contents) {
             fs::write(dir.join(file), body).map_err(|e| format!("{file}: {e}"))?;
         }
+        let routes = self.routes.iter().fold(String::new(), |mut out, marker| {
+            let _ = writeln!(out, "{} {:016x}", marker.len(), text::hash(salt, marker));
+            out
+        });
+        fs::write(dir.join("routes"), routes).map_err(|e| format!("routes: {e}"))?;
         fs::write(dir.join("salt"), format!("{salt}\n")).map_err(|e| format!("salt: {e}"))?;
         Ok(format!(
-            "lexicon: {} addresses, {} names, {kept} code tables, {} fields\n",
+            "lexicon: {} addresses, {} names, {kept} code tables, {} fields, {} routes\n",
             self.addresses.len(),
             self.names.len(),
-            self.fields.len()
+            self.fields.len(),
+            self.routes.len()
         ))
     }
 }

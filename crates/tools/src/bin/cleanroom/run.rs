@@ -934,7 +934,9 @@ mod tests {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml"),
             Path::new("/opt/cleanroom/tools/cleanroom/scan_lexicon/salt").to_owned(),
             Path::new("/opt/cleanroom/tools/cleanroom/scan_lexicon/names").to_owned(),
+            Path::new("/opt/cleanroom/tools/cleanroom/scan_lexicon/routes").to_owned(),
             repo.join("tools/cleanroom/scan_lexicon/names"),
+            repo.join("tools/cleanroom/scan_lexicon/routes"),
         ]
         .iter()
         .filter_map(|p| read(p).map(|_| p.display().to_string()))

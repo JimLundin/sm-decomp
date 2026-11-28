@@ -11,10 +11,10 @@
 //! first commit as LANE's baseline holds it. It prints each file's new hits' count and line
 //! numbers, never the words, and the bytes of its lines the baseline doesn't hold.
 //!
-//! `cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE`: the
-//! observer side. Builds the hashed lexicon from the bank logs, `verify`'s decoders and
-//! sources, the decode notes and a list of distinctive single words. Nothing it reads is
-//! written out unhashed.
+//! `cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE
+//! --routes FILE`: the observer side. Builds the hashed lexicon from the bank logs, `verify`'s
+//! decoders and sources, the decode notes, a list of distinctive single words and a list of
+//! route markers. Nothing it reads is written out unhashed.
 
 mod export;
 mod import;
@@ -44,7 +44,7 @@ const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN
                      cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
-                     cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE";
+                     cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE --routes FILE";
 
 const DEFAULT_LEXICON: &str = "tools/cleanroom/scan_lexicon";
 const DEFAULT_ALLOW: &str = "tools/cleanroom/scan_allow.txt";
@@ -231,7 +231,10 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
     for arg in rest {
         if arg.starts_with("--") {
             if awaiting_input
-                || !matches!(arg.as_str(), "--logs" | "--rust" | "--notes" | "--words")
+                || !matches!(
+                    arg.as_str(),
+                    "--logs" | "--rust" | "--notes" | "--words" | "--routes"
+                )
             {
                 return Err(USAGE.to_owned());
             }
@@ -260,6 +263,10 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
                 .map(|l| l.split('#').next().unwrap_or_default().trim())
                 .filter(|w| !w.is_empty())
                 .for_each(|w| plain.distinctive(w)),
+            "--routes" => src
+                .lines()
+                .filter(|l| !l.is_empty())
+                .for_each(|marker| plain.route(marker)),
             _ => return Err(USAGE.to_owned()),
         }
     }
@@ -567,7 +574,14 @@ mod tests {
             let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
             assert!(options(&args, &["--lexicon", "--allow"]).is_err());
         }
-        for flag in ["--logs", "--rust", "--notes", "--words", "--unknown"] {
+        for flag in [
+            "--logs",
+            "--rust",
+            "--notes",
+            "--words",
+            "--routes",
+            "--unknown",
+        ] {
             let args = [
                 "unused-output".to_owned(),
                 "salt".to_owned(),

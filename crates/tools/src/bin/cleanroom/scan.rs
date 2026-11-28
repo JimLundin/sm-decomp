@@ -517,7 +517,7 @@ pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<F
         addresses(lex, line, |class, detail| {
             push(n.saturating_add(1), class, detail);
         });
-        for marker in routes(&line.to_lowercase()) {
+        for marker in routes(lex, &line.to_lowercase()) {
             push(n.saturating_add(1), Class::Route, marker);
         }
     }
@@ -565,32 +565,15 @@ pub fn added(
         .collect()
 }
 
-/// Where the original and the observer's notes are: text that points an implementer at them.
-/// Each marker is held as its length and its hash under `ROUTE_SALT`, as the lexicon holds its
-/// names, so the binary the box mounts holds no readable pointer.
-const ROUTE_SALT: &str = "route";
-const ROUTES: &[(usize, u64)] = &[
-    (15, 0xa155_5901_ab37_4d77),
-    (8, 0xdcb5_601a_be29_3ea6),
-    (8, 0x1295_e291_959b_efaa),
-    (10, 0x214c_3b6d_d5da_34a1),
-    (12, 0x378e_a055_db84_cdf9),
-    (9, 0xe8a7_1e37_860f_17c0),
-    (6, 0x65f5_b813_6399_98ab),
-    (7, 0x7b2d_4b5c_6936_dc67),
-    (14, 0xa57c_6364_bee1_b3ed),
-    (10, 0x7764_93d3_98f2_6342),
-    (10, 0xee20_8aa8_85d3_91ce),
-];
-
-/// The route markers LOWER holds, each once, in `ROUTES` order.
-fn routes(lower: &str) -> Vec<String> {
-    ROUTES
+/// The route markers, the lexicon's text that points an implementer at the original or the
+/// observer's notes, that LOWER holds, each once, in the lexicon's order.
+fn routes(lex: &Lexicon, lower: &str) -> Vec<String> {
+    lex.routes
         .iter()
         .filter_map(|&(len, hash)| {
             (0..=lower.len().saturating_sub(len))
                 .filter_map(|at| lower.get(at..at.saturating_add(len)))
-                .find(|window| window.len() == len && text::hash(ROUTE_SALT, window) == hash)
+                .find(|window| window.len() == len && text::hash(&lex.salt, window) == hash)
                 .map(str::to_owned)
         })
         .collect()
@@ -598,8 +581,16 @@ fn routes(lower: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Allow, Class, ROUTE_SALT, ROUTES, added, file};
+    use super::{Allow, Class, added, file};
     use crate::{lexicon::Lexicon, text};
+
+    fn repo_lexicon() -> Lexicon {
+        Lexicon::load(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../tools/cleanroom/scan_lexicon"),
+        )
+        .unwrap()
+    }
 
     /// The route markers in plain text, which only the tests hold.
     const PLAIN_ROUTES: &[&str] = &[
@@ -617,19 +608,14 @@ mod tests {
     ];
 
     #[test]
-    fn every_route_is_found_by_its_hash() {
-        assert_eq!(PLAIN_ROUTES.len(), ROUTES.len());
-        for (plain, (len, hash)) in PLAIN_ROUTES.iter().zip(ROUTES) {
-            assert_eq!((plain.len(), text::hash(ROUTE_SALT, plain)), (*len, *hash));
+    fn every_route_is_found_by_the_lexicons_hash() {
+        let lex = repo_lexicon();
+        assert_eq!(PLAIN_ROUTES.len(), lex.routes.len());
+        for (plain, (len, hash)) in PLAIN_ROUTES.iter().zip(&lex.routes) {
+            assert_eq!((plain.len(), text::hash(&lex.salt, plain)), (*len, *hash));
             let mut out = Vec::new();
             let line = format!("Ünïcode first: see {}.", plain.to_uppercase());
-            file(
-                &Lexicon::default(),
-                &Allow::parse(""),
-                "x.md",
-                &line,
-                &mut out,
-            );
+            file(&lex, &Allow::parse(""), "x.md", &line, &mut out);
             assert_eq!(
                 out.iter()
                     .map(|f| (f.class, f.detail.as_str()))
@@ -639,9 +625,8 @@ mod tests {
         }
     }
 
-    /// The cleanroom binary, as the box mounts it, holds no route marker as text.
-    #[test]
-    fn the_binary_holds_no_route_in_plain_text() {
+    /// The cleanroom binary, as the box mounts it.
+    fn binary() -> Vec<u8> {
         let exe = std::env::current_exe().unwrap();
         let profile = exe.parent().and_then(std::path::Path::parent).unwrap();
         let built = std::process::Command::new(env!("CARGO"))
@@ -660,7 +645,12 @@ mod tests {
             .status()
             .unwrap();
         assert!(built.success());
-        let binary = std::fs::read(profile.join("cleanroom")).unwrap();
+        std::fs::read(profile.join("cleanroom")).unwrap()
+    }
+
+    #[test]
+    fn the_binary_holds_no_route_in_plain_text() {
+        let binary = binary();
         for plain in PLAIN_ROUTES {
             assert!(
                 !binary
@@ -668,6 +658,23 @@ mod tests {
                     .any(|w| w.eq_ignore_ascii_case(plain.as_bytes())),
                 "the binary holds {plain}"
             );
+        }
+    }
+
+    /// Neither the lexicon's hash of a marker nor its hash under the salt the binary once held.
+    #[test]
+    fn the_binary_holds_no_route_hash() {
+        let binary = binary();
+        let lex = repo_lexicon();
+        for plain in PLAIN_ROUTES {
+            for hash in [text::hash(&lex.salt, plain), text::hash("route", plain)] {
+                for bytes in [hash.to_le_bytes(), hash.to_be_bytes()] {
+                    assert!(
+                        !binary.windows(bytes.len()).any(|w| w == bytes),
+                        "the binary holds the hash of {plain}"
+                    );
+                }
+            }
         }
     }
 
