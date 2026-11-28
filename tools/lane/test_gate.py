@@ -36,7 +36,8 @@ class Gate(unittest.TestCase):
         self.fake("verify_lib", self.repo / "tools/lane/run_tests.sh")
         self.fake("crate_rules", self.repo / "tools/check_crate_rules.sh")
         self.fake("doc_links", self.repo / "tools/check_doc_links.sh")
-        for name, script in (("faults", "tools/check_mutants.py"), ("owners", "tools/cleanroom/adjusted_vectors_run.py")):
+        for name, script in (("faults", "tools/check_mutants.py"), ("owners", "tools/cleanroom/adjusted_vectors_run.py"),
+                             ("prereview", "tools/lane/prereview.py")):
             (self.repo / script).write_text(FAKE_PYTHON.format(ran=str(self.ran), name=name))
         self.git("init", "-q", "-b", "lane/test")
         self.commit("Invented tree", "-A")
@@ -96,9 +97,19 @@ class Gate(unittest.TestCase):
         out = self.passes()
         self.assertIn("GATE REUSED: ", out)
         self.assertRegex(out, rf"(?m)^GATE OK {self.git('rev-parse', '--short', 'HEAD')} ")
-        self.assertEqual(self.ran_checks(), [])
+        self.assertEqual(self.ran_checks(), ["prereview"])
         self.passes(SM_GATE_FRESH="1")
         self.assertIn("cargo", self.ran_checks())
+
+    def test_a_reused_pass_still_runs_the_review_findings(self) -> None:
+        self.settled()
+        self.commit("Same tree, a message the review findings refuse")
+        status, out = self.gate(GATE_TEST_STATUS_prereview="1", GATE_TEST_OUT_prereview="invented dash finding")
+        self.assertEqual(status, 1, out)
+        self.assertIn("PREREVIEW FAIL", out.splitlines())
+        self.assertIn("invented dash finding", out.splitlines())
+        self.assertNotIn("GATE REUSED: ", out)
+        self.assertEqual(self.ran_checks(), ["prereview"])
 
     def test_other_compiler_flags_run_again(self) -> None:
         self.settled()

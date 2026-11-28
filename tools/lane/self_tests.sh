@@ -29,7 +29,7 @@ suite "$lane/test_self_tests.py"
 # files (including this selector and its change detector) run every suite. The landing tool,
 # the adjusted-vector prover, the box's relay and the `cleanroom` binary's inputs and fixtures
 # have their own Python and Rust tests in Quality.
-for path in "$lane"/{played,run_tests}.sh "$lane"/{land,test_land,__init__}.py "$clean/__init__.py" \
+for path in "$lane"/{played,run_tests}.sh "$lane"/{land,test_land,prereview,test_prereview,__init__}.py "$clean/__init__.py" \
     "$clean"/{adjusted_vectors_run.py,test_adjusted_vectors_run.py,adjusted_probe_tests.toml,adjusted_rule_owners} \
     "$clean"/{box_relay.py,test_box_relay.py,scan.sh,scan_tool.sh,scan_lexicon.sh,scan_lexicon,scan_allow.txt} \
     "$clean"/{allowed_deps.txt,scan_fixtures,rule_fixtures}; do

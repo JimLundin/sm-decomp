@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Local source gate: the formatting, lint, dependency, crate-rule and doc-link checks of Quality,
-# and, each only when the branch (committed since its base, or in the working tree) changes its
-# subject: the tools' self-tests; verify's lib tests, which hold the README, the report, the
-# played runs and the vectors' pins to the tree; the planted faults' anchors and coverage
-# (tools/check_mutants.py validate, which runs no fault); the adjusted vectors' rule owners
-# (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test); and, for each domain whose
-# spec or vectors change, an adjusted vector for every Parameter entry
+# the mechanical review findings (tools/lane/prereview.py: dashes in the branch's commit messages
+# and changed Markdown lines, changed Markdown lines over 100 columns, backticked repository paths
+# in the docs that don't exist), and, each only when the branch (committed since its base, or in the
+# working tree) changes its subject: the tools' self-tests; verify's lib tests, which hold the
+# README, the report, the played runs and the vectors' pins to the tree; the planted faults' anchors
+# and coverage (tools/check_mutants.py validate, which runs no fault); the adjusted vectors' rule
+# owners (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test); and, for each
+# domain whose spec or vectors change, an adjusted vector for every Parameter entry
 # (tools/cleanroom/adjusted_vectors.sh --gate). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 
@@ -14,10 +16,11 @@
 # shellcheck or their absence, Python, the environment variables cargo, rustc, the gate and the
 # self-tests read, and the cargo and rustfmt configuration files outside the tree (below). Those
 # decide what every check reads, which checks run and how, so a later gate of the same key with
-# nothing uncommitted passed already: the root's gate of a picked commit whose tree is
-# the lane's, on the base the lane was gated on, says whose pass it reuses and runs nothing. A file
-# git is told to ignore changes to (skip-worktree, assume-unchanged), a file hidden by ignore rules
-# from outside the tree, or a cargo configuration that includes another turns this off.
+# nothing uncommitted passed already: the root's gate of a picked commit whose tree is the lane's,
+# on the base the lane was gated on, says whose pass it reuses and runs only the review findings,
+# which read the commit messages the key leaves out. A file git is told to ignore changes to
+# (skip-worktree, assume-unchanged), a file hidden by ignore rules from outside the tree, or a
+# cargo configuration that includes another turns this off.
 # SM_GATE_FRESH=1 runs the checks anyway.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
 # default origin/main; a stacked branch names the branch it builds on), SM_GATE_PASSED (where the
@@ -34,6 +37,8 @@ R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}"
 # bin directory; where it is missing the gate says so and CI's Quality holds the rules.
 deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny")
 [ -x "$deny" ] || deny=
+# The review findings run first and every time, a reused pass included.
+prereview=$("${SM_PY:-python3}" -I tools/lane/prereview.py "$BASE" 2>&1) && prereview_ok=1 || prereview_ok=0
 PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
 key=
 # The configuration files cargo and rustfmt read from outside the tree: in CARGO_HOME, rustfmt's
@@ -84,6 +89,11 @@ if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
   key=$(git rev-parse HEAD^{tree})-$(git rev-parse "$left^{tree}")-$ran_with
 fi
 if [ -n "$key" ] && [ "${SM_GATE_FRESH:-0}" != 1 ] && [ -s "$PASSED/$key" ]; then
+  if [ "$prereview_ok" = 0 ]; then
+    echo "PREREVIEW FAIL"; echo "$prereview"
+    echo "GATE FAILED $(git branch --show-current)"
+    exit 1
+  fi
   echo "GATE REUSED: $(cat "$PASSED/$key") passed this tree over the same base, with the same tools"
   [ -n "$deny" ] || echo "DENY SKIPPED: no cargo-deny here; CI's Quality runs cargo deny check bans"
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
@@ -195,6 +205,7 @@ if ! passed doc-links; then
   fail "DOC LINKS FAIL"
   reason doc-links <"$O/doc-links.log"
 fi
+[ "$prereview_ok" = 1 ] || { fail "PREREVIEW FAIL"; echo "$prereview"; }
 if ! passed verify-lib; then
   fail "VERIFY LIB FAIL"
   # Each failing test, then where each panicked with the panic's first line.
