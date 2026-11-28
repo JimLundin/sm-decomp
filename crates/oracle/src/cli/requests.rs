@@ -81,7 +81,7 @@ pub(super) struct CorpusRequest {
 impl MovieRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
         let [rom, inputs, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--positions-only] [--streams] [--ppu] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]".to_string()));
+            return Err(RequestError::Invalid("movie ROM INPUTS [--frames N] [--seeds TABLE DIR] [--ranges] [--lag-log LOG] [--watch FROM EVERY] [--trace FROM TO PC,...] [--positions-only] [--streams] [--ppu] [--native-seeds TABLE DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]".to_string()));
         };
         let mut frames = None;
         let mut seeds: Option<(PathBuf, PathBuf)> = None;
@@ -108,16 +108,18 @@ impl MovieRequest {
                     );
                 }
                 "--seeds" => {
-                    let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
-                        return Err(RequestError::Invalid("--seeds CSV DIR".to_string()));
+                    let (Some(table), Some(directory)) = (options.next(), options.next()) else {
+                        return Err(RequestError::Invalid("--seeds TABLE DIR".to_string()));
                     };
-                    seeds = Some((PathBuf::from(csv), PathBuf::from(directory)));
+                    seeds = Some((PathBuf::from(table), PathBuf::from(directory)));
                 }
                 "--native-seeds" => {
-                    let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
-                        return Err(RequestError::Invalid("--native-seeds CSV DIR".to_string()));
+                    let (Some(table), Some(directory)) = (options.next(), options.next()) else {
+                        return Err(RequestError::Invalid(
+                            "--native-seeds TABLE DIR".to_string(),
+                        ));
                     };
-                    native.push((PathBuf::from(csv), PathBuf::from(directory)));
+                    native.push((PathBuf::from(table), PathBuf::from(directory)));
                 }
                 "--from" => {
                     let (Some(state), Some(frame)) = (options.next(), options.next()) else {
@@ -198,7 +200,7 @@ impl MovieRequest {
                 "--lag-log" => {
                     lag_log =
                         Some(PathBuf::from(options.next().ok_or_else(|| {
-                            RequestError::Invalid("--lag-log CSV".to_string())
+                            RequestError::Invalid("--lag-log LOG".to_string())
                         })?));
                 }
                 other => return Err(RequestError::Invalid(format!("unknown option {other}"))),

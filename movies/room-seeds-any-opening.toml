@@ -1,0 +1,34 @@
+[[seed]]
+room_index = 1
+room = "0000"
+movie_frame = 568
+
+[[seed]]
+room_index = 2
+room = "0000"
+movie_frame = 2219
+
+[[seed]]
+room_index = 3
+room = "0000"
+movie_frame = 4323
+
+[[seed]]
+room_index = 4
+room = "0000"
+movie_frame = 6012
+
+[[seed]]
+room_index = 5
+room = "0000"
+movie_frame = 7512
+
+[[seed]]
+room_index = 6
+room = "0000"
+movie_frame = 8315
+
+[[seed]]
+room_index = 7
+room = "DF45"
+movie_frame = 15196

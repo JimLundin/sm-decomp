@@ -7,6 +7,7 @@ pub mod game;
 pub mod inputs;
 pub mod lean;
 pub mod lsnes;
+pub mod room_seeds;
 
 /// A controller word in JOY1 order: B is bit 15, R is bit 4.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

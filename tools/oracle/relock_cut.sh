@@ -7,7 +7,7 @@
 #   PHASE   cut, realign, derive, check, or all of them in that order (default)
 #   PLAN    the plan; OUT/<capture>/NNNN.lss (+ .record, or .words) are written
 #   LOGS    one log a job (LOGS/<movie>-<rung>.log, LOGS/derive-<capture>.log),
-#           the window CSVs (LOGS/csv/) and the check's report (LOGS/check.txt)
+#           the window seed tables (LOGS/tables/) and the check's report (LOGS/check.txt)
 #   WINDOW  MOVIE-RUNG, e.g. 100-50000: only those windows (all by default);
 #           derive and check then cover only those windows' seeds
 # Environment:
@@ -18,14 +18,15 @@
 #            <dir>/target/seeds/<capture>/NNNN-ROOM-wram.bin (the old bundles,
 #            unpacked); space-separated
 #   JOBS     concurrent jobs (8); STAGGER seconds between lsnes starts (4)
+#   PYTHON   (default python3), with tomllib
 #
 # realign: a capture usually follows step FRAME-1 of its movie, some follow
-# step FRAME (the CSV can't tell, the game's frame counter can); those are
+# step FRAME (the table's frame can't tell, the game's frame counter can); those are
 # re-cut one step later, from the seed itself.
 #
 # The check: every planned seed exists. A cut seed's record carries the
 # memories (`movie` dumps them on save steps); its room word ($7E:079B) and
-# frame counter ($7E:05B6) equal the CSV row's `room` and `nmi`, and its work RAM equals the lsnes room capture's
+# frame counter ($7E:05B6) equal the table seed's `room` and `nmi`, and its work RAM equals the lsnes room capture's
 # byte for byte outside the stack page $1F00-$1FFF, as `movie --seeds` counts.
 # A derived seed has its .words and derive-seed confirmed every word stuck at
 # the load (it reads the written value, or other than the plain base, one step
@@ -46,7 +47,8 @@ windows=" $* "
 root=$(cd "$(dirname "$0")/../.." && pwd)
 jobs=${JOBS:-8}
 stagger=${STAGGER:-4}
-mkdir -p "$logs/csv" "$out"
+python=${PYTHON:-python3}
+mkdir -p "$logs/tables" "$out"
 
 # Whether window MOVIE-RUNG is selected.
 selected() { [ "$windows" = "  " ] || [[ $windows == *" $1 "* ]]; }
@@ -67,23 +69,22 @@ start_job() {
     "$@" < /dev/null &
 }
 
-# One window: MOVIE RUNG, then its captures as CAPTURE INDEX FRAME triples.
+# One window: MOVIE RUNG, then its captures as CAPTURE INDEX ROOM FRAME quadruples.
 window() {
-    local movie=$1 rung=$2 log=$logs/$1-$2.log arguments=() last=0 capture index frame csv
+    local movie=$1 rung=$2 log=$logs/$1-$2.log arguments=() last=0 capture index room frame table
     local -A rows=()
     shift 2
-    while [ $# -ge 3 ]; do
-        capture=$1 index=$2 frame=$3
-        shift 3
-        rows[$capture]+=" $index"
+    while [ $# -ge 4 ]; do
+        capture=$1 index=$2 room=$3 frame=$4
+        shift 4
+        rows[$capture]+="$(seed_toml "$index" "$room" "$frame")"$'\n\n'
         if [ "$frame" -gt "$last" ]; then last=$frame; fi
     done
     for capture in "${!rows[@]}"; do
-        csv=$logs/csv/$movie-$rung-$capture.csv
-        awk -F, -v keep="${rows[$capture]} " 'NR == 1 || index(keep, " " $1 " ")' \
-            "$root/movies/room-seeds-$capture.csv" > "$csv"
+        table=$logs/tables/$movie-$rung-$capture.toml
+        printf '%s' "${rows[$capture]}" > "$table"
         mkdir -p "$out/$capture"
-        arguments+=(--native-seeds "$csv" "$out/$capture")
+        arguments+=(--native-seeds "$table" "$out/$capture")
     done
     if [ "$rung" -gt 0 ]; then
         arguments+=(--from "$(printf '%s/%s/%06d.lss' "$LADDERS" "$movie" "$rung")" "$rung")
@@ -102,7 +103,7 @@ cut_phase() {
         sort -rn | while read -r _ movie rung; do echo "$movie $rung"; done > "$logs/windows.txt"
     while read -r movie rung; do
         # shellcheck disable=SC2046
-        start_job window "$movie" "$rung" $(cuts | awk -v m="$movie" -v r="$rung" '$1 == m && $2 == r { print $3, $4, $6 }')
+        start_job window "$movie" "$rung" $(cuts | awk -v m="$movie" -v r="$rung" '$1 == m && $2 == r { print $3, $4, $5, $6 }')
     done < "$logs/windows.txt"
     wait
 }
@@ -145,28 +146,32 @@ differing() {
 # Work RAM word OFFSET of RECORD, as an unsigned decimal.
 record_word() { od -An -tu2 -j $((43 + $2)) -N 2 "$1" | tr -d ' '; }
 
-# The game's frame counter ($7E:05B6) at a capture: the CSV's `nmi` column.
-csv_counter() {
-    awk -F, -v index_="$2" 'NR == 1 { for (i = 1; i <= NF; i++) if ($i == "nmi") column = i; next }
-        $1 == index_ { print $column; exit }' "$root/movies/room-seeds-$1.csv" | tr -d '\r'
+# A seed of the oracle's `--native-seeds` table: INDEX ROOM FRAME.
+seed_toml() {
+    printf '[[seed]]\nroom_index = %s\nroom = "%s"\nmovie_frame = %s\n\n' "$1" "$2" "$3"
+}
+
+# The game's frame counter ($7E:05B6) at a capture: its table seed's `nmi`.
+table_counter() {
+    "$python" -c 'import sys, tomllib; print(*(s.get("nmi", "") for s in tomllib.load(open(sys.argv[1], "rb"))["seed"] if s["room_index"] == int(sys.argv[2])))' "$root/movies/room-seeds-$1.toml" "$2"
 }
 
 # A capture usually follows step FRAME-1, but some follow step FRAME: the
 # record's frame counter is then one short of the capture's. Re-cut those one
 # step later from the seed itself.
 realign_phase() {
-    local movie rung capture index room frame stem counter expected csv
+    local movie rung capture index room frame stem counter expected table
     while read -r movie rung capture index room frame; do
         stem=$(printf '%s/%s/%04d' "$out" "$capture" "$index")
         if [ ! -f "$stem.record" ] || [ "$(wc -c < "$stem.record")" -lt $((43 + 131072)) ]; then continue; fi
         counter=$(record_word "$stem.record" $((0x05B6)))
-        expected=$(csv_counter "$capture" "$index")
+        expected=$(table_counter "$capture" "$index")
         if [ "$(((counter + 1) % 65536))" != "$expected" ]; then continue; fi
-        csv=$logs/csv/realign-$capture-$index.csv
-        printf 'room_index,room,movie_frame\n%s,%s,%s\n' "$index" "$room" $((frame + 1)) > "$csv"
+        table=$logs/tables/realign-$capture-$index.toml
+        seed_toml "$index" "$room" $((frame + 1)) > "$table"
         mkdir -p "$logs/realign"
         "$ORACLE" movie "$ROM" "$INPUTS/$movie.inputs" --no-memories --ppu \
-            --from "$stem.lss" "$frame" --frames $((frame + 2)) --native-seeds "$csv" "$logs/realign" \
+            --from "$stem.lss" "$frame" --frames $((frame + 2)) --native-seeds "$table" "$logs/realign" \
             > "$logs/realign-$capture-$index.log" 2>&1
         mv -f "$(printf '%s/realign/%04d' "$logs" "$index").lss" "$stem.lss"
         mv -f "$(printf '%s/realign/%04d' "$logs" "$index").record" "$stem.record"
@@ -201,12 +206,12 @@ check_phase() {
             done
         done
         counter=$(record_word "$record" $((0x05B6)))
-        expected=$(csv_counter "$capture" "$index")
+        expected=$(table_counter "$capture" "$index")
         if [ "$found" != "$room" ]; then
-            echo "FAIL $capture:$index room $found, CSV $room" >> "$report"
+            echo "FAIL $capture:$index room $found, table $room" >> "$report"
             failures=$((failures + 1))
         elif [ "$counter" != "$expected" ]; then
-            echo "FAIL $capture:$index frame counter $counter, CSV $expected" >> "$report"
+            echo "FAIL $capture:$index frame counter $counter, table $expected" >> "$report"
             failures=$((failures + 1))
         elif [ -z "$capture_wram" ]; then
             echo "ok   $capture:$index room $room frame $frame; no lsnes capture to compare" >> "$report"

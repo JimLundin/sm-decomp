@@ -1,6 +1,33 @@
+use super::lag_log::{self, LagFrame};
 use super::requests::{CorpusRequest, MovieRequest, RequestError};
-use super::{RoomSeed, csv, movie, save_due};
+use super::{RoomSeed, movie, save_due};
+use crate::record::room_seeds::Hex;
 use std::path::PathBuf;
+
+const fn room_seed(room_index: u32, room: u32, movie_frame: u64) -> RoomSeed {
+    RoomSeed {
+        room_index,
+        room: Hex(room),
+        movie_frame,
+        next_input_index: None,
+        movie_subframe_index: None,
+        seed_sha256: None,
+        registers_sha256: None,
+        observation_sha256: None,
+        cpu_pc: None,
+        nmi: None,
+    }
+}
+
+fn lag_log_bytes(records: &[[u16; 7]]) -> Vec<u8> {
+    let mut bytes = b"SMLAGLOG".to_vec();
+    bytes.extend(1u16.to_le_bytes());
+    for (record, frame) in records.iter().zip(1u32..) {
+        bytes.extend(frame.to_le_bytes());
+        bytes.extend(record.iter().flat_map(|word| word.to_le_bytes()));
+    }
+    bytes
+}
 
 fn args(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
@@ -14,10 +41,10 @@ fn movie_options_parse_without_opening_paths() {
         "--frames",
         "100",
         "--seeds",
-        "missing.csv",
+        "missing.toml",
         "seeds",
         "--native-seeds",
-        "missing-native.csv",
+        "missing-native.toml",
         "native",
         "--from",
         "missing.state",
@@ -28,7 +55,7 @@ fn movie_options_parse_without_opening_paths() {
         "--from-ladder",
         "missing-ladder",
         "--lag-log",
-        "missing-lag.csv",
+        "missing-lag.log",
         "--watch",
         "10",
         "5",
@@ -76,16 +103,16 @@ fn movie_repeated_options_keep_last_values_and_accumulate_native_lists() {
         "two",
         "7",
         "--seeds",
-        "one.csv",
+        "one.toml",
         "one",
         "--seeds",
-        "two.csv",
+        "two.toml",
         "two",
         "--native-seeds",
-        "one.csv",
+        "one.toml",
         "one",
         "--native-seeds",
-        "two.csv",
+        "two.toml",
         "two",
         "--streams",
         "--ppu",
@@ -101,7 +128,7 @@ fn movie_repeated_options_keep_last_values_and_accumulate_native_lists() {
     );
     assert_eq!(
         request.seeds,
-        Some((PathBuf::from("two.csv"), PathBuf::from("two")))
+        Some((PathBuf::from("two.toml"), PathBuf::from("two")))
     );
     assert_eq!(request.native.len(), 2);
     assert_eq!(request.streams, Some(crate::Streams::PpuAndApuLog));
@@ -112,9 +139,13 @@ fn superseded_missing_input_is_replaced_by_the_effective_input() {
     let directory =
         std::env::temp_dir().join(format!("oracle-cli-effective-input-{}", std::process::id()));
     std::fs::create_dir_all(&directory).unwrap();
-    let missing = directory.join("missing.csv");
-    let effective = directory.join("effective.csv");
-    std::fs::write(&effective, "room_index,room,movie_frame\n1,1234,40\n").unwrap();
+    let missing = directory.join("missing.toml");
+    let effective = directory.join("effective.toml");
+    std::fs::write(
+        &effective,
+        "[[seed]]\nroom_index = 1\nroom = \"1234\"\nmovie_frame = 40\n",
+    )
+    .unwrap();
     let values = vec![
         "rom".to_owned(),
         "pads".to_owned(),
@@ -126,11 +157,11 @@ fn superseded_missing_input_is_replaced_by_the_effective_input() {
         "used".to_owned(),
     ];
     let request = MovieRequest::parse(&values).unwrap();
-    let (csv, destination) = request.seeds.unwrap();
-    assert_eq!(csv, effective);
+    let (table, destination) = request.seeds.unwrap();
+    assert_eq!(table, effective);
     assert_eq!(destination, PathBuf::from("used"));
     assert!(!missing.exists());
-    assert_eq!(super::room_seeds(&csv).len(), 1);
+    assert_eq!(super::room_seeds(&table).len(), 1);
     std::fs::remove_file(effective).unwrap();
     std::fs::remove_dir(directory).unwrap();
 }
@@ -140,8 +171,8 @@ fn movie_missing_and_malformed_operands_return_errors() {
     for tail in [
         vec!["--frames"],
         vec!["--frames", "no"],
-        vec!["--seeds", "csv"],
-        vec!["--native-seeds", "csv"],
+        vec!["--seeds", "table"],
+        vec!["--native-seeds", "table"],
         vec!["--from", "state"],
         vec!["--from", "state", "no"],
         vec!["--ladder", "0", "dir"],
@@ -271,83 +302,61 @@ fn corpus_missing_operands_and_compatibility_are_rejected() {
 }
 
 #[test]
-fn room_csv_headers_can_be_reordered_and_blank_lines_keep_line_identity() {
-    let rows = csv::room_seeds("movie_frame,ignored,room,room_index\n40,x,abcd,7\n\n80,x,1234,8\n")
-        .unwrap();
+fn a_lag_log_reads_a_record_a_movie_frame() {
+    let log = lag_log::parse(&lag_log_bytes(&[
+        [1, 2, 1, 4, 5, 6, 7],
+        [8, 9, 0, 11, 12, 13, 14],
+    ]))
+    .unwrap();
     assert_eq!(
-        rows,
+        log,
         [
-            RoomSeed {
-                index: 7,
-                room: 0xabcd,
-                movie_frame: 40
+            LagFrame {
+                frame_counter: 1,
+                nmi_counter: 2,
+                lagged: true,
+                game_state: 4,
+                room: 5,
+                x: 6,
+                y: 7
             },
-            RoomSeed {
-                index: 8,
-                room: 0x1234,
-                movie_frame: 80
+            LagFrame {
+                frame_counter: 8,
+                nmi_counter: 9,
+                lagged: false,
+                game_state: 11,
+                room: 12,
+                x: 13,
+                y: 14
             }
         ]
     );
-    let error = csv::room_seeds("movie_frame,ignored,room,room_index\n\n40,x,abcd\n").unwrap_err();
-    assert_eq!(
-        error,
-        csv::CsvError {
-            line: 3,
-            column: 4,
-            kind: csv::ErrorKind::MissingField
-        }
-    );
 }
 
 #[test]
-fn room_csv_invalid_fields_report_coordinates_without_retaining_the_row() {
-    let error =
-        csv::room_seeds("room_index,room,movie_frame\n1,invalid-private-value,30\n").unwrap_err();
-    assert_eq!(
-        error,
-        csv::CsvError {
-            line: 2,
-            column: 2,
-            kind: csv::ErrorKind::InvalidNumber
-        }
-    );
-    assert_eq!(
-        csv::room_seeds("other\n").unwrap_err().kind,
-        csv::ErrorKind::MissingColumn("room_index")
-    );
-}
-
-#[test]
-fn lag_csv_short_rows_are_errors_and_unknown_numeric_fields_keep_the_sentinel() {
-    assert_eq!(
-        csv::lag_log("header\n0,1,2,3,4,5,6,7,8,9,10\n").unwrap(),
-        [[3, 5, 6, 7, 8, 9, 10]]
-    );
-    assert_eq!(
-        csv::lag_log("header\n0,1,2,unknown,4,5,6,7,8,9,10\n").unwrap(),
-        [[-1, 5, 6, 7, 8, 9, 10]]
-    );
-    assert_eq!(
-        csv::lag_log("header\n0,1,2,3,4,5\n").unwrap_err(),
-        csv::CsvError {
-            line: 2,
-            column: 7,
-            kind: csv::ErrorKind::MissingField
-        }
-    );
+fn a_lag_log_of_another_version_order_or_length_is_refused_without_its_contents() {
+    let good = lag_log_bytes(&[[41267, 0, 0, 0, 0, 0, 0], [0; 7]]);
+    let mut version = good.clone();
+    version[8] = 2;
+    let mut order = good.clone();
+    order[10] = 7;
+    let mut lag = good.clone();
+    lag[18] = 2;
+    let short = &good[..good.len() - 1];
+    for (bytes, expected) in [
+        (&good[1..], "not an lsnes lag log"),
+        (&version[..], "lag log version 2, this oracle reads 1"),
+        (&order[..], "record 1: not movie frame 1"),
+        (&lag[..], "record 1: lag flag is neither 0 nor 1"),
+        (short, "17 bytes after the last whole record"),
+    ] {
+        assert_eq!(lag_log::parse(bytes).unwrap_err(), expected);
+    }
 }
 
 #[test]
 fn native_save_uses_absolute_movie_step_when_resumed() {
-    let lists = vec![(
-        vec![RoomSeed {
-            index: 1,
-            room: 1,
-            movie_frame: 41,
-        }],
-        PathBuf::from("native"),
-    )];
+    let lists = vec![(vec![room_seed(1, 1, 41)], PathBuf::from("native"))];
     assert!(save_due(&lists, None, (40, 100)));
     assert!(!save_due(&lists, None, (0, 100)));
     assert!(!save_due(&lists, None, (41, 100)));
@@ -363,11 +372,11 @@ fn movie_lag_log_and_positions_only_report_the_compared_fields() {
     record.wram[0x05b6..0x05b8].copy_from_slice(&41267_u16.to_le_bytes());
     record.wram[0x0af6..0x0af8].copy_from_slice(&54128_u16.to_le_bytes());
     record.wait_entry = Some(Beam { v: 283, h: 1179 });
-    let row = csv::lag_log("header\n0,0,0,49712,0,0,1,0,0,31805,0\n").unwrap()[0];
+    let row = lag_log::parse(&lag_log_bytes(&[[49712, 0, 1, 0, 0, 31805, 0]])).unwrap()[0];
     let payloads = ["41267", "54128", "49712", "31805", "283", "1179"];
 
     for positions_only in [false, true] {
-        let mut command = args(&["rom", "inputs", "--lag-log", "lag.csv"]);
+        let mut command = args(&["rom", "inputs", "--lag-log", "lag.log"]);
         if positions_only {
             command.push("--positions-only".to_owned());
         }
@@ -379,7 +388,7 @@ fn movie_lag_log_and_positions_only_report_the_compared_fields() {
         assert_eq!(report.contains("frame counter"), !positions_only);
         assert_omits(&report, &payloads);
         let mut same_position = row;
-        same_position[5] = 54128;
+        same_position.x = 54128;
         assert_eq!(
             lag_difference(47, &record, &same_position, request.positions_only).is_none(),
             positions_only
@@ -392,14 +401,10 @@ fn movie_seed_comparisons_report_room_status_and_optional_range_locations() {
     use super::movie_report::seed_comparison;
     use std::collections::VecDeque;
 
-    let seed = RoomSeed {
-        index: 17,
-        room: 0xadbe,
-        movie_frame: 10,
-    };
+    let seed = room_seed(17, 0xadbe, 10);
     let mut capture = vec![0; 0x1000];
     capture[0x40..0x42].copy_from_slice(&[0xb2, 0xa1]);
-    capture[0x079b..0x079d].copy_from_slice(&seed.room.to_le_bytes());
+    capture[0x079b..0x079d].copy_from_slice(&0xadbe_u16.to_le_bytes());
     let mut earlier = capture.clone().into_boxed_slice();
     earlier[0x40..0x42].copy_from_slice(&[0xd4, 0xc3]);
     earlier[0x079b..0x079d].copy_from_slice(&[0xfa, 0xce]);
@@ -408,7 +413,7 @@ fn movie_seed_comparisons_report_room_status_and_optional_range_locations() {
     let history = VecDeque::from([earlier, later]);
 
     for ranges in [false, true] {
-        let mut command = args(&["rom", "inputs", "--seeds", "rooms.csv", "captures"]);
+        let mut command = args(&["rom", "inputs", "--seeds", "rooms.toml", "captures"]);
         if ranges {
             command.push("--ranges".to_owned());
         }

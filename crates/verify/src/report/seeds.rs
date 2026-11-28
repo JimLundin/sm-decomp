@@ -5,48 +5,20 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use crate::lock::{Lock, Row, Start};
+use oracle_record::room_seeds::RoomSeeds;
 
 /// The movie frame of each seed of `capture`, by its index, from `root`'s table of its seeds.
 fn seed_frames(root: &Path, capture: &str) -> Result<BTreeMap<u32, u64>, String> {
-    let path = format!("movies/room-seeds-{capture}.csv");
-    let text =
-        std::fs::read_to_string(root.join(&path)).map_err(|_| format!("{path}: unavailable"))?;
-    let mut lines = text.lines();
-    let header: Vec<_> = lines.next().unwrap_or_default().split(',').collect();
-    let column = |name: &str| {
-        header
-            .iter()
-            .position(|field| field.trim() == name)
-            .ok_or_else(|| format!("{path}: missing column {name}"))
-    };
-    let (id_column, frame_column) = (column("room_index")?, column("movie_frame")?);
-    let mut frames = BTreeMap::new();
-    for (line_number, line) in lines
-        .enumerate()
-        .filter(|(_, line)| !line.trim().is_empty())
-    {
-        let fields: Vec<_> = line.split(',').map(str::trim).collect();
-        let invalid = || {
-            format!(
-                "{path}: invalid seed metadata at row {}",
-                line_number.saturating_add(2)
-            )
-        };
-        let id: u32 = fields
-            .get(id_column)
-            .ok_or_else(invalid)?
-            .parse()
-            .map_err(|_| invalid())?;
-        let frame: u64 = fields
-            .get(frame_column)
-            .ok_or_else(invalid)?
-            .parse()
-            .map_err(|_| invalid())?;
-        if frames.insert(id, frame).is_some() {
-            return Err(format!("{path}: duplicate seed {id}"));
-        }
-    }
-    Ok(frames)
+    let table = RoomSeeds::read(&root.join(table_path(capture)))?;
+    Ok(table
+        .seed
+        .iter()
+        .map(|seed| (seed.room_index, seed.movie_frame))
+        .collect())
+}
+
+fn table_path(capture: &str) -> String {
+    format!("movies/room-seeds-{capture}.toml")
 }
 
 /// The movie frame of the seed `wanted` of `capture`.
@@ -54,7 +26,7 @@ pub(super) fn seed_frame(root: &Path, capture: &str, wanted: u32) -> Result<u64,
     seed_frames(root, capture)?
         .get(&wanted)
         .copied()
-        .ok_or_else(|| format!("movies/room-seeds-{capture}.csv: missing seed {wanted}"))
+        .ok_or_else(|| format!("{}: missing seed {wanted}", table_path(capture)))
 }
 
 /// The movie a capture records: the first word of its name. The lock holds no movie of its

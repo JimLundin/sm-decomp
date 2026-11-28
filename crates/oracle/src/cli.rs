@@ -7,13 +7,14 @@
 //! `oracle ladder-check ROM INPUTS DIR` checks that each rung of a movie's
 //!   ladder (`movie --ladder N DIR`), resumed, reproduces the next.
 
-mod csv;
+mod lag_log;
 mod movie_report;
 mod requests;
 #[cfg(test)]
 mod tests;
 
 use crate::lsnes::Lsnes;
+use crate::record::room_seeds::{RoomSeed, RoomSeeds};
 use crate::{FrameRecord, NmiKind, Start, Streams};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -23,18 +24,10 @@ fn fail(message: impl core::fmt::Display) -> ! {
     std::process::exit(2)
 }
 
-/// One row of an lsnes room-seed CSV.
-#[derive(Debug, PartialEq, Eq)]
-struct RoomSeed {
-    index: u32,
-    room: u16,
-    movie_frame: u64,
-}
-
 fn room_seeds(path: &Path) -> Vec<RoomSeed> {
-    let text = std::fs::read_to_string(path)
-        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-    csv::room_seeds(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
+    RoomSeeds::read(path)
+        .unwrap_or_else(|error| fail(error))
+        .seed
 }
 
 fn word(wram: &[u8], address: usize) -> u16 {
@@ -105,11 +98,11 @@ fn save_after_step(
     for (list, directory) in lists {
         for seed in list.iter().filter(|seed| seed.movie_frame == step + 1) {
             std::fs::write(
-                directory.join(format!("{:04}.record", seed.index)),
+                directory.join(format!("{:04}.record", seed.room_index)),
                 lsnes.raw(),
             )
             .unwrap_or_else(|error| fail(error));
-            seeds.push(directory.join(format!("{:04}.lss", seed.index)));
+            seeds.push(directory.join(format!("{:04}.lss", seed.room_index)));
         }
     }
     let rung = cutting
@@ -155,12 +148,12 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
         std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
     let pads = crate::inputs::read(&inputs).unwrap_or_else(|error| fail(error));
     let frames = frames.unwrap_or(pads.len());
-    let seeds = seeds.map(|(csv, directory)| (room_seeds(&csv), directory));
+    let seeds = seeds.map(|(table, directory)| (room_seeds(&table), directory));
     let native: Vec<_> = native
         .into_iter()
-        .map(|(csv, directory)| (room_seeds(&csv), directory))
+        .map(|(table, directory)| (room_seeds(&table), directory))
         .collect();
-    let lag_log = lag_log.map(|csv| read_lag_log(&csv));
+    let lag_log = lag_log.map(|path| read_lag_log(&path));
     let mut lag_mismatches = 0;
     let (mut start, mut first) = match start {
         requests::MovieStart::PowerOn => (Start::PowerOn, 0),
@@ -317,7 +310,7 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
                 break;
             }
             next_seed += 1;
-            let Ok(capture) = crate::seed::capture_wram(directory, seed.index) else {
+            let Ok(capture) = crate::seed::capture_wram(directory, seed.room_index) else {
                 continue;
             };
             checked += 1;
@@ -547,13 +540,12 @@ fn ladder_rung(arguments: &[String]) {
     }
 }
 
-/// An lsnes lag log (`tools/lsnes_lag_log.lua`): per movie frame, the frame
-/// counter $05B6, the NMI counter $05B8, the lag flag, the game state $0998,
-/// the room $079B and Samus's X and Y ($0AF6, $0AFA) after the frame.
-fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
-    let text = std::fs::read_to_string(path)
-        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-    csv::lag_log(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
+/// An lsnes lag log (`tools/lsnes_lag_log.lua`), a record a movie frame.
+fn read_lag_log(path: &Path) -> Vec<lag_log::LagFrame> {
+    std::fs::read(path)
+        .map_err(|error| error.to_string())
+        .and_then(|bytes| lag_log::parse(&bytes))
+        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
 }
 
 fn read_corpus_lock(path: &Path) -> crate::lock::Lock {

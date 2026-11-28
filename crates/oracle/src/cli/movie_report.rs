@@ -1,5 +1,6 @@
 //! Public diagnostics for movie comparisons.
 
+use super::lag_log::LagFrame;
 use super::{RoomSeed, differing, word};
 use crate::FrameRecord;
 use std::{collections::VecDeque, fmt::Write};
@@ -7,26 +8,25 @@ use std::{collections::VecDeque, fmt::Write};
 pub(super) fn lag_difference(
     frame: usize,
     record: &FrameRecord,
-    row: &[i64; 7],
+    row: &LagFrame,
     positions_only: bool,
 ) -> Option<String> {
-    let w = |address| i64::from(word(&record.wram, address));
+    let w = |address| word(&record.wram, address);
     let compared = if positions_only { 3 } else { 0 };
-    let lagged = i64::from(record.nmi().is_none_or(|nmi| !nmi.polled));
+    let lagged = u16::from(record.nmi().is_none_or(|nmi| !nmi.polled));
     let fields = [
-        ("frame counter", w(0x05b6)),
-        ("NMI counter", w(0x05b8)),
-        ("lag flag", lagged),
-        ("game state", w(0x0998)),
-        ("room", w(0x079b)),
-        ("Samus X", w(0x0af6)),
-        ("Samus Y", w(0x0afa)),
+        ("frame counter", w(0x05b6), row.frame_counter),
+        ("NMI counter", w(0x05b8), row.nmi_counter),
+        ("lag flag", lagged, u16::from(row.lagged)),
+        ("game state", w(0x0998), row.game_state),
+        ("room", w(0x079b), row.room),
+        ("Samus X", w(0x0af6), row.x),
+        ("Samus Y", w(0x0afa), row.y),
     ];
     let differences: Vec<_> = fields
         .into_iter()
-        .zip(row)
         .skip(compared)
-        .filter_map(|((name, actual), &expected)| (actual != expected).then_some(name))
+        .filter_map(|(name, actual, expected)| (actual != expected).then_some(name))
         .collect();
     if differences.is_empty() {
         return None;
@@ -59,7 +59,7 @@ pub(super) fn seed_comparison(
     let newest = history.len() - 1;
     let at = (frame - 1) as i64 - (newest - offset) as i64 - seed.movie_frame as i64;
     let wram = &history[offset];
-    let matched = word(wram, 0x079b) == seed.room;
+    let matched = u32::from(word(wram, 0x079b)) == seed.room.0;
     let mut report = String::new();
     if show_ranges {
         writeln!(report, "  differing per frame, oldest first: {counts:?}").unwrap();
@@ -72,7 +72,7 @@ pub(super) fn seed_comparison(
     writeln!(
         report,
         "seed {:4} frame {:6}: room {}; WRAM bytes differing {best} at frame offset {at:+}",
-        seed.index,
+        seed.room_index,
         seed.movie_frame,
         if matched { "match" } else { "DIFFERS" }
     )

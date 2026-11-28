@@ -117,14 +117,15 @@ frames (`crates/oracle/src/ladder.rs`), so a cut or a measurement resumes from t
   `equal` or the differing parts; exit 1 on any difference. Reproduces means the record before the
   next rung is byte-identical; `.lss` bytes are not compared (equal machines can save different bytes).
 - `oracle ladder-rung INPUTS LADDERS FRAME` prints `RUNG PATH` for `movie --from PATH RUNG`;
-  `movie ... --native-seeds CSV DIR --from-ladder LADDERS` starts at the latest rung before the
+  `movie ... --native-seeds TABLE DIR --from-ladder LADDERS` starts at the latest rung before the
   earliest seed. Rungs: 100% 22, low% 16, any% 12; every `ladder-check` equal.
 - No workflow builds or checks the ladders. `ladder-check` runs only by hand.
 
-**Movie sync.** `oracle movie ROM movies/any.inputs --lag-log CSV` compares each frame with the
-lsnes lag log (`any-boundary/lag.csv`): `$05B6`, `$05B8`, the lag flag, the game state, the room
-and Samus's position. lsnes is in sync by definition (all room seeds checked: same room, 0 WRAM
-bytes differing).
+**Movie sync.** `oracle movie ROM movies/any.inputs --lag-log LOG` compares each frame with the
+lsnes lag log `tools/lsnes_lag_log.lua` writes: `$05B6`, `$05B8`, the lag flag, the game state, the
+room and Samus's position. The log is binary with a version, an 18-byte record a frame, because a
+movie's hundreds of thousands of frames are too many for TOML (`crates/oracle/src/cli/lag_log.rs`).
+lsnes is in sync by definition (all room seeds checked: same room, 0 WRAM bytes differing).
 
 **Movies.** `movies/manifest.toml` lists the published TAS movies (any% 3653M, low% 3273M,
 100% 4010M and others), each with its download link, SHA-256, frame count, emulator (lsnes
@@ -135,10 +136,11 @@ rr2-beta23, bsnes v085 compatibility core) and ROM SHA-256. Download the ZIP, ex
 python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inputs --rom rom/sm.smc
 ```
 
-`movies/room-seeds-*.csv` list the room captures each movie's seeds come from (read by
-`relock_plan.sh`, `relock_cut.sh` and `oracle --seeds`). Movies, inputs, states and logs are
-ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows
-start from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
+`movies/room-seeds-*.toml` list the room captures each movie's seeds come from
+(`oracle_record::room_seeds`, read by `relock_plan.sh`, `relock_cut.sh`, `oracle --seeds` and the
+README report). An lsnes capture writes its own as `rooms.toml`. Movies, inputs, states and logs are
+ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows start
+from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
 
 ## 4. The lock
 
@@ -175,8 +177,8 @@ native state files.
 `tools/oracle/relock_cut.sh PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]` runs one
 `movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first, `JOBS`
 (8) at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their movie but
-some follow step F (the record's `$05B6` one short of the CSV's `nmi`); those are re-cut a step on.
-`check`: each seed's room and frame counter equal its CSV row's, and its WRAM equals its capture's
+some follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut a step on.
+`check`: each seed's room and frame counter equal its table's, and its WRAM equals its capture's
 outside the stack page. `derive-seed` checks that each written word stuck: one step on it reads the
 written value, or something other than the plain base's step (physics moves Samus's position in that step).
 
@@ -228,7 +230,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 
 | Command | Does |
 | --- | --- |
-| `oracle movie ROM INPUTS [--frames N] [--from STATE FRAME] [--lag-log CSV [--positions-only]] [--seeds CSV DIR [--ranges]] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--watch FROM EVERY] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
+| `oracle movie ROM INPUTS [--frames N] [--from STATE FRAME] [--lag-log LOG [--positions-only]] [--seeds TABLE DIR [--ranges]] [--native-seeds TABLE DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--watch FROM EVERY] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
 | `oracle corpus ROM LOCK BUNDLE [--cache OUT] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
 | `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |

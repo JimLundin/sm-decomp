@@ -11,7 +11,7 @@
 # and field or dependency where the run stopped.
 #
 # In movie frames: a row's cut c is movie frame f + c, f its seed's `movie_frame` in
-# movies/room-seeds-<capture>.csv, or 0 for a row from power-on, so a row's cut 0 is the frame
+# movies/room-seeds-<capture>.toml, or 0 for a row from power-on, so a row's cut 0 is the frame
 # after the previous row's last cut. `seed_frame` is the seed cut's frame, `frames` the first and
 # last frame the run held, and `power_on` whether it starts from the console's power-on, frame 0;
 # the report's tests check all three against the lock.

@@ -1,0 +1,2363 @@
+[[seed]]
+room_index = 1
+room = "DF45"
+movie_frame = 8538
+next_input_index = 8538
+movie_subframe_index = 8537
+seed_sha256 = "14fd681f7ed52b354e650bbb12aa91f4cd353591ed998c277d9a3e1dd552549b"
+registers_sha256 = "0e968cf44f87cd3dd77bd7ad8d619b41ebba77960ffd7346712ff6e7462816f2"
+observation_sha256 = "aa11577a93857ddd85a409f4b1d5113f7c74b3b2013e4c2cfb1331d6dcaa774e"
+cpu_pc = "8095AF"
+nmi = 7839
+
+[[seed]]
+room_index = 2
+room = "DF8D"
+movie_frame = 8950
+next_input_index = 8950
+movie_subframe_index = 8949
+seed_sha256 = "d50b6d222285f4707ac2fc281ae96d43fb57dccbc136874c098705df0affc83c"
+registers_sha256 = "fb27b2ef001f8d9c47ba366b624e985bb91f83645e3b4b91e9c1f6af1287d8d4"
+observation_sha256 = "3c278902a5041c21495a6a1206e2d04d0440126265bdf34c95b8417e819c22d1"
+cpu_pc = "809474"
+nmi = 8194
+
+[[seed]]
+room_index = 3
+room = "DFD7"
+movie_frame = 9232
+next_input_index = 9232
+movie_subframe_index = 9231
+seed_sha256 = "cbdbc82ef3dd0cf65c470ee895daa419652190414998cb979171f7640d85227c"
+registers_sha256 = "408a6e8cb65e4f5ad8316671f6304423891d05b632da4b896d845079d9abe404"
+observation_sha256 = "8154ba70254e3dcaf445e3878308fffbbb917e8e029f344519bd1bde56353e7f"
+cpu_pc = "808E29"
+nmi = 8419
+
+[[seed]]
+room_index = 4
+room = "E021"
+movie_frame = 9577
+next_input_index = 9577
+movie_subframe_index = 9576
+seed_sha256 = "5c6af6418c036dfe241bc26dd736044ff6db99da1dd2111899ef109b21ccedf3"
+registers_sha256 = "147312beb1d8613fdf8c395c9ba488fd59280202bdeb9a9101c126d828dcf603"
+observation_sha256 = "c25203aa60ac80ccf9e884ede19c0b0ea96874872b78fc4a019c074f53b45e9f"
+cpu_pc = "808E29"
+nmi = 8706
+
+[[seed]]
+room_index = 5
+room = "E06B"
+movie_frame = 9841
+next_input_index = 9841
+movie_subframe_index = 9840
+seed_sha256 = "75c8d32ddce4b6a0d12ac52d8659168e459b7b9d09105a054432355fe74d8956"
+registers_sha256 = "8e97ffa6b5b490a225c6713bc222ca489838d5564196ba3deb6af98cb918c08f"
+observation_sha256 = "513a899796a210e903f3248e86f2cd9e385e66471b593bbb8f241c113f310ac6"
+cpu_pc = "808CDF"
+nmi = 8913
+
+[[seed]]
+room_index = 6
+room = "E0B5"
+movie_frame = 10162
+next_input_index = 10162
+movie_subframe_index = 10161
+seed_sha256 = "a1cf6bc5f1fdaaf3d37ed3de48af62fc20b80e391d5013ccbf7f04e6c84114ab"
+registers_sha256 = "c294af283f32e3b8934080e430d7010bbd78fc211842222bfc4f4f4f87c80d80"
+observation_sha256 = "723db8d139544b231032f21ca9aa79e488b8ed50611005d9f8c9898580717b66"
+cpu_pc = "808D47"
+nmi = 9177
+
+[[seed]]
+room_index = 7
+room = "E06B"
+movie_frame = 11939
+next_input_index = 11939
+movie_subframe_index = 11938
+seed_sha256 = "d9944342840254c2c956597eb8614141a5ae7140b9f776169cdcf06d2675b550"
+registers_sha256 = "c3a79b8d330e8d9e793dbaa120bb6b294f84b04c9acd7567e1d36764a2bb404f"
+observation_sha256 = "b700d4b5c510b123ccf18f223a48f8b9601bfe906c52c2fc4451a859db9a1b7e"
+cpu_pc = "8095D3"
+nmi = 10892
+
+[[seed]]
+room_index = 8
+room = "E021"
+movie_frame = 12198
+next_input_index = 12198
+movie_subframe_index = 12197
+seed_sha256 = "d86af3ae0f7cd05431635b6c44d6f6884b83779cb48945f59563896dcd1756b1"
+registers_sha256 = "dfa1af2dfbe6f088939366c5045607be156a16ac54b06d06d35c5dd59d201774"
+observation_sha256 = "6a04bcea2b51dc95be035ed570c71dad1e8e467bf9760b5f19095d7504047bec"
+cpu_pc = "808CDD"
+nmi = 11093
+
+[[seed]]
+room_index = 9
+room = "DFD7"
+movie_frame = 12462
+next_input_index = 12462
+movie_subframe_index = 12461
+seed_sha256 = "412c763d8bdfe6571c4f79ecb772329c4f384a3b283b368402c1ed14e7213e4b"
+registers_sha256 = "f6891d6b645a54fdd007cd8a79e214c2e787a1e9a89f1c56df2d900123f18867"
+observation_sha256 = "d2d001a06951258a9b89bc3584c1de854ceeec7cd6485209440cadce1074e764"
+cpu_pc = "808CDE"
+nmi = 11299
+
+[[seed]]
+room_index = 10
+room = "DF8D"
+movie_frame = 12793
+next_input_index = 12793
+movie_subframe_index = 12792
+seed_sha256 = "dc7459eaee9674d51bf602940efb83e3a9dfa3cfea23be5328c356171c6856fd"
+registers_sha256 = "6546988fe7fd2ac06f2493b65bcf69f2321356ca6748ce0841ab7cc0533dd1ce"
+observation_sha256 = "d6dcff9ca7719919440bd6edfb3832105900453121f29049bcb7b032bb7d9fb6"
+cpu_pc = "8095B4"
+nmi = 11573
+
+[[seed]]
+room_index = 11
+room = "DF45"
+movie_frame = 13072
+next_input_index = 13072
+movie_subframe_index = 13071
+seed_sha256 = "ed3729f2efb94b273aadb6716f52aa77a8f7c84e9397a50751319668865a6d54"
+registers_sha256 = "8e7452358ea5c1c027da10b7aa230075b91b04016d4bf8a4bf342b09516db659"
+observation_sha256 = "a418fdfd310e762996b7ce94099576fe1a91c8d02eeba5d2b5ec31154554caf4"
+cpu_pc = "8095D7"
+nmi = 11792
+
+[[seed]]
+room_index = 12
+room = "91F8"
+movie_frame = 15428
+next_input_index = 15428
+movie_subframe_index = 15427
+seed_sha256 = "b3247e509b140da1d75970be9cf089b6617b0933d8a2333a09986915a9cfbbe5"
+registers_sha256 = "d18ffd11047e6c3f8041feae39853e738c89d1231c30c0af23d9c06f46603432"
+observation_sha256 = "51a011ab23060bb83b0c440912ff873eb0697fb03aaec66d47ba2891e11070d4"
+cpu_pc = "8095BC"
+nmi = 13954
+
+[[seed]]
+room_index = 13
+room = "92FD"
+movie_frame = 16459
+next_input_index = 16459
+movie_subframe_index = 16458
+seed_sha256 = "54f0516b199619d6c3dc660b89987a17bab9b8ef03d02b24d0b2ee5b14013cb1"
+registers_sha256 = "d54874d162e3637764a944e66740c31245373db1187854fde8b3756720380511"
+observation_sha256 = "df1f47fb52579566845f111244898bb844bf6fe9000fb4658324d4cbd2afe9c5"
+cpu_pc = "8095BB"
+nmi = 14914
+
+[[seed]]
+room_index = 14
+room = "96BA"
+movie_frame = 17058
+next_input_index = 17058
+movie_subframe_index = 17057
+seed_sha256 = "70c8ffaf3e6b1639ebb814bacb758ca7e260eae02c0f53187bad8232d1a64bdc"
+registers_sha256 = "111ed708f394563cc057ca978eb9153848f7c619b3ff4aa8759ac0fb5d43dbf1"
+observation_sha256 = "183930870f0e1f8a7650da2e0c874d1c3ca43028190022196c4a3e4105cf23ff"
+cpu_pc = "8095D3"
+nmi = 15443
+
+[[seed]]
+room_index = 15
+room = "975C"
+movie_frame = 17443
+next_input_index = 17443
+movie_subframe_index = 17442
+seed_sha256 = "ad15c17fd42ba70cdfde5c5f182e74ce5038d3cd662b93db68fc30ac3ab76cf2"
+registers_sha256 = "2e6dbfdb70abeb5c0001ec8a01336242d435745c0b9927c6af70b04d86c1ec09"
+observation_sha256 = "5b64349abeafe81584e9b15f04f0e9dc5c392fa95c437501e91a4ca010cc0990"
+cpu_pc = "808E29"
+nmi = 15769
+
+[[seed]]
+room_index = 16
+room = "97B5"
+movie_frame = 17829
+next_input_index = 17829
+movie_subframe_index = 17828
+seed_sha256 = "57d3b5a179c081905bd9013296a9da33926018e683c9995be11265743342679a"
+registers_sha256 = "be48852c61d2af493e8ccc907d255ae1c9c4db36cb3f1b5b6fa8f9f7ff0bd1cd"
+observation_sha256 = "6eaca3d68695126fe8092cafab1d4e1343d9bcfa54afc499289548d132d8469e"
+cpu_pc = "809332"
+nmi = 16098
+
+[[seed]]
+room_index = 17
+room = "9E9F"
+movie_frame = 18109
+next_input_index = 18109
+movie_subframe_index = 18108
+seed_sha256 = "f6be1a33c09c8c0e3281e8d5b956ead1770869396285907751e6c557d68f21f1"
+registers_sha256 = "6e6578f6377ca23b103022ec38607e21451fc4d6cfbda09ac04751ae2b5ebfa3"
+observation_sha256 = "529da2ecb81668f0a43ade73bffba8ad5d8be8ae9758983d288ba5ada588f89c"
+cpu_pc = "808B44"
+nmi = 16316
+
+[[seed]]
+room_index = 18
+room = "9F11"
+movie_frame = 19514
+next_input_index = 19514
+movie_subframe_index = 19513
+seed_sha256 = "e69963161929409333e5621d01e691454052876a26ef2c63918741ce4c1d4ae4"
+registers_sha256 = "325609da8aca0392ec119d7ad57ba16110cb085fc04bf1715885f22d7243ef38"
+observation_sha256 = "f60382e3d44ab637d6182c6c9497914d034a6a5781d9c57c72af14f07fa09cb5"
+cpu_pc = "808C8B"
+nmi = 17267
+
+[[seed]]
+room_index = 19
+room = "A107"
+movie_frame = 19809
+next_input_index = 19809
+movie_subframe_index = 19808
+seed_sha256 = "4e7eecd7183f0deeafe0a6645c453e22158441ac10588213a40cc015adb29894"
+registers_sha256 = "a9851b4a3cce2cb27c0e94f9020a68a60f41d5966bda3ff1395782fc93629faf"
+observation_sha256 = "a879c3abc15f537d82889580aff7f080244365a1971e7f229a7b49c3e8939f7d"
+cpu_pc = "8095B9"
+nmi = 17506
+
+[[seed]]
+room_index = 20
+room = "9F11"
+movie_frame = 20432
+next_input_index = 20432
+movie_subframe_index = 20431
+seed_sha256 = "a59d797df5cbabc8905cc2850a38caf998820f406bacb748017b7564ccaf0df8"
+registers_sha256 = "a16445f0dc83af9c0dc40cf9233cd57fdd435313a958d26561e46936d2d1c8ca"
+observation_sha256 = "c575ca2c42805ac7ef1c142744c162fa15abcea0366fd14f356c24b46073f951"
+cpu_pc = "8095EF"
+nmi = 17679
+
+[[seed]]
+room_index = 21
+room = "9E9F"
+movie_frame = 20732
+next_input_index = 20732
+movie_subframe_index = 20731
+seed_sha256 = "731c31c6e1b9f538fe39e2be28e34b9be84bd2c9bf9bcbe214e1eac2dff2b187"
+registers_sha256 = "f9b21994a47bd11885b78ef0c24ee3caa888d023a83466958e5a584edee35534"
+observation_sha256 = "9627016765c41a13b9549216f5316eee52f686b62e10f08504c377cd0195f232"
+cpu_pc = "808DAC"
+nmi = 17911
+
+[[seed]]
+room_index = 22
+room = "97B5"
+movie_frame = 21476
+next_input_index = 21476
+movie_subframe_index = 21475
+seed_sha256 = "ce13f6589ef377c267cf12ff42686628d712f522ee701dc1980e6b69c161d1ad"
+registers_sha256 = "a590baa37562c2632a8f2527e4e4ffdd8d85c2744368e17476c66d1c6fab899d"
+observation_sha256 = "6c12d708f2e25bd455a6a88bfaacd643f629d166ddd7fa3ec822e34c03b714f7"
+cpu_pc = "8095BC"
+nmi = 18600
+
+[[seed]]
+room_index = 23
+room = "975C"
+movie_frame = 21833
+next_input_index = 21833
+movie_subframe_index = 21832
+seed_sha256 = "f3628631c71b8e3fe07051b2060acd9bba46cb70c48dfc6f5a868e9ece85b641"
+registers_sha256 = "7475712c0d432076e38a0df7ef9d8394b193e13353ca8a6b246ce3b54a16b8d8"
+observation_sha256 = "86442044d4cd443c8cd2ec572bc8568794fe90545934b626919d39bce466f039"
+cpu_pc = "8095B1"
+nmi = 18901
+
+[[seed]]
+room_index = 24
+room = "96BA"
+movie_frame = 22226
+next_input_index = 22226
+movie_subframe_index = 22225
+seed_sha256 = "42e0581b1e2e84f8047805964fe0c391cc7d6704ed74a6f469879cc08f44eab1"
+registers_sha256 = "8db15cec3edfd25852a72a8ac3e1c90459ca7599a8fce6126c37b0862b5520a5"
+observation_sha256 = "80d0f0579d73d0a5b4f9116ad232acaaaeb532531e7662f25cedabdf8dcd994c"
+cpu_pc = "8095DD"
+nmi = 19223
+
+[[seed]]
+room_index = 25
+room = "92FD"
+movie_frame = 22983
+next_input_index = 22983
+movie_subframe_index = 22982
+seed_sha256 = "13c45123dbb97aaf467fe753c927127b37279a97237def9a1fa73545b4e06b5f"
+registers_sha256 = "dd3d86a0f0a3604d5103b0acad0c25e2ce3f5d03dbda80d01605f435aecd4d9a"
+observation_sha256 = "4d03bdc275a686a1153d353a76c4813cd3e67686e1f773e66dcf223d3da2a4e5"
+cpu_pc = "8095DE"
+nmi = 19910
+
+[[seed]]
+room_index = 26
+room = "9879"
+movie_frame = 23687
+next_input_index = 23687
+movie_subframe_index = 23686
+seed_sha256 = "ee005718b9620a27e55e2b824246f6b912fe0362aedbd160ce3b198292edac85"
+registers_sha256 = "b7062ba21140543bbf51aa3407a41583c45556cb7e90f2c986d14adecd15bf37"
+observation_sha256 = "b6cea39b302f7e106390ebb45408ed671cee4fa59ec2d05227f85c010166d27a"
+cpu_pc = "8095DC"
+nmi = 20555
+
+[[seed]]
+room_index = 27
+room = "9804"
+movie_frame = 24080
+next_input_index = 24080
+movie_subframe_index = 24079
+seed_sha256 = "db265b64fe9263bb0819070e7591c1fc05ca14c9670789a759a2112d5d351c17"
+registers_sha256 = "cbecd813abd06354e94503d1a199bc5da2b1e6696ff965fd67fce5ae16909d6e"
+observation_sha256 = "8a3cad14ae032aa16ae620a32d8cc9f192024a316fe89343c6ed1fc670aff031"
+cpu_pc = "809333"
+nmi = 20891
+
+[[seed]]
+room_index = 28
+room = "9879"
+movie_frame = 24802
+next_input_index = 24802
+movie_subframe_index = 24801
+seed_sha256 = "d663bcf51535b5ee5b073357b114e27e34dd4117a94b85d01ac8cb8c58419db8"
+registers_sha256 = "ea8a9d050579e7a7201532e4f74f2ba2176255294b46fdf7216a04bd1d8c7d87"
+observation_sha256 = "789b65e78d0fae14fe98cc8b51ba780697314f7b2138fd4af9bcdc6250d58bda"
+cpu_pc = "808DAC"
+nmi = 21152
+
+[[seed]]
+room_index = 29
+room = "92FD"
+movie_frame = 25135
+next_input_index = 25135
+movie_subframe_index = 25134
+seed_sha256 = "bf3e0fb781ebe4d0b1f01ae8c79b74428254d2873ca1a57108c58c4c6e3d43c0"
+registers_sha256 = "761d50e278e002757931d78054bfe80c3e23b8559b0823431c512e21db348be2"
+observation_sha256 = "c19deed6a6d594274b7b84c9d9fc5d0426d89ca874c3b95a06cf21f7f1318a99"
+cpu_pc = "8095BA"
+nmi = 21415
+
+[[seed]]
+room_index = 30
+room = "990D"
+movie_frame = 25713
+next_input_index = 25713
+movie_subframe_index = 25712
+seed_sha256 = "e95269e92cb697ee883141fb819ddc6ba6330d8f6e9331f8a40ec8f679463389"
+registers_sha256 = "0509331b01af123df504fed424b3ce892123a229bc261d1201f177ee9666c735"
+observation_sha256 = "d4b8118eebce1fb50d8a5280a1015f4f8831897e036f07de781042774c783c00"
+cpu_pc = "8095B9"
+nmi = 21926
+
+[[seed]]
+room_index = 31
+room = "99BD"
+movie_frame = 26555
+next_input_index = 26555
+movie_subframe_index = 26554
+seed_sha256 = "3bb8a36d0f857eccdde03f041491e43df1717be9679e2a0881a843b84920e458"
+registers_sha256 = "07263e0f07f4ab60c4a9195399cb8b205eb2ebef1027c6d0efd377f39add6a3a"
+observation_sha256 = "de1b17726e3d83d0dfd77afab4eff5e539d2f077d241b0acb8c11cdadcc3a889"
+cpu_pc = "8095EE"
+nmi = 22307
+
+[[seed]]
+room_index = 32
+room = "9969"
+movie_frame = 27065
+next_input_index = 27065
+movie_subframe_index = 27064
+seed_sha256 = "ad44618230130a60185251a80295146b1f6e64d25605263fe2e934f30ca264dc"
+registers_sha256 = "89fc4db8e4372a6849e76a178ea36228d57477dad1cbfe8e11917f175d24bd00"
+observation_sha256 = "a59cb3105edab61c61c009b654cf8c364c205434f0678cc4530ecd55826d9b34"
+cpu_pc = "808DAC"
+nmi = 22758
+
+[[seed]]
+room_index = 33
+room = "9938"
+movie_frame = 27453
+next_input_index = 27453
+movie_subframe_index = 27452
+seed_sha256 = "ad63080d850f9a8c122d967b4671c82a2c19257f6cdd1a57f5ec0e91aaacd1af"
+registers_sha256 = "40949dd0f3f9ee68f1e7b97537958d6285fed064cd301630afd7d97beb957203"
+observation_sha256 = "0d6d158dccf7143801c3ae986de517fc9784314cb6a67128f83bcb9e643f9ec9"
+cpu_pc = "8095BA"
+nmi = 23088
+
+[[seed]]
+room_index = 34
+room = "9AD9"
+movie_frame = 27813
+next_input_index = 27813
+movie_subframe_index = 27812
+seed_sha256 = "535ba02760e3e2af6cbcab6b7d1a69fe4789be4cafa779db07b8303a22d97f1c"
+registers_sha256 = "284fac8711dda304fcb91b098dc20d9240386829034485604a36b900d359be24"
+observation_sha256 = "10b92880780ee10e4bf2db4f90c110bd73a52611b76bfb604986f2d9c3064fbf"
+cpu_pc = "8095BC"
+nmi = 23358
+
+[[seed]]
+room_index = 35
+room = "9BC8"
+movie_frame = 28721
+next_input_index = 28721
+movie_subframe_index = 28720
+seed_sha256 = "f4041564aff683cadb62d685b6c52401e67cb2db9f344a982a323e5622a94843"
+registers_sha256 = "657f13314afb0db8e73a47be67229e4145eca8e43d832de45c1c890355c681cc"
+observation_sha256 = "9630a8b52c795b66a4da3970cb00bc94e7336c1abe88e515fb995b0fdac5413c"
+cpu_pc = "8095DE"
+nmi = 24195
+
+[[seed]]
+room_index = 36
+room = "9C07"
+movie_frame = 29079
+next_input_index = 29079
+movie_subframe_index = 29078
+seed_sha256 = "587a0e494541ef48855bff1fc091f840e3e57780b341010d87efd79650bf7184"
+registers_sha256 = "81583afc5d19d1cb0ceb04fa92660d6511ccb91ef6afcc543fc780e2be5626d5"
+observation_sha256 = "8abed7cf1f04bb497325a7c89c0283b7f2fb72464aedaa11b55fef5f7fd6eaeb"
+cpu_pc = "8095BA"
+nmi = 24490
+
+[[seed]]
+room_index = 37
+room = "9BC8"
+movie_frame = 29754
+next_input_index = 29754
+movie_subframe_index = 29753
+seed_sha256 = "5b4df5f3942c09929858d918a55111c19014e4159b753ccf0aa34f4d23fd3792"
+registers_sha256 = "8557585aa65fdfdf6f5cfeb8957ec93191c55eab85574ab3c090285566702f15"
+observation_sha256 = "bac0a0a9e890e8b8ebdfc9a8e33b7a2096e3c1dcc2380d304a82ecd849aab588"
+cpu_pc = "8095BA"
+nmi = 24700
+
+[[seed]]
+room_index = 38
+room = "9AD9"
+movie_frame = 30656
+next_input_index = 30656
+movie_subframe_index = 30655
+seed_sha256 = "6843a5b6f0b16903b1484f24d28e41480848fae9cf848c6929c8dcc0d6b55d14"
+registers_sha256 = "41293b061d46623bf2cd16b7a3e64141a7ce2ce0bf3cf1656f1d3ade98837615"
+observation_sha256 = "1dd3a10e9b049c7d8e822ea7456d00bb960874a87c35b77211d50620ca551cd3"
+cpu_pc = "809331"
+nmi = 25104
+
+[[seed]]
+room_index = 39
+room = "9FE5"
+movie_frame = 31507
+next_input_index = 31507
+movie_subframe_index = 31506
+seed_sha256 = "1328a44cfa0b72bb35df55cac6f86163802a2b56026eabf174d207576584da58"
+registers_sha256 = "655ee774e4964db2e43e42779a283a3b0b7fa2a4b1e42890bc1c3b95c44fcdb9"
+observation_sha256 = "92388656f8f3949efa2665cdcd4ba5961f348d855a8583e92c4da7098e81467c"
+cpu_pc = "8095BA"
+nmi = 25898
+
+[[seed]]
+room_index = 40
+room = "A011"
+movie_frame = 31739
+next_input_index = 31739
+movie_subframe_index = 31738
+seed_sha256 = "7086ae14176f55bdfc73eb2e9cc6274ed32598b0addd835e3850081cf4cb4a5a"
+registers_sha256 = "20c17b68b5dec62b8fc98185e477d5518e9b67052f95b1a9b369ec0048064064"
+observation_sha256 = "30ed53cc6406ce983c3cd7ab82db5cc252608154f2dfc3b51e02bd1c04116bb7"
+cpu_pc = "8095BA"
+nmi = 26069
+
+[[seed]]
+room_index = 41
+room = "A051"
+movie_frame = 32393
+next_input_index = 32393
+movie_subframe_index = 32392
+seed_sha256 = "fce15aecb732ad4c96bfa7bfcf6e8706d52dc508ad3a3096269d1461dcadbdf0"
+registers_sha256 = "3a0351d5d49799d44422d6ff45384e0dc85f4b26776e01a5e80cbfb5552bc220"
+observation_sha256 = "73e8aaef70be2f8b322598625856fed520f55ba47a3a0d46616db3635f53390e"
+cpu_pc = "8095B1"
+nmi = 26267
+
+[[seed]]
+room_index = 42
+room = "A011"
+movie_frame = 33010
+next_input_index = 33010
+movie_subframe_index = 33009
+seed_sha256 = "d5775546503cbb73d3d676a04db1399219bec65226ab6bb0592b03a66543774d"
+registers_sha256 = "06f4245b079533a14974910e9b6033e927ba21a0124f259f52c2fe3e9cbe53e8"
+observation_sha256 = "77afd4523f9da26c0ab1ccba783c67e4d7a4119611d543305cf377761ca3ece6"
+cpu_pc = "809332"
+nmi = 26429
+
+[[seed]]
+room_index = 43
+room = "9AD9"
+movie_frame = 33603
+next_input_index = 33603
+movie_subframe_index = 33602
+seed_sha256 = "42854b092374ff3434a67e602ae6c6c9527f297f8792b1eb43dfbef773fdb447"
+registers_sha256 = "5169699d150f15f96ad6f786a911bc1367f164352a460f732b3923c1d86b8369"
+observation_sha256 = "24f030f48f27171e75538581226b3a42b53720c591f46f1ac5e02caacfded98b"
+cpu_pc = "808BC1"
+nmi = 26928
+
+[[seed]]
+room_index = 44
+room = "9CB3"
+movie_frame = 35201
+next_input_index = 35201
+movie_subframe_index = 35200
+seed_sha256 = "6671ff3094b386d50427c03fb569fe616027fa069605d042279f8d9263938ed3"
+registers_sha256 = "cbeaba18335714603601f5db7777e6a5cd2b6f7e4883b3cf7c88e71b1ddd444f"
+observation_sha256 = "81db406d36635c86527d5572ae5de804133792f9d901061c6b56613776e0a6d8"
+cpu_pc = "808EA8"
+nmi = 27912
+
+[[seed]]
+room_index = 45
+room = "9D19"
+movie_frame = 35852
+next_input_index = 35852
+movie_subframe_index = 35851
+seed_sha256 = "b49da3029b723dae3be22b329d27ecae4755d682b768d68e0ee3d315af47f206"
+registers_sha256 = "f06cce21beb67567201e7223daf04aed2873f8d857a692488ec4165055d69d8c"
+observation_sha256 = "3a9be18a28ad4ff54a43165b956bce16e70965a07ddc784796633a4a83c08147"
+cpu_pc = "8095BB"
+nmi = 28461
+
+[[seed]]
+room_index = 46
+room = "9E52"
+movie_frame = 37217
+next_input_index = 37217
+movie_subframe_index = 37216
+seed_sha256 = "3ace77e42636312feaa79199e3f5d38f2a0af9b2009477a175b9d351065a4b07"
+registers_sha256 = "de09254fa386b35cb027c72c5431c32af8ac76fb587b68d4fc4668e0a0b07a41"
+observation_sha256 = "8bc9878c261125933841a23bcd4cba6b888a5044fbc3ba9000c4079cf6e801f9"
+cpu_pc = "8095BA"
+nmi = 29354
+
+[[seed]]
+room_index = 47
+room = "9FBA"
+movie_frame = 37879
+next_input_index = 37879
+movie_subframe_index = 37878
+seed_sha256 = "40b4be376c5196524e4ccb8473b290f6dd9ee9a4b21942fa7d3069b0bfb11632"
+registers_sha256 = "d02972c64ece157c5b8f18532d7ade9fb807c7f834251ae34a7458b50476d805"
+observation_sha256 = "61e366ee6be5ca686f388720926750cf788530dc8f56f485e0abb649a6094226"
+cpu_pc = "808EAC"
+nmi = 29957
+
+[[seed]]
+room_index = 48
+room = "A253"
+movie_frame = 38438
+next_input_index = 38438
+movie_subframe_index = 38437
+seed_sha256 = "f42532aecf0eb715cd90919fd59c549242b8ac87ad8214c5c40c3c158037911f"
+registers_sha256 = "aa9088a70a1ecf2d54e3c1a08e0fd01cbdcd49f1de8cdd760b921172497b9b85"
+observation_sha256 = "2d22f6be351537ae5b6343fb244d00f555eff192a0d8b4afe59086c2f6cdb284"
+cpu_pc = "809497"
+nmi = 30451
+
+[[seed]]
+room_index = 49
+room = "A293"
+movie_frame = 38871
+next_input_index = 38871
+movie_subframe_index = 38870
+seed_sha256 = "af4c704b832c3b6a5917c72cb0b8a689084d4ef0a1247e636548355f2aacc559"
+registers_sha256 = "95cb9c0ddb712ea49009bde7c64ee9e6c20df1ad9aaf4989ae10c1fd6a8a490d"
+observation_sha256 = "ade9de3bbdce1619cfa5a7a47744e92ad79464f2c19405e1dcc924ab2eb1725e"
+cpu_pc = "8095D1"
+nmi = 30811
+
+[[seed]]
+room_index = 50
+room = "A2CE"
+movie_frame = 39608
+next_input_index = 39608
+movie_subframe_index = 39607
+seed_sha256 = "dad6cd6caf5b5b5b5fe20b0ec963d51cac0c07c22ab7d730bb94e99fbbcfd4c8"
+registers_sha256 = "b2de8b0324fe413571bc9076286e59f94f4809b107b7394b2d988ae0ed43d253"
+observation_sha256 = "288aa82e50f30dfe0a784a946e5dee8a06f2042c0dd6a966c785c1252fbd969c"
+cpu_pc = "8095BB"
+nmi = 31490
+
+[[seed]]
+room_index = 51
+room = "A293"
+movie_frame = 40675
+next_input_index = 40675
+movie_subframe_index = 40674
+seed_sha256 = "df8ad7bd91cee8a25723ac1ae74715bc37927a2da0bbd19472de15e506a54edb"
+registers_sha256 = "f4aebfec6092d3f8d9f226c0677dc6f829e0edac52fc5087969e284ddd15569e"
+observation_sha256 = "06e0bd10fde3e06ba72cb893d1d1e48a0c243c260707efae0cfade0fa36743cd"
+cpu_pc = "8095AF"
+nmi = 32088
+
+[[seed]]
+room_index = 52
+room = "A253"
+movie_frame = 41420
+next_input_index = 41420
+movie_subframe_index = 41419
+seed_sha256 = "dc82bdae2596d3133a1286bd3cf47d0378bff3b49fb3a01569aef25e96b113b2"
+registers_sha256 = "27d6ef293d4eb6215e797b9a49e2f699eabd2828fa3caf5eb0ccc52e268ee13c"
+observation_sha256 = "589d54460945a137e3d03e6ce93918df8bb030ecc7a6da9b53ab482afa571ddf"
+cpu_pc = "808EAB"
+nmi = 32768
+
+[[seed]]
+room_index = 53
+room = "A3DD"
+movie_frame = 41918
+next_input_index = 41918
+movie_subframe_index = 41917
+seed_sha256 = "7e8f4e839a514309aeeff9bc662da7fd8d5b4d6153a853c50c7ada69e7cf48c0"
+registers_sha256 = "90414f315c78f6ccacb5ce008eac6b500a31ddca8cee27d46b226bb807d8d92b"
+observation_sha256 = "53b6d020d84cc122baa1965b953c49b0b2560f7869ee0fda32dc3ba3e414c1c3"
+cpu_pc = "808DB2"
+nmi = 33204
+
+[[seed]]
+room_index = 54
+room = "A408"
+movie_frame = 42207
+next_input_index = 42207
+movie_subframe_index = 42206
+seed_sha256 = "3e6827286e6a83c7ee74288bf8065b69da018a943bd34aa68a89f22043087761"
+registers_sha256 = "463056822e7fdbac27f4ade28977ad47367f028f90c1e83aef5b5c1b5f3c5e17"
+observation_sha256 = "f309c64e2981ebfb1aeef0d646a616d707d0e364e96ee70106a00a0ce80b9aad"
+cpu_pc = "8095BC"
+nmi = 33434
+
+[[seed]]
+room_index = 55
+room = "CF54"
+movie_frame = 42530
+next_input_index = 42530
+movie_subframe_index = 42529
+seed_sha256 = "2b2f2626554e8be8777a8c41dba91fc2dec4b76b250949769bcab0c74ed9eab2"
+registers_sha256 = "3f2b355b073439eb7c63e85e57bdac2ff9a6033405f552cb844773b6bf53e87e"
+observation_sha256 = "5a00e0196b97252414f647c9b10528a7b9108e58967617a7f7bc5aa4ee696b9d"
+cpu_pc = "8095DD"
+nmi = 33697
+
+[[seed]]
+room_index = 56
+room = "CEFB"
+movie_frame = 42731
+next_input_index = 42731
+movie_subframe_index = 42730
+seed_sha256 = "a4096935f7ba2c349e077a63681b472d413dafd1a895758da15785f1e0bbc88a"
+registers_sha256 = "83ea2a8779f05758f18403e8289c5be246262dea319c4b44eed1971b4a6a5ed5"
+observation_sha256 = "8eba5c3146bff4e1ba077025709592c1726ee924c0e5b106dfe08d4aa50d4da2"
+cpu_pc = "808E2B"
+nmi = 33841
+
+[[seed]]
+room_index = 57
+room = "CF80"
+movie_frame = 42937
+next_input_index = 42937
+movie_subframe_index = 42936
+seed_sha256 = "6f1798753ff9bbf2a5553d47923c14aca5b505098b8a8fe0e05022d242943ccd"
+registers_sha256 = "15276ca534ac98d27e3cd1840a057589bcfb1c2fd713b37b6c7cc9221fb7432c"
+observation_sha256 = "067b453a9644d1f3507ae9db214a6c39400ba8311773602f1d3e0db03019167a"
+cpu_pc = "809334"
+nmi = 33980
+
+[[seed]]
+room_index = 58
+room = "A6A1"
+movie_frame = 43141
+next_input_index = 43141
+movie_subframe_index = 43140
+seed_sha256 = "48184e2aa1dc6883eaaeb9a9e1f8bd28338562a1afba81c9deda7fc755b4d33c"
+registers_sha256 = "bffbe827b720f75801cf20f4a1675a94cd418f46a4301da7970d410d0006ce35"
+observation_sha256 = "2fb494f65ebb3ccc3cde205314289b37010d4b886fa9c3191be2390310cb3eff"
+cpu_pc = "809334"
+nmi = 34124
+
+[[seed]]
+room_index = 59
+room = "A471"
+movie_frame = 43470
+next_input_index = 43470
+movie_subframe_index = 43469
+seed_sha256 = "43aaae115429be9f1d0053dac0383f8fa4862e3687ec7c225aa4dc65498d5bcb"
+registers_sha256 = "76d4065dd8c88b6244c1ea5e623cf46b456e18956fd5222b5990c25522465ac0"
+observation_sha256 = "176651a29841422f971be5e5cba53668bdd37c1fa9a6379260eedc4f4b37d8c3"
+cpu_pc = "8095DE"
+nmi = 34397
+
+[[seed]]
+room_index = 60
+room = "A4DA"
+movie_frame = 43904
+next_input_index = 43904
+movie_subframe_index = 43903
+seed_sha256 = "9f3d8f8c8e9aed26338c633181b4b7020f8439e93ccbf42479a2edc33cf493a4"
+registers_sha256 = "110ad397ebc0fdba4210160b15b7ed1cf129c363556c5afb53fbc7de9779d01b"
+observation_sha256 = "6aeeff5600534d1fc0839657cd3cadddd66eb3af394c6265bbde1b18f5f4a33e"
+cpu_pc = "808CD8"
+nmi = 34769
+
+[[seed]]
+room_index = 61
+room = "A521"
+movie_frame = 44290
+next_input_index = 44290
+movie_subframe_index = 44289
+seed_sha256 = "c5bf7a7eb49e6064deb068d990efab86cc25f094a87cff8b22290a9b18e79b84"
+registers_sha256 = "659d5ff1d1cefa1f36dd5af7ad25476d17cb8652556314c40270be9ca4b0b57d"
+observation_sha256 = "8801b262e6cca105018072c4d08123d4960d0f4b53a821c1a6b311a164ec2450"
+cpu_pc = "8095B4"
+nmi = 35095
+
+[[seed]]
+room_index = 62
+room = "A56B"
+movie_frame = 44781
+next_input_index = 44781
+movie_subframe_index = 44780
+seed_sha256 = "3413acde075871453bb0805cf513d930cc610ac3f13e91872ddc45c63c9d82bc"
+registers_sha256 = "84867eb75511f93a95a74fe85364967eeedf55ff5f9d0f1feef3899d442ad262"
+observation_sha256 = "06c6291a822273510cd17c6d4c10bcb18a1daaa6c95e4976c32245308bc0bc7d"
+cpu_pc = "8095BA"
+nmi = 35524
+
+[[seed]]
+room_index = 63
+room = "A59F"
+movie_frame = 45139
+next_input_index = 45139
+movie_subframe_index = 45138
+seed_sha256 = "a5f3eddb977db8ea6071af95056394902f603f3a6fb5c4b60def413531f2a280"
+registers_sha256 = "ef9a8c78ae2c96bf8c64495606cba6d42bf203a7eb53ff46d8d357def5c47d46"
+observation_sha256 = "e779b86b4b91e4fc050395b65a80c2645e007ca8120c43ad95e7153bba1c86f6"
+cpu_pc = "8095DD"
+nmi = 35824
+
+[[seed]]
+room_index = 64
+room = "A6E2"
+movie_frame = 46405
+next_input_index = 46405
+movie_subframe_index = 46404
+seed_sha256 = "752ac4877f3ea36bb22eeafb7848a7fd57f17fda5603d9da3f4902838ea177c9"
+registers_sha256 = "dbc1ad767d703a05b5f29e8f50a3a0b260bb41d0a3ae51ceba019d505f893235"
+observation_sha256 = "3f968d8d51b96e3b48299dc3d7c0fbced69a3aa05c87fa501e52b91d0628285b"
+cpu_pc = "8095BA"
+nmi = 37014
+
+[[seed]]
+room_index = 65
+room = "A59F"
+movie_frame = 47210
+next_input_index = 47210
+movie_subframe_index = 47209
+seed_sha256 = "65661d6dc719f822817d2a3730e6e96e52574c090695eb7c7db1836f9cfeb5db"
+registers_sha256 = "5341055716c0772aac0b2bf3686fb40d6a6ca434cfd86fb513de2b8504f5c095"
+observation_sha256 = "d6caf9c5a64d5172ce49059bfa45f51eec9a74951deacb0467bd5666186e18b0"
+cpu_pc = "8095DE"
+nmi = 37373
+
+[[seed]]
+room_index = 66
+room = "A56B"
+movie_frame = 47498
+next_input_index = 47498
+movie_subframe_index = 47497
+seed_sha256 = "01671a85b2ed7c8e7839ccdbe919be3b7fe7a7ec8addef794bf1539d29695292"
+registers_sha256 = "bb5a393556bf952c1e6d0add61bf5bde9ef4a38eb017066102c2aba9d656d5af"
+observation_sha256 = "3db6a294fe0255a6975faab061d2393d9ba01af3891b9246df9c3be216898a7e"
+cpu_pc = "8095BE"
+nmi = 37599
+
+[[seed]]
+room_index = 67
+room = "A521"
+movie_frame = 47784
+next_input_index = 47784
+movie_subframe_index = 47783
+seed_sha256 = "2575d2858d177bdb8ef4fee3ce4cd4bbaca7909a2e601d36f18e4fb712f4ae7c"
+registers_sha256 = "906474b76ca38f7326896ffc9fd975d8108251b752cc6528905729a3bd87ad10"
+observation_sha256 = "55c177437c337b1954e3a4c76fb8b450bf31555bbaafba5addd89731b01b2101"
+cpu_pc = "808C89"
+nmi = 37825
+
+[[seed]]
+room_index = 68
+room = "A4DA"
+movie_frame = 48292
+next_input_index = 48292
+movie_subframe_index = 48291
+seed_sha256 = "03e56c20a6d2e557cbda20c9bbd95a578169f683b1af809816847e774e185410"
+registers_sha256 = "fa0436347b0d6231d4a1cc32a7251ba2ac011c4b163482370b03f9134673cd56"
+observation_sha256 = "98b69208a8b28d07fc853727dd3d2d4d3a8897c78491afd9ccbc474fb90f9ac5"
+cpu_pc = "8095BA"
+nmi = 38269
+
+[[seed]]
+room_index = 69
+room = "A471"
+movie_frame = 48610
+next_input_index = 48610
+movie_subframe_index = 48609
+seed_sha256 = "ebb5f26c4c28a390b860f174f783419ce2bfae7c098683b651a7a6ed4acbeb7e"
+registers_sha256 = "f2fd724956eacf64794734b7ab3a302ccf7710ddf68947f752661c1b30ee6d0a"
+observation_sha256 = "56b9431d439d503bd9bed1dbe2c47126f7d53d250fe9b90761413b51c1c7c4c5"
+cpu_pc = "808CCC"
+nmi = 38523
+
+[[seed]]
+room_index = 70
+room = "A6A1"
+movie_frame = 49006
+next_input_index = 49006
+movie_subframe_index = 49005
+seed_sha256 = "f51e4d9c28f4c5ab9c218b2249d89971c4c9d0e0861f27d53f3bea96bc15eb9d"
+registers_sha256 = "9ab25a3293d4b25762e75e3847a83113e48d517774beb930bb05bd5baa01fc6f"
+observation_sha256 = "910c4c1af09fee50932c8e7b27035b1c5aedeea05b0ec06daf0ef2529f700493"
+cpu_pc = "80946A"
+nmi = 38859
+
+[[seed]]
+room_index = 71
+room = "A7DE"
+movie_frame = 49489
+next_input_index = 49489
+movie_subframe_index = 49488
+seed_sha256 = "42e960fec325056b0d8e5e746c4b107de8d2b55c807cc5908f15e4645771287c"
+registers_sha256 = "29a7ec90ee7db1cd7135323d3d4b91a4d2bbc06bc73b6e6a1924664c86a57783"
+observation_sha256 = "0dc8165c61527e101ba58956caa6eb2ecea2ab9b80713745b8830c34ed953c66"
+cpu_pc = "808CCC"
+nmi = 39284
+
+[[seed]]
+room_index = 72
+room = "A7B3"
+movie_frame = 50225
+next_input_index = 50225
+movie_subframe_index = 50224
+seed_sha256 = "23e0c075b4fa56541397d66b43bb732c0eed489917e502ebd1c489f36cdca225"
+registers_sha256 = "9fcd7fdd1800a396f87a9eede3d6c55dbdbff2cf5c1de0090235f5b755e7a15d"
+observation_sha256 = "a6ccd3520915fc0696f457f64dd3f48dc9da81c5c306dea07d2c4f6138b915ce"
+cpu_pc = "808EA2"
+nmi = 39954
+
+[[seed]]
+room_index = 73
+room = "A788"
+movie_frame = 50664
+next_input_index = 50664
+movie_subframe_index = 50663
+seed_sha256 = "9a7b7665aca82fff7476f22ab9d3892e1b6b486449f49b8f9d61ff3ea4c49bfc"
+registers_sha256 = "c99aa158e4caad399e78df3696f1674fd03163acd218b2bf79fee793b110ca75"
+observation_sha256 = "9586b3a8974584a36c2dab4fb2c4002fb3d06c3676e09b3f745b59690a3915ea"
+cpu_pc = "8095D7"
+nmi = 40327
+
+[[seed]]
+room_index = 74
+room = "AFA3"
+movie_frame = 51110
+next_input_index = 51110
+movie_subframe_index = 51109
+seed_sha256 = "ead0ac9ce99b8e78217ded93cd7890e1525d59aa8dd96d761114fbf69f6fb89d"
+registers_sha256 = "8e1ef9342982b7fcbdd02c9bd981e0d271dcc4d83df019c95e09657096baab32"
+observation_sha256 = "d24e580731ff3d9a23aa5f77952d816ff5bfc03703f0c35b3057103b926a7dbc"
+cpu_pc = "808CCE"
+nmi = 40712
+
+[[seed]]
+room_index = 75
+room = "ACB3"
+movie_frame = 51634
+next_input_index = 51634
+movie_subframe_index = 51633
+seed_sha256 = "924b57530bf9cd3fe720b3325a4a23d36056e6b526f75aead9322dca2de978b6"
+registers_sha256 = "1cb685d5cfe6696ef521345ef8f0eb7bc7316efcce52a762b5077e1f78415ca0"
+observation_sha256 = "555d6e15fdc7c47947322acdb26381ef728572f54d720c27a95113724d23fb43"
+cpu_pc = "808DAC"
+nmi = 41164
+
+[[seed]]
+room_index = 76
+room = "B07A"
+movie_frame = 52075
+next_input_index = 52075
+movie_subframe_index = 52074
+seed_sha256 = "470808702d9e69ae7de767d56a07aaea62e367195993af0f2df85c3414d1b992"
+registers_sha256 = "57e3c1fc41e2464ada46dc102e5e5cc8e303c31ffed565a6e8a5417017da5caa"
+observation_sha256 = "b112da783a4eb3427e20f21e86daf7ad57c54c930c8f1cc21d90d7a1f4afddc7"
+cpu_pc = "8095D7"
+nmi = 41544
+
+[[seed]]
+room_index = 77
+room = "ACF0"
+movie_frame = 52408
+next_input_index = 52408
+movie_subframe_index = 52407
+seed_sha256 = "c72f43337a8b26b50a21380b2d97a6166fc21264b9dc07fb8d3920de0d19102a"
+registers_sha256 = "0712331e855b780ea448be2c0c050cc135f188387bfee265baf0192d78db07e6"
+observation_sha256 = "1444a71e2845ff73b7e6853e8a628c67d175916315b9c0e104c24198f02d25bc"
+cpu_pc = "808CD8"
+nmi = 41804
+
+[[seed]]
+room_index = 78
+room = "AD1B"
+movie_frame = 53121
+next_input_index = 53121
+movie_subframe_index = 53120
+seed_sha256 = "2e7a51266f5bb0b393d7ea80858d7cab39f13356cb79ea34d6365458b4564344"
+registers_sha256 = "99803d4b8467c5973147e4b6ee392e4c3be52ffe84719dfae7130643c3b9f025"
+observation_sha256 = "472fc7322f34720f06028799d333bb1ccfecc7218ad09d141760b480827e167d"
+cpu_pc = "8095D7"
+nmi = 42458
+
+[[seed]]
+room_index = 79
+room = "ACF0"
+movie_frame = 53814
+next_input_index = 53814
+movie_subframe_index = 53813
+seed_sha256 = "ff7ffadaf90cd1b6ec5cc8d093142eefabbf93492620b5e471d8c6b6bfc93db8"
+registers_sha256 = "a73adbbf8422c639aa15e43bf55e42ef93899d2382081559086ae0520a454d7e"
+observation_sha256 = "f6c7ca964fd9ef73ec91b02247248ab2f5950a383012b9bed28563b36518b85b"
+cpu_pc = "808BBD"
+nmi = 42681
+
+[[seed]]
+room_index = 80
+room = "B07A"
+movie_frame = 54325
+next_input_index = 54325
+movie_subframe_index = 54324
+seed_sha256 = "3d8f03f7eca42b02391c95cc8567e2bd7a75901f3800b35feb756bf20cb6f100"
+registers_sha256 = "9ff6cf0978d70fc4178533bd0d8d365148b27a9c640cf9b08f4a28e6ae2fb247"
+observation_sha256 = "c2495c8c7fc3489d855da1871775b617ded9d0e2115744a6872be1f903819972"
+cpu_pc = "808CCE"
+nmi = 43131
+
+[[seed]]
+room_index = 81
+room = "ACB3"
+movie_frame = 54671
+next_input_index = 54671
+movie_subframe_index = 54670
+seed_sha256 = "89b5b87ceb7353e5988c7e682c49d04ef80d69467cab1e913c4bd5ede200e8e8"
+registers_sha256 = "d1343102d8c1f074fb6ca0aa8989a73e8b539b31cd5caaa202ba1acc1f60dfd6"
+observation_sha256 = "7d30c179fa3d05721c21114e7bece963e758767113b9479f54f95ff0ed09c10e"
+cpu_pc = "809327"
+nmi = 43407
+
+[[seed]]
+room_index = 82
+room = "AD5E"
+movie_frame = 54942
+next_input_index = 54942
+movie_subframe_index = 54941
+seed_sha256 = "426f3f087fa22d7de985020ef6b02ddb910f730a146469c11550b85b8332bd35"
+registers_sha256 = "bf542e2f493663e49fa10e5c4f7fade720dc5277d2d3ac78b4925fb6c0406698"
+observation_sha256 = "d642f232455596be327e3b263edd29840cd2e1797c687ebcd08391613ec7f6a7"
+cpu_pc = "808BC0"
+nmi = 43600
+
+[[seed]]
+room_index = 83
+room = "ADAD"
+movie_frame = 55322
+next_input_index = 55322
+movie_subframe_index = 55321
+seed_sha256 = "f085d7c4c661dd60adcc5df474b05ddd100a41055a9f52e75b00cad2146c13e4"
+registers_sha256 = "2cdbca5f498deef77d1bf9da80fb4fab00ffe7c52a99ab1588cf29b1ccef025b"
+observation_sha256 = "1d9d23fefae60d70122108c7da2a6084face73115318119421619a1289f60bf7"
+cpu_pc = "8095BC"
+nmi = 43893
+
+[[seed]]
+room_index = 84
+room = "ADDE"
+movie_frame = 56166
+next_input_index = 56166
+movie_subframe_index = 56165
+seed_sha256 = "1f569a49ad2e437c00cf067d6967537615ec8cdc29800b1bfc9fb6a61586ad9c"
+registers_sha256 = "921650c1f2deaeac257c024d60e8397fa450485f06e1cb7597ffb725b5052e7a"
+observation_sha256 = "671416b614ae5ce85e70cbddda35fe7a423c17a93391508b17953d8ed5cf817e"
+cpu_pc = "8095BB"
+nmi = 44270
+
+[[seed]]
+room_index = 85
+room = "ADAD"
+movie_frame = 56846
+next_input_index = 56846
+movie_subframe_index = 56845
+seed_sha256 = "03c4ae16f225c6432b6bd8408141135977a787a33cd787d07a12b14da45f5f73"
+registers_sha256 = "19d547607bc75543c06b3a0c7e98930b7a3a47ca45622c92020bfdaf59a0519f"
+observation_sha256 = "ff8752dba8072d08f1827a2490b8ec9def2a7348a97481d530cee5d979479459"
+cpu_pc = "808BC0"
+nmi = 44470
+
+[[seed]]
+room_index = 86
+room = "AD5E"
+movie_frame = 57284
+next_input_index = 57284
+movie_subframe_index = 57283
+seed_sha256 = "0dc70d54d07189adffa8fd5de7bf313f19f93c106f6a5627742b5f9939c97088"
+registers_sha256 = "1c08f3cb13dcf987732a37f377b143f835460ec006a6dd8ab11fb50e57692684"
+observation_sha256 = "e7a19f9564888dcb5c3c362e91f916b4b1f9d54fb768f46f5ef39f6f711ea942"
+cpu_pc = "808CD8"
+nmi = 44822
+
+[[seed]]
+room_index = 87
+room = "ACB3"
+movie_frame = 57934
+next_input_index = 57934
+movie_subframe_index = 57933
+seed_sha256 = "4c6dc77d792f53180207ffbe2072115464169cd6f5a497a870016ea9fcc09a3f"
+registers_sha256 = "a598793b951b67019179f232800ae7ace8bb256b30b420b8edc1cdf40718a999"
+observation_sha256 = "e1525e5059f6ec0117233e9d04ecf94c45ef4f4a8b5371420002d1adc3e504a1"
+cpu_pc = "808C8B"
+nmi = 45408
+
+[[seed]]
+room_index = 88
+room = "AD5E"
+movie_frame = 58143
+next_input_index = 58143
+movie_subframe_index = 58142
+seed_sha256 = "5507188605cfb0956285446b5af3ce545a3d516162412fc60d2edd2272234692"
+registers_sha256 = "30bd9baef650c6e06a9205519229ed2053fc3bf35a7bcfb90862cbb1550e7134"
+observation_sha256 = "4998fa63e03173cee6440c77b9d5004a7aa002480de9e2226cb6d217a675d90c"
+cpu_pc = "8095D3"
+nmi = 45536
+
+[[seed]]
+room_index = 89
+room = "B656"
+movie_frame = 58944
+next_input_index = 58944
+movie_subframe_index = 58943
+seed_sha256 = "91e1e6b58c24b764c267135ad2bf4dea5c3dbcfb9ba5c9f04fdb3c78a1314ef6"
+registers_sha256 = "917c0655a2d12177e5b0b73f7a2af72984b66d2341bf67e91709a0de13446902"
+observation_sha256 = "a9fd8cc980ff7e3ff594d5c40bcafa2dae5e968e864b31db10f21b870dc347ea"
+cpu_pc = "8095D5"
+nmi = 46251
+
+[[seed]]
+room_index = 90
+room = "B510"
+movie_frame = 59873
+next_input_index = 59873
+movie_subframe_index = 59872
+seed_sha256 = "cb4cf9fa4825686d93648ef92b1f34d30706cf9375ea286daa745ace3098122b"
+registers_sha256 = "d84ada5988757745881b1988edcdc9d037e1c579aeb0ddc05873b21426eec11d"
+observation_sha256 = "9179947097b93cbd9d6279dcf62e756d9f2af27309560854d904d13695e5ece0"
+cpu_pc = "808CD8"
+nmi = 47110
+
+[[seed]]
+room_index = 91
+room = "B6EE"
+movie_frame = 60244
+next_input_index = 60244
+movie_subframe_index = 60243
+seed_sha256 = "f5af65619994c9172d3a34700dc0b119162485b06549026f3fb8ff1e5adce1ab"
+registers_sha256 = "5244c678cdd71333a1d933b30d10d6a6c34b29c9bbfb4339bad588d4e0370e0f"
+observation_sha256 = "e28aaf5c35fba7fe0a91353147220c8a10b32473938ae53799deac44fb6b30e0"
+cpu_pc = "8095D3"
+nmi = 47406
+
+[[seed]]
+room_index = 92
+room = "B585"
+movie_frame = 60866
+next_input_index = 60866
+movie_subframe_index = 60865
+seed_sha256 = "5c037b6c6439ac4e682b20b734dee93a47ec11c6fab7d18d1c6f391a2cebbf4b"
+registers_sha256 = "3416063db3f17649bada43fa91e18a77b405ca82f23d9408bac2210215e343da"
+observation_sha256 = "2779f6f4ce8175669dc60da62b221856a6cc2d3f1bc7eb78bdfb47a5a56a9663"
+cpu_pc = "808CA7"
+nmi = 47958
+
+[[seed]]
+room_index = 93
+room = "B5D5"
+movie_frame = 61815
+next_input_index = 61815
+movie_subframe_index = 61814
+seed_sha256 = "42c7d9ad66be1d6d2001e28e8c8966f582b02d31f9535f7805a426db01fdc479"
+registers_sha256 = "1ae326b55d6eb196a02a5e6bbd538feec7521ce98d9fd8cc7d47608459624b24"
+observation_sha256 = "9a7b781d7b93a5b100a904f1fc16c3339de314bef8504d24bcc0e1988f58a6ee"
+cpu_pc = "808D47"
+nmi = 48804
+
+[[seed]]
+room_index = 94
+room = "B62B"
+movie_frame = 63159
+next_input_index = 63159
+movie_subframe_index = 63158
+seed_sha256 = "30c28150eaea37da2daa8455a1f341921607b021aa9cb0e16a9a5c2b8e540b25"
+registers_sha256 = "8746a7a87d6b74206a3d79cb3f2f4cc3649db573e637cbabb249a4791e52b68f"
+observation_sha256 = "f30ec00925829ac9288a1018aaecb13546fa2633388777563e41f52ad784a89a"
+cpu_pc = "8095D6"
+nmi = 49645
+
+[[seed]]
+room_index = 95
+room = "B482"
+movie_frame = 63728
+next_input_index = 63728
+movie_subframe_index = 63727
+seed_sha256 = "35c2eec9f3699e34d88e60acdd740b6833285c52d6bc4286cb07c3493faf451d"
+registers_sha256 = "aef61bbf5e6d332197b2548aee69ac8100c82c8a6f4648ebdbdee59b59e21d01"
+observation_sha256 = "1356436dbaab4896802a542e50132f5adcdb5d486bb2e9716c7c1abec777af54"
+cpu_pc = "808CCE"
+nmi = 50154
+
+[[seed]]
+room_index = 96
+room = "B37A"
+movie_frame = 64017
+next_input_index = 64017
+movie_subframe_index = 64016
+seed_sha256 = "051e1fe6822495577c47bf0002768ccf3c5317a03429c12b58f15648b26e5a74"
+registers_sha256 = "be20d8ea72dbb41d2524abdfba38e4eabc6971f1f4d5964e37fd3c6b2c960096"
+observation_sha256 = "7cf8ec6620c3a36faade0b9ff066edd9e34dd2e7e88f6046ef76eb8694218480"
+cpu_pc = "8095AF"
+nmi = 50380
+
+[[seed]]
+room_index = 97
+room = "B32E"
+movie_frame = 64569
+next_input_index = 64569
+movie_subframe_index = 64568
+seed_sha256 = "143229a455813bc1b2c59216f52b163513f109c0fa024c2a7d2bfd5239157b15"
+registers_sha256 = "14631f019273b4126b9cbcfa9f29bb7b1cc30ed34b38d506a8b36191d27acd68"
+observation_sha256 = "819906accd6eaf85cda2aa3bbddd1cff9c0a0ddf7dd30db531369f68629fbb49"
+cpu_pc = "8095D5"
+nmi = 50865
+
+[[seed]]
+room_index = 98
+room = "B37A"
+movie_frame = 67241
+next_input_index = 67241
+movie_subframe_index = 67240
+seed_sha256 = "2fc7ec10960ecba24d4a8d8129fe5b07ce7258ffaa25b2ae3a905717d71f92a2"
+registers_sha256 = "1521f818f3a5afe9edba4306f7df24ea345ae0edabdd4318b189b2140e9c644b"
+observation_sha256 = "b120d48ecdb76351fa93a03204dcc95990cc6fef2855327277e085822aa1d086"
+cpu_pc = "8095D7"
+nmi = 53344
+
+[[seed]]
+room_index = 99
+room = "B482"
+movie_frame = 67694
+next_input_index = 67694
+movie_subframe_index = 67693
+seed_sha256 = "bfd83a58e547766d0b52bce0db5d815d3881aeccd585905af6321c9500fd56bd"
+registers_sha256 = "3608de53676eb18262dc1f8b51aac224ee172905409197c63019a74a81eaf4dd"
+observation_sha256 = "28b0d18be96a1fd910b7ca25e2ec0e404a2dd8aa2c36c2cd0386dc0403bbd99d"
+cpu_pc = "8095D7"
+nmi = 53737
+
+[[seed]]
+room_index = 100
+room = "B62B"
+movie_frame = 68087
+next_input_index = 68087
+movie_subframe_index = 68086
+seed_sha256 = "1ba79b751e1e90e5e25a01d5beb086df3258bd77ff5d08ae098cf1ef945f5450"
+registers_sha256 = "b11e41851655ef26bd8d139c49e4af27b009c8db33393a945075108fb83bd363"
+observation_sha256 = "9db640770d0d397d6e20e8534edc1484f29e6d9df698d319b8dff497255bce4e"
+cpu_pc = "808BC2"
+nmi = 54066
+
+[[seed]]
+room_index = 101
+room = "B5D5"
+movie_frame = 68405
+next_input_index = 68405
+movie_subframe_index = 68404
+seed_sha256 = "337b00334c7c98607d2b0d384235b550997f10fb1d62531ea4a955907b874aaa"
+registers_sha256 = "d93ad15750e47bed37ea766096ebbf9d9bf4d54a52a7aaf678ea3156354f5f06"
+observation_sha256 = "81b1486c28f68e5fd5e85402a9a3b13783f23217bfadc090d490c7a61189ad5f"
+cpu_pc = "808EA2"
+nmi = 54304
+
+[[seed]]
+room_index = 102
+room = "B585"
+movie_frame = 69111
+next_input_index = 69111
+movie_subframe_index = 69110
+seed_sha256 = "b8eaab2a1e5d5f25375fc1795c9c8dc972f36495634fd9f18c7de1d8533c4acb"
+registers_sha256 = "4a68bfe657417195906bca0ba7be41368cf10c278e6ec45a4e5a7ba2bd1302fd"
+observation_sha256 = "fa80acbb7e59c07f57270f0c36a736d7667c949b7a6f1e335a2f5371a524c0b3"
+cpu_pc = "808BC2"
+nmi = 54932
+
+[[seed]]
+room_index = 103
+room = "B6EE"
+movie_frame = 69806
+next_input_index = 69806
+movie_subframe_index = 69805
+seed_sha256 = "2ad62ebf5204956a25b40381f5aaff86b5f0205d792e4490dd5376357b1ff6fa"
+registers_sha256 = "983e49b3d68be89fa2196dbd74a59380227420514edb59dd12a5887c211f448f"
+observation_sha256 = "0c2950a5fc0cdd8a63e45d317b484520b354efe95d1db27bdf9a9af3657bba6e"
+cpu_pc = "808EA7"
+nmi = 55544
+
+[[seed]]
+room_index = 104
+room = "B510"
+movie_frame = 70154
+next_input_index = 70154
+movie_subframe_index = 70153
+seed_sha256 = "6063adaac64e7b53ed5c766f1a331cfeb94671b539eecacb464e46b8930f297d"
+registers_sha256 = "75bb176e847c5391242080fa77ba21038aafc33a14e9a320214a963c3fbec6fe"
+observation_sha256 = "cb09ee350ae5c3cb1e7ce57eff02d32cf9f6d834af86b6c798e79cb375fe36f5"
+cpu_pc = "8095B4"
+nmi = 55824
+
+[[seed]]
+room_index = 105
+room = "B656"
+movie_frame = 70640
+next_input_index = 70640
+movie_subframe_index = 70639
+seed_sha256 = "fdc5e9728857bb146ef1319c6f61319a837bd5402d02eea53ab7f62654965d6f"
+registers_sha256 = "3da3d3b2ec06df0f99eabc9c3a0ce34c85f21b3bcb5c694287d19f0d7040e4df"
+observation_sha256 = "694c0314b5e96133f537161b0e2e55710175f07c61b2f5ed072a5a66b1992a5f"
+cpu_pc = "8095AF"
+nmi = 56228
+
+[[seed]]
+room_index = 106
+room = "AD5E"
+movie_frame = 71442
+next_input_index = 71442
+movie_subframe_index = 71441
+seed_sha256 = "e39149cbb2faf6abd948e96318276787fc79b2c8f9c1f1572a4a22d0be960dff"
+registers_sha256 = "29a5def462335c7a4758472cdc8df2e9dcc5867c12fe7cda5977a334584d20a8"
+observation_sha256 = "0a73005ee3c79c5a7f5884680c3bdedca3431ccdadf8f69724383618d052fcc7"
+cpu_pc = "8095B9"
+nmi = 56930
+
+[[seed]]
+room_index = 107
+room = "ACB3"
+movie_frame = 72252
+next_input_index = 72252
+movie_subframe_index = 72251
+seed_sha256 = "7ee4eac65ba49355c8035b83228a7b4c3665a8fd0bd9ba0cb96a07a786640678"
+registers_sha256 = "034ab89d2c4c68466ec149109037273e792d5ce10e9b7d2a9628e21cd8e5e076"
+observation_sha256 = "02145c79b0149468f6f2f8dc9bddcbfc03d2654f71aa2ac9e71dfc33692f9f55"
+cpu_pc = "808DAC"
+nmi = 57672
+
+[[seed]]
+room_index = 108
+room = "AF72"
+movie_frame = 72827
+next_input_index = 72827
+movie_subframe_index = 72826
+seed_sha256 = "69b84a6cf2342cd74ae48f14dfa8598d52551aac665f8e4ba01a5b16f0dc91f1"
+registers_sha256 = "c9be029beae17b02d077d38a00621e001ac5326c9d0cc1de00ee5e13bc6ff521"
+observation_sha256 = "37e0a68b418b5534ad71a7ee5382865df7220c68319ffd8aa58169549189722f"
+cpu_pc = "8095AF"
+nmi = 58156
+
+[[seed]]
+room_index = 109
+room = "B106"
+movie_frame = 73085
+next_input_index = 73085
+movie_subframe_index = 73084
+seed_sha256 = "89977a1453d3dbae92978aaa9d78766e00ee035e0a6afafba751881b66be3bde"
+registers_sha256 = "f367b840046e7ba0610efa0de68da6b0445cc79473ad1ec94e944c9fd8cb4d5d"
+observation_sha256 = "e2cc228bf1dc55f864c239ce1d2aa0a330671fdc0eca18f7b4cf313393ce13c3"
+cpu_pc = "8095DE"
+nmi = 58351
+
+[[seed]]
+room_index = 110
+room = "B167"
+movie_frame = 73446
+next_input_index = 73446
+movie_subframe_index = 73445
+seed_sha256 = "0fd3ecb6918a5e1874aab8fa590c4ea15f41d5470db74016783b2e0457f80d04"
+registers_sha256 = "b1ec4f1d62a50cbbc0f1a5d1887b8af44c631e01ee32e948f9c20518093b3b13"
+observation_sha256 = "cfeae7d633639e714bde2343a3d45f5cc6ac2b5f5b990e19bc13a219ddc702a0"
+cpu_pc = "8095B9"
+nmi = 58655
+
+[[seed]]
+room_index = 111
+room = "A7DE"
+movie_frame = 73661
+next_input_index = 73661
+movie_subframe_index = 73660
+seed_sha256 = "7e6ad587eac2cdf5fe8b37d253ac9a3df1173e9befba09ac50229cc06a38231d"
+registers_sha256 = "3889cc470bfd46fb8f7721bdafb8f6aaab8bf5c3903bde51438b38b79081da05"
+observation_sha256 = "719ce73dc9368a5069ad3f4a831bfde5efa5aa00534454680ab97062e3d296e5"
+cpu_pc = "80932D"
+nmi = 58811
+
+[[seed]]
+room_index = 112
+room = "AA41"
+movie_frame = 73869
+next_input_index = 73869
+movie_subframe_index = 73868
+seed_sha256 = "1b5715e8e610b53c7eb7e9ed1a85d567a18f5d604139b4d26a2e8cf29cde92cd"
+registers_sha256 = "bc87a1a77b4469909ce5565b55da32b555098498f32221436220d1d2da3b199f"
+observation_sha256 = "907cf937de48002d21b109428f2f844a6e38e8b70c6cf223d536a2c33a61897e"
+cpu_pc = "8095AF"
+nmi = 58955
+
+[[seed]]
+room_index = 113
+room = "A9E5"
+movie_frame = 75019
+next_input_index = 75019
+movie_subframe_index = 75018
+seed_sha256 = "9a9d1c7a9154153c42d7781174d3691f1d33942614048b25e185dd7b8c2b85db"
+registers_sha256 = "1616307d95f915a23d2b2119b5ce3a653b47ba14cd343a0a2ca9836b1d3e93e9"
+observation_sha256 = "ebd60a5e5f8e8f71a9812466f25db3700884a41ae17cf4d7c3eb142a0b55a27a"
+cpu_pc = "8095D7"
+nmi = 59248
+
+[[seed]]
+room_index = 114
+room = "AA41"
+movie_frame = 75762
+next_input_index = 75762
+movie_subframe_index = 75761
+seed_sha256 = "97cca693a8f0eb36620bccb23a06389cb12f70d37c804c0b9a93f62fd7a092b1"
+registers_sha256 = "8dce00bdf36d2ec7cef0692377dd93cb4ff9facfd20ec06b59025d8ac2df70c4"
+observation_sha256 = "79b956ddad063823f11a177d5dfa0dcc074a3ab17b2d9aed21b7742175f4c194"
+cpu_pc = "8095D7"
+nmi = 59531
+
+[[seed]]
+room_index = 115
+room = "A7DE"
+movie_frame = 76179
+next_input_index = 76179
+movie_subframe_index = 76178
+seed_sha256 = "595c09e1cf75b44f94329322c46478fc08976f298352ebd1798b2ffa74d4609b"
+registers_sha256 = "4f4eb906c5127896f1bde8a3f444386d2109c4c175434308e59a4358ec466bb2"
+observation_sha256 = "a6f4ff2e9d7d39dd19bf1293c85ef7f393fcb0f614b5211195fd90c1ad4cd5bc"
+cpu_pc = "8095D7"
+nmi = 59881
+
+[[seed]]
+room_index = 116
+room = "A815"
+movie_frame = 76492
+next_input_index = 76492
+movie_subframe_index = 76491
+seed_sha256 = "13d7960564e91608fde53eb990e5163250bbca3aba8820a6db85d805870f82b6"
+registers_sha256 = "56d5df45642f7a9d31bfbe3fcc8b21229bd1e74272363a81e2b009fbf5219699"
+observation_sha256 = "01212cabd5601702e09508d3337310d0880fb5b68d6ef62b346ac81d82891f9c"
+cpu_pc = "809334"
+nmi = 60122
+
+[[seed]]
+room_index = 117
+room = "A75D"
+movie_frame = 76781
+next_input_index = 76781
+movie_subframe_index = 76780
+seed_sha256 = "1955b27774867b23d6932a7d47f184b0ff22e042b2cc4ecff6e1c5ec1ca15119"
+registers_sha256 = "a48f8134ff7dd2a0b30f4f1bceeca23bc299309d873e9896df246834ed136c7e"
+observation_sha256 = "52f302184d17e72718a165d33e4132334be1dc292f6c77072cb201bcb36435bb"
+cpu_pc = "808DAC"
+nmi = 60346
+
+[[seed]]
+room_index = 118
+room = "A8B9"
+movie_frame = 77003
+next_input_index = 77003
+movie_subframe_index = 77002
+seed_sha256 = "7593fe018da015538643f2a5dae189066035e48a65eafc0d3f015ec5bf036b45"
+registers_sha256 = "9e2001490b697a5845afeb88e8f1ad93dad4c025e629e097256cfd53e6edc303"
+observation_sha256 = "dace62d0ae2ab0b24acee16a671e51a929f672b56a27d6d1beccf3e4ae0ec6e1"
+cpu_pc = "8095B4"
+nmi = 60506
+
+[[seed]]
+room_index = 119
+room = "A890"
+movie_frame = 77345
+next_input_index = 77345
+movie_subframe_index = 77344
+seed_sha256 = "3cc03c7ecc9cef1d83e1041e6d834ea5b76efe3a96ed37b8ce94a30cf0aa487c"
+registers_sha256 = "9a567b41ada2eab6ca9d7feb5270062901fbcbe556d534054e5cef3790c95da0"
+observation_sha256 = "d8dc4f72fbd2d88c28b83d4082bacd982e047aa27439bbeab96acfb2f0be80f5"
+cpu_pc = "8095D7"
+nmi = 60788
+
+[[seed]]
+room_index = 120
+room = "A8B9"
+movie_frame = 77988
+next_input_index = 77988
+movie_subframe_index = 77987
+seed_sha256 = "7c7816b13a9da5357e06c5b178e2561e64eb4cca3d118db30240ddd7ac7970f7"
+registers_sha256 = "fb68b6ade632fdddd003bba1093d09054e168bd39e437d8145d3a2a7edec15a7"
+observation_sha256 = "d1168f8fdec21e8e06de1e1c6a78c5c86ca7299dc4d2f9098f644637047cad2c"
+cpu_pc = "8095AF"
+nmi = 60970
+
+[[seed]]
+room_index = 121
+room = "A75D"
+movie_frame = 78335
+next_input_index = 78335
+movie_subframe_index = 78334
+seed_sha256 = "528ac7aa6a89baed3ce05994879c49c31a6a5e0317a66aeb08c3b5032bc9a240"
+registers_sha256 = "403a067ee49f7726839a485bde955df9d8bb440589ba7cf461837f771f13769f"
+observation_sha256 = "31a2b29d6bc538a4d318130658d4ebcbca70852cc254b7f7341d8f3c4ca5b172"
+cpu_pc = "8095B8"
+nmi = 61253
+
+[[seed]]
+room_index = 122
+room = "A815"
+movie_frame = 78634
+next_input_index = 78634
+movie_subframe_index = 78633
+seed_sha256 = "e2e98ebc8b1dcdfe6e29932ee361efcc4f206882e95ba3e939b2cf5ab6509994"
+registers_sha256 = "8cd0cd8a57ece1d05a6d2e4ca755948a34686a6fc1ef74912bc637c7d4358f5f"
+observation_sha256 = "c1d479be288a1bf5a65e639388486b7ced444e3b99fc8a341e57bde68c840dc3"
+cpu_pc = "8095EF"
+nmi = 61480
+
+[[seed]]
+room_index = 123
+room = "A7DE"
+movie_frame = 78961
+next_input_index = 78961
+movie_subframe_index = 78960
+seed_sha256 = "11d0bb196a52bd560b6e708de8b92db280dd4e2610665b636fc3ce0aea99f7d3"
+registers_sha256 = "c85dbca32e489dfb19e95361c4768747b7e24ad68ee389f56e3db04cdb307041"
+observation_sha256 = "175ce22e86b287e9f058918045ef989cd15ad842fa22d60e6bdf71ea51e02122"
+cpu_pc = "8095AE"
+nmi = 61739
+
+[[seed]]
+room_index = 124
+room = "A6A1"
+movie_frame = 79670
+next_input_index = 79670
+movie_subframe_index = 79669
+seed_sha256 = "74ffcaad993732260f90c4429dea4e1e59951d2c73009d6a664eb541e6479caa"
+registers_sha256 = "a804c63d710d752b4c58d652f10c9b8ee4929572659a6f55fe73cfd80d57d1b8"
+observation_sha256 = "22e7c02adfe166c11727e6eddfcc5b058991682c2d9e597d13b37b563133cb1d"
+cpu_pc = "808DAC"
+nmi = 62388
+
+[[seed]]
+room_index = 125
+room = "CF80"
+movie_frame = 79986
+next_input_index = 79986
+movie_subframe_index = 79985
+seed_sha256 = "6197dd8bbe630d6a0a5e97c2793375c23079635bb061b82d73afe4b84726987f"
+registers_sha256 = "5a2f9d284d1ab87e1b02e4f8d11d9336a79b6db7c71272dfe06c6602ca0f2ea5"
+observation_sha256 = "ec747ccb4d2f0abc243923837c0a20c01612179637268991f6d61f162863940d"
+cpu_pc = "8095BB"
+nmi = 62642
+
+[[seed]]
+room_index = 126
+room = "D21C"
+movie_frame = 80680
+next_input_index = 80680
+movie_subframe_index = 80679
+seed_sha256 = "d97648b804e5ab38a7056f2d73e4acb943ad9642448dbc5b85a583acf1ec87af"
+registers_sha256 = "3a62d1cac2c44b71e175a77c0eb7663c595028980ddfc85aad71e3df6f332918"
+observation_sha256 = "f0ea33e6639759e9d31134c93b0e3bf6483f589022f584378909d046f53e7701"
+cpu_pc = "808E29"
+nmi = 63275
+
+[[seed]]
+room_index = 127
+room = "D252"
+movie_frame = 81016
+next_input_index = 81016
+movie_subframe_index = 81015
+seed_sha256 = "22b5ff158f1d23e9032e59a803d648eda10fda9f610de969a3cd51fe36d5c61c"
+registers_sha256 = "4617e638c1fb1b4080b0dbc2f54e831430c93ee6b7600c383db69c5290c20cc2"
+observation_sha256 = "201c1244b5ff821ff4b4d3a2b40f37df941493eac2b07a8a2611de402643f07b"
+cpu_pc = "8095CD"
+nmi = 63551
+
+[[seed]]
+room_index = 128
+room = "D461"
+movie_frame = 81266
+next_input_index = 81266
+movie_subframe_index = 81265
+seed_sha256 = "0c81d0a14847448b3a6f19df034ce9f807cc0a8156d5edae814419b480dd8ae4"
+registers_sha256 = "2296bd5c3108dea4ff047e4a167b6cc53b1241b29ddf8f76228619cedb800b5b"
+observation_sha256 = "4474469629660b69572245a73356b6b110ae4a60dda839b448ca7504044ece7d"
+cpu_pc = "808CD7"
+nmi = 63739
+
+[[seed]]
+room_index = 129
+room = "D48E"
+movie_frame = 81598
+next_input_index = 81598
+movie_subframe_index = 81597
+seed_sha256 = "ac703bab92db6683da638bfb87998acf8b6c3ffed7d06a509a81643ed17560ff"
+registers_sha256 = "7f6fabd18e33df82499a1bad0bcffe622eaf3ce117ae0b8081ff1a02c089dfec"
+observation_sha256 = "e4af3e5aa4dcefb792712949e3b8011d72ddff39b11f59b19bc03ab8a8e7e680"
+cpu_pc = "8095B1"
+nmi = 64004
+
+[[seed]]
+room_index = 130
+room = "D408"
+movie_frame = 81971
+next_input_index = 81971
+movie_subframe_index = 81970
+seed_sha256 = "1d17fc869f5d377f3cd9ffcdca4dd512d32d8c1b66b4dcc93183a90921fa0067"
+registers_sha256 = "390f90f728d6cbc4e4da38c067aa62ff8421e9dba5ef73a6b81ed3db429a9226"
+observation_sha256 = "ee9e820795e2d5f28a93a435018868b4276e3b282201874a21cb53a895b831d0"
+cpu_pc = "808C84"
+nmi = 64309
+
+[[seed]]
+room_index = 131
+room = "D340"
+movie_frame = 82391
+next_input_index = 82391
+movie_subframe_index = 82390
+seed_sha256 = "cff5b5d7697d816b9f5b07f1e161d894fb313a4fc68fe68d76c75db61fe7c5d5"
+registers_sha256 = "23bc57698c7a1f5c25b1651039983b22d86fa45f0a4d644810ac20fe4be17a14"
+observation_sha256 = "182b6120670ee6cc2211bb98c6290ead17262bf5349ef3eb1eba393fa05014af"
+cpu_pc = "808BD3"
+nmi = 64630
+
+[[seed]]
+room_index = 132
+room = "D387"
+movie_frame = 82962
+next_input_index = 82962
+movie_subframe_index = 82961
+seed_sha256 = "3414095a60026289d0ee97a107eee0e72a534c6e6ca96c70f8d8df835bca4de4"
+registers_sha256 = "5499a2cbc2741908b532e13cb239322b14a84162502a96ae7a6a32f3366413a2"
+observation_sha256 = "37f2a03bb37d410854b87901a8f51e4f8f27cb357aba743836367dc5f1865289"
+cpu_pc = "80946A"
+nmi = 65125
+
+[[seed]]
+room_index = 133
+room = "D27E"
+movie_frame = 83225
+next_input_index = 83225
+movie_subframe_index = 83224
+seed_sha256 = "468d8ca50d4e06f38a2e4e49aa6bae1a29d96d8dc014d56cf5437ff72b843820"
+registers_sha256 = "4ab1b018e790439243a24e3793c95c8a2c3a573f752065530e51d42deca41400"
+observation_sha256 = "64ecec1cb37c6f903144809249d8e9731a8f3144fe806aed83453ca6feeafd6a"
+cpu_pc = "809334"
+nmi = 65328
+
+[[seed]]
+room_index = 134
+room = "D2AA"
+movie_frame = 83464
+next_input_index = 83464
+movie_subframe_index = 83463
+seed_sha256 = "ca9ae9c0670095c1d88a8f6d4b038070828d65484465f47091212ac9f1da5594"
+registers_sha256 = "dedb1c77455809a8c82318516db225d9360f225050fac91794fea46b1284591f"
+observation_sha256 = "015d17022109db2170fa3246ec5ab66de0bfe74a7917a80ffabf8a851d8e592a"
+cpu_pc = "808DAC"
+nmi = 65504
+
+[[seed]]
+room_index = 135
+room = "D27E"
+movie_frame = 84481
+next_input_index = 84481
+movie_subframe_index = 84480
+seed_sha256 = "5dd9c58f9e08d8c34a7b187d63e685401595bf9a447f60cfd78bb3432b4a6f7e"
+registers_sha256 = "f6eea8f673cf80564aa9e56cd1c77bc888981fc0f2524f87066b320174738cc9"
+observation_sha256 = "69e784c92136a5450c44de3baaf5e60676640372e144e1891aefeb8e291763af"
+cpu_pc = "808CCC"
+nmi = 525
+
+[[seed]]
+room_index = 136
+room = "D387"
+movie_frame = 84731
+next_input_index = 84731
+movie_subframe_index = 84730
+seed_sha256 = "5ed7229747ecfbd8d9e9f45475264f1bd50aea55a7e258a08e5ca4fafe481daf"
+registers_sha256 = "4b5807b88a63d2e36b51e59cbc52c053d8329f15d0b104c192cffb32490cab31"
+observation_sha256 = "dca49f600ff7289c5f39df4d4d0318b869d2845b189137cf26a086bd080cc945"
+cpu_pc = "8095DB"
+nmi = 713
+
+[[seed]]
+room_index = 137
+room = "D340"
+movie_frame = 85135
+next_input_index = 85135
+movie_subframe_index = 85134
+seed_sha256 = "e4dbcc0857a813225fd0d72ffcda390c83710699239afacece201100852e8b78"
+registers_sha256 = "b83174cc6669bbac93efcdfbd89bf54f37c03098fb71125e0623cd2ca98b226b"
+observation_sha256 = "6a5038f30b4952203566ea6bdbaf04c46cb07279609f9b028cb2c3adcd49e08a"
+cpu_pc = "808EA3"
+nmi = 1030
+
+[[seed]]
+room_index = 138
+room = "D5EC"
+movie_frame = 85875
+next_input_index = 85875
+movie_subframe_index = 85874
+seed_sha256 = "4cda2bc22cdaca949cedeb4727de2510d5a70dc4b2da5368a860e309b9fc06af"
+registers_sha256 = "73aa4fcf83aec4e975c6b7a6e46ec134426f4592591a45494b3986529d964a39"
+observation_sha256 = "e40b9a50cebaadb72eb5cd8edaaf49c46ee6bf0e6fa28a558aa220230e0a9f10"
+cpu_pc = "808DAC"
+nmi = 1703
+
+[[seed]]
+room_index = 139
+room = "D9FE"
+movie_frame = 86336
+next_input_index = 86336
+movie_subframe_index = 86335
+seed_sha256 = "ffb411bf97b541ac4f61fa94993089911718b05b59b342ffef9f5d2b302c1a9d"
+registers_sha256 = "f5f0d48988e646faefe704c7b35bfc5d32fe32cad170e1efe30a0d4bbb76fd8a"
+observation_sha256 = "42d07fd2cd2242ed63492c072faaeda578bf0cdf2e5ca7bf84789f167566ce60"
+cpu_pc = "808CD3"
+nmi = 2099
+
+[[seed]]
+room_index = 140
+room = "DA2B"
+movie_frame = 86747
+next_input_index = 86747
+movie_subframe_index = 86746
+seed_sha256 = "c577f3e40fae2bc7039c439b0b3a508dca99274d6b01fd04c466dabd827d5944"
+registers_sha256 = "83452d02f9ed547251d05532e124d9d3c2232ff0f949701d81ec66ef1cbdbaf8"
+observation_sha256 = "58eccc6016fe4c8d2fc347a4a536a941414a60cb9b07f9f91625ba057374ea4f"
+cpu_pc = "808EA5"
+nmi = 2438
+
+[[seed]]
+room_index = 141
+room = "D913"
+movie_frame = 87801
+next_input_index = 87801
+movie_subframe_index = 87800
+seed_sha256 = "341207f41d01281f9d291c2d2f728d221eb0518d628f36984720d1ece91830aa"
+registers_sha256 = "f0fc071c4a086afc19f84a6f1ed9990aefcf64ab96ee064c430d2185d9b0db5f"
+observation_sha256 = "52e4c58a06236382b92631ef783b74e097885605d0b3954148d309a8dfb7bf2a"
+cpu_pc = "808CC1"
+nmi = 3422
+
+[[seed]]
+room_index = 142
+room = "D72A"
+movie_frame = 88124
+next_input_index = 88124
+movie_subframe_index = 88123
+seed_sha256 = "2a7ed138d6841b9be09a6200e74569537faf8c3c47e2e02912fed11c13feebed"
+registers_sha256 = "39e615a8beb341c4d548bd52395d592d56d68c152987f37ba542f43f7f32c625"
+observation_sha256 = "97b4c7688ecbf2b042a76c263d5daf80c5f1d5dc1ac2677cb025608b526a8469"
+cpu_pc = "80932E"
+nmi = 3658
+
+[[seed]]
+room_index = 143
+room = "D78F"
+movie_frame = 89049
+next_input_index = 89049
+movie_subframe_index = 89048
+seed_sha256 = "6f231449d0ed2cf565483fc8da8a0641dd20ee4d9b929bde17947e4d4f468820"
+registers_sha256 = "dd63120c8ff0e37600179f4973c11ef5e475cc22a8a96e7c179bad3b4a66855a"
+observation_sha256 = "7d389009205419b7033a864e562548e2268e8affaac2d0b5ed5671ee49b014b5"
+cpu_pc = "809331"
+nmi = 4514
+
+[[seed]]
+room_index = 144
+room = "DA60"
+movie_frame = 89497
+next_input_index = 89497
+movie_subframe_index = 89496
+seed_sha256 = "a29389755f5df9a20fd76f9571f3c3dcf209e812a807725b227f80599cb45527"
+registers_sha256 = "2b91aecd165e1e40b2b0449b72a4dafc7dd5a33d8fc8b5213a71040d356bd52c"
+observation_sha256 = "37bb52de88e6fc3ec0e493b41c8ee2c2f9c734869ae63ac59681c6f5d010e1db"
+cpu_pc = "808EA3"
+nmi = 4903
+
+[[seed]]
+room_index = 145
+room = "D78F"
+movie_frame = 92086
+next_input_index = 92086
+movie_subframe_index = 92085
+seed_sha256 = "4e6e3a443269f1518780f6ba564ffad8818d4801b412e3c05a960e746baee165"
+registers_sha256 = "7ba3901e7ff565ce664d815ce6c69e365f55794f6172d1dce5e9553fcd27091b"
+observation_sha256 = "4177cf268471932654024e3fa0cab8d4b2f1aec68188c6daf9c7eb6325e6752d"
+cpu_pc = "8095BC"
+nmi = 7397
+
+[[seed]]
+room_index = 146
+room = "D72A"
+movie_frame = 92454
+next_input_index = 92454
+movie_subframe_index = 92453
+seed_sha256 = "d5807e017e3cc148466e5849436bd587a537b753b159f2d3fc987aa4977f6990"
+registers_sha256 = "0e1fa81eff64feeddac229c30e9161c287ff95e15d49161c90547b2e6a6f4170"
+observation_sha256 = "06e934b9717f6552bc214933b99ea6f4caa7aebbaa9d5abb264e53417078865c"
+cpu_pc = "8095D3"
+nmi = 7691
+
+[[seed]]
+room_index = 147
+room = "D913"
+movie_frame = 93305
+next_input_index = 93305
+movie_subframe_index = 93304
+seed_sha256 = "4b8280eb5d75e4c3aaa6f7837aaf94ddcab1466e1adb5f023ec35f0933d60fa8"
+registers_sha256 = "03d2ae915306b82f50e58aaf384670a1979862d4f127d858cc5e239fddd2c785"
+observation_sha256 = "19c8e9dcdeb534a11d90aabd6d98da1fbc08bf0e53a7408cbce940122d8eca0d"
+cpu_pc = "8095D7"
+nmi = 8472
+
+[[seed]]
+room_index = 148
+room = "DA2B"
+movie_frame = 93595
+next_input_index = 93595
+movie_subframe_index = 93594
+seed_sha256 = "c027c07378a9213d86a119b9b6a7eee78c547ed810685c41d6dbab63e4356686"
+registers_sha256 = "c4275ba36c6f9cfa132920eaa5f36976a093cc90b2707ab03260be61163a76d6"
+observation_sha256 = "d156ba2b58879995d9c24847a81938b4484568c148f8f8b274fa137fafc71109"
+cpu_pc = "808EA7"
+nmi = 8685
+
+[[seed]]
+room_index = 149
+room = "D9FE"
+movie_frame = 94677
+next_input_index = 94677
+movie_subframe_index = 94676
+seed_sha256 = "226941ca5e877c53769754ce693801156555a387ff0ce64174be1a8e80dcea8c"
+registers_sha256 = "591160988e6b25c56f0cb0013e6aee1145afcc47ebf2724da9a180cdc01fb5c5"
+observation_sha256 = "13bbbdb0932cc8163bc4b970e5d9f8163ebc5250a0d7ed22eb18a21a195a7a55"
+cpu_pc = "8095D7"
+nmi = 9700
+
+[[seed]]
+room_index = 150
+room = "D5EC"
+movie_frame = 94980
+next_input_index = 94980
+movie_subframe_index = 94979
+seed_sha256 = "2df1c88b4c67841b7f37affeef3f2c79331f8f1314a321e8940c74b91d280564"
+registers_sha256 = "47ef7474160d1c4ed3b292db4b54814e01a1734dfcd36d0c43bf4641c6e46802"
+observation_sha256 = "f4e134c441237e459c4d8f0a78314e3f37f3d46436822006664484e3dc59fcbd"
+cpu_pc = "808CD8"
+nmi = 9943
+
+[[seed]]
+room_index = 151
+room = "D340"
+movie_frame = 95404
+next_input_index = 95404
+movie_subframe_index = 95403
+seed_sha256 = "f51be1cf13793098bbd9477aeb099f0caaab5c61b3f485bb6c1cd11967ab69aa"
+registers_sha256 = "15674b97e20f9b63ad1f74b53240ed7526bd433ced55e542e41b755b01abb84e"
+observation_sha256 = "52727d1f04694ce1edbe2a91f28093921f1a5899a6ca85cb771808cdac6a9c3a"
+cpu_pc = "808BD3"
+nmi = 10268
+
+[[seed]]
+room_index = 152
+room = "D433"
+movie_frame = 95649
+next_input_index = 95649
+movie_subframe_index = 95648
+seed_sha256 = "db5f04e08fb4ebe9ffd46fb1cc199c3f0d2c881a07c526ddb7dfeae51df94184"
+registers_sha256 = "41b7d9436d49572cdee8809bd9bc75df864b7a8c426ab948286da6d29a8c6a73"
+observation_sha256 = "2930d026beedc97c0a48dbda0eb140eeb087a228d8dfb990994b0f6459122b8e"
+cpu_pc = "808DB2"
+nmi = 10446
+
+[[seed]]
+room_index = 153
+room = "D2D9"
+movie_frame = 95966
+next_input_index = 95966
+movie_subframe_index = 95965
+seed_sha256 = "55b8bc7c05065373782baee043efd909cab9631c88a8440bb773da8ebbcca18e"
+registers_sha256 = "626ae29411888f3c04fb5a07e15275badec3e3eae977b4c5db7b7de76918aa58"
+observation_sha256 = "6cbe76232dcac95a455bc5f6b8d6b640b7c1e8da61d9cbaa5aeaba4de115dd8d"
+cpu_pc = "8095C2"
+nmi = 10691
+
+[[seed]]
+room_index = 154
+room = "D30B"
+movie_frame = 96599
+next_input_index = 96599
+movie_subframe_index = 96598
+seed_sha256 = "0696f929a2b0107eeaa309efcd625fd0e624ddfbf3f601bc050cbafa204e21a2"
+registers_sha256 = "6538bbba39b8e43dc3fa54eb5a87a98c29ec4f55b05a4eda3a40423a2cbf15ec"
+observation_sha256 = "0f6e9ae19ff0ce91f42c42b3410e0ca15dd73894ce7f97f33220685cb9ec0f8b"
+cpu_pc = "8095D7"
+nmi = 11255
+
+[[seed]]
+room_index = 155
+room = "94CC"
+movie_frame = 96890
+next_input_index = 96890
+movie_subframe_index = 96889
+seed_sha256 = "b8cd89ae75aba700219d41bc69a817d25477a64a39adc67de73a31d023c50cd7"
+registers_sha256 = "d1da1e22a055de500d594f0a67a3bfade4e9c2c81160c2b1afa71f557e5cdeb1"
+observation_sha256 = "0fe96ac36d160faf86d362fbcbec3f14a6009887eed9769f50692a9a2bb5a348"
+cpu_pc = "808CCC"
+nmi = 11482
+
+[[seed]]
+room_index = 156
+room = "95A8"
+movie_frame = 97174
+next_input_index = 97174
+movie_subframe_index = 97173
+seed_sha256 = "fd937862525fdd6e99cd22d0138244d0e1da1d5fb3c0372fd0af487330182480"
+registers_sha256 = "9e2e72fe28fb4eedb9be4c4ba0f74442cfcbf855bafed75ade0c900bad3f0d09"
+observation_sha256 = "d0faec8084aef7cb599f5a2672d3a6b4e0ae040c09f44b7f43ab0f2c49d0b841"
+cpu_pc = "808CD8"
+nmi = 11711
+
+[[seed]]
+room_index = 157
+room = "957D"
+movie_frame = 97377
+next_input_index = 97377
+movie_subframe_index = 97376
+seed_sha256 = "ee16207ae7129b99ef7ce1b76748b38b6eac954d19fe47e9a069deaffa209752"
+registers_sha256 = "807fda101bb501da6071f9881b49856c9bc5d0598abcc1e43bcdbb7bac0f3825"
+observation_sha256 = "54517d2c442f953e8a77f457f9ae5c81760a4215aab0041cf4ef3c09559c51e1"
+cpu_pc = "808EA3"
+nmi = 11856
+
+[[seed]]
+room_index = 158
+room = "9552"
+movie_frame = 97960
+next_input_index = 97960
+movie_subframe_index = 97959
+seed_sha256 = "09516f75aabfcdf36c0672dd8995d7d72cc2cb0dd0abc61e138c598104462331"
+registers_sha256 = "175d6edaf8385509a4dc9d85abb718e9198d2b63b2c1d9430cd8f66deb68fe6a"
+observation_sha256 = "e4663a6df5352033cb6e0b34fa91c4b6658855ac18a3f76bd4600ee8f65afea6"
+cpu_pc = "8095DE"
+nmi = 12377
+
+[[seed]]
+room_index = 159
+room = "94FD"
+movie_frame = 98531
+next_input_index = 98531
+movie_subframe_index = 98530
+seed_sha256 = "80b7f3d1983e628acb169fa56e9e9acb7fcf68db8f10a6cd768cc1f1ecf09592"
+registers_sha256 = "fcd3d2dbc833f91d236c741e30fdb9780b0fe4a8bb3cc1fe4453cfb18db295d6"
+observation_sha256 = "7d972e17e2bfbabb86b8b8e4d67f0e70c639101517d33cd4b7ae3344e076a068"
+cpu_pc = "8095D6"
+nmi = 12856
+
+[[seed]]
+room_index = 160
+room = "CBD5"
+movie_frame = 99265
+next_input_index = 99265
+movie_subframe_index = 99264
+seed_sha256 = "62b3d588389d04b1eda4749ac6763c12dccaf337216bd0014442d78844b9596e"
+registers_sha256 = "dd9a58b01daca2006d4edc7215ed504d5290f96ac0f1218c1b6f8d4df907fef8"
+observation_sha256 = "7c088b230831f81dc4620b681737d16adcc091c6a437a989fb49f62ba1fde13b"
+cpu_pc = "808CD8"
+nmi = 13518
+
+[[seed]]
+room_index = 161
+room = "CB8B"
+movie_frame = 99581
+next_input_index = 99581
+movie_subframe_index = 99580
+seed_sha256 = "cc1b33ff73cc8c7a24c1ca61c170ba82115d3bd5f0b3eb572cdc6e57fb16bef3"
+registers_sha256 = "e0fa0100295d2f17c8d35465d697fdc990b2d538270542f0c76e4adb2641ff6b"
+observation_sha256 = "32eecdbe6f9bd028ed2681f6da942721186c1e324522de34c288a857893834b2"
+cpu_pc = "809331"
+nmi = 13775
+
+[[seed]]
+room_index = 162
+room = "CD5C"
+movie_frame = 99876
+next_input_index = 99876
+movie_subframe_index = 99875
+seed_sha256 = "f9725e8e0ca60eb520a43bddd43fcf10681319db7a81146e0b1e111938a01eb1"
+registers_sha256 = "540d79c415a239ce7dcb8a9cbae53b6f401ed5a1d7d77c6bac6737119638b6d0"
+observation_sha256 = "ac2a5eacae3132a8002c3dec0ffc0029b8d2cf8a65baa833dcca035ad9432e11"
+cpu_pc = "8095AF"
+nmi = 14014
+
+[[seed]]
+room_index = 163
+room = "CAF6"
+movie_frame = 100171
+next_input_index = 100171
+movie_subframe_index = 100170
+seed_sha256 = "4c5aeefaa0470d78ee9a6f8ad8f59f0e2cf6dc262822d490c3fc36fba72977c7"
+registers_sha256 = "3236dd2844fef3621acb1998aae68e49919a78becae5b63cb1f44331aa14caad"
+observation_sha256 = "c8b8d0610661737e8573a063284c5080982815c5d98957d5af6646cd24f3c5e9"
+cpu_pc = "8095B8"
+nmi = 14231
+
+[[seed]]
+room_index = 164
+room = "CC6F"
+movie_frame = 100678
+next_input_index = 100678
+movie_subframe_index = 100677
+seed_sha256 = "925b7c150fa2e8038af998d032cc03b77368f3a44f16b9a9cbec5e83a3fb8ada"
+registers_sha256 = "c0eb49b8e3895c9e00a706d37d34a147e3d7e85e41702dc3184f68beb3afc1d6"
+observation_sha256 = "36c1aeb527a7b44066ec5c7dd224bd3560617313cab0c32c2f13e04b490cd099"
+cpu_pc = "8095DC"
+nmi = 14677
+
+[[seed]]
+room_index = 165
+room = "CD13"
+movie_frame = 101197
+next_input_index = 101197
+movie_subframe_index = 101196
+seed_sha256 = "29f3a9f5b387b14c0534cd5bb8d4438c7aa5379769394e954c54fe20996876ea"
+registers_sha256 = "0b67a2d5871d2891fca734d47c276c612b364efab21e988b5b87554804702bf8"
+observation_sha256 = "0cd7d67c871b424186da55424cf57a8a543b16621e9af546cbbb079cd4c375ea"
+cpu_pc = "808EAB"
+nmi = 15138
+
+[[seed]]
+room_index = 166
+room = "CC6F"
+movie_frame = 103412
+next_input_index = 103412
+movie_subframe_index = 103411
+seed_sha256 = "06b6586a5752be833ade407f3b40af281f4c9929cd6ac2808205c658918a6215"
+registers_sha256 = "532a89ff03446b2174574ef854d15d318f7098bb26770c916a95e84e9d33e03e"
+observation_sha256 = "f48f8b6bd6275f854d4c35d8cde0eeafa51a5eb0771e49643cb1f291a4426329"
+cpu_pc = "809333"
+nmi = 17247
+
+[[seed]]
+room_index = 167
+room = "CAF6"
+movie_frame = 103869
+next_input_index = 103869
+movie_subframe_index = 103868
+seed_sha256 = "474e2ffb6c889f3419615da76bf67169eb57bb932b21e1abdae0cdf81d6f406b"
+registers_sha256 = "1682cebfcde5cf97dc3ca28816641689233e84b031b23d1160da4f73529c8a61"
+observation_sha256 = "6bfb2a655ceaf857ffb8063b3980a045b426b3c11f4aad0301dc21f6662f4cf0"
+cpu_pc = "8095B1"
+nmi = 17623
+
+[[seed]]
+room_index = 168
+room = "CA08"
+movie_frame = 104171
+next_input_index = 104171
+movie_subframe_index = 104170
+seed_sha256 = "576ebeeda707ab2116c44f5fdc89c34fdd1f04cff91cec5edc28b9c18bff107e"
+registers_sha256 = "47629e8dcc1f8636f728f0529a299392a22aa0da9dababff0531ee121ec29286"
+observation_sha256 = "4ac94e03429cfa6f5769c9c2726bdeaaa10c0b073c7152d04fad648b4cf15ac4"
+cpu_pc = "8095C4"
+nmi = 17863
+
+[[seed]]
+room_index = 169
+room = "93FE"
+movie_frame = 104532
+next_input_index = 104532
+movie_subframe_index = 104531
+seed_sha256 = "17334356948778fc80a04de48a8082ff65fa36d716120e18484541b1dd12e8b7"
+registers_sha256 = "afc2b37d9a6eb80698e133972c187f95467da676bb0c67f108d2f8e0e841b654"
+observation_sha256 = "c570b7a8daae03f01f1fd2678b88825baddb3ce869ce91553c262a3c812fe902"
+cpu_pc = "809329"
+nmi = 18111
+
+[[seed]]
+room_index = 170
+room = "95FF"
+movie_frame = 104974
+next_input_index = 104974
+movie_subframe_index = 104973
+seed_sha256 = "3f1f6ace00853c136efd2e34f37d2a0a11bd24194e96f520a8f809f373fce0c5"
+registers_sha256 = "cbb0b35ce56c756f864b9bdd94aa5678dddf6ddf3b3ada2756b3ff6cbbc16059"
+observation_sha256 = "fc076d5a72949b763847d6a7b2eddc28e441293d237e76c8ac6825d1f4327f0e"
+cpu_pc = "8095B3"
+nmi = 18486
+
+[[seed]]
+room_index = 171
+room = "948C"
+movie_frame = 105220
+next_input_index = 105220
+movie_subframe_index = 105219
+seed_sha256 = "731bf5b64f2aa65fbb9b4eb5e064dff85865d61541932c336b89b75862441892"
+registers_sha256 = "58d3fef46761663b2870dd0363f9dacb9f1e072d66f2262e3e51afb2370541df"
+observation_sha256 = "42c32965037c7cdaa0e7f6fa739a35427f9bb3a906339efaf529e1587a4c4bcc"
+cpu_pc = "8095EF"
+nmi = 18671
+
+[[seed]]
+room_index = 172
+room = "95D4"
+movie_frame = 105511
+next_input_index = 105511
+movie_subframe_index = 105510
+seed_sha256 = "1cde8f4ef980be55b19bc872f17ebff6bc8f9a9675143474c126a7dce3fc82f3"
+registers_sha256 = "00d84941a21727c538671b0ee17cd4bd5fa8eb0191bc1d0fac1d522c0f335a45"
+observation_sha256 = "89154dc23acfdacad0dd0816c40450e9675e0ddda7f0b95dc54b369a1c120327"
+cpu_pc = "8095B9"
+nmi = 18905
+
+[[seed]]
+room_index = 173
+room = "91F8"
+movie_frame = 105725
+next_input_index = 105725
+movie_subframe_index = 105724
+seed_sha256 = "7887d7c2f632d6f7a4d7a5bd260c47d9c1dbe2b0c899536f3cc0737e2843d9c2"
+registers_sha256 = "8453dfca0dfbd80c64c1a9c1cf85baa01b7c1a94bac1ac5ba30bc7a717525728"
+observation_sha256 = "1e2cdb73026c0213edb2638652594c3b8d3ac255c27183749c678f9c27e9eddf"
+cpu_pc = "808EAB"
+nmi = 19029
+
+[[seed]]
+room_index = 174
+room = "92FD"
+movie_frame = 106159
+next_input_index = 106159
+movie_subframe_index = 106158
+seed_sha256 = "1e6db5bf7c19aac80103afee2673f6b1e2cc2f788cec6a7cce73811be69e2e83"
+registers_sha256 = "4596938f204a8fdc02d04aafe9f6de6cb90c6b9912c7a2f4c421f45c06e3d6d6"
+observation_sha256 = "b12ac0e835d4473a146c847d63b972b038d1dec591b50ce421f14fcd8ba0801d"
+cpu_pc = "8095BA"
+nmi = 19393
+
+[[seed]]
+room_index = 175
+room = "990D"
+movie_frame = 106502
+next_input_index = 106502
+movie_subframe_index = 106501
+seed_sha256 = "09db877d1be6eb3a12d313d43c2ab1e3d0ce1d53b67ba1f2f7599f9a649b1705"
+registers_sha256 = "8a3c4fa98532d9aad09ec278b88da65146ef39384afefe1075a4d68e8fee48e6"
+observation_sha256 = "e3b1f3d9ce5c5c4f0df5b739b17111688f6937efc032e8e3fd170d561db81868"
+cpu_pc = "8095DC"
+nmi = 19669
+
+[[seed]]
+room_index = 176
+room = "99BD"
+movie_frame = 106837
+next_input_index = 106837
+movie_subframe_index = 106836
+seed_sha256 = "23f97f56d2dedb24e7d5746fd44266bf8db2d85fb11d374c147e28d0d5d4eb84"
+registers_sha256 = "a99dd7906bf4fd30b548ffd4ea40caeae81317f19bdfea37ddcdaaf7d93ca43f"
+observation_sha256 = "0e33438460585b17b80f26f3a17b3b44221410745a2c38a547f5ba9b457b40e2"
+cpu_pc = "8095F0"
+nmi = 19942
+
+[[seed]]
+room_index = 177
+room = "A5ED"
+movie_frame = 107329
+next_input_index = 107329
+movie_subframe_index = 107328
+seed_sha256 = "bc1349c63e8465c261e98f8bffb777486183104cc7fd363645cb0935312de1fe"
+registers_sha256 = "71ea82b1aef3beff057457dfbb6bc7089931057ec97ae05e5ffc7e97b2c5177b"
+observation_sha256 = "1706df5070d885130b4ba39aaa7203d3f46c9f9a49a470ac9d6d5772352e30c4"
+cpu_pc = "8095B3"
+nmi = 20374
+
+[[seed]]
+room_index = 178
+room = "A66A"
+movie_frame = 107677
+next_input_index = 107677
+movie_subframe_index = 107676
+seed_sha256 = "7f83a89cecc268f7c79c8a6629485958ad11a24de5a973853119d94fd3afdbf0"
+registers_sha256 = "a60be340bfb6976ee46dc0f28d65e38c16a3ada7b7481c9cbad9d202e216af69"
+observation_sha256 = "5532621aa8862119bbaafd0e6654d042efe5d886344b2b1c4b282484148078f7"
+cpu_pc = "808E2B"
+nmi = 20654
+
+[[seed]]
+room_index = 179
+room = "DAAE"
+movie_frame = 110837
+next_input_index = 110837
+movie_subframe_index = 110836
+seed_sha256 = "286fcd6097c9b1184db91718215924e2e26a0b9fb0e994ae8aa31e8022f105ac"
+registers_sha256 = "0b0491f50f2d63d39db4d1e32f0a7ba2ea23e3949b8bdc1c61a531a2d46e7fda"
+observation_sha256 = "bce7976ca250178276de3721fda24baafedc4635e09c937f41e812719dd1eca3"
+cpu_pc = "88B52E"
+nmi = 23752
+
+[[seed]]
+room_index = 180
+room = "DAE1"
+movie_frame = 111578
+next_input_index = 111578
+movie_subframe_index = 111577
+seed_sha256 = "b521c15e3164684410d12760e8729fe9d9d4603885af0b127c0da27af6e8220d"
+registers_sha256 = "51c2e5788850cc6482e47b1690ea74c88e643c6d94954e02d318dc59f5c21ae5"
+observation_sha256 = "8445b184685040e3e7f8f31ca058547c78faa1934533c79cb4d002534971c020"
+cpu_pc = "8095D5"
+nmi = 24434
+
+[[seed]]
+room_index = 181
+room = "DB31"
+movie_frame = 112069
+next_input_index = 112069
+movie_subframe_index = 112068
+seed_sha256 = "431d397849177178a9cdee37713fd11197a5dd623eccd24a4a5300868ba6c7d7"
+registers_sha256 = "aab11c934019f5e4505d00d0e1bb38e25060f788621d9ab6f3740f7c989af2a6"
+observation_sha256 = "6300dd18d097be26858b896d17b1963415a40d9feb86418c2624f07ca514e5f0"
+cpu_pc = "808CCC"
+nmi = 24863
+
+[[seed]]
+room_index = 182
+room = "DB7D"
+movie_frame = 112362
+next_input_index = 112362
+movie_subframe_index = 112361
+seed_sha256 = "c29eeec69028d72a4bfbb6dc72dbe2aac21d59893ad2f0e2f00b70d356a717a1"
+registers_sha256 = "0035f2c57f401eda9e64b1a4d3fea95c2af31b4ba947de8f7cc52b8d2e4808f3"
+observation_sha256 = "98ceb54fb5df966289b90a860a1fb972be329c730577d6161d96f62f20c62723"
+cpu_pc = "8095AF"
+nmi = 25095
+
+[[seed]]
+room_index = 183
+room = "DBCD"
+movie_frame = 112883
+next_input_index = 112883
+movie_subframe_index = 112882
+seed_sha256 = "68ca9d3f18d9fd87969f236118f132b8bb5e8c1e7bfa9b2deef928d705d9186f"
+registers_sha256 = "c4c55fa514cc44783cf970eac461eecfbb8b7916e158af25d313125e567b2db7"
+observation_sha256 = "6df3e0bb05b1f7e6455289e62e352e6db559d784eca2b5cdaee5d807c8dd1cd0"
+cpu_pc = "809334"
+nmi = 25553
+
+[[seed]]
+room_index = 184
+room = "DC19"
+movie_frame = 113332
+next_input_index = 113332
+movie_subframe_index = 113331
+seed_sha256 = "5209618b2a122c124df8241ae8e2e8a7c92a5f88686718f8552e39f5bf829bb3"
+registers_sha256 = "e69a1274b457404978c73beb328ac7cb990a1ffdb76991deeca87fe1e6cd28e4"
+observation_sha256 = "57c75083ffc901fbfc1b2002aefa9b165bc7e9530ecdeb6d259931be7068d676"
+cpu_pc = "809332"
+nmi = 25941
+
+[[seed]]
+room_index = 185
+room = "DC65"
+movie_frame = 113575
+next_input_index = 113575
+movie_subframe_index = 113574
+seed_sha256 = "4833c963293ddfe221a1073c6a8c0a4595073e8efc286bcda490591b63d6c50e"
+registers_sha256 = "32a55ea2ca2b94d982d7a6aee9c0dc65483c0592c88c3b3320e935ee84c9da30"
+observation_sha256 = "649391cffbf84fff2445d406e83e07e0ba6e29827fad05123bc2915b92560f8e"
+cpu_pc = "808CC1"
+nmi = 26127
+
+[[seed]]
+room_index = 186
+room = "DCB1"
+movie_frame = 113829
+next_input_index = 113829
+movie_subframe_index = 113828
+seed_sha256 = "9a1f5f01996196462b68573211fc680b72fa7afbe1020b6a701931417e83f491"
+registers_sha256 = "9e110dbeb884da41c6999dfd358a8334dccccd248b9bb15575f0d43fb55fd339"
+observation_sha256 = "a7f7f683d2dc28de113ddea5153f998f4d667d6918c3321dc0eead3857d5c75c"
+cpu_pc = "8095DD"
+nmi = 26322
+
+[[seed]]
+room_index = 187
+room = "DCFF"
+movie_frame = 115275
+next_input_index = 115275
+movie_subframe_index = 115274
+seed_sha256 = "364a25e9e20ef03b05560b275702457b1da238a8e584815c432615c168f32aab"
+registers_sha256 = "18c11ed50be0cfbb4431a7c1c5faccc403f242e08bfb628bdf0dd450d4b0b2a3"
+observation_sha256 = "77f63d3bc2db22af302da2ea7ffdd1ba1f5a901edbe3252603e602f4f5937080"
+cpu_pc = "809490"
+nmi = 27676
+
+[[seed]]
+room_index = 188
+room = "DDC4"
+movie_frame = 115560
+next_input_index = 115560
+movie_subframe_index = 115559
+seed_sha256 = "48fce278b969bcc09427c0c17e23417bdac7956b65f7a4c6da9c6395d69a820b"
+registers_sha256 = "89417047149a88723211b5f3658150a954e6cb4d608ea79708dcecbb2dd61194"
+observation_sha256 = "c804d582af4b88001252733adf15337159dad36e01196127e0c739d54251d865"
+cpu_pc = "8095BA"
+nmi = 27905
+
+[[seed]]
+room_index = 189
+room = "DDF3"
+movie_frame = 116079
+next_input_index = 116079
+movie_subframe_index = 116078
+seed_sha256 = "3c6e5ceffefbafd7e6a1501f8d8a01fa6bef638532c0b888d9fff880d4e10d6d"
+registers_sha256 = "c8a8a82cfaa43f0828620b2c6762870ff92e69b5da283f6733a0ca2cf3afeeb4"
+observation_sha256 = "4e88328f6f9bdc122d3013e7381e8f12eab4aaf18023fc01ace5e99cdbee023d"
+cpu_pc = "8095DE"
+nmi = 28369
+
+[[seed]]
+room_index = 190
+room = "DD58"
+movie_frame = 116359
+next_input_index = 116359
+movie_subframe_index = 116358
+seed_sha256 = "6d808cceaab4bf2a540289f5a6f79a356511701e59051d167a256611b0ecaea6"
+registers_sha256 = "270b54d7264f533b1e2de981286734cd21e6653c264320f181f90eabd9a7d297"
+observation_sha256 = "c16b89c71c7f975a4cf6d1eb67609f5281cb6c6e93122e71641cbb3fe1a7a468"
+cpu_pc = "8095D7"
+nmi = 28579
+
+[[seed]]
+room_index = 191
+room = "DE4D"
+movie_frame = 126534
+next_input_index = 126534
+movie_subframe_index = 126533
+seed_sha256 = "e5d6c79a8a1b5d321b30d4764cb17d7ce6038d9739e5731209da0ecd31341266"
+registers_sha256 = "bf44e01f13403bc9f7a4521f4a1024f8936cea178c05ef0708895d5c4c952ec0"
+observation_sha256 = "86d5e6e08254a1770292c0dd213f69f1b583074ec21c9b224f33588fa8789000"
+cpu_pc = "808BBE"
+nmi = 38556
+
+[[seed]]
+room_index = 192
+room = "DE7A"
+movie_frame = 126793
+next_input_index = 126793
+movie_subframe_index = 126792
+seed_sha256 = "6c5bc64d2946fbc7c48904c9b96613cf5bdcf3329f2dbea5b3a800aded429c1a"
+registers_sha256 = "8afa31c2c269d731d29ccc695fa49c9e0d9a735b373340420976b687b411de2b"
+observation_sha256 = "541edeea431fbf92cbe7b34295823071b18b7d663d37ac873dff1b4ef34c84e9"
+cpu_pc = "80946A"
+nmi = 38742
+
+[[seed]]
+room_index = 193
+room = "DEA7"
+movie_frame = 127049
+next_input_index = 127049
+movie_subframe_index = 127048
+seed_sha256 = "19bd5f75a8acae0aba8607b26f5f90da77b683578511e610fff61d6d8affab44"
+registers_sha256 = "f79a535d3af1021d2c95d88a3f5ae2c2bc67c32779b73e8aed8a9db1ecc0eab5"
+observation_sha256 = "3534a5524a4eeafe0e2523e13527deac3be16c022cdbd982b09d645817684667"
+cpu_pc = "808DAC"
+nmi = 38937
+
+[[seed]]
+room_index = 194
+room = "DEDE"
+movie_frame = 127489
+next_input_index = 127489
+movie_subframe_index = 127488
+seed_sha256 = "008d8d75b409f54ec4519fe2a5c9c5310a5ea6a23c5659c9fbc25ea53baf9d63"
+registers_sha256 = "6ccda5d10e0577a08af65fc5eec1ea9f4ec8ae98684931fd1d6ea4e97c69f6d8"
+observation_sha256 = "0fe60b4be64ab0e573f7fe3a25d9951020a160e1e88c7dbf25edb3c1f5a631b7"
+cpu_pc = "808CD8"
+nmi = 39309
+
+[[seed]]
+room_index = 195
+room = "96BA"
+movie_frame = 128517
+next_input_index = 128517
+movie_subframe_index = 128516
+seed_sha256 = "8d585165b6d1862ce5e34574cfe59e8c0ff52ad49996ec1381ddb5ca5dcbc292"
+registers_sha256 = "bad4fee92f20fcc4c5386fb4bcc2b0cf4b5e23dcefecc58d64a01c9a53e3bdd6"
+observation_sha256 = "eaaa529b8158f2aba6f40a3f961b014fb9ccd6b61d5f090d09bddbc70139ba1a"
+cpu_pc = "8095AF"
+nmi = 40254
+
+[[seed]]
+room_index = 196
+room = "92FD"
+movie_frame = 128976
+next_input_index = 128976
+movie_subframe_index = 128975
+seed_sha256 = "b7d6f6fd0e251f321834350b64d5fbd7a91b4580828dd1bea884a59f34ccbe7c"
+registers_sha256 = "ec052b2c11cfec88442e8042efef379d80b6c61ca83d8751ef6c94501042d9d9"
+observation_sha256 = "6baf003235e02bfa12cab5ec3e30c9b58e189956a513935bdf3264130aef823e"
+cpu_pc = "809331"
+nmi = 40640
+
+[[seed]]
+room_index = 197
+room = "91F8"
+movie_frame = 129581
+next_input_index = 129581
+movie_subframe_index = 129580
+seed_sha256 = "ba857c56bdda67797a2a97d4a16d3bddd48aff6e1b0f8e7ce1a1a1f84ba339da"
+registers_sha256 = "1ff78f525c970ac70a787d84cceebc6429675941a3ef70836f8bffadfcfb2f18"
+observation_sha256 = "393afa457abf9755457b7ea7fba24e16d186d1e76b7acfe549ed79f1df1df4a6"
+cpu_pc = "8095CF"
+nmi = 41151

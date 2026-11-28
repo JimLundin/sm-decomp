@@ -1,6 +1,5 @@
 -- lsnes rr2-beta23: read-only per-frame observations, never change input/state.
 -- Flat NMI counters include boot/reset and coroutine waits: this log does not classify lag.
--- input.get observes live controls; the WRAM joypad word records playback evidence.
 local path = assert(os.getenv("SM_LSNES_LOG"), "set SM_LSNES_LOG to a new output path")
 local limit = tonumber(os.getenv("SM_LSNES_FRAMES"))
 assert(limit == nil or (limit > 0 and limit == math.floor(limit)), "invalid frame limit")
@@ -11,10 +10,12 @@ for _, suffix in ipairs({"", ".error.txt"}) do
         error("refusing to overwrite existing capture: " .. path .. suffix)
     end
 end
+-- The format crates/oracle/src/cli/lag_log.rs reads: a magic and a version, then per movie
+-- frame its number and the words after it, little-endian.
+local function word(value) return string.char(value % 256, math.floor(value / 256) % 256) end
 local log = assert(io.open(path, "wb"))
-log:write("input_frame,movie_frame,nmi_before,nmi_after,including_lag_before,including_lag_after,emulator_lag,game_state,room,x,y,input_callbacks,first_live_input,last_live_input,joypad_before,joypad_after\n")
+log:write("SMLAGLOG", word(1))
 local declared_frames = movie.framecount()
-local before = nil
 local rows = 0
 local last_frame = 0
 -- Set to an existing, empty target/seeds/<movie> directory. Dumps stay local.
@@ -32,10 +33,9 @@ local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
 if seed_dir then
-    local existing = io.open(seed_dir .. "/rooms.csv", "rb")
-    if existing then existing:close(); error("seed directory already has rooms.csv") end
-    seeds = assert(io.open(seed_dir .. "/rooms.csv", "wb"))
-    seeds:write("room_index,room,movie_frame,next_input_index,movie_subframe_index,region,size,sha256,file\n")
+    local existing = io.open(seed_dir .. "/rooms.toml", "rb")
+    if existing then existing:close(); error("seed directory already has rooms.toml") end
+    seeds = assert(io.open(seed_dir .. "/rooms.toml", "wb"))
 end
 local function capture_room(frame, boundary)
     if not seeds then return end
@@ -63,7 +63,7 @@ local function capture_room(frame, boundary)
     frame = seed_origin_frame
     assert(movie.readonly(), "seed capture must remain read-only")
     seed_count = seed_count + 1
-    local register_file = string.format("%04d-%04X-registers.csv", seed_count, room)
+    local register_file = string.format("%04d-%04X-registers.toml", seed_count, room)
     local existing = io.open(seed_dir .. "/" .. register_file, "rb")
     if existing then existing:close(); error("refusing to overwrite seed: " .. register_file) end
     local registers = assert(memory.getregisters(), "core has no register observations")
@@ -80,11 +80,10 @@ local function capture_room(frame, boundary)
     for name, _ in pairs(registers) do names[#names + 1] = name end
     table.sort(names)
     local output = assert(io.open(seed_dir .. "/" .. register_file, "wb"))
-    output:write("name,value\n")
     for _, name in ipairs(names) do
         local value = registers[name]
         if type(value) == "boolean" then value = value and 1 or 0 end
-        output:write(string.format("%s,%d\n", name, value))
+        output:write(string.format("%s = %d\n", name, value))
     end
     assert(output:close())
     -- This is after the first gameplay frame; frame is the next zero-based input.
@@ -101,46 +100,27 @@ local function capture_room(frame, boundary)
         for index = 0, size - 1 do encoded[index + 1] = string.char(bytes[index]) end
         assert(output:write(table.concat(encoded)))
         assert(output:close())
-        seeds:write(string.format("%d,%04X,%d,%d,%d,%s,%d,%s,%s\n", seed_count,
-            room, frame, frame, seed_origin_subframe, name, size,
-            memory.hash_region(base, size), file))
     end
+    seeds:write(string.format("[[seed]]\nroom_index = %d\nroom = \"%04X\"\nmovie_frame = %d\n" ..
+        "next_input_index = %d\nmovie_subframe_index = %d\n\n", seed_count, room, frame, frame,
+        seed_origin_subframe))
     seeds:flush()
     print(string.format("Seed %d: room $%04X after movie frame %d", seed_count, room, frame))
     seed_pending = false
     seed_origin_frame = nil
 end
-function on_input()
+function on_frame_emulated()
     assert(movie.readonly(), "recording movie must remain read-only")
     local frame = movie.currentframe()
-    assert(frame <= declared_frames, "unexpected input after declared movie end")
-    local word = 0
-    for index = 0, 11 do
-        if input.get(0, index) ~= 0 then word = word + 2 ^ (15 - index) end
-    end
-    if before == nil then
-        assert(frame == last_frame + 1, "nonsequential movie frame")
-        before = {frame, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
-            0, word, word, memory.readword(0x7E008B)}
-    end
-    assert(frame == before[1], "new movie frame before prior output")
-    before[4] = before[4] + 1
-    before[6] = word
-end
-function on_frame_emulated()
-    assert(before ~= nil, "frame output without corresponding input boundary")
-    local frame = movie.currentframe()
-    assert(frame == before[1], "movie frame changed during emulation")
+    assert(frame == last_frame + 1, "nonsequential movie frame")
     capture_room(frame)
-    log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
-        frame - 1, frame, before[2], memory.readword(0x7E05B6),
-        before[3], memory.readword(0x7E05B8), memory.get_lag_flag() and 1 or 0,
-        memory.readword(0x7E0998), memory.readword(0x7E079B),
-        memory.readword(0x7E0AF6), memory.readword(0x7E0AFA),
-        before[4], before[5], before[6], before[7], memory.readword(0x7E008B)))
+    log:write(word(frame % 65536), word(math.floor(frame / 65536)),
+        word(memory.readword(0x7E05B6)), word(memory.readword(0x7E05B8)),
+        word(memory.get_lag_flag() and 1 or 0), word(memory.readword(0x7E0998)),
+        word(memory.readword(0x7E079B)), word(memory.readword(0x7E0AF6)),
+        word(memory.readword(0x7E0AFA)))
     rows = rows + 1
     last_frame = frame
-    before = nil
     if rows % 1000 == 0 then log:flush() end
     if frame == declared_frames or frame == limit then
         log:flush()
@@ -164,7 +144,6 @@ local function guarded(callback)
         end
     end
 end
-on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
 if seed_dir then
     -- The video callback can suspend in the middle of a CPU opcode. Observe

@@ -8,11 +8,11 @@
 # Environment: PYTHON (default python3), with tomllib.
 #
 # It reads each seeded start from scenarios/locks/lsnes.toml, uses the room-seed
-# CSVs movies/room-seeds-<capture>.csv and the scenario edit recipes, and adds
+# tables movies/room-seeds-<capture>.toml and the scenario edit recipes, and adds
 # each derivation's base seed. One line a seed, sorted so that each window's
 # captures are adjacent and in frame order:
 #   cut MOVIE RUNG CAPTURE INDEX ROOM FRAME
-#       a movie capture: its row of the capture's CSV, cut from ladder rung
+#       a movie capture: its seed in the capture's table, cut from ladder rung
 #       RUNG of MOVIE (the latest at or before step FRAME-1; 0 is power-on).
 #       A window is one (MOVIE, RUNG): one `movie --from` run.
 #   derive CAPTURE INDEX BASE BASE_INDEX --word OFFSET=VALUE...
@@ -120,14 +120,14 @@ for seed in $seeds; do
             ;;
     esac
     movie=$(movie_of "$capture")
-    csv=$root/movies/room-seeds-$capture.csv
+    table=$root/movies/room-seeds-$capture.toml
     if [ -z "$movie" ]; then
         echo "skip $capture $index no-lsnes-movie"
         continue
     fi
-    row=$(awk -F, -v index_="$index" 'NR > 1 && $1 == index_ { print $2, $3; exit }' "$csv" | tr -d '\r')
+    row=$("$python" -c 'import sys, tomllib; print(*next(([s["room"], s["movie_frame"]] for s in tomllib.load(open(sys.argv[1], "rb"))["seed"] if s["room_index"] == int(sys.argv[2])), []))' "$table" "$index")
     if [ -z "$row" ]; then
-        echo "skip $capture $index no-csv-row"
+        echo "skip $capture $index no-table-seed"
         continue
     fi
     read -r room frame <<<"$row"

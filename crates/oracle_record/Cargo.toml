@@ -7,6 +7,8 @@ publish.workspace = true
 description = "The oracle's frame record: the types an oracle step returns, without an emulator"
 
 [dependencies]
+serde = { workspace = true, features = ["derive"] }
+toml.workspace = true
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }
