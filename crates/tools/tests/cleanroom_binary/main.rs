@@ -1,4 +1,4 @@
-//! The `cleanroom` binary cargo built for this run, as the box mounts it, holds no route marker.
+//! The `cleanroom` binary cargo built for this run holds no route marker.
 
 mod routes;
 #[path = "../../src/bin/cleanroom/salted.rs"]
@@ -13,6 +13,7 @@ fn the_binary_holds_no_route_in_plain_text() {
         .to_ascii_lowercase();
     let text = String::from_utf8_lossy(&binary);
     for plain in PLAIN_ROUTES {
+        assert_eq!(*plain, plain.to_ascii_lowercase(), "markers are lowercase");
         assert!(!text.contains(plain), "the binary holds {plain}");
     }
 }
