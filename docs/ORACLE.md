@@ -264,10 +264,10 @@ recorded again with watches has the same records byte for byte, and
 
 **Making the record cache.** `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW` plays
 the row's frame pads from its native seed and writes `lean.txt` last.
-`tools/oracle/record_caches.sh ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list of
-rows with eight lsnes processes by default. It requires Bash 5.1, `flock` and Python. The wrapper
-builds the default `tools` cache reader and skips a row when `tools cache-check` accepts the
-existing cache for the lsnes the oracle would run, found as section 2 says. Set `WATCH_PCS`
+`python3 tools/oracle/record_caches.py ROWS BUNDLE ROM CACHE [JOBS]` runs the capture for a list
+of rows with eight lsnes processes by default. It builds the default `tools` cache reader and
+skips a row when `tools cache-check` accepts the existing cache for the lsnes the oracle would
+run, found as section 2 says. A row another batch is recording waits for it. Set `WATCH_PCS`
 to record the `hits.txt` read by independent causal input providers. `ORACLE` names the oracle
 command, `SM_TOOLS` overrides the cache reader and `SM_LOCK` overrides the lock.
 

@@ -1,68 +1,65 @@
 """Exercise cache reuse, recovery and batch status with synthetic captures."""
 
-from concurrent.futures import ThreadPoolExecutor
 from hashlib import sha256
 import os
 from pathlib import Path
-import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
 
 
-SCRIPT = Path(__file__).with_name("record_caches.sh").resolve()
+SCRIPT = Path(__file__).with_name("record_caches.py").resolve()
 
-STUB = """#!/usr/bin/env bash
-set -eu
-[[ $1 == corpus && $3 == "$SM_LOCK" && -d $4/pads ]]
-shift 4
+STUB = f"""#!{sys.executable}
+import os, shutil, sys, time
+from pathlib import Path
 
-while (($#)); do
-  case $1 in
-    --only) row=$2; shift ;;
-    --cache) cache=$2; shift ;;
-    --watch-pcs) watch_pcs=$2; shift ;;
-    *) exit 2 ;;
-  esac
-  shift
-done
-echo "$row" >> "$CALLS"
-if [[ ${HOLD_ORACLE:-} == 1 ]]; then
-  touch "$FIXTURES/held"
-  for ((attempt = 0; attempt < 250; attempt++)); do
-    [[ -f "$FIXTURES/release" ]] && break
-    sleep 0.02
-  done
-  [[ -f "$FIXTURES/release" ]]
-fi
-case $row in
-  first)
-    for ((attempt = 0; attempt < 100; attempt++)); do
-      [[ ! -f "$FIXTURES/await-third" || -f "$FINAL_CACHE/third/lean.txt" ]] && break
-      sleep 0.02
-    done
-    [[ ! -f "$FIXTURES/await-third" || -f "$FINAL_CACHE/third/lean.txt" ]]
-    ;;
-  failed) exit 1 ;;
-esac
-mkdir -p "$cache/$row"
-cp "$FIXTURES/lean.bin" "$cache/$row/lean.bin"
-sed "s/^row fixture$/row $row/" "$FIXTURES/lean.txt" > "$cache/$row/lean.txt"
-if [[ -f "$FIXTURES/interrupt" ]]; then
-  truncate -s 1 "$cache/$row/lean.bin"
-  [[ $(cat "$FIXTURES/interrupt") == success ]] && exit 0
-  exit 1
-fi
-if [[ -n ${watch_pcs:-} ]]; then
-  python3 - "$watch_pcs" > "$cache/$row/hits.txt" <<'PYTHON'
-import sys
-addresses = [int(pc.lstrip("$").replace(":", ""), 16) for pc in sys.argv[1].split(",")]
-print("# watched " + ",".join(f"{pc:06x}" for pc in addresses))
-print("# frame pc line dot peek")
-PYTHON
-fi
+arguments = sys.argv[1:]
+if arguments[0] != "corpus" or arguments[2] != os.environ["SM_LOCK"] or not Path(arguments[3], "pads").is_dir():
+    sys.exit(1)
+options = dict(zip(arguments[4::2], arguments[5::2]))
+if set(options) - {{"--only", "--cache", "--watch-pcs"}}:
+    sys.exit(2)
+row, cache = options["--only"], Path(options["--cache"])
+fixtures = Path(os.environ["FIXTURES"])
+with open(os.environ["CALLS"], "a") as calls:
+    calls.write(row + "\\n")
+
+
+def reaches(ready, attempts=250):
+    for _ in range(attempts):
+        if ready():
+            return True
+        time.sleep(0.02)
+    return ready()
+
+
+if os.environ.get("HOLD_ORACLE") == "1":
+    (fixtures / "held").touch()
+    if not reaches(lambda: (fixtures / "release").is_file()):
+        sys.exit(1)
+if row == "first":
+    third = Path(os.environ["FINAL_CACHE"], "third", "lean.txt")
+    if not reaches(lambda: not (fixtures / "await-third").is_file() or third.is_file(), 100):
+        sys.exit(1)
+if row == "failed":
+    sys.exit(1)
+(cache / row).mkdir(parents=True, exist_ok=True)
+shutil.copy(fixtures / "lean.bin", cache / row / "lean.bin")
+index = (fixtures / "lean.txt").read_text().replace("\\nrow fixture\\n", f"\\nrow {{row}}\\n")
+(cache / row / "lean.txt").write_text(index)
+interrupt = fixtures / "interrupt"
+if interrupt.is_file():
+    with open(cache / row / "lean.bin", "r+b") as records:
+        records.truncate(1)
+    sys.exit(0 if interrupt.read_text() == "success" else 1)
+if "--watch-pcs" in options:
+    addresses = [int(pc.lstrip("$").replace(":", ""), 16) for pc in options["--watch-pcs"].split(",")]
+    (cache / row / "hits.txt").write_text(
+        "# watched " + ",".join(f"{{pc:06x}}" for pc in addresses) + "\\n# frame pc line dot peek\\n")
 """
 
 
@@ -82,6 +79,18 @@ def lean_record():
 
 
 class RecordCachesTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # The batch reads caches with the tools binary. Build it once here, so no batch times out on a cold build.
+        cls.tools = os.environ.get("SM_TOOLS")
+        if not cls.tools:
+            root = SCRIPT.parents[2]
+            artifacts = Path(os.environ.get("CARGO_TARGET_DIR") or root / "target")
+            subprocess.run([os.environ.get("CARGO") or "cargo", "build", "--quiet", "--locked", "--profile", "verify",
+                            "--manifest-path", str(root / "Cargo.toml"), "--target-dir", str(artifacts), "-p", "tools"],
+                           check=True)
+            cls.tools = str(artifacts / "verify/tools")
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -106,7 +115,7 @@ class RecordCachesTest(unittest.TestCase):
         self.lock = self.root / "lock.toml"
         self.pads = b"synthetic pad"
         self.lsnes = self.root / "lsnes"
-        self.lsnes.write_text("#!/bin/sh\n")
+        self.lsnes.write_text("synthetic lsnes\n")
         self.lsnes.chmod(0o755)
         self.server = digest(b"")
 
@@ -140,14 +149,14 @@ frames = 1
             self.write_inputs(rows)
         return subprocess.run(
             [
-                "bash", SCRIPT, "-", self.bundle, self.rom,
+                sys.executable, SCRIPT, "-", self.bundle, self.rom,
                 self.cache, str(jobs),
             ],
             input="\n".join(rows),
             capture_output=True,
             text=True,
             env={**os.environ, "ORACLE": str(self.stub), "CALLS": str(self.calls),
-                 "WATCH_PCS": watches, "SM_LOCK": str(self.lock),
+                 "WATCH_PCS": watches, "SM_LOCK": str(self.lock), "SM_TOOLS": self.tools,
                  "SM_LSNES": str(self.lsnes),
                  "FIXTURES": str(self.fixtures), "FINAL_CACHE": str(self.cache),
                  **(env or {})},
@@ -211,7 +220,7 @@ frames = 1
     def test_a_cache_from_another_lsnes_or_server_is_regenerated(self):
         self.add_pad("drift")
         self.assert_recorded("drift")
-        self.lsnes.write_text("#!/bin/sh\n# another build\n")
+        self.lsnes.write_text("another synthetic lsnes\n")
         self.assert_recorded("drift")
         self.server = digest(b"another server")
         self.assert_recorded("drift")
@@ -223,7 +232,7 @@ frames = 1
         index = self.cache / "warm" / "lean.txt"
         original = index.read_bytes()
         old_tools = self.root / "old-tools"
-        old_tools.write_text("#!/usr/bin/env bash\nexit 1\n")
+        old_tools.write_text(f"#!{sys.executable}\nraise SystemExit(1)\n")
         old_tools.chmod(0o755)
         malformed_lock = self.root / "malformed.toml"
         malformed_lock.write_text("invalid")
@@ -241,17 +250,6 @@ frames = 1
     def test_parallel_requests_keep_both_watch_sets(self):
         self.add_pad("warm")
         self.write_inputs(["warm"])
-        flock = self.root / "flock"
-        flock.write_text(
-            '#!/usr/bin/env bash\n'
-            'touch "$FIXTURES/competing"\n'
-            'exec "$REAL_FLOCK" "$@"\n'
-        )
-        flock.chmod(0o755)
-        competing_env = {
-            "PATH": f"{self.root}:{os.environ['PATH']}",
-            "REAL_FLOCK": shutil.which("flock"),
-        }
 
         def wait_for(signal):
             for _ in range(250):
@@ -260,23 +258,32 @@ frames = 1
                 time.sleep(0.02)
             self.fail(f"worker did not reach {signal}")
 
-        with ThreadPoolExecutor(max_workers=2) as workers:
-            first = workers.submit(
-                self.run_batch, "warm", watches="0080aa",
-                env={"HOLD_ORACLE": "1"}, prepare=False,
+        def batch(watches, held):
+            return subprocess.Popen(
+                [sys.executable, SCRIPT, "-", self.bundle, self.rom, self.cache, "2"],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                env={**os.environ, "ORACLE": str(self.stub), "CALLS": str(self.calls), "WATCH_PCS": watches,
+                     "SM_LOCK": str(self.lock), "SM_LSNES": str(self.lsnes), "FIXTURES": str(self.fixtures),
+                     "FINAL_CACHE": str(self.cache), "HOLD_ORACLE": "1" if held else ""},
             )
-            try:
-                wait_for("held")
-                second = workers.submit(
-                    self.run_batch, "warm", watches="828080",
-                    env=competing_env, prepare=False,
-                )
-                wait_for("competing")
-                self.assertEqual(self.calls.read_text().splitlines(), ["warm"])
-            finally:
-                (self.fixtures / "release").touch()
-            for result in (first.result(), second.result()):
-                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        first = batch("0080aa", True)
+        second = None
+        try:
+            first.stdin.write("warm\n")
+            first.stdin.close()
+            wait_for("held")
+            second = batch("828080", False)
+            second.stdin.write("warm\n")
+            second.stdin.close()
+            self.assertEqual(second.stdout.readline(), "warm waits for another recorder\n")
+            self.assertEqual(self.calls.read_text().splitlines(), ["warm"])
+        finally:
+            (self.fixtures / "release").touch()
+        for process in (first, second):
+            output = process.stdout.read()
+            self.assertEqual(process.wait(timeout=10), 0, output)
+            process.stdout.close()
 
         self.assert_recorded("warm", watches="0080aa,828080")
         self.assertEqual(self.calls.read_text().splitlines(), ["warm", "warm"])
