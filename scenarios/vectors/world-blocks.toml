@@ -20,7 +20,45 @@
 #   first wait of 1, 2 and 3, a whole look and none, growing back by a step, by a show and not at
 #   all, and a bomb block's broken script with a leading sound and without one.
 # - Each [[vector]] is one frame: id; source ("constructed"); entries (the spec's behaviours it
-#   exercises); before; frame; after. A comment gives its case.
+#   exercises); rules (optional, below); before; frame; after. A comment gives its case.
+# - rules (optional): the rows of the reference rules this vector overrides (spec §2, "The rules'
+#   rows"), for an adjusted game. A vector without rules runs the reference rows. Each family's
+#   row is a key, bomb, crumble, power_bomb, shot, speed or super_missile, and the rows for the
+#   cells marked Nothing are marked_nothing = { bomb, crumble, shot }, by the family they are met
+#   as. A row is { touch, hits }, and a rules table names only what it changes: a row it doesn't
+#   name, and a field of a row it doesn't give, is the reference one; a field it gives replaces
+#   that field whole.
+#   - touch: "ByBody" (no touch asks the cell to react), or { when, start }: when is "Any" (every
+#     touch), a way ("Down", "Left", "Look", "Right" or "Up") or a list of how she moves
+#     ("Dashing", "Shinesparking", "ScrewAttacking"; a touch by any way while she moves in one).
+#   - hits: a list, each { by, on, start }: by, a list of what reaches the cell, named as a hit's
+#     by; on, "Both" (a block and reacting air) or "Block" (a block only). A hit acts by the
+#     first item that names it and the cell's body; one no item names does nothing.
+#   - start: { script ("broken", "touched" or "revealed"), from ("First", or "PastSound": past
+#     its leading Sound step, if it has one), change ("Plain": a block becomes Solid, reacting
+#     air Air; "Air"; or "AsItIs": left as it is until the script's show) }. A row of
+#     marked_nothing has no start: its act is a place held until the run.
+#   The reference rows, as the spec's table gives them, with BREAKS = { script = "broken", from =
+#   "First", change = "Plain" }, QUIET = BREAKS with from = "PastSound", SHATTERS = BREAKS with
+#   change = "Air", BURSTS = SHATTERS with script = "touched", REVEALS = { script = "revealed",
+#   from = "First", change = "AsItIs" }, and EVERY = ["Beam", "Bomb", "Grapple", "Missile",
+#   "PowerBomb", "SuperMissile"]:
+#   bomb = { touch = { when = ["Dashing", "Shinesparking", "ScrewAttacking"], start = BURSTS },
+#     hits = [{ by = ["Bomb"], on = "Both", start = QUIET }, { by = ["PowerBomb"], on = "Both",
+#     start = BREAKS }] };
+#   crumble = { touch = { when = "Down", start = BREAKS }, hits = [{ by = ["Bomb"], on = "Block",
+#     start = REVEALS }] };
+#   power_bomb = { touch = "ByBody", hits = [{ by = ["PowerBomb"], on = "Both", start = BREAKS },
+#     { by = ["Bomb"], on = "Both", start = REVEALS }] };
+#   shot = { touch = "ByBody", hits = [{ by = EVERY, on = "Both", start = BREAKS }] };
+#   speed = { touch = { when = ["Dashing", "Shinesparking"], start = SHATTERS }, hits = [{ by =
+#     ["Bomb"], on = "Block", start = REVEALS }] };
+#   super_missile = { touch = "ByBody", hits = [{ by = ["SuperMissile"], on = "Both", start =
+#     BREAKS }, { by = ["Bomb"], on = "Both", start = REVEALS }] };
+#   marked_nothing.bomb = { touch = { when = "Any" }, hits = [{ by = EVERY, on = "Both" }] };
+#   marked_nothing.crumble = { touch = { when = "Any" }, hits = [{ by = ["Bomb", "PowerBomb"],
+#     on = "Block" }] };
+#   marked_nothing.shot = { touch = "ByBody", hits = [{ by = EVERY, on = "Both" }] }.
 # - A cell: at = [x, y] in cells; kind ("Air", "Block", "ReactingAir", "Solid", "StandInAcross",
 #   "StandInDown"); look ("310", the picture's index in hex, ":x", ":y" or ":xy" when flipped);
 #   reaction (a reaction's name, one of the [reaction.*] tables above), mark ("Nothing", "Scroll",
@@ -2847,5 +2885,241 @@ places = [
   { place = 38, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
 answers = ["Solid"]
+written = []
+sounds = []
+
+# Adjusted vectors: one per Parameter entry, each run with a row of the rules changed (`rules`),
+# so a model that holds the reference rows fixed gets its outcome wrong. Each is worked from the
+# spec's arms at the adjusted row; the reference rows' outcome is given for contrast.
+# - C-adj-crumble-side (CrumbleBlocks, a crumble block broken by a move right): the move right
+#   breaks one and a move down no longer does (the reference: C-crumble-side, C-place-highest).
+# - C-adj-speed-screw (SpeedBlocks, a speed block shattered by a screw attack): she shatters
+#   it screw attacking without dashing (the reference: C-speed-screw, it stops her).
+# - C-adj-bomb-by-missile (BombBlocks, a bomb block broken by a missile and by nothing else): a
+#   missile breaks one and a bomb's blast no longer does (the reference: C-bomb-by-missile,
+#   C-bomb-by-bomb).
+# - C-adj-shot-touch (ShotBlocks, a shot block broken by any touch): walking into one breaks it
+#   (the reference: C-shot-touch, it stops her and nothing starts).
+# - C-adj-super-by-missile (SuperMissileBlocks, a missile breaks one as a super missile does): a
+#   missile breaks it (the reference: C-super-by-missile, nothing starts).
+# - C-adj-pb-by-bomb (PowerBombBlocks, a bomb's blast breaks one as a power bomb's does): a bomb
+#   breaks it and the revealed script never runs (the reference: C-pb-by-bomb, revealed).
+# - C-adj-reveal-power-bomb (BombsReveal, a power bomb's blast reveals a crumble block as a
+#   bomb's does): it shows its whole look (the reference: C-reveal-power-bomb, nothing starts).
+# - C-adj-nothing-shot-touch (BlocksMarkedNothing, a touch of a cell marked Nothing met as shot
+#   blocks holds a place): she passes it and the crumble she lands on takes the place below
+#   (the reference: C-nothing-shot-touch, it stops her and the crumble takes 39).
+
+[[vector]]
+# crumble blocks break to a move right only: the one she walks into starts in 39, and the one she lands on stops her and doesn't start
+id = "C-adj-crumble-side"
+source = "constructed"
+entries = ["CrumbleBlocks"]
+rules = { crumble = { touch = { when = "Right", start = { script = "broken", from = "First", change = "Plain" } } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { touch = [4, 7], way = "Right" },
+  { touch = [5, 7], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Solid", look = "310", reaction = "crumble" },
+  { at = [5, 7], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid", "Solid"]
+written = []
+sounds = []
+
+[[vector]]
+# speed blocks shatter to a screw attack only: screw attacking without dashing, she shatters one, and its first wait of 1 runs its sound and first show this frame
+id = "C-adj-speed-screw"
+source = "constructed"
+entries = ["SpeedBlocks"]
+rules = { speed = { touch = { when = ["ScrewAttacking"], start = { script = "broken", from = "First", change = "Air" } } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "330", reaction = "speed" },
+]
+places = [
+]
+[vector.frame]
+she = { screw_attacking = true }
+requests = [{ touch = [4, 7], way = "Right" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Air", look = "331", reaction = "speed" },
+]
+places = [
+  { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
+]
+answers = ["Air"]
+written = [[4, 7]]
+sounds = [{ sound = "Shatter", queue_limit = 5 }]
+
+[[vector]]
+# bomb blocks break to a missile and to no blast: the missile's starts its broken script from its sound, and the bomb's blast on the second block starts nothing
+id = "C-adj-bomb-by-missile"
+source = "constructed"
+entries = ["BombBlocks"]
+rules = { bomb = { hits = [{ by = ["Missile"], on = "Both", start = { script = "broken", from = "First", change = "Plain" } }] } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "340", reaction = "bomb" },
+  { at = [5, 7], kind = "Block", look = "340", reaction = "bomb" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Missile" },
+  { hit = [5, 7], by = "Bomb" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Air", look = "342", reaction = "bomb" },
+  { at = [5, 7], kind = "Block", look = "340", reaction = "bomb" },
+]
+places = [
+  { place = 39, reaction = "bomb", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
+]
+written = [[4, 7]]
+sounds = [{ sound = "Crack", queue_limit = 2 }]
+
+[[vector]]
+# shot blocks break to any touch: she walks into one, it turns solid keeping its own look and waits its first wait
+id = "C-adj-shot-touch"
+source = "constructed"
+entries = ["ShotBlocks"]
+rules = { shot = { touch = { when = "Any", start = { script = "broken", from = "First", change = "Plain" } } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+]
+places = [
+]
+[vector.frame]
+requests = [{ touch = [4, 7], way = "Right" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Solid", look = "350", reaction = "shot" },
+]
+places = [
+  { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
+]
+answers = ["Solid"]
+written = []
+sounds = []
+
+[[vector]]
+# a missile breaks a super missile block as a super missile does
+id = "C-adj-super-by-missile"
+source = "constructed"
+entries = ["SuperMissileBlocks"]
+rules = { super_missile = { hits = [{ by = ["Missile", "SuperMissile"], on = "Both", start = { script = "broken", from = "First", change = "Plain" } }, { by = ["Bomb"], on = "Both", start = { script = "revealed", from = "First", change = "AsItIs" } }] } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "360", reaction = "super" },
+]
+places = [
+]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "Missile" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Air", look = "361", reaction = "super" },
+]
+places = [
+  { place = 39, reaction = "super", script = "broken", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
+]
+written = [[4, 7]]
+sounds = [{ sound = "Pop", queue_limit = 4 }]
+
+[[vector]]
+# a bomb's blast breaks a hidden power bomb block as a power bomb's does: it turns solid with its whole look and waits its first wait, the stand-in below it unchanged
+id = "C-adj-pb-by-bomb"
+source = "constructed"
+entries = ["PowerBombBlocks"]
+rules = { power_bomb = { hits = [{ by = ["Bomb", "PowerBomb"], on = "Both", start = { script = "broken", from = "First", change = "Plain" } }] } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "power-bomb" },
+  { at = [4, 8], kind = "StandInDown", look = "3A1", reach = -1 },
+]
+places = [
+]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "Bomb" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Solid", look = "370", reaction = "power-bomb" },
+  { at = [4, 8], kind = "StandInDown", look = "3A1", reach = -1 },
+]
+places = [
+  { place = 39, reaction = "power-bomb", script = "broken", cell = [4, 7], next = 0, wait = 1 },
+]
+written = []
+sounds = []
+
+[[vector]]
+# a power bomb's blast reveals a hidden crumble block as a bomb's does: its revealed show puts back its whole look this frame
+id = "C-adj-reveal-power-bomb"
+source = "constructed"
+entries = ["BombsReveal"]
+rules = { crumble = { hits = [{ by = ["Bomb", "PowerBomb"], on = "Block", start = { script = "revealed", from = "First", change = "AsItIs" } }] } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3A0", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [{ hit = [4, 7], by = "PowerBomb" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 39, reaction = "crumble", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
+]
+written = [[4, 7]]
+sounds = []
+
+[[vector]]
+# a touch of a cell marked Nothing met as shot blocks holds a place: she passes it, it holds 39 until the run, and the crumble she lands on takes 38
+id = "C-adj-nothing-shot-touch"
+source = "constructed"
+entries = ["BlocksMarkedNothing"]
+rules = { marked_nothing = { shot = { touch = { when = "Any" } } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { touch = [4, 7], way = "Right" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3C0", mark = "Nothing", met_as = "Shot" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Air", "Solid"]
 written = []
 sounds = []

@@ -195,10 +195,51 @@ The family names the rules a reaction follows; it is the only part of a reaction
 decides on.
 
 **The rules' rows.** What her touches and each hit ask of a family's blocks, and of the cells
-marked `Nothing` met as each family, is one row of the rules per family. A caller may adjust a
-row, which makes an adjusted game; the reference rules hold the rows the entries of §5 state, and
-those are what the vectors check. So those entries' switch is `parameter`; every other entry's
-is `none`.
+marked `Nothing` met as each family, is one row of the rules: six rows for the families and three
+for the cells marked `Nothing`. A caller may adjust any part of a row, which makes an adjusted
+game; the reference rules hold the rows the entries of §5 state, and those are what the vectors
+check unless a vector says otherwise. So those entries' switch is `parameter`; every other entry's
+is `none`. A row holds:
+
+- **her touches:** either none of them asks the cell to react, so she meets it by its body; or the
+  touches that do, which are every touch, the touches by one way (`Down`, `Left`, `Look`, `Right` or
+  `Up`), or the touches by any way while she moves in one of a list of ways (dashing, shinesparking,
+  screw attacking). With every place taken, a touch of a cell whose touches ask it to react lets
+  her through (`FullPlacesLetHerThrough`). Otherwise a touch the row names acts, and any other
+  meets the cell by its body.
+- **its hits:** a list, each naming what reaches the cell (some of `Beam`, `Bomb`, `Grapple`,
+  `Missile`, `PowerBomb` and `SuperMissile`), the bodies it acts on (a block and reacting air, or a
+  block only) and its act. A hit acts by the first item of the list that names what reaches the
+  cell and the cell's body; a hit no item names does nothing.
+- **the act** of each touch and hit that acts. In a family's row it is a start: which script runs
+  (`broken`, `touched` or `revealed`), from its first step or past its leading `Sound` step if it
+  has one, and how the cell changes at once. It stops reacting (a block becomes `Solid`, reacting
+  air `Air`), it becomes `Air`, or it is left as it is until the script's show; a cell that changes
+  takes the whole look if its reaction has one and keeps its own otherwise. A touch that starts a
+  block meets it as the start leaves it. In a row for the cells marked `Nothing` the act is always
+  the same: the request takes the highest free place until this frame's run, and a touch that
+  takes one meets the cell as `Air`.
+
+The reference rows name five starts: **breaks**, the `broken` script from its first step, the
+cell stopping reacting; **breaks quietly**, the same past its leading `Sound` step; **shatters**,
+the `broken` script from its first step, the cell becoming `Air`; **bursts**, the same with the
+`touched` script; **reveals**, the `revealed` script from its first step, the cell left as it is.
+"Every hit" is any of the six.
+
+| Row | Her touches | Its hits | Entries |
+| --- | --- | --- | --- |
+| bomb blocks | while she dashes, shinesparks or screw attacks: bursts | a bomb's blast, either body: breaks quietly; a power bomb's blast, either body: breaks | `BombBlocks` |
+| crumble blocks | a move down: breaks | a bomb's blast, a block only: reveals | `CrumbleBlocks`; its hits also `BombsReveal` |
+| power bomb blocks | by its body | a power bomb's blast, either body: breaks; a bomb's blast, either body: reveals | `PowerBombBlocks` |
+| shot blocks | by its body | every hit, either body: breaks | `ShotBlocks` |
+| speed blocks | while she dashes or shinesparks: shatters | a bomb's blast, a block only: reveals | `SpeedBlocks`; its hits also `BombsReveal` |
+| super missile blocks | by its body | a super missile, either body: breaks; a bomb's blast, either body: reveals | `SuperMissileBlocks` |
+| `Nothing` met as bomb blocks | every touch | every hit, either body | `BlocksMarkedNothing` |
+| `Nothing` met as crumble blocks | every touch | a bomb's or a power bomb's blast, a block only | `BlocksMarkedNothing` |
+| `Nothing` met as shot blocks | by its body | every hit, either body | `BlocksMarkedNothing` |
+
+A vector at other rows names its entry and gives the rows it changes in its `rules` table, in the
+form the vector file's header states.
 
 ---
 
@@ -348,8 +389,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a crumble block falls away a few frames after she lands on it.
 - params: the first wait (the reaction's).
-- switch: parameter (the row of the rules for crumble blocks: which of her touches start one, and
-  that no weapon does; the reference rules hold the row this entry states).
+- switch: parameter (the crumble blocks' row of §2: its touches, a move down that breaks one, and
+  its hits, which never break one; the reference rules hold the row this entry states)
+  [C-adj-crumble-side].
 - A crumble block reached by a move down → it starts: it becomes `Solid` (`Air` if it was air to
   her) with the whole look, remembering what it was, and its `broken` script waits its first wait
   [C-place-highest, C-crumble-air, C-crumble-2x1]
@@ -364,9 +406,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a speed block shatters as she dashes or shinesparks into it, and stops her otherwise.
 - params: none.
-- switch: parameter (the row of the rules for speed blocks: that her touches start one while she
-  dashes or shinesparks, and that no weapon does; the reference rules hold the row this entry
-  states).
+- switch: parameter (the speed blocks' row of §2: its touches, while she dashes or shinesparks,
+  that shatter one, and its hits, which never shatter one; the reference rules hold the row this
+  entry states) [C-adj-speed-screw].
 - A speed block reached while she is dashing or shinesparking, by any way → it starts: it
   becomes `Air` with the whole look, remembering what it was [C-speed-dash, C-speed-spark,
   C-speed-look]
@@ -378,9 +420,10 @@ names; "the whole look" is that reaction's (§2).
 - summary: a bomb block breaks under a bomb's or a power bomb's blast, or as she dashes,
   shinesparks or screw attacks into it.
 - params: none.
-- switch: parameter (the row of the rules for bomb blocks: that her touches start one while she
-  dashes, shinesparks or screw attacks, and which blasts start which script; the reference rules
-  hold the row this entry states).
+- switch: parameter (the bomb blocks' row of §2: its touches, while she dashes, shinesparks or
+  screw attacks, that burst one, and its hits, a bomb's blast that breaks one quietly and a power
+  bomb's that breaks one; the reference rules hold the row this entry states)
+  [C-adj-bomb-by-missile].
 - A bomb block reached while she is dashing, shinesparking or screw attacking, by any way →
   its `touched` script starts: it becomes `Air` with the whole look, remembering what it was
   [C-bomb-screw, C-bomb-dash, C-bomb-spark]
@@ -404,9 +447,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a shot block breaks under any of her weapons and under the grapple.
 - params: none.
-- switch: parameter (the row of the rules for shot blocks: that every weapon and the grapple start
-  one, and that her touches meet it by its body; the reference rules hold the row this entry
-  states).
+- switch: parameter (the shot blocks' row of §2: its touches, which meet one by its body, and its
+  hits, every hit, which breaks one; the reference rules hold the row this entry states)
+  [C-adj-shot-touch].
 - Any weapon or the grapple reaches a shot block → it starts: it becomes `Solid` (`Air` if it
   was air to her), with the whole look if its reaction has one and its own look otherwise, and one
   that grows back remembers what it was [C-shot-regrows, C-shot-blast, C-shot-air, C-shot-grapple]
@@ -419,8 +462,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a super missile breaks a super missile block; a bomb shows it for what it is.
 - params: none.
-- switch: parameter (the row of the rules for super missile blocks: that a super missile breaks one
-  and a bomb's blast reveals it; the reference rules hold the row this entry states).
+- switch: parameter (the super missile blocks' row of §2: its touches, which meet one by its body,
+  and its hits, a super missile that breaks one and a bomb's blast that reveals it; the reference
+  rules hold the row this entry states) [C-adj-super-by-missile].
 - A super missile reaches a super missile block → it starts: it becomes `Solid` (`Air` if it was
   air to her) with the whole look, remembering what it was [C-super-by-super, C-super-regrows]
 - A bomb's blast reaches it, a block or air to her → its `revealed` script starts, leaving the cell
@@ -435,8 +479,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a power bomb's blast breaks a power bomb block; a bomb shows it for what it is.
 - params: none.
-- switch: parameter (the row of the rules for power bomb blocks: that a power bomb's blast breaks
-  one and a bomb's blast reveals it; the reference rules hold the row this entry states).
+- switch: parameter (the power bomb blocks' row of §2: its touches, which meet one by its body,
+  and its hits, a power bomb's blast that breaks one and a bomb's blast that reveals it; the
+  reference rules hold the row this entry states) [C-adj-pb-by-bomb].
 - A power bomb's blast reaches a power bomb block → it starts: it becomes `Solid` (`Air` if it was
   air to her) with the whole look, remembering what it was [C-pb-first-wait]
 - A bomb's blast reaches it, a block or air to her → its `revealed` script starts, leaving the cell
@@ -452,9 +497,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a bomb's blast shows a hidden crumble or speed block for what it is.
 - params: none.
-- switch: parameter (the bomb's blast in the rows of the rules for crumble and speed blocks: that it
-  reveals them where they are blocks to her, and that no other weapon does; the reference rules hold
-  the rows this entry states).
+- switch: parameter (the hits in two rows of §2, the crumble row and the speed row: a bomb's blast
+  reveals the cell where it is a block to her, and no other hit acts; the reference rules hold the
+  rows this entry states) [C-adj-reveal-power-bomb].
 - A bomb's blast reaches a crumble or speed block that is a block to her → its `revealed` script
   starts, leaving the cell as it is until the script's show [C-reveal-crumble, C-reveal-crumble-2x1,
   C-reveal-speed]
@@ -491,9 +536,9 @@ names; "the whole look" is that reaction's (§2).
   `Inert` takes none; a cell marked `Other` is its part's, but for the place its mark may hold
   when she is inside it, and for a blast on one met as crumble blocks.
 - params: none.
-- switch: parameter (the rows of the rules for the cells marked `Nothing`, one for each family they
-  are met as: which touches and hits take a place; the reference rules hold the rows this entry
-  states).
+- switch: parameter (the three rows of §2 for the cells marked `Nothing`, one for each family they
+  are met as: the touches and the hits that take a place; the reference rules hold the rows this
+  entry states) [C-adj-nothing-shot-touch].
 - A touch of a cell marked `Nothing`, met as crumble or bomb blocks, by any way → `Air`, and the
   touch takes the highest free place until this frame's run [C-nothing-touch,
   C-nothing-bomb-touch]

@@ -1,0 +1,17 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# BombBlocks: docs/behaviours/world-blocks.md:418
+bomb = ["BombBlocks"]
+# CrumbleBlocks: docs/behaviours/world-blocks.md:388; BombsReveal: docs/behaviours/world-blocks.md:496
+crumble = ["CrumbleBlocks", "BombsReveal"]
+# PowerBombBlocks: docs/behaviours/world-blocks.md:478
+power_bomb = ["PowerBombBlocks"]
+# ShotBlocks: docs/behaviours/world-blocks.md:446
+shot = ["ShotBlocks"]
+# SpeedBlocks: docs/behaviours/world-blocks.md:405; BombsReveal: docs/behaviours/world-blocks.md:496
+speed = ["SpeedBlocks", "BombsReveal"]
+# SuperMissileBlocks: docs/behaviours/world-blocks.md:461
+super_missile = ["SuperMissileBlocks"]
+# BlocksMarkedNothing: docs/behaviours/world-blocks.md:532
+marked_nothing = ["BlocksMarkedNothing"]

@@ -473,6 +473,10 @@ content is the draw routine's, which the format names by what each cell becomes.
   The others are code with no row: the places, the run, the patterns, growing back, the room's
   start, the scroll cells, the answers (which follow from the rows and the places), the full
   places and the outputs.
+  A vector's `rules` table gives the rows it changes, by the vector file's names for them; the
+  harness builds `Rules` from the reference rows with those replaced, field by field, and runs
+  that vector at them. `tools/cleanroom/adjusted_rule_owners/world-blocks.toml` names the entry
+  that owns each row.
 - **A `Show` of 0 frames** waits 65,536 frames (`$84:85E0` decrements first); the spec allows 1 to
   32,767 and the importer refuses the rest. So no commit holds a wait of 0, and the spec's wait is
   1 to 32,767.
