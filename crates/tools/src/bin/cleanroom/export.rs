@@ -51,7 +51,6 @@ impl Export<'_> {
             model,
             format!("scenarios/vectors/{}.toml", self.domain),
             "rust-toolchain.toml".to_owned(),
-            ".gitattributes".to_owned(),
         ];
         entries.extend(match self.role {
             Role::Implementer => vec![
