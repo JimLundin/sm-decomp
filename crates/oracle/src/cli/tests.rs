@@ -1,18 +1,16 @@
 use super::lag_log::{self, LagFrame};
 use super::requests::{CorpusRequest, MovieRequest, RequestError};
 use super::{RoomSeed, movie, save_due};
-use crate::record::room_seeds::Hex;
+use crate::record::room_seeds::Room;
 use std::path::PathBuf;
 
 const fn room_seed(room_index: u32, room: u32, movie_frame: u64) -> RoomSeed {
     RoomSeed {
         room_index,
-        room: Hex(room),
+        room: Room(room),
         movie_frame,
         next_input_index: None,
         movie_subframe_index: None,
-        seed_sha256: None,
-        observation_sha256: None,
         nmi: None,
     }
 }

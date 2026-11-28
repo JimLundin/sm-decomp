@@ -139,8 +139,7 @@ python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inpu
 
 `movies/room-seeds-*.toml` list the room captures each movie's seeds come from
 (`oracle_record::room_seeds`, read by `relock_plan.sh`, `relock_cut.sh`, `oracle --seeds` and the
-README report). An lsnes capture writes its own as `rooms.toml`. A seed's `seed_sha256` and
-`observation_sha256` are 64 lowercase hex digits. Movies, inputs, states and logs are
+README report). An lsnes capture writes its own as `rooms.toml`. Movies, inputs, states and logs are
 ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows start
 from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
 

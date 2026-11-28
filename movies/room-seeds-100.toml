@@ -4,8 +4,6 @@ room = "DF45"
 movie_frame = 8538
 next_input_index = 8538
 movie_subframe_index = 8537
-seed_sha256 = "14fd681f7ed52b354e650bbb12aa91f4cd353591ed998c277d9a3e1dd552549b"
-observation_sha256 = "aa11577a93857ddd85a409f4b1d5113f7c74b3b2013e4c2cfb1331d6dcaa774e"
 nmi = 7839
 
 [[seed]]
@@ -14,8 +12,6 @@ room = "DF8D"
 movie_frame = 8950
 next_input_index = 8950
 movie_subframe_index = 8949
-seed_sha256 = "d50b6d222285f4707ac2fc281ae96d43fb57dccbc136874c098705df0affc83c"
-observation_sha256 = "3c278902a5041c21495a6a1206e2d04d0440126265bdf34c95b8417e819c22d1"
 nmi = 8194
 
 [[seed]]
@@ -24,8 +20,6 @@ room = "DFD7"
 movie_frame = 9232
 next_input_index = 9232
 movie_subframe_index = 9231
-seed_sha256 = "cbdbc82ef3dd0cf65c470ee895daa419652190414998cb979171f7640d85227c"
-observation_sha256 = "8154ba70254e3dcaf445e3878308fffbbb917e8e029f344519bd1bde56353e7f"
 nmi = 8419
 
 [[seed]]
@@ -34,8 +28,6 @@ room = "E021"
 movie_frame = 9577
 next_input_index = 9577
 movie_subframe_index = 9576
-seed_sha256 = "5c6af6418c036dfe241bc26dd736044ff6db99da1dd2111899ef109b21ccedf3"
-observation_sha256 = "c25203aa60ac80ccf9e884ede19c0b0ea96874872b78fc4a019c074f53b45e9f"
 nmi = 8706
 
 [[seed]]
@@ -44,8 +36,6 @@ room = "E06B"
 movie_frame = 9841
 next_input_index = 9841
 movie_subframe_index = 9840
-seed_sha256 = "75c8d32ddce4b6a0d12ac52d8659168e459b7b9d09105a054432355fe74d8956"
-observation_sha256 = "513a899796a210e903f3248e86f2cd9e385e66471b593bbb8f241c113f310ac6"
 nmi = 8913
 
 [[seed]]
@@ -54,8 +44,6 @@ room = "E0B5"
 movie_frame = 10162
 next_input_index = 10162
 movie_subframe_index = 10161
-seed_sha256 = "a1cf6bc5f1fdaaf3d37ed3de48af62fc20b80e391d5013ccbf7f04e6c84114ab"
-observation_sha256 = "723db8d139544b231032f21ca9aa79e488b8ed50611005d9f8c9898580717b66"
 nmi = 9177
 
 [[seed]]
@@ -64,8 +52,6 @@ room = "E06B"
 movie_frame = 11939
 next_input_index = 11939
 movie_subframe_index = 11938
-seed_sha256 = "38304691363952b390e991679094e58b26f2908b8e896618f4acfc315bb4988a"
-observation_sha256 = "20a30d767055d9fd8355bffdfdb0909bbf01881c1b6dbfaf870ead08a059c164"
 nmi = 10892
 
 [[seed]]
@@ -74,8 +60,6 @@ room = "E021"
 movie_frame = 12198
 next_input_index = 12198
 movie_subframe_index = 12197
-seed_sha256 = "fbf1fe26ac8132c605ade70627f5f7c70bb551de7b7d80e9f8ff08d9ce3a6d54"
-observation_sha256 = "78316a37134d68876aa0f7d6903eda2731a729ccef808f9543287831f9a2e4d1"
 nmi = 11093
 
 [[seed]]
@@ -84,8 +68,6 @@ room = "DFD7"
 movie_frame = 12461
 next_input_index = 12461
 movie_subframe_index = 12460
-seed_sha256 = "824c0c655d02000c8b1416f12412a3cdb21b6337f58677dda9817f185b07edc2"
-observation_sha256 = "c9997724b93f44101863abee9585a871611b48a45558d7626f3e309cf7201ce0"
 nmi = 11298
 
 [[seed]]
@@ -94,8 +76,6 @@ room = "DF8D"
 movie_frame = 12792
 next_input_index = 12792
 movie_subframe_index = 12791
-seed_sha256 = "501bd41739ba0c95be65669d2fa7bb9c0d5b72c0a803a2895ee322da27d3f147"
-observation_sha256 = "a9f81d4505f828dffda42eb3852b01c223c943295f8ff76a649773c55f8f4c01"
 nmi = 11572
 
 [[seed]]
@@ -104,8 +84,6 @@ room = "DF45"
 movie_frame = 13073
 next_input_index = 13073
 movie_subframe_index = 13072
-seed_sha256 = "1d334447110148ff2fa700de5dd362fc6664e05ec7bf5aef882219d0df6d4b63"
-observation_sha256 = "a12a3c0dc4d06b979ecea431513d864d29a380343203b674e00d58b8336e0c0b"
 nmi = 11793
 
 [[seed]]
@@ -114,8 +92,6 @@ room = "91F8"
 movie_frame = 15428
 next_input_index = 15428
 movie_subframe_index = 15427
-seed_sha256 = "9910792374e3f98d2386719e2164dd20d03bc980649dc3137ea404e7efdb69b2"
-observation_sha256 = "2e9eb8f2bdb4579f3d704158d667a81d65f04073e330eff98860955436e35583"
 nmi = 13954
 
 [[seed]]
@@ -124,8 +100,6 @@ room = "92FD"
 movie_frame = 16459
 next_input_index = 16459
 movie_subframe_index = 16458
-seed_sha256 = "ac9ed1f96e1beec587e2b6a6596d1c843770c687c3ae2e71763e628cee76b5fb"
-observation_sha256 = "e66ff9ac44e5e7530d0095475db04fa61cae9a0d87527758319d47f3e8699058"
 nmi = 14914
 
 [[seed]]
@@ -134,8 +108,6 @@ room = "96BA"
 movie_frame = 17058
 next_input_index = 17058
 movie_subframe_index = 17057
-seed_sha256 = "75c75adf1624619f77f231df55bc42bfe5e79a2c149a105ac862656214e2f212"
-observation_sha256 = "27ac3891c7712e69c3f1a58229254392bec587d2e2aca1a2a05e7eda11ca3545"
 nmi = 15443
 
 [[seed]]
@@ -144,8 +116,6 @@ room = "975C"
 movie_frame = 17443
 next_input_index = 17443
 movie_subframe_index = 17442
-seed_sha256 = "935bb432f5ecbec7c3b7820dc9e545712edb7fef188f132b676c6e68bc0d980c"
-observation_sha256 = "505a74e04982cf4293c8fe2654aa24f6e49285c6d34ab027503d5ddcf86b48e2"
 nmi = 15769
 
 [[seed]]
@@ -154,8 +124,6 @@ room = "97B5"
 movie_frame = 17829
 next_input_index = 17829
 movie_subframe_index = 17828
-seed_sha256 = "d4e387c4b8fc1cd5e5f1f4112f309caeebf304045c0bd9b794769a27a6fe30f2"
-observation_sha256 = "d53488019bd2d1802f072073cfa5208f6f4cac954b2e2be6ebe78198d244bd0d"
 nmi = 16098
 
 [[seed]]
@@ -164,8 +132,6 @@ room = "9E9F"
 movie_frame = 18109
 next_input_index = 18109
 movie_subframe_index = 18108
-seed_sha256 = "52adfdd29ba70e7454f90d0d5d2b889f98dd677a14584372b9234d49005047d1"
-observation_sha256 = "77f25a064e8d42d7502549ce5892938de72521505d62cbe39bd010ec540cb9c6"
 nmi = 16316
 
 [[seed]]
@@ -174,8 +140,6 @@ room = "9F11"
 movie_frame = 19514
 next_input_index = 19514
 movie_subframe_index = 19513
-seed_sha256 = "c840f7ea0eefea3939cf55444470842737c6c28c20046d42c49a933f31f04a69"
-observation_sha256 = "496a7ce701802e3f350bc96ee57e1782fd1c20498504b6a1fddb89d2b0fc1bc9"
 nmi = 17267
 
 [[seed]]
@@ -184,8 +148,6 @@ room = "A107"
 movie_frame = 19809
 next_input_index = 19809
 movie_subframe_index = 19808
-seed_sha256 = "849d74dce705e1c17db7122ef74d01b091423c49f8c360dea703694290b61253"
-observation_sha256 = "8e667b0085c298e542e579a74d08c11bf86a602e1f1215e34f2c671b0a98eb0f"
 nmi = 17506
 
 [[seed]]
@@ -194,8 +156,6 @@ room = "9F11"
 movie_frame = 20432
 next_input_index = 20432
 movie_subframe_index = 20431
-seed_sha256 = "45ccb144c864cf94d8294ab09221729275b34af52e92dc686d53e3badb7c5f48"
-observation_sha256 = "5e4554b6922b147eaa95e83e5f57c7bdc6f2ee76e326185d6faf32afd9248ebb"
 nmi = 17679
 
 [[seed]]
@@ -204,8 +164,6 @@ room = "9E9F"
 movie_frame = 20732
 next_input_index = 20732
 movie_subframe_index = 20731
-seed_sha256 = "46440064d4fe0edd3cc921c0b414e1f5cda9a55fbb9d87b33cc157e1f5d7cd3d"
-observation_sha256 = "b3a605afaeedce53ee87f32af33847ac992257792f9a8b5df20c966b23dda809"
 nmi = 17911
 
 [[seed]]
@@ -214,8 +172,6 @@ room = "97B5"
 movie_frame = 21476
 next_input_index = 21476
 movie_subframe_index = 21475
-seed_sha256 = "771e6f046f8360d8d1be6fcae14b251deaa60f7d86c384f731636f40d9c0b366"
-observation_sha256 = "820929e76a9ecf3725f0d2aba6c8e973d79514601a7c28125ca650e22b2490e6"
 nmi = 18600
 
 [[seed]]
@@ -224,8 +180,6 @@ room = "975C"
 movie_frame = 21833
 next_input_index = 21833
 movie_subframe_index = 21832
-seed_sha256 = "5bbe32e4ce8374dd3554aa10fd5293d717daba141c608ea550d51eb634f5a602"
-observation_sha256 = "224475ad8956ceb47d047e16277f71973778d3baf906917b61d808a868126807"
 nmi = 18901
 
 [[seed]]
@@ -234,8 +188,6 @@ room = "96BA"
 movie_frame = 22225
 next_input_index = 22225
 movie_subframe_index = 22224
-seed_sha256 = "3a4cf4bca8d837cb9178e547a84ae2a612066aa1734da9a5e1daff1ec0ed8b50"
-observation_sha256 = "c0d0102ede2cedbfab2bb8dbcd4baeaa066f647432afd7e308cdee92fd643c98"
 nmi = 19222
 
 [[seed]]
@@ -244,8 +196,6 @@ room = "92FD"
 movie_frame = 22982
 next_input_index = 22982
 movie_subframe_index = 22981
-seed_sha256 = "178e6d4c3935419e74f6f0f57c06749f9dbc9c8feb199997baaa35ce1c6d15d5"
-observation_sha256 = "1466788ddc9a49881b4287e7e51e065ce7872861700fcda3c23f10ce55d84d3e"
 nmi = 19910
 
 [[seed]]
@@ -254,8 +204,6 @@ room = "9879"
 movie_frame = 23686
 next_input_index = 23686
 movie_subframe_index = 23685
-seed_sha256 = "69522189823e75f2e03ceb9307535baecbdec94b898d197e84585d071cb822cf"
-observation_sha256 = "ec2f9e7418e7f8a5c7e8a01924dbc1e3de6229c689c698d2eebf0a70ab82804e"
 nmi = 20555
 
 [[seed]]
@@ -264,8 +212,6 @@ room = "9804"
 movie_frame = 24079
 next_input_index = 24079
 movie_subframe_index = 24078
-seed_sha256 = "5b62a1c69d39609c7b88281958f399424452ef5373f031d4db775c790b1acc94"
-observation_sha256 = "15c6063d8984da7f3ca444b82644876f1b9e255e62cfe52777911861b8b0d2bb"
 nmi = 20891
 
 [[seed]]
@@ -274,8 +220,6 @@ room = "9879"
 movie_frame = 24801
 next_input_index = 24801
 movie_subframe_index = 24800
-seed_sha256 = "1a6ec274f242bd9e825e790ddef4fcc57bcbc8ec32f39e8fbc155ffb3063f666"
-observation_sha256 = "0c853ea35c9a0c391e8c8ba3f2d09f0342d49c4b5107e958aa0e1a1f0b9ae7d0"
 nmi = 21152
 
 [[seed]]
@@ -284,8 +228,6 @@ room = "92FD"
 movie_frame = 25134
 next_input_index = 25134
 movie_subframe_index = 25133
-seed_sha256 = "ada69ada4c280ba8d24078bd6d60cb1260c88ba060734be8dd512b357fce2f55"
-observation_sha256 = "db6bb937442fb9005a3d26b0f5013c9392c19a5009bf6072dc9d9ad02ea2c2f4"
 nmi = 21415
 
 [[seed]]
@@ -294,8 +236,6 @@ room = "990D"
 movie_frame = 25712
 next_input_index = 25712
 movie_subframe_index = 25711
-seed_sha256 = "0f6abf848a987d8b85f3914a04abd087c1b14d5b9f03c8ca412990d36f106dc7"
-observation_sha256 = "1842a62e74590fa2015eff233bc69a72eab017be9fc1b7cb320b175d5d654508"
 nmi = 21926
 
 [[seed]]
@@ -304,8 +244,6 @@ room = "99BD"
 movie_frame = 26554
 next_input_index = 26554
 movie_subframe_index = 26553
-seed_sha256 = "4f74c488b69dc92f8746fe3703bbba326347b40ef3e79fdd70607efe383a68c2"
-observation_sha256 = "8ac114618c20729f7ea31d89e49c6faa8c3a0be6c6a3991341a92836388994c1"
 nmi = 22307
 
 [[seed]]
@@ -314,8 +252,6 @@ room = "9969"
 movie_frame = 27063
 next_input_index = 27063
 movie_subframe_index = 27062
-seed_sha256 = "7fe28865a16e256fcd7064ffab0c6d4b534292fd1b149735e02a18f6af839428"
-observation_sha256 = "934ad8ee019440b8f7cffc14b31eeb1ca4a9537be11ffffa339354d5b19ec494"
 nmi = 22757
 
 [[seed]]
@@ -324,8 +260,6 @@ room = "9938"
 movie_frame = 27451
 next_input_index = 27451
 movie_subframe_index = 27450
-seed_sha256 = "a85f5a3bfa04a0ea1908d4bca45ca96134e487f1e6413aa9ed38f2e5ccd63191"
-observation_sha256 = "e1fb720fe28f35f45444231b659e430def8cb40c46bb737dfba9d20e4fb0c81c"
 nmi = 23087
 
 [[seed]]
@@ -334,8 +268,6 @@ room = "9AD9"
 movie_frame = 27811
 next_input_index = 27811
 movie_subframe_index = 27810
-seed_sha256 = "01a9754e160056ee69f61f6d305c8bf3a80d979952b9123a08fc63a4f1b363b2"
-observation_sha256 = "d6498b0d4f2017cad722103cf4cacdbde574ccc9b6440fd71dc001dd955ce499"
 nmi = 23358
 
 [[seed]]
@@ -344,8 +276,6 @@ room = "9BC8"
 movie_frame = 28718
 next_input_index = 28718
 movie_subframe_index = 28717
-seed_sha256 = "590b4b9190bf912dbf4b5cedd3f5dd067eb0d0ff188963c53340829b5d5fe8af"
-observation_sha256 = "b411eb9d619fffd3cb5cc0d700852c3614da2859bc593a3a9599b9e6a12715c1"
 nmi = 24193
 
 [[seed]]
@@ -354,8 +284,6 @@ room = "9C07"
 movie_frame = 29076
 next_input_index = 29076
 movie_subframe_index = 29075
-seed_sha256 = "7831c6246681865313b77ecdc9676007f4f8531411ca2bf34d1e95d5d0ab6ed3"
-observation_sha256 = "eebea05011d3d4aee59b42951dc38de7d6c4242fa34320bff5511b5f5d24509d"
 nmi = 24488
 
 [[seed]]
@@ -364,8 +292,6 @@ room = "9BC8"
 movie_frame = 30924
 next_input_index = 30924
 movie_subframe_index = 30923
-seed_sha256 = "8f2da46b61db8385577365095b16ff6ba75940f8d14bcf39226338b68fbc740c"
-observation_sha256 = "438a18b7da6818e4aaeb53bed81b70def4962f992ca7582de25e952cc945a367"
 nmi = 25073
 
 [[seed]]
@@ -374,8 +300,6 @@ room = "9AD9"
 movie_frame = 32376
 next_input_index = 32376
 movie_subframe_index = 32375
-seed_sha256 = "72164ae8b16b3206ff9bac3c67505555e372469e9edd772310311117e2af8a86"
-observation_sha256 = "d90c64f9c69165e5ec3017b1acb174da4fa46c24050c7988de9de1457d2047c7"
 nmi = 25628
 
 [[seed]]
@@ -384,8 +308,6 @@ room = "9FE5"
 movie_frame = 33227
 next_input_index = 33227
 movie_subframe_index = 33226
-seed_sha256 = "b5de6fbe5a76f68c9af24bfed7a2b7f8af46e8e95eb88d5860599bd3bf38b6af"
-observation_sha256 = "0fe4890bdca69b4e4c058df1f631c8e25388de82ba1e9ca765eaaf5907c0e693"
 nmi = 26422
 
 [[seed]]
@@ -394,8 +316,6 @@ room = "A011"
 movie_frame = 33460
 next_input_index = 33460
 movie_subframe_index = 33459
-seed_sha256 = "4c57582dd64a6e5207cdb02ff4fe37c27c2ca390a77f66b03b7760ee04779cc1"
-observation_sha256 = "5de7971198cdf6d83782e70ed4b5eb53e0ea89f17d28d19d31dd0b721823c125"
 nmi = 26596
 
 [[seed]]
@@ -404,8 +324,6 @@ room = "A051"
 movie_frame = 34114
 next_input_index = 34114
 movie_subframe_index = 34113
-seed_sha256 = "db97f26c327078c71e9bfef1b38ce3428bf5c8d2d48463104a7d15cd9fca7754"
-observation_sha256 = "0c0e98cfe3e9ef31890295d351027baba65b675255987882ef898403315f7639"
 nmi = 26794
 
 [[seed]]
@@ -414,8 +332,6 @@ room = "A011"
 movie_frame = 34731
 next_input_index = 34731
 movie_subframe_index = 34730
-seed_sha256 = "2a53c190fa564a0bec445fc21e9760ecfed16e9870b571b4978fee69e81f2714"
-observation_sha256 = "cfe6cd1f95e0d3f9c5794e92568c97ee6300520075639ee62adba0c319f3044b"
 nmi = 26956
 
 [[seed]]
@@ -424,8 +340,6 @@ room = "9AD9"
 movie_frame = 35324
 next_input_index = 35324
 movie_subframe_index = 35323
-seed_sha256 = "5aae40fa3bbaf9d61279dc5146ce7963324bf73d217b1f1e6a553fe40ce06d97"
-observation_sha256 = "23ceaeb847f88c38986dd86dab7ac369834fbefed148007596a2bf769f04af43"
 nmi = 27455
 
 [[seed]]
@@ -434,8 +348,6 @@ room = "9CB3"
 movie_frame = 36915
 next_input_index = 36915
 movie_subframe_index = 36914
-seed_sha256 = "df7e12a3cd79cf4dc0f051a2001c192f87d2661f5a10da3fec8d0c51202e452b"
-observation_sha256 = "d266fc3631840addd5e60860ba87d214a0b867c233bdcce17eb42a705d1fde2c"
 nmi = 28425
 
 [[seed]]
@@ -444,8 +356,6 @@ room = "9D19"
 movie_frame = 37539
 next_input_index = 37539
 movie_subframe_index = 37538
-seed_sha256 = "bf7f909115476e3a3e124d633047e09a381e347e323f62026984e32cfa964550"
-observation_sha256 = "1dfd2ee551684fa87cc5f00eb6e152e11e978fc5a92e9a2cbea836af138c56b2"
 nmi = 28945
 
 [[seed]]
@@ -454,8 +364,6 @@ room = "9E11"
 movie_frame = 38507
 next_input_index = 38507
 movie_subframe_index = 38506
-seed_sha256 = "72219e3458188021009b3402e5eb02d3f4e0ea6b950c3247791e3d6026ba990f"
-observation_sha256 = "68a203e82b27b2882fbc6af1c30aa7ba3058cf772e082299a69aaa8ec551f254"
 nmi = 29425
 
 [[seed]]
@@ -464,8 +372,6 @@ room = "9D19"
 movie_frame = 39383
 next_input_index = 39383
 movie_subframe_index = 39382
-seed_sha256 = "4c73a9569c3b8b00ccad73597bbd074aa7a903d3ba84db58f086a4179cc3dbeb"
-observation_sha256 = "564a32fdb6b85a537b60a429ed25774355101bcf4600f6d4f05086e305869f3c"
 nmi = 29820
 
 [[seed]]
@@ -474,8 +380,6 @@ room = "A130"
 movie_frame = 39747
 next_input_index = 39747
 movie_subframe_index = 39746
-seed_sha256 = "5e0cdd01e717929a0b68f24dfbf4286ed39aff878ba06ef71484e95e35a6cbca"
-observation_sha256 = "a91d66b45e6cb237d9736f0d4d745e22db54066ede2c32052ac15bfa0fb0a329"
 nmi = 30125
 
 [[seed]]
@@ -484,8 +388,6 @@ room = "A15B"
 movie_frame = 40206
 next_input_index = 40206
 movie_subframe_index = 40205
-seed_sha256 = "ac268e6e75393f1609b05d3198eb0b0ba54ef35f36323dca53fec786ab412afb"
-observation_sha256 = "848fe07d442f80d749fe25cc935f3505fa30b9fca381234f8a77289f5d90374c"
 nmi = 30521
 
 [[seed]]
@@ -494,8 +396,6 @@ room = "A130"
 movie_frame = 40873
 next_input_index = 40873
 movie_subframe_index = 40872
-seed_sha256 = "cd97a73cc63e0ebd7da2bef6065db434766b338c25533c6eaacaef2659d651e0"
-observation_sha256 = "5bd43f146b34b4ded6834958f8e5503f736a3cc608b0dae90047c0293e661118"
 nmi = 30730
 
 [[seed]]
@@ -504,8 +404,6 @@ room = "9D19"
 movie_frame = 41278
 next_input_index = 41278
 movie_subframe_index = 41277
-seed_sha256 = "36efa7f79ba4e999ac4c086f98022f4d55ede048335a8784e9d56928efbf2502"
-observation_sha256 = "dcf565592f9c470728c89bf1ec3d3210502bc7f3f6a3dde335c2577cd29d1a85"
 nmi = 31051
 
 [[seed]]
@@ -514,8 +412,6 @@ room = "A0A4"
 movie_frame = 41691
 next_input_index = 41691
 movie_subframe_index = 41690
-seed_sha256 = "ac32213e35bf7bdcc066cbfbb665c0e2a53080c8dce72569ba193f078b541d5f"
-observation_sha256 = "87bd9129989378f33bfdb7e5767f3ed469aeb9f6fcf882eafe404debc39d7ecb"
 nmi = 31386
 
 [[seed]]
@@ -524,8 +420,6 @@ room = "9B5B"
 movie_frame = 42030
 next_input_index = 42030
 movie_subframe_index = 42029
-seed_sha256 = "265f642c46bd1cf5c8bed291c199cb66a6ca802dc5150a1ea942fa8d0d4fb434"
-observation_sha256 = "d0794f238babff26d5f39753ef46f3284691d196c8b4ce7aa62270bb235dd928"
 nmi = 31658
 
 [[seed]]
@@ -534,8 +428,6 @@ room = "A0A4"
 movie_frame = 42774
 next_input_index = 42774
 movie_subframe_index = 42773
-seed_sha256 = "aeda78b27b47fa257b579e2bf1df5494039a1a6daeb6cb08b36d10fe2e319724"
-observation_sha256 = "761d7b567f666db5e2bbf431a240a4e479e714a9368ccacda6a3cf3798fc172d"
 nmi = 31945
 
 [[seed]]
@@ -544,8 +436,6 @@ room = "9D19"
 movie_frame = 43113
 next_input_index = 43113
 movie_subframe_index = 43112
-seed_sha256 = "c9178dcfdae594b89fdc27041d48dc0d3ccaeaeaf041fbb8ad39022540968896"
-observation_sha256 = "9e2d9a49a93566dbe20047ea7d5effca5135ffc272b8fce1b1dc7ba9a87357ff"
 nmi = 32202
 
 [[seed]]
@@ -554,8 +444,6 @@ room = "9E52"
 movie_frame = 44840
 next_input_index = 44840
 movie_subframe_index = 44839
-seed_sha256 = "da097fc84b46604b62bcbb25e4ea420e193bb9117a4f5d31585b6c39626715cf"
-observation_sha256 = "cbd12c78ae44c51f67b5d99b7f891d4f6a63dee8baf79cff0590e22c83084134"
 nmi = 33036
 
 [[seed]]
@@ -564,8 +452,6 @@ room = "9FBA"
 movie_frame = 46162
 next_input_index = 46162
 movie_subframe_index = 46161
-seed_sha256 = "90065014e3c0b53089d9bcf28a65fbed39ea0dd8f1570b3606ac3db34d734d99"
-observation_sha256 = "11cfbc80c11ce66bd6a476fe355f383ccce00c085f9e558142c88057b896e244"
 nmi = 33900
 
 [[seed]]
@@ -574,8 +460,6 @@ room = "A253"
 movie_frame = 46711
 next_input_index = 46711
 movie_subframe_index = 46710
-seed_sha256 = "70ba6384f638cb230c41e2ad58efdd05f7f9cb1e0a941b13e269de597778569c"
-observation_sha256 = "ff57726525b66d14186461354916cc66a6a0e36a223479026408af2b0cb6c476"
 nmi = 34384
 
 [[seed]]
@@ -584,8 +468,6 @@ room = "A293"
 movie_frame = 47144
 next_input_index = 47144
 movie_subframe_index = 47143
-seed_sha256 = "a052f215a0dab64f5bcb0e1bc144bff1afc93f4d07d239c369339072d5abcfe2"
-observation_sha256 = "0ff67bb13a93c9076379e0954613dbc4493bfac3e7475cf5f0bfb385e183f866"
 nmi = 34744
 
 [[seed]]
@@ -594,8 +476,6 @@ room = "A2CE"
 movie_frame = 47880
 next_input_index = 47880
 movie_subframe_index = 47879
-seed_sha256 = "a5510009eb93eb68c202074af4e0732cf7400d34d7d4fd74a6e6e26a09e27c00"
-observation_sha256 = "2a582ad699d0d619260fc802604fec44f70678f3fa75b2fe977edd328a202640"
 nmi = 35422
 
 [[seed]]
@@ -604,8 +484,6 @@ room = "A293"
 movie_frame = 48939
 next_input_index = 48939
 movie_subframe_index = 48938
-seed_sha256 = "384621807acc4826364a22bfc764823c0232467b19b45637a68c64b95cd0f090"
-observation_sha256 = "a4aea5abc78826badbb003ad602ba1c6a9e175732dbe36566a3e77e677124fd6"
 nmi = 36012
 
 [[seed]]
@@ -614,8 +492,6 @@ room = "A253"
 movie_frame = 49644
 next_input_index = 49644
 movie_subframe_index = 49643
-seed_sha256 = "e44bd49f47cc612fa92b9f775e7529a3c208cc3cf895055d053271de9d0cb214"
-observation_sha256 = "5158b53c03b9704b55a115f3e705734655cd9e47b586ab15f67d6b0b66d2cbbf"
 nmi = 36652
 
 [[seed]]
@@ -624,8 +500,6 @@ room = "A3DD"
 movie_frame = 50142
 next_input_index = 50142
 movie_subframe_index = 50141
-seed_sha256 = "8d20a7e1511b8693a8f51859e2ff5d51c14a7bb6b53414bd0dd711a24ae65446"
-observation_sha256 = "1fe470267c673fc0f74952d8d1a17fce2d8cd2d0fd0cc31837286587a14d6fb3"
 nmi = 37090
 
 [[seed]]
@@ -634,8 +508,6 @@ room = "A408"
 movie_frame = 50429
 next_input_index = 50429
 movie_subframe_index = 50428
-seed_sha256 = "30bdd2e490482d182b8c7b64f3c0b74ee21343ad6cb328de62c8941c7ecbd233"
-observation_sha256 = "e1bbe3ae184bd7dd77b3954fa4b62ecd6e02604a4a26895d18df23f6975a6c92"
 nmi = 37318
 
 [[seed]]
@@ -644,8 +516,6 @@ room = "CF54"
 movie_frame = 50748
 next_input_index = 50748
 movie_subframe_index = 50747
-seed_sha256 = "a4b51a3c74fe728b9db1267e251e1202d2a090df943c4531990113c3a11b7fe3"
-observation_sha256 = "00051d60f823249635bf7f68733f1a9357c9803f458e2e20bbc75fddbcdd4dcf"
 nmi = 37577
 
 [[seed]]
@@ -654,8 +524,6 @@ room = "CEFB"
 movie_frame = 50949
 next_input_index = 50949
 movie_subframe_index = 50948
-seed_sha256 = "231ecabd92660053aef4d8235d37c247e71e918a80a22e60eb13387fc2b86f51"
-observation_sha256 = "cd20daade98878ae0850953fb41bb5605b89daafc6aa8a1260d71ad0533db94d"
 nmi = 37721
 
 [[seed]]
@@ -664,8 +532,6 @@ room = "CF80"
 movie_frame = 51155
 next_input_index = 51155
 movie_subframe_index = 51154
-seed_sha256 = "f4d79819513a82a77d45e7f7116a6e89bd5fde51f7b171166e755d41c31fd54c"
-observation_sha256 = "76c8ea41e55fe847bd386264b7e4fb593370dc7758d68af8e17632f74b735b5c"
 nmi = 37860
 
 [[seed]]
@@ -674,8 +540,6 @@ room = "A6A1"
 movie_frame = 51359
 next_input_index = 51359
 movie_subframe_index = 51358
-seed_sha256 = "02110ff9d1c0fddb797b295115d40f3d39322ae3c1e061022a91936f9f862460"
-observation_sha256 = "504a77468a16aed19c05d1037a56f01a3094cd16ea1669c3991c0381f66d4f5e"
 nmi = 38004
 
 [[seed]]
@@ -684,8 +548,6 @@ room = "A471"
 movie_frame = 51688
 next_input_index = 51688
 movie_subframe_index = 51687
-seed_sha256 = "3fe08b1c5c151c5b3e8acf15b3f910bb1102b15174510533467ac0e70b782670"
-observation_sha256 = "7c1f779331b0074b6ba720fbab055b869385de5fbccbb336be1674941d4f6dd1"
 nmi = 38277
 
 [[seed]]
@@ -694,8 +556,6 @@ room = "A4DA"
 movie_frame = 52117
 next_input_index = 52117
 movie_subframe_index = 52116
-seed_sha256 = "e55a59212e8fd63882cd69fcb8d291b7877766268de86254ce866e769a2ce90d"
-observation_sha256 = "09b4ecee6016e8cf782e9b356798df57b2004b07077b6ad15c6b04e848327b8e"
 nmi = 38643
 
 [[seed]]
@@ -704,8 +564,6 @@ room = "A521"
 movie_frame = 53244
 next_input_index = 53244
 movie_subframe_index = 53243
-seed_sha256 = "b9b15c705c7ab2c7e73ef85c3e95997749858eea192cd5bbe495bdaf26f205a8"
-observation_sha256 = "57426aa66e5fe0926c14da349de410870872f0c8be707e4e23ea16384ca5bc40"
 nmi = 39307
 
 [[seed]]
@@ -714,8 +572,6 @@ room = "A56B"
 movie_frame = 53712
 next_input_index = 53712
 movie_subframe_index = 53711
-seed_sha256 = "11bf7bf9ae551d425745f862a7e24f77835716c8e87f9bd4d8c534c8af32d284"
-observation_sha256 = "4576ccae86e09d090207b6507f04f3e1cdca9858061eced68c97ca3f2480f979"
 nmi = 39713
 
 [[seed]]
@@ -724,8 +580,6 @@ room = "A59F"
 movie_frame = 54061
 next_input_index = 54061
 movie_subframe_index = 54060
-seed_sha256 = "398ad0411b4f348075001b9ce8419a199b39d9357fdf9911ec87eee0e2ea68cf"
-observation_sha256 = "5bd190b6e0fb2f6cce4e04567c995a55e1d4b2c7260201cf76e1079b4a32741c"
 nmi = 40004
 
 [[seed]]
@@ -734,8 +588,6 @@ room = "A6E2"
 movie_frame = 55316
 next_input_index = 55316
 movie_subframe_index = 55315
-seed_sha256 = "dfd3c1452f5cc5b5c62e31c4e301d65882148c36420c809d0027c10d88279ad3"
-observation_sha256 = "5ed02a01b2120c25e6aa836cb5267e3201c760f53cf5a16ca9c0389914913e67"
 nmi = 41180
 
 [[seed]]
@@ -744,8 +596,6 @@ room = "A59F"
 movie_frame = 56120
 next_input_index = 56120
 movie_subframe_index = 56119
-seed_sha256 = "2cadd745919d925fc91e9b597d852a9f0bedc001330d6c97ff8c5c8eaf582c74"
-observation_sha256 = "c4fda51cee7b33ddcdd427b56335623b8d243b86e32e8ecb0dc042f956f9d060"
 nmi = 41538
 
 [[seed]]
@@ -754,8 +604,6 @@ room = "A56B"
 movie_frame = 56408
 next_input_index = 56408
 movie_subframe_index = 56407
-seed_sha256 = "52e4f38235c53149b51e3b78f41f7f96f2beb24cc6edfce9c9972684108c41a2"
-observation_sha256 = "8ac2eeda2fe07be29b0eb3987729268bbc3994cf22b4223ac4672b8deb8625ee"
 nmi = 41764
 
 [[seed]]
@@ -764,8 +612,6 @@ room = "A521"
 movie_frame = 56694
 next_input_index = 56694
 movie_subframe_index = 56693
-seed_sha256 = "8b00e535b8539bed16f9b514ebf43538398fd986da1b55f2bec5f5df279f45b2"
-observation_sha256 = "4f1e1044408dc91d64f593601b88ea2a370430e961fb1423af96bdca73dc6e1c"
 nmi = 41990
 
 [[seed]]
@@ -774,8 +620,6 @@ room = "A4DA"
 movie_frame = 57202
 next_input_index = 57202
 movie_subframe_index = 57201
-seed_sha256 = "5aed36e1d6716a385ed9941d842ac2d4cf2a6871558b6f03c8e88baa60b01304"
-observation_sha256 = "2251dc7e3ba79f32e595361b06f13c1f674a3b4f0cd5560cfe893f321222e86a"
 nmi = 42434
 
 [[seed]]
@@ -784,8 +628,6 @@ room = "A471"
 movie_frame = 57518
 next_input_index = 57518
 movie_subframe_index = 57517
-seed_sha256 = "b84efb7ae0c036120ba4e796e5dddc2b07275e5870c5c2e4783eb0b3b0effef4"
-observation_sha256 = "2d5b0aadd1fef1c7fc6b692d098d83e3a474e1568876f0f9e2a631b84343125d"
 nmi = 42687
 
 [[seed]]
@@ -794,8 +636,6 @@ room = "A4B1"
 movie_frame = 57840
 next_input_index = 57840
 movie_subframe_index = 57839
-seed_sha256 = "01440fc5d8446c0a676a679554eb29af7961483f5a1d12dca2ebaa27f4f69032"
-observation_sha256 = "ba2abe7f24e52f149ad4f3e41ee73c6b9b8a9ce7b7882d1f2162cdd6d38d9417"
 nmi = 42951
 
 [[seed]]
@@ -804,8 +644,6 @@ room = "A471"
 movie_frame = 58506
 next_input_index = 58506
 movie_subframe_index = 58505
-seed_sha256 = "96881b196d28d1191ca4519a6e683c77c245015bb48dbf46dd9c9c1a9f7f1477"
-observation_sha256 = "5a0a6b4421e8f8b5f335adc4f8f62d9247e41f256da6342b82618baf68c606c1"
 nmi = 43157
 
 [[seed]]
@@ -814,8 +652,6 @@ room = "A6A1"
 movie_frame = 58769
 next_input_index = 58769
 movie_subframe_index = 58768
-seed_sha256 = "7d18a8d91ff4c1922f533531f3c0d30f7822257a9e03d2dd41215bcdbf64abbb"
-observation_sha256 = "411c10a42e504e15c8ff537f9e0603620f5bdd1571af584dcff1c6776292b56c"
 nmi = 43360
 
 [[seed]]
@@ -824,8 +660,6 @@ room = "A7DE"
 movie_frame = 59246
 next_input_index = 59246
 movie_subframe_index = 59245
-seed_sha256 = "bbe234fbc52a6789306de9ff240d77303d26a2da8a6167ce23119d4953b9c876"
-observation_sha256 = "f408fcae0983eb3705d8d4683551b159f0ce835c20f3a15ffd3892fea6b37ba0"
 nmi = 43780
 
 [[seed]]
@@ -834,8 +668,6 @@ room = "AA41"
 movie_frame = 60089
 next_input_index = 60089
 movie_subframe_index = 60088
-seed_sha256 = "28959311718737de3ccea5e83307921ea6bf3697f5499535c114d43e0c91ec21"
-observation_sha256 = "eb940152587ab11bbcd038f30202f0a95736ce73772028a6867b54797319fda1"
 nmi = 44558
 
 [[seed]]
@@ -844,8 +676,6 @@ room = "A9E5"
 movie_frame = 60517
 next_input_index = 60517
 movie_subframe_index = 60516
-seed_sha256 = "61183f5940e803719709e9166163648ac7b631fc701c4af08884da2eade84505"
-observation_sha256 = "2eb797a55cbde2419c0a2d19a8360d0d9c96df2bf9b9e8849d876793dd2505dc"
 nmi = 44927
 
 [[seed]]
@@ -854,8 +684,6 @@ room = "AA41"
 movie_frame = 61249
 next_input_index = 61249
 movie_subframe_index = 61248
-seed_sha256 = "cd8c96c0ecdbd9f2a55e97574540b3e95dae070b8fccd124b97c3af7bee6e421"
-observation_sha256 = "ce4eb70a7d4abdc7ba9238db2d5ace15294f288e509f4c796e513ee091dbdd9b"
 nmi = 45199
 
 [[seed]]
@@ -864,8 +692,6 @@ room = "A7DE"
 movie_frame = 62463
 next_input_index = 62463
 movie_subframe_index = 62462
-seed_sha256 = "7a615ec3dd019452604e5557d9167fa4394fca08b82643c860593c8d57dff1ee"
-observation_sha256 = "7e725297cec1dd9ef5ce9112bb8f60da70ac35127be81ccbf6f94444d715038e"
 nmi = 45547
 
 [[seed]]
@@ -874,8 +700,6 @@ room = "A7B3"
 movie_frame = 62787
 next_input_index = 62787
 movie_subframe_index = 62786
-seed_sha256 = "5937c26795a7dd6cd8efb8edff92c74a70b0ddda4b9948b1fb6bcbe1f49ef777"
-observation_sha256 = "d091ae65befb032a9a24e2a1f80dab6204b048ab52bcf401c46108351f372f77"
 nmi = 45805
 
 [[seed]]
@@ -884,8 +708,6 @@ room = "A788"
 movie_frame = 63199
 next_input_index = 63199
 movie_subframe_index = 63198
-seed_sha256 = "97928a581ef07f61c7faba0ad261186027da3a4b258a440e58688edc387af3f2"
-observation_sha256 = "51c151b02e35a3ccb5072a1d84bffa795c4adb5d4ed8608e16791030096e6648"
 nmi = 46151
 
 [[seed]]
@@ -894,8 +716,6 @@ room = "AFA3"
 movie_frame = 64232
 next_input_index = 64232
 movie_subframe_index = 64231
-seed_sha256 = "4f78df2615bde4cef1a6a08bc9e358011f1934f48ebc00ffbdfccb94aaa0151a"
-observation_sha256 = "0d792c02c287c4ff4eaaa2087a5f3a6f34e935a8987216147c8c115ba9f5f668"
 nmi = 46724
 
 [[seed]]
@@ -904,8 +724,6 @@ room = "ACB3"
 movie_frame = 64749
 next_input_index = 64749
 movie_subframe_index = 64748
-seed_sha256 = "9106483dcb03bec6eafd17bb5eaf4d7d4f9ceb68f9f8f6dc5859dd0e537e3ce1"
-observation_sha256 = "03f733e67418b2ff792738942b084c63bae9c5ee914316d918acc1ad427ae363"
 nmi = 47169
 
 [[seed]]
@@ -914,8 +732,6 @@ room = "AC83"
 movie_frame = 65075
 next_input_index = 65075
 movie_subframe_index = 65074
-seed_sha256 = "ee6fe4522b54bf0f01090d5bec97294979bdcf46b01e0162bce78c29a4706e0b"
-observation_sha256 = "c18112f26226b4a22205ef35049f7a0fdcc7970d3618aa00a9b020d77b140750"
 nmi = 47432
 
 [[seed]]
@@ -924,8 +740,6 @@ room = "AC5A"
 movie_frame = 65798
 next_input_index = 65798
 movie_subframe_index = 65797
-seed_sha256 = "73e8d3beacec9cd9ea2b9b216fc55f750afebd4c74f5c3e69aa6766c698f612c"
-observation_sha256 = "8738a85d5db01d11a54ba10b20a6f2c43de37b55969d5f190ff89f6cca843127"
 nmi = 47692
 
 [[seed]]
@@ -934,8 +748,6 @@ room = "AC83"
 movie_frame = 67049
 next_input_index = 67049
 movie_subframe_index = 67048
-seed_sha256 = "68ff7efc6111306951aa0972066193a8632f42866eee43592fb8fd058211ccd6"
-observation_sha256 = "140aa06908e2d13266f242ebcce07ceb63b125b931677fb5303f2d96ce2cae90"
 nmi = 48083
 
 [[seed]]
@@ -944,8 +756,6 @@ room = "ACB3"
 movie_frame = 67359
 next_input_index = 67359
 movie_subframe_index = 67358
-seed_sha256 = "5acfe3be1b35f3b4e8645eb3071de57ffbd3b245082fc039070f45864171fe8b"
-observation_sha256 = "27cd17da29b792c235d4aa71f45c2cb431fbeb7b526084f61a64b84eef60dec1"
 nmi = 48324
 
 [[seed]]
@@ -954,8 +764,6 @@ room = "B07A"
 movie_frame = 67656
 next_input_index = 67656
 movie_subframe_index = 67655
-seed_sha256 = "e3ad1b9f6298b58cecdd3afffd080243fda4378c9d0e8f522e2f59a52ebb89a6"
-observation_sha256 = "ce5e5b6939beb813fbc7f04c191b9571c04d4af61833203d7559362f27bedb16"
 nmi = 48559
 
 [[seed]]
@@ -964,8 +772,6 @@ room = "ACF0"
 movie_frame = 67961
 next_input_index = 67961
 movie_subframe_index = 67960
-seed_sha256 = "68d2dbe2bbe6aff2ae9f8ba08922bc43bd37a20c3e45f999458341806a961ed9"
-observation_sha256 = "b2c9cd2e6d06d607cbf4c09fd5438f4d165ec053782b03b3185d5b61fe4ea79c"
 nmi = 48785
 
 [[seed]]
@@ -974,8 +780,6 @@ room = "AD1B"
 movie_frame = 68673
 next_input_index = 68673
 movie_subframe_index = 68672
-seed_sha256 = "64b82e906a624ee51014966c310a20ab0b6b912ca7e75dbf4a47e45c614dc96e"
-observation_sha256 = "4ea0f3d976f01df3aa4dc825e34457abc881764e5ac9729d9e34175b6d390e18"
 nmi = 49438
 
 [[seed]]
@@ -984,8 +788,6 @@ room = "ACF0"
 movie_frame = 69358
 next_input_index = 69358
 movie_subframe_index = 69357
-seed_sha256 = "118b8462f92421c41d672642672eb715e5f1234f628acbdeb622595a189f4af7"
-observation_sha256 = "8b86e643c28604b34cef93cb4c58b96976bdb8229812b613e99200b372937182"
 nmi = 49653
 
 [[seed]]
@@ -994,8 +796,6 @@ room = "B07A"
 movie_frame = 70316
 next_input_index = 70316
 movie_subframe_index = 70315
-seed_sha256 = "169b13f799425a5e0760f5865a6dd540a663e1a8017b0d21e1cfb9f15acf8553"
-observation_sha256 = "aa76c1a4c5b17c3a21e27bbd6a02ee1260f4bb917907f68a40723e05907bd7df"
 nmi = 50151
 
 [[seed]]
@@ -1004,8 +804,6 @@ room = "ACB3"
 movie_frame = 70600
 next_input_index = 70600
 movie_subframe_index = 70599
-seed_sha256 = "7c25b6a0f72dfbcf2aa85435e71015eb1149ad5fec8c1a42ad0eb62bb8082979"
-observation_sha256 = "505750e30b4c594fc5266e1d6b2da649fda569e31ce3bcf5562f4dafd895304f"
 nmi = 50369
 
 [[seed]]
@@ -1014,8 +812,6 @@ room = "AD5E"
 movie_frame = 71710
 next_input_index = 71710
 movie_subframe_index = 71709
-seed_sha256 = "81458cecc172fba815eb0ee3f1a34c9323142ca954b6304c470a4e8bd0c1d4ac"
-observation_sha256 = "b8421cc8255f335962925cd8c33f1311ab1fe777b2c59d24336ade387fc9ec37"
 nmi = 50995
 
 [[seed]]
@@ -1024,8 +820,6 @@ room = "ADAD"
 movie_frame = 72041
 next_input_index = 72041
 movie_subframe_index = 72040
-seed_sha256 = "d4743eaa43146712d9cb7a176918d6ec90752a6ce122041d8e11743fdfcb820a"
-observation_sha256 = "8a4c43ea198597579a6a9da77bb8c836d0716b1456d835b0e307648d961fb1df"
 nmi = 51239
 
 [[seed]]
@@ -1034,8 +828,6 @@ room = "ADDE"
 movie_frame = 72927
 next_input_index = 72927
 movie_subframe_index = 72926
-seed_sha256 = "702b349175f97ee4f218432e834dcd89c5b33b65bb08ea1b2c652e09732eb615"
-observation_sha256 = "0d61a1accf64bec1964ec03f64f3c19f9c6fec61f2477e68ea39a5c15eef9b00"
 nmi = 51658
 
 [[seed]]
@@ -1044,8 +836,6 @@ room = "ADAD"
 movie_frame = 73607
 next_input_index = 73607
 movie_subframe_index = 73606
-seed_sha256 = "e757949e3f871724696180ba94b1d212cdcdfb39b64dc1d12277f1f79ba6c891"
-observation_sha256 = "33c91ad00cbb5d9fd4cb7e9237292b0267d67c4a1e05c41556ab51abbcfa3a1e"
 nmi = 51860
 
 [[seed]]
@@ -1054,8 +844,6 @@ room = "AD5E"
 movie_frame = 74044
 next_input_index = 74044
 movie_subframe_index = 74043
-seed_sha256 = "83a28569674c0eb55841c88dd78bdfd4f6900c5e7b25a3ecc0a3cef293fdaa91"
-observation_sha256 = "9325bba3c6ee110436f307fc148cf5402e164d35d3e4738de1aa7abeb0607c3d"
 nmi = 52211
 
 [[seed]]
@@ -1064,8 +852,6 @@ room = "ACB3"
 movie_frame = 74692
 next_input_index = 74692
 movie_subframe_index = 74691
-seed_sha256 = "ee2edf2a943b44369cf55029a860f2c01719bc5e0e9d1f7a98725709dbf56157"
-observation_sha256 = "82804c9f0e589fd32ff239c6cc7183596b940cce795c916837e7c46c935baf8f"
 nmi = 52795
 
 [[seed]]
@@ -1074,8 +860,6 @@ room = "AD5E"
 movie_frame = 74900
 next_input_index = 74900
 movie_subframe_index = 74899
-seed_sha256 = "2c2f1b55aed32151627e91a0da8f22e3ea4a9ed0b987b29de1e98b05ce8683b0"
-observation_sha256 = "ab69a087835deccdb57a453e7687228767ba88bf5d061d42a26bf530501cf8b1"
 nmi = 52922
 
 [[seed]]
@@ -1084,8 +868,6 @@ room = "B656"
 movie_frame = 75678
 next_input_index = 75678
 movie_subframe_index = 75677
-seed_sha256 = "d9d3fe53354a177c691bc59d76edee372e1eaca4f66302ce7698a17f9b343d3a"
-observation_sha256 = "9373a2828a3fdd9016c9b3537a84f74797850994f72991f727a58d6ac850da20"
 nmi = 53614
 
 [[seed]]
@@ -1094,8 +876,6 @@ room = "B510"
 movie_frame = 77262
 next_input_index = 77262
 movie_subframe_index = 77261
-seed_sha256 = "28ff5b0a7887f86dc5665131ee17ad4174aebaf1926c21a9d92e22a4e8f2c1f0"
-observation_sha256 = "4592fe8ee1a43e799c80067f2c3983c2d509d901bd6fbe99154cc66d77cc1b10"
 nmi = 54722
 
 [[seed]]
@@ -1104,8 +884,6 @@ room = "B55A"
 movie_frame = 78418
 next_input_index = 78418
 movie_subframe_index = 78417
-seed_sha256 = "a1030cd09fa3eda983f0cf20e1bf3b4035a860ea380e1e701f9bfd2d14d9c1ab"
-observation_sha256 = "deb53fa0a87356c0b7d3e016bfe8551fd86341e4fc26733de679939e6909f0ff"
 nmi = 55420
 
 [[seed]]
@@ -1114,8 +892,6 @@ room = "B6EE"
 movie_frame = 79123
 next_input_index = 79123
 movie_subframe_index = 79122
-seed_sha256 = "7da8b30fe4ed11c2f0173e565ba85d1b14084455e93a5dd6b92e1d2419b73ba6"
-observation_sha256 = "7ad4afb8a41264471873606d25b3dbc8ddffd0ed1bba224e8871898b2b1825eb"
 nmi = 55652
 
 [[seed]]
@@ -1124,8 +900,6 @@ room = "B585"
 movie_frame = 80585
 next_input_index = 80585
 movie_subframe_index = 80584
-seed_sha256 = "2e59c3dffe05006c8739a08bedb076d81e161ec7084d27ea3a8eead7b6cadb83"
-observation_sha256 = "bb62084a9a834fcf69b14206c7016b1fa662506c046c8be93d60be5f89978055"
 nmi = 56642
 
 [[seed]]
@@ -1134,8 +908,6 @@ room = "B5D5"
 movie_frame = 81520
 next_input_index = 81520
 movie_subframe_index = 81519
-seed_sha256 = "f23a43853ad6860c0496cff6e3d607ed1f1aad7252e1824fc4cfbad18e065d12"
-observation_sha256 = "581e19df38ff1171c6a7aa81353fd533ad6bf5c9541ca7a88046216bdf216e3e"
 nmi = 57458
 
 [[seed]]
@@ -1144,8 +916,6 @@ room = "B62B"
 movie_frame = 82826
 next_input_index = 82826
 movie_subframe_index = 82825
-seed_sha256 = "21175367d0711e4e0419ca59b106d5157a9a7ab8709faf1d6fb2b70ec464880f"
-observation_sha256 = "e5b60c40199bb9d016e80db379a83a6be08e1d43885436679c2e435fafd3b75a"
 nmi = 58262
 
 [[seed]]
@@ -1154,8 +924,6 @@ room = "B482"
 movie_frame = 83398
 next_input_index = 83398
 movie_subframe_index = 83397
-seed_sha256 = "b1b2cc388db8f6948eb649c9e465dbf6a47962edc7fe0c27a430a96847ee92c4"
-observation_sha256 = "da1d12f8f1e4af205bfdd9ba30ee3235a243d3ef0d4666a60cf02d21e7cb8be1"
 nmi = 58773
 
 [[seed]]
@@ -1164,8 +932,6 @@ room = "B37A"
 movie_frame = 83655
 next_input_index = 83655
 movie_subframe_index = 83654
-seed_sha256 = "864027ef665fb99336eaa2fa3bc7bbb4c41e595c5cd5a06af9383ff904222c45"
-observation_sha256 = "489670261e796383bd341953f90eb2a9305f753a228f88d75d35760c4575839a"
 nmi = 58966
 
 [[seed]]
@@ -1174,8 +940,6 @@ room = "B32E"
 movie_frame = 84091
 next_input_index = 84091
 movie_subframe_index = 84090
-seed_sha256 = "fa6201f109346f027545580a0048465fd45aec0832d67794c3a9494fe3d8144f"
-observation_sha256 = "81055b0cef377dd79e9a15498790facb402ece3764aaccf6fd099a5f75948e11"
 nmi = 59340
 
 [[seed]]
@@ -1184,8 +948,6 @@ room = "B698"
 movie_frame = 86300
 next_input_index = 86300
 movie_subframe_index = 86299
-seed_sha256 = "ca46715d4272723193ba6bcd18dc41905aebb9b2b27f8c0068f0e81c47849372"
-observation_sha256 = "3305370240885fe20e00c1257ab67f4ff37f17cfd2d8f99272d88b1476ec9e07"
 nmi = 61434
 
 [[seed]]
@@ -1194,8 +956,6 @@ room = "B32E"
 movie_frame = 87043
 next_input_index = 87043
 movie_subframe_index = 87042
-seed_sha256 = "6794059d04925dc9dfe24117843c0873d2f01bbf74822670dbe5f0a12ba5ff53"
-observation_sha256 = "c8df13ac86d4e4cb523981cf49169701d61e1c2ff35214732150b8a88adfad86"
 nmi = 61718
 
 [[seed]]
@@ -1204,8 +964,6 @@ room = "B37A"
 movie_frame = 87322
 next_input_index = 87322
 movie_subframe_index = 87321
-seed_sha256 = "f6cd0841e0c1ee866b9cc29e1bee7613c0ce21d822d314cdfadebe0555bd055e"
-observation_sha256 = "e0e2152a586cb5bd3449fcd2e37309311cc3198f236f051c84d992697504bf9f"
 nmi = 61937
 
 [[seed]]
@@ -1214,8 +972,6 @@ room = "B482"
 movie_frame = 87654
 next_input_index = 87654
 movie_subframe_index = 87653
-seed_sha256 = "cc2b9f507084a2dec049805ba8453f2d404d3e0cdddfef869f4573cd269d98c0"
-observation_sha256 = "81a4bf1842b52a2f29388634de3ea5f474011c56b19f4a4fe9b721f7ed38dc93"
 nmi = 62206
 
 [[seed]]
@@ -1224,8 +980,6 @@ room = "B62B"
 movie_frame = 88050
 next_input_index = 88050
 movie_subframe_index = 88049
-seed_sha256 = "23435a258ddb4ceb2882e229a96b2b6588209dc8f1d86a2695b1d118762f6743"
-observation_sha256 = "cb07fd264aff160012c9b16706896d892e67262737d5067fd01e0d7f1143c509"
 nmi = 62538
 
 [[seed]]
@@ -1234,8 +988,6 @@ room = "B5D5"
 movie_frame = 88366
 next_input_index = 88366
 movie_subframe_index = 88365
-seed_sha256 = "029cc866b90e7189450db05af586658b89c9491c61fdf30573a3e39cacb3d84e"
-observation_sha256 = "f113a683e64e03443b48ffa72ed6550f0adc61b7f454379fa151a5537320d2ca"
 nmi = 62774
 
 [[seed]]
@@ -1244,8 +996,6 @@ room = "B585"
 movie_frame = 89062
 next_input_index = 89062
 movie_subframe_index = 89061
-seed_sha256 = "6221330ce65d68a62ed092b483b84d98fac960ea0243b199b48ff6c32e994e46"
-observation_sha256 = "76ee0fcb8130a520649989838597561bd76bd428c68ef5907f82c00f2ed9e8d1"
 nmi = 63392
 
 [[seed]]
@@ -1254,8 +1004,6 @@ room = "B4E5"
 movie_frame = 89679
 next_input_index = 89679
 movie_subframe_index = 89678
-seed_sha256 = "70c734d1e9fcfcb2eab8242169b13e6a7c1ab25ee1f20b70782fb77f713ae17b"
-observation_sha256 = "f9aa62c2e7be8b8e3e492b307d5d2a815544591687178258628c880d86de38d8"
 nmi = 63930
 
 [[seed]]
@@ -1264,8 +1012,6 @@ room = "B4AD"
 movie_frame = 90375
 next_input_index = 90375
 movie_subframe_index = 90374
-seed_sha256 = "5c67ab975f8be7680db31b476e21ebb03cb4368713147b23425174979cc83308"
-observation_sha256 = "751f133c8ad6760d6a0e6734fe854fbcd3c63e0b808680f01ef6e6ef3ba17e00"
 nmi = 64552
 
 [[seed]]
@@ -1274,8 +1020,6 @@ room = "B40A"
 movie_frame = 90663
 next_input_index = 90663
 movie_subframe_index = 90662
-seed_sha256 = "e2ee36f087ca8e61f4fcccdaccea45e7ee422adc03d2f584b14abc1f9085c41c"
-observation_sha256 = "8294dd2d798b686f33dd824b2c253acb43de80d50cce6f2dc42077058611d655"
 nmi = 64770
 
 [[seed]]
@@ -1284,8 +1028,6 @@ room = "B3A5"
 movie_frame = 91914
 next_input_index = 91914
 movie_subframe_index = 91913
-seed_sha256 = "fd621ec9f0c4755a00e86b5af1b580202838f7a878365598ed7e72ed4c787f86"
-observation_sha256 = "7a888834c93377c77e0fa977fced6e52b42028b8e7addb77103923f534d4d240"
 nmi = 25
 
 [[seed]]
@@ -1294,8 +1036,6 @@ room = "B2DA"
 movie_frame = 92344
 next_input_index = 92344
 movie_subframe_index = 92343
-seed_sha256 = "5c985b38ae426624e7a8e2edb56f73dbd8b5907318454c0b71cf9135775ef79a"
-observation_sha256 = "5eeda9f612e1626a6e387d47da44cedcd466480fe08a961e4579749cdf0ead49"
 nmi = 369
 
 [[seed]]
@@ -1304,8 +1044,6 @@ room = "B6C1"
 movie_frame = 92751
 next_input_index = 92751
 movie_subframe_index = 92750
-seed_sha256 = "f64b78001c9a521265a0ab766de4911ee5f7005b67fa669a035bdf59ceca27b0"
-observation_sha256 = "4d84ff40cc6eb787119652c656a34bf75b9e1fc114226572da9b7fcc8daba5f0"
 nmi = 714
 
 [[seed]]
@@ -1314,8 +1052,6 @@ room = "B283"
 movie_frame = 93568
 next_input_index = 93568
 movie_subframe_index = 93567
-seed_sha256 = "94aef479b97c52e31d01204b41ddc5cebbe243f0df981a24b6cb211a572e69e9"
-observation_sha256 = "c3c455d6eb9cd64c692a190d8aa6947f8ec9eb4bccddc755ff6657a355178e34"
 nmi = 1057
 
 [[seed]]
@@ -1324,8 +1060,6 @@ room = "B1E5"
 movie_frame = 95176
 next_input_index = 95176
 movie_subframe_index = 95175
-seed_sha256 = "eddfc487a46effb423fbb89eaf270b10423311e2a4102bd6311fe3cb76b2ca2c"
-observation_sha256 = "e5a99f5e81c35d4df2ece26ecf03d9ec00e17167799864df0c26cadee0665ef4"
 nmi = 1775
 
 [[seed]]
@@ -1334,8 +1068,6 @@ room = "B236"
 movie_frame = 96028
 next_input_index = 96028
 movie_subframe_index = 96027
-seed_sha256 = "57b573847f8ae5088bd6c4a016e433b38d68d917d330682120c8e4ff804a8288"
-observation_sha256 = "e929fd7c2f9d46c9cad065c874137c29a4cd3b1bb1a9689489eeb05dd757ad66"
 nmi = 2545
 
 [[seed]]
@@ -1344,8 +1076,6 @@ room = "AF3F"
 movie_frame = 96871
 next_input_index = 96871
 movie_subframe_index = 96870
-seed_sha256 = "56c38afb650d43177c1e96a067acfa090b68f00540d0a32d72701e635da44b8e"
-observation_sha256 = "bfc7bda6ced8ac0a3ec5903a0916ace472e5a113dc7bb37ec3aa9da7936fc4a3"
 nmi = 3330
 
 [[seed]]
@@ -1354,8 +1084,6 @@ room = "AF14"
 movie_frame = 97194
 next_input_index = 97194
 movie_subframe_index = 97193
-seed_sha256 = "1cfcf676c389c8be06b3b3abdeac432eb7174875d364d713f01caedc1a40e5a5"
-observation_sha256 = "fb38d470e8a8a71151a372106c90e0759b2587381766a507e9ca0991431be0bf"
 nmi = 3586
 
 [[seed]]
@@ -1364,8 +1092,6 @@ room = "AE74"
 movie_frame = 97831
 next_input_index = 97831
 movie_subframe_index = 97830
-seed_sha256 = "a7d8e358b814a1ca527ec378c7a6756f516cf6056fb7d0aba5338e8c6166abcb"
-observation_sha256 = "0b2ffa4455b036e6b42678f33589d83d7d849fbb52a5ce1149de7e36df0beb76"
 nmi = 4158
 
 [[seed]]
@@ -1374,8 +1100,6 @@ room = "AFFB"
 movie_frame = 98212
 next_input_index = 98212
 movie_subframe_index = 98211
-seed_sha256 = "d46969b6d2fa66bb4371297e168155aa72a29e74c4c5c9d28fa78365fdbf388a"
-observation_sha256 = "b47057ae29392d0062b931eb82c6aba456f86c5e5ffd61b97493938747ff87a8"
 nmi = 4479
 
 [[seed]]
@@ -1384,8 +1108,6 @@ room = "B026"
 movie_frame = 98473
 next_input_index = 98473
 movie_subframe_index = 98472
-seed_sha256 = "d2f4eb2a354479c375e4f380885e75bbd59e57be6014571be54d26854dea4b76"
-observation_sha256 = "08e8fc2854f3840766b66c53421c087e5a4fbaada1a7ae545144ade7be978b94"
 nmi = 4683
 
 [[seed]]
@@ -1394,8 +1116,6 @@ room = "AFCE"
 movie_frame = 98745
 next_input_index = 98745
 movie_subframe_index = 98744
-seed_sha256 = "27b9627e8d65a6e85f149247c8f3d17aea5e690deb1268ccd167fbe1a422846a"
-observation_sha256 = "d4232997537f56136fdf96130bc2d7dd588c7d95c5a1097208ab74585f826eea"
 nmi = 4895
 
 [[seed]]
@@ -1404,8 +1124,6 @@ room = "A923"
 movie_frame = 99142
 next_input_index = 99142
 movie_subframe_index = 99141
-seed_sha256 = "386578077ff4ecb1471438a1efe8d4b96e7027cbc7800340f7443b69d7c6f3c1"
-observation_sha256 = "dfcd894b01406677114be89dd816636635c8cfd1182c265c6883ba9133e827b7"
 nmi = 5211
 
 [[seed]]
@@ -1414,8 +1132,6 @@ room = "A98D"
 movie_frame = 99412
 next_input_index = 99412
 movie_subframe_index = 99411
-seed_sha256 = "666331a9b2a0925b54b1366e5f7355d9ec94d5b1a7f86bab0b2ab6ceaa5ebb44"
-observation_sha256 = "a2fdf1dfd22d533bb048d0ef86a150aa0772060014e495122a8417e1aa73b85b"
 nmi = 5403
 
 [[seed]]
@@ -1424,8 +1140,6 @@ room = "AA82"
 movie_frame = 103591
 next_input_index = 103591
 movie_subframe_index = 103590
-seed_sha256 = "6505afa3f538b2ea1fc611fe9235fafd6ee9c925bf8e7e573d92c4386ee9414c"
-observation_sha256 = "003e56fb6773e5df6f3e29a073c24fffb11116e408c1a6d3712c6842d006811e"
 nmi = 9090
 
 [[seed]]
@@ -1434,8 +1148,6 @@ room = "AB07"
 movie_frame = 103858
 next_input_index = 103858
 movie_subframe_index = 103857
-seed_sha256 = "547252a425fc7a24adc46c9d60fdf6a99011376430e9c29d83145773fbfe9937"
-observation_sha256 = "1805a64dad857753999a8905e74c889b672d395814e2808848912e3b890c78bd"
 nmi = 9295
 
 [[seed]]
@@ -1444,8 +1156,6 @@ room = "AB3B"
 movie_frame = 104163
 next_input_index = 104163
 movie_subframe_index = 104162
-seed_sha256 = "d7ec3bffd8af0e3fdfbae36a6bf6c5fddfe8dc8baaa3228bdf3f566311455af3"
-observation_sha256 = "6052e352b29c2e8534d710c98d43618037faef89cba5383e9853d895a8579bc0"
 nmi = 9539
 
 [[seed]]
@@ -1454,8 +1164,6 @@ room = "AB07"
 movie_frame = 105122
 next_input_index = 105122
 movie_subframe_index = 105121
-seed_sha256 = "94fd762a3363153226d2c9fe046182131ff84e015903495f5919770320bbcab4"
-observation_sha256 = "ffd0e70babf60e61e2a2d89860b22a778ad7f96ba8a29643cae7922e6b4b05be"
 nmi = 10031
 
 [[seed]]
@@ -1464,8 +1172,6 @@ room = "AB8F"
 movie_frame = 105388
 next_input_index = 105388
 movie_subframe_index = 105387
-seed_sha256 = "eb208277901179afacdf8af019c667f483ba15ccd564557e83768b40c0245824"
-observation_sha256 = "742adcfd7fd0dcbd3844f85a97a428cd8202b1389b42eca2fe90b6b24bf0ec81"
 nmi = 10215
 
 [[seed]]
@@ -1474,8 +1180,6 @@ room = "AC2B"
 movie_frame = 105868
 next_input_index = 105868
 movie_subframe_index = 105867
-seed_sha256 = "08f1d6cf47cc292b50be0bd215227b70b730064ffe850e2667c7145a55ef3665"
-observation_sha256 = "9c530a59277cba4ae148a973ed72f9606c4bded73be9fe63f9f2cb48c2a7800f"
 nmi = 10630
 
 [[seed]]
@@ -1484,8 +1188,6 @@ room = "AB8F"
 movie_frame = 106520
 next_input_index = 106520
 movie_subframe_index = 106519
-seed_sha256 = "ddf05952da4f2641ddbf7df2caba1d92acfb6d2e6a6cc16f5a08cb5b49a5eaca"
-observation_sha256 = "c49ba3af703a2320e8ea89fe1d685024045db9fd2f3c5b9964a9355f88c3a8a5"
 nmi = 10805
 
 [[seed]]
@@ -1494,8 +1196,6 @@ room = "AB07"
 movie_frame = 107554
 next_input_index = 107554
 movie_subframe_index = 107553
-seed_sha256 = "08e974b8e19af0a11620d3cb5bc3c0ee7ec30d8f9c9403cd3b9be29505a9c8c2"
-observation_sha256 = "9c8c295a91c2f198c88bd5c83cda702a9d3fca88d7ab46e3f8fb2ba1f35dfa19"
 nmi = 11373
 
 [[seed]]
@@ -1504,8 +1204,6 @@ room = "AA82"
 movie_frame = 107842
 next_input_index = 107842
 movie_subframe_index = 107841
-seed_sha256 = "9349f6119fa3801c3918c1f2deffa97b547d765e0283b5b4b2947d4c9f2d2fb1"
-observation_sha256 = "aa8bc7eff9cf4e2078ae9961cf67c2065e2a454b10a214e00f3fd9d44fc5a3ba"
 nmi = 11593
 
 [[seed]]
@@ -1514,8 +1212,6 @@ room = "AADE"
 movie_frame = 108048
 next_input_index = 108048
 movie_subframe_index = 108047
-seed_sha256 = "a42045f78b0947dea23ed989645f461dcc2a8eb0df676ea129076196d8840d9b"
-observation_sha256 = "8bac54598c161302da3d39deabca2086675869c6335c46f7318b09e0b1fc3c97"
 nmi = 11737
 
 [[seed]]
@@ -1524,8 +1220,6 @@ room = "AA82"
 movie_frame = 108701
 next_input_index = 108701
 movie_subframe_index = 108700
-seed_sha256 = "a86a72d09b9c0499eec81bf92480ee230f76f93beea23e59bb31e0e3156d2aaa"
-observation_sha256 = "f8d1f177dd5563fc5606ad86c170fd49d96a839c294c4037e83930bef0f9c45c"
 nmi = 11926
 
 [[seed]]
@@ -1534,8 +1228,6 @@ room = "A98D"
 movie_frame = 109013
 next_input_index = 109013
 movie_subframe_index = 109012
-seed_sha256 = "dba4227e39f880012d53a838d5600c30f9595cb03fcc72fa6bf45167b79bff64"
-observation_sha256 = "d00e4f8845284c7a6987f568451b5597c00bbacceafd2a0ccad212e245c2cf67"
 nmi = 12174
 
 [[seed]]
@@ -1544,8 +1236,6 @@ room = "A923"
 movie_frame = 109343
 next_input_index = 109343
 movie_subframe_index = 109342
-seed_sha256 = "5a63a0e6f389bf6fae24a3590bcfcba5174e8a8da11a79ce4ad27f591eddeb0d"
-observation_sha256 = "3091609c5cef39593718dc18d354066647fd44b922890a4dcb8c18cb95bc1fd2"
 nmi = 12423
 
 [[seed]]
@@ -1554,8 +1244,6 @@ room = "AA0E"
 movie_frame = 109689
 next_input_index = 109689
 movie_subframe_index = 109688
-seed_sha256 = "37f72fde08e7b8e951b281e2c15e5fff1005d54597242c88098337196aedfb64"
-observation_sha256 = "6bc58a0c123b6d25aa82235c25f7bc06780101953429ce8a2400e680cbdda853"
 nmi = 12697
 
 [[seed]]
@@ -1564,8 +1252,6 @@ room = "A7DE"
 movie_frame = 110520
 next_input_index = 110520
 movie_subframe_index = 110519
-seed_sha256 = "a94fdbb74f42b5c3092942ea34bfcc9288e30f4773f909e69ae931f42bfb96af"
-observation_sha256 = "8b58496b82d47a628a9b243c40c28fd2bfc01ae8103f9cb375d43e39ab2beda0"
 nmi = 13066
 
 [[seed]]
@@ -1574,8 +1260,6 @@ room = "A815"
 movie_frame = 110905
 next_input_index = 110905
 movie_subframe_index = 110904
-seed_sha256 = "07c8ff0baeef7c38cb17e55aa3c24b09037ab1e3c6961fe840c8554df2cb2ccc"
-observation_sha256 = "d2a5c3f26f984d0adf447ecf862fd31f94289e9f932a1c2ffed3a5ce42273b99"
 nmi = 13379
 
 [[seed]]
@@ -1584,8 +1268,6 @@ room = "A8F8"
 movie_frame = 111484
 next_input_index = 111484
 movie_subframe_index = 111483
-seed_sha256 = "359d2b588949dec61333458dffd015e2f04c26aec05c8cfbea747762f1598695"
-observation_sha256 = "31cb5c69a248c07c826383ebef2852f88946391181034fff951b9ed3d41530da"
 nmi = 13881
 
 [[seed]]
@@ -1594,8 +1276,6 @@ room = "A815"
 movie_frame = 112213
 next_input_index = 112213
 movie_subframe_index = 112212
-seed_sha256 = "bd97fb6eaaaa3e9a48f3313c755535b21ca24aef9e8b92b79c672e58db9d8fb0"
-observation_sha256 = "96ef2f74e7b74c1ad7d7adb53911072aed125b2504e29fd2a32f83e1cc75ec24"
 nmi = 14130
 
 [[seed]]
@@ -1604,8 +1284,6 @@ room = "A75D"
 movie_frame = 112672
 next_input_index = 112672
 movie_subframe_index = 112671
-seed_sha256 = "7b4385294ed639c6b9fd274fba007137f46a94b140e6adc264115895f437bb1c"
-observation_sha256 = "17d990ca8ec74fa973fc604d3733c013987230fc687e0e6b21a60fc3bf989ff0"
 nmi = 14494
 
 [[seed]]
@@ -1614,8 +1292,6 @@ room = "A8B9"
 movie_frame = 112965
 next_input_index = 112965
 movie_subframe_index = 112964
-seed_sha256 = "0130999b9281573702aa3b7c9eda0832f6d8263ab5bcc683cefa484c07cace78"
-observation_sha256 = "712a62225ed7f497162946e2021ee17c964986320ded96a9488a1a808f98fdbb"
 nmi = 14725
 
 [[seed]]
@@ -1624,8 +1300,6 @@ room = "A890"
 movie_frame = 113301
 next_input_index = 113301
 movie_subframe_index = 113300
-seed_sha256 = "63d9938582cdd87f0887474f705a377294a8e9ee5e5db1f8d9e7d78219845c86"
-observation_sha256 = "9880b795b1e287f696db5aa1a2819bfcfd96a22dd1be150dd4c0449216ee228a"
 nmi = 15001
 
 [[seed]]
@@ -1634,8 +1308,6 @@ room = "A8B9"
 movie_frame = 113936
 next_input_index = 113936
 movie_subframe_index = 113935
-seed_sha256 = "4b0abb7621cd96c222598d5e51325853cc5e3d15477ed029fd22272dee4524cc"
-observation_sha256 = "175463729033238ba9f9387e42a4ffe36951e395447ab1caa61836d27217f3e8"
 nmi = 15175
 
 [[seed]]
@@ -1644,8 +1316,6 @@ room = "A75D"
 movie_frame = 114287
 next_input_index = 114287
 movie_subframe_index = 114286
-seed_sha256 = "16f87a99547d11f0b5c8188b53c2c91df5f9c10ec6651ce6b7372b18eb0c1292"
-observation_sha256 = "f6f7fe9b21aa8c61e74aedb3b649bc9def7fe77cbc0f3d9e20909dc8f56de872"
 nmi = 15463
 
 [[seed]]
@@ -1654,8 +1324,6 @@ room = "A815"
 movie_frame = 114586
 next_input_index = 114586
 movie_subframe_index = 114585
-seed_sha256 = "f2d0afc5b6d1413ed4f1ff836ad99827b264e8672cb343b33f1394881c8e1cf0"
-observation_sha256 = "1f00ebbe01a87a20583f553bc47ec9beb5d14ab639792bea025037d49db0ccde"
 nmi = 15690
 
 [[seed]]
@@ -1664,8 +1332,6 @@ room = "A7DE"
 movie_frame = 114914
 next_input_index = 114914
 movie_subframe_index = 114913
-seed_sha256 = "c2ca430986ca11ea89497d93069d70a6b200c2923c9dc70c38d92b3876163f6d"
-observation_sha256 = "07fa64ce9adb40dffc970e393e16b7bcdf8e3e6c24fa0312dd88a94c5daf19fc"
 nmi = 15949
 
 [[seed]]
@@ -1674,8 +1340,6 @@ room = "A6A1"
 movie_frame = 115199
 next_input_index = 115199
 movie_subframe_index = 115198
-seed_sha256 = "0c0748fa6f8e06ce201e75c088836ce8b5f6ed93317d0ad006bef295f9346945"
-observation_sha256 = "82bac72b2f3d1bebbddf1764e174996c61332c6468d1a0409f6e76f1fa4d1ba5"
 nmi = 16171
 
 [[seed]]
@@ -1684,8 +1348,6 @@ room = "CF80"
 movie_frame = 115516
 next_input_index = 115516
 movie_subframe_index = 115515
-seed_sha256 = "c85a2d8b2ef32511e2226f4e5c394de8a8a6dd270aea83a2313a0d11fe92a36a"
-observation_sha256 = "c5319a9212399110aebdde7e9e0c121e6664b5e25494c04eb781182d079c20a5"
 nmi = 16425
 
 [[seed]]
@@ -1694,8 +1356,6 @@ room = "CEFB"
 movie_frame = 115717
 next_input_index = 115717
 movie_subframe_index = 115716
-seed_sha256 = "968b6f2b407379362f96b050b425e1666d9a6e6fb3013aac94fa7c814d7f3c34"
-observation_sha256 = "7e586e302f17b50865df76552ad22446c83861127e9aa86a92ab04ee29e0b56d"
 nmi = 16564
 
 [[seed]]
@@ -1704,8 +1364,6 @@ room = "CF54"
 movie_frame = 115907
 next_input_index = 115907
 movie_subframe_index = 115906
-seed_sha256 = "036a2423353feee485439d5cd9c84764387412dbf2b54fdbe865c07036def92a"
-observation_sha256 = "985859de0f11dbe214c6390a2b32d39dceb03f4470b139e8789fa138329b3072"
 nmi = 16692
 
 [[seed]]
@@ -1714,8 +1372,6 @@ room = "A408"
 movie_frame = 116092
 next_input_index = 116092
 movie_subframe_index = 116091
-seed_sha256 = "37caa5b77333a6cc08937f2819693deca6fbcf23e534a1940d87634d17bb7941"
-observation_sha256 = "79eebeb9a5afd8f1c6d8aa934a8d855c5f4ac9f01e8947ca03333752b44929ba"
 nmi = 16822
 
 [[seed]]
@@ -1724,8 +1380,6 @@ room = "A447"
 movie_frame = 116374
 next_input_index = 116374
 movie_subframe_index = 116373
-seed_sha256 = "4591ed89672a8cf1aa3d952a938cfb441ccef150ac689a8cc63ae36c27fc8f08"
-observation_sha256 = "d028ffe55075d2dcd0f06ee731525575f632ded1d53d5881c2eaa58dd80bbfea"
 nmi = 17042
 
 [[seed]]
@@ -1734,8 +1388,6 @@ room = "A408"
 movie_frame = 117065
 next_input_index = 117065
 movie_subframe_index = 117064
-seed_sha256 = "b678041be6b47424b3ddae4464b591edebff5849e3d77118ea7b330daf627c6a"
-observation_sha256 = "6759d0c08a18ce20ead9692834a59ef1ebb6a7a23dab77e9193789c26ba1c9a5"
 nmi = 17277
 
 [[seed]]
@@ -1744,8 +1396,6 @@ room = "A3DD"
 movie_frame = 117512
 next_input_index = 117512
 movie_subframe_index = 117511
-seed_sha256 = "cbe86e0eefee26651a34e6c4ac11ad74998b91eae0bf677a3f00f995c94c55e4"
-observation_sha256 = "be37d55f628549c9bab709ddf40154ec0934c00b07a6d0db88e6094ce14b881f"
 nmi = 17664
 
 [[seed]]
@@ -1754,8 +1404,6 @@ room = "A253"
 movie_frame = 117814
 next_input_index = 117814
 movie_subframe_index = 117813
-seed_sha256 = "976e4e1344ca736edcb93a67b49e209531a133e71e22f549f48f79d9adc33156"
-observation_sha256 = "6a02911fbf19c6ee1f3dc170665f882c622c2157947ce9d803f9e63617806cda"
 nmi = 17901
 
 [[seed]]
@@ -1764,8 +1412,6 @@ room = "A2F7"
 movie_frame = 118105
 next_input_index = 118105
 movie_subframe_index = 118104
-seed_sha256 = "8d0738e46aa19c3ce91e6061efa77c5ed8b624c3b0cc4ef253d1c2088199c67a"
-observation_sha256 = "21a22c899d342a972e36e1f5f95127c3c667fdec7286325018c75ee92b26da3c"
 nmi = 18130
 
 [[seed]]
@@ -1774,8 +1420,6 @@ room = "A322"
 movie_frame = 118427
 next_input_index = 118427
 movie_subframe_index = 118426
-seed_sha256 = "317f7109e910ccea6fb9bd52667bebad794097aa88f498267eab8daa43e0cf02"
-observation_sha256 = "40424a41fcda621fcdde49eaf4b3aa9866eec3d86bfaca45b2466a05b4dd0ef6"
 nmi = 18372
 
 [[seed]]
@@ -1784,8 +1428,6 @@ room = "A3AE"
 movie_frame = 118755
 next_input_index = 118755
 movie_subframe_index = 118754
-seed_sha256 = "5cc344bdc608d0375dd5e98a49ff8ba73fea7f4976eeca3bdbc0dc1a625bb37b"
-observation_sha256 = "8392fbffc95179f318bb2a3f592e49c7d009cc25e5681203adc0e5a6e9991f24"
 nmi = 18642
 
 [[seed]]
@@ -1794,8 +1436,6 @@ room = "A322"
 movie_frame = 120172
 next_input_index = 120172
 movie_subframe_index = 120171
-seed_sha256 = "c47e35cbd085910d88dd82418000dd9f1bbdf530ed1329b6b4adab59b85df6a0"
-observation_sha256 = "4fa3b8d765c5c6e44176b85f760b3227d73a05af0b834f32e7fb7476e636d7ab"
 nmi = 19170
 
 [[seed]]
@@ -1804,8 +1444,6 @@ room = "A37C"
 movie_frame = 120440
 next_input_index = 120440
 movie_subframe_index = 120439
-seed_sha256 = "2de7ffbcf187b080986b5cd4d3e6e25f9ccfc707515dcc62c60c911d7ae80219"
-observation_sha256 = "90e9abc4b7de9985cb7cc680de22992647ca9b664c0c39372e3629479322f03d"
 nmi = 19376
 
 [[seed]]
@@ -1814,8 +1452,6 @@ room = "A322"
 movie_frame = 121389
 next_input_index = 121389
 movie_subframe_index = 121388
-seed_sha256 = "fdb41f7001e88350320bcd326bd027856b359ffd966aee41669cdc2f5e5b4f7f"
-observation_sha256 = "c718a91397f5e0fc201c2992856bf7e8a413cc327135887c52704b974e23452e"
 nmi = 19818
 
 [[seed]]
@@ -1824,8 +1460,6 @@ room = "962A"
 movie_frame = 121641
 next_input_index = 121641
 movie_subframe_index = 121640
-seed_sha256 = "542c9a7050ad9796e220450e725494b97c5191ece9416748f3814e227004fbca"
-observation_sha256 = "eb08c684ceb60c5fb2cbea54faaaa5a086bbb0063945ad4383bf65414b03e8ff"
 nmi = 20010
 
 [[seed]]
@@ -1834,8 +1468,6 @@ room = "948C"
 movie_frame = 122013
 next_input_index = 122013
 movie_subframe_index = 122012
-seed_sha256 = "d1d9eda52b92ae53ffcaa91e8b880edc9e4eb2fc3eba302d7f18adb9ff4a9a7b"
-observation_sha256 = "2bf0017f53f08da58306abc391e7568c78f42073ce54be1044d1b3d4b36f1720"
 nmi = 20317
 
 [[seed]]
@@ -1844,8 +1476,6 @@ room = "95FF"
 movie_frame = 122527
 next_input_index = 122527
 movie_subframe_index = 122526
-seed_sha256 = "6e3e1087a8a3588ea6b99f6a5152caa05f8874bdc06c962d240f7cae6090453a"
-observation_sha256 = "2d7696fea0e21a14b67883e43f3bf795b70e7c0f5352dd863acda317084b11ee"
 nmi = 20733
 
 [[seed]]
@@ -1854,8 +1484,6 @@ room = "93FE"
 movie_frame = 123233
 next_input_index = 123233
 movie_subframe_index = 123232
-seed_sha256 = "8e30f789b69474324a9124b71a0cde66c00810f5762d3aa009b5daed2e07414c"
-observation_sha256 = "c1f348b591ebf32c4a1d52abb9ee9a51bf933d0ad3f15ce2ad921921229bb238"
 nmi = 20928
 
 [[seed]]
@@ -1864,8 +1492,6 @@ room = "CA08"
 movie_frame = 123678
 next_input_index = 123678
 movie_subframe_index = 123677
-seed_sha256 = "f4737dc41f544bb89513279b0915b2da270dfdd4e3b7324c0d558b4877acfed0"
-observation_sha256 = "11a02bb4e378673509663a215fc668184284ee017a9ac4d6fc2da89ab703e9b9"
 nmi = 21305
 
 [[seed]]
@@ -1874,8 +1500,6 @@ room = "CAF6"
 movie_frame = 123982
 next_input_index = 123982
 movie_subframe_index = 123981
-seed_sha256 = "c0a6df5ba901d742ee9f570beba723dd2c3abb09245298bc380f2b67cd19ad83"
-observation_sha256 = "7408c210679763124553589518b16e2e41a39a60919e6c1f0544dc7f4caf38e6"
 nmi = 21528
 
 [[seed]]
@@ -1884,8 +1508,6 @@ room = "CC6F"
 movie_frame = 124625
 next_input_index = 124625
 movie_subframe_index = 124624
-seed_sha256 = "aebfb251cfaae74d8f3996c50b4c5c73ee11e1f3fac2ac9f7cc0470687da7849"
-observation_sha256 = "8fd1a69b3d287b0078f450667f332cfb4242b57bd8b5bac08e40e40b0a545e30"
 nmi = 22109
 
 [[seed]]
@@ -1894,8 +1516,6 @@ room = "CD13"
 movie_frame = 125145
 next_input_index = 125145
 movie_subframe_index = 125144
-seed_sha256 = "35e1921ba8e5cc0cfa8b4672bb8471992d2e09ca9e5928ebe6f782375f4f910c"
-observation_sha256 = "41348cdceefb082005baea6107b8758b4620cb190d66f667289321c0d8233bd4"
 nmi = 22571
 
 [[seed]]
@@ -1904,8 +1524,6 @@ room = "CC6F"
 movie_frame = 127426
 next_input_index = 127426
 movie_subframe_index = 127425
-seed_sha256 = "9593e6712cadf2b9a0eac8d7ad000b34fa5df442028e6f60ba58fafe02b84930"
-observation_sha256 = "77d15c9aea4130d6da9573923f64aa7456a1ec65125729ea4b3284651652b536"
 nmi = 24750
 
 [[seed]]
@@ -1914,8 +1532,6 @@ room = "CAF6"
 movie_frame = 127789
 next_input_index = 127789
 movie_subframe_index = 127788
-seed_sha256 = "7ea8ab8300ff47975f5d856559ae9573b2cd3ae86cac6c0eedf873857ec61a3b"
-observation_sha256 = "f41dc9f00e1cbf5744ac266504ba2a3bc69b5321b460cc2553545c1879edf605"
 nmi = 25032
 
 [[seed]]
@@ -1924,8 +1540,6 @@ room = "CDF1"
 movie_frame = 128202
 next_input_index = 128202
 movie_subframe_index = 128201
-seed_sha256 = "dc7c3425053b586926b624f4a2a338956261da55f7ca4f2a9689d8130d37aa81"
-observation_sha256 = "5c87019fcd80781cca9f1360eb1b07a61ad5389b1f9e50a74e46f2e9dab1fac5"
 nmi = 25381
 
 [[seed]]
@@ -1934,8 +1548,6 @@ room = "CAF6"
 movie_frame = 129372
 next_input_index = 129372
 movie_subframe_index = 129371
-seed_sha256 = "a9f409509aba1719ebedd41d732dc00c84f207aded4b1e6a75c92b3d2c307df2"
-observation_sha256 = "998940e6748ad54bdbd404dddaea95953d71fbb2d758b4072da3427df7165a1a"
 nmi = 26071
 
 [[seed]]
@@ -1944,8 +1556,6 @@ room = "CDA8"
 movie_frame = 129627
 next_input_index = 129627
 movie_subframe_index = 129626
-seed_sha256 = "8312b72d7127971208927bc0608c72b50e7433f24513a7217c9102a199d5ce68"
-observation_sha256 = "248cab18681605e0eb3964b27e7b501f8f04d9a10808a0cbee8e86937fb70035"
 nmi = 26268
 
 [[seed]]
@@ -1954,8 +1564,6 @@ room = "CAF6"
 movie_frame = 130296
 next_input_index = 130296
 movie_subframe_index = 130295
-seed_sha256 = "cb9e94431eb745f512e35e26d3cd49774e6328eec9437938f5deea1ac9c7151e"
-observation_sha256 = "116328c2971225446720771f0be2e27d136ee34a75f5ca26ef612258d090fe8f"
 nmi = 26457
 
 [[seed]]
@@ -1964,8 +1572,6 @@ room = "CD5C"
 movie_frame = 131548
 next_input_index = 131548
 movie_subframe_index = 131547
-seed_sha256 = "cdb85a46f38c4c1492869b5ee2d0571117ae306583f9eda384b6d9301993cdd6"
-observation_sha256 = "556f7844ead8096412aa977a67f751536af8ccbb62f8fc4160be79f8c597e3db"
 nmi = 27245
 
 [[seed]]
@@ -1974,8 +1580,6 @@ room = "CB8B"
 movie_frame = 131784
 next_input_index = 131784
 movie_subframe_index = 131783
-seed_sha256 = "f5bf0f8edffc7cc1aa3c1e0059ecef675507aac9add0af289348b875beba0526"
-observation_sha256 = "0b68de46b8c9474720b2ba8f8dbc32f1ba1453054a258d0d337df1695042cde1"
 nmi = 27422
 
 [[seed]]
@@ -1984,8 +1588,6 @@ room = "CBD5"
 movie_frame = 132067
 next_input_index = 132067
 movie_subframe_index = 132066
-seed_sha256 = "7ba7056c6731672958e2551f6f04e12d862209798b760c3dc42944d67ee8912d"
-observation_sha256 = "9a3dbbba972f6dcac63ea4adb59fbc661293afa8277c9f07e3525ec45a4675b0"
 nmi = 27641
 
 [[seed]]
@@ -1994,8 +1596,6 @@ room = "CC27"
 movie_frame = 132365
 next_input_index = 132365
 movie_subframe_index = 132364
-seed_sha256 = "5e0923f3b5b474dc0d0c9bb61646d9e08e66934a502d37c43b5408ecfbc6ad48"
-observation_sha256 = "8573a28b38458190e5caa864ba97cff24ed8a92e1d6c37ddcb77de6ffb422168"
 nmi = 27872
 
 [[seed]]
@@ -2004,8 +1604,6 @@ room = "CBD5"
 movie_frame = 133278
 next_input_index = 133278
 movie_subframe_index = 133277
-seed_sha256 = "f891dd109f04f0a282cd22a55348ddb6d721a3fc4f0d3fc21d51e7f393f1923d"
-observation_sha256 = "a13c32b918450126cecb34352732eb3a3779f15b31db6782410ddc88493c78fc"
 nmi = 28321
 
 [[seed]]
@@ -2014,8 +1612,6 @@ room = "CB8B"
 movie_frame = 133731
 next_input_index = 133731
 movie_subframe_index = 133730
-seed_sha256 = "27891afba9fe2c5a38be95e88f72fd997470eb713dc586a52caa9dc9ec983e3b"
-observation_sha256 = "7561231ca5883863be84a2488a30d6823b5a804ba6084909fff4b3eca1286b53"
 nmi = 28715
 
 [[seed]]
@@ -2024,8 +1620,6 @@ room = "CD5C"
 movie_frame = 134027
 next_input_index = 134027
 movie_subframe_index = 134026
-seed_sha256 = "fcdb45c358ba0d80eccb994341b35ce9849dd8d7d8c3876f38a659b6c77a7a96"
-observation_sha256 = "a4360f9b2e5b1ab577c788723ea244eac0cc1580e2774e58e113a2715149b4cd"
 nmi = 28952
 
 [[seed]]
@@ -2034,8 +1628,6 @@ room = "CAF6"
 movie_frame = 134341
 next_input_index = 134341
 movie_subframe_index = 134340
-seed_sha256 = "35578dcac15b37a1ac216675109843ed6e7eb461aac454a6041cb697906b60af"
-observation_sha256 = "a1e098ed3f3aeb5201a6259306b45032f1cc2d87b1736f9892c83422d846cb49"
 nmi = 29185
 
 [[seed]]
@@ -2044,8 +1636,6 @@ room = "CA52"
 movie_frame = 134605
 next_input_index = 134605
 movie_subframe_index = 134604
-seed_sha256 = "4ac5753fdd15811d58154bb7bd343df5ca56614546dae789c26105ecc3fbf5dc"
-observation_sha256 = "4c8788202298b17541e8286ddf8fdebce9769ef52d1201c031db574e12390ff6"
 nmi = 29385
 
 [[seed]]
@@ -2054,8 +1644,6 @@ room = "CAAE"
 movie_frame = 135178
 next_input_index = 135178
 movie_subframe_index = 135177
-seed_sha256 = "2e7d849b405f4b2caf848e9d94b7260cd0189b337241b87922de521a580bb813"
-observation_sha256 = "2d117f8020bf0d8a04a1e8ac325b304c69d293bb199b6fc763f057ebb1642cdf"
 nmi = 29897
 
 [[seed]]
@@ -2064,8 +1652,6 @@ room = "CA52"
 movie_frame = 136247
 next_input_index = 136247
 movie_subframe_index = 136246
-seed_sha256 = "986e65cb8dabc6a8550cdbcb5feb56b93674a3ce4f79dac05be5b97e1dd0a182"
-observation_sha256 = "730062b4f3a04ae358c6e343e5619633988955ada0c5b6c36c4a13337204d62a"
 nmi = 30506
 
 [[seed]]
@@ -2074,8 +1660,6 @@ room = "93FE"
 movie_frame = 136806
 next_input_index = 136806
 movie_subframe_index = 136805
-seed_sha256 = "6577200863bd847d7b4046a9bddcdbf0be5be5aefd14f4ffb9aceb5e91e7b92f"
-observation_sha256 = "c926a839ff977683fc98c6ce8b9d49ac323db4d1fbc3b042ed1ee777301a6879"
 nmi = 30952
 
 [[seed]]
@@ -2084,8 +1668,6 @@ room = "9461"
 movie_frame = 138642
 next_input_index = 138642
 movie_subframe_index = 138641
-seed_sha256 = "cc179b3fd291e1168e38f557ae02381fe2b61b125585c42d9fc916e5ff4e5479"
-observation_sha256 = "6b0789ab05c783a413d4cb262929b59d1b0c4e5c7efe864e853a67d48e654dc5"
 nmi = 31926
 
 [[seed]]
@@ -2094,8 +1676,6 @@ room = "968F"
 movie_frame = 138917
 next_input_index = 138917
 movie_subframe_index = 138916
-seed_sha256 = "f366150f0b072cde1c2375b4f01d7a11618c26cb454a59eef3a8358e3b0a6a6d"
-observation_sha256 = "123d52ba3507cc997dbe1ed43bd225c5b2b511a81cdd66ed4513e2b4d1f6270d"
 nmi = 32140
 
 [[seed]]
@@ -2104,8 +1684,6 @@ room = "C98E"
 movie_frame = 139180
 next_input_index = 139180
 movie_subframe_index = 139179
-seed_sha256 = "cf08ecadeb91cb03ac6db9c4d6a92f0289ce16dc1476b908bbe6fb1b823c10a0"
-observation_sha256 = "83221096943b41b0d1096bbb20b528c2f4d8f1f816e794e93ffa4b3b1b2e5ed4"
 nmi = 32322
 
 [[seed]]
@@ -2114,8 +1692,6 @@ room = "CE40"
 movie_frame = 141493
 next_input_index = 141493
 movie_subframe_index = 141492
-seed_sha256 = "2f04544b6cd22d163011c77b243922dbeb8e2238609ceb72a8a86e38b0a7f091"
-observation_sha256 = "8481fa2daef5c6d19c5708d1950c769243b9b7f7bd13f5149003650bb2e76d86"
 nmi = 33714
 
 [[seed]]
@@ -2124,8 +1700,6 @@ room = "93FE"
 movie_frame = 142387
 next_input_index = 142387
 movie_subframe_index = 142386
-seed_sha256 = "8adea10fa0f0dbc71072d64d69382c0d88bda14e3342e4c92843d7758ef9e3a2"
-observation_sha256 = "9e85c4f994a8ea0526acf8b3eb48e91a089931f45813a4dfe037819a51697e83"
 nmi = 34096
 
 [[seed]]
@@ -2134,8 +1708,6 @@ room = "95FF"
 movie_frame = 143527
 next_input_index = 143527
 movie_subframe_index = 143526
-seed_sha256 = "6e08ea03cab3340abdc91884b8cd02d97779326b2686e28f2564363ee0040790"
-observation_sha256 = "6e910894aafa0271ec952a53869dbed18e1e1507f6f85868d1095b69c80b93b7"
 nmi = 34770
 
 [[seed]]
@@ -2144,8 +1716,6 @@ room = "948C"
 movie_frame = 143762
 next_input_index = 143762
 movie_subframe_index = 143761
-seed_sha256 = "fa6348dee56f472decde0dc861e3a5b64f97f62b6d9a190c60f76b27d0696633"
-observation_sha256 = "0b9ed98af73fa73ce7343f52ac9db45594e64743ea2cd44815655a0746864bf8"
 nmi = 34944
 
 [[seed]]
@@ -2154,8 +1724,6 @@ room = "962A"
 movie_frame = 144302
 next_input_index = 144302
 movie_subframe_index = 144301
-seed_sha256 = "bef92b918755f3a212283c1ffe6d47fd084c19b22bbecbf1150d4f78919806f2"
-observation_sha256 = "24892c94a449da7575a32a9f303585efcf14b20084dac065f57bcb8194e012e6"
 nmi = 35425
 
 [[seed]]
@@ -2164,8 +1732,6 @@ room = "A322"
 movie_frame = 144660
 next_input_index = 144660
 movie_subframe_index = 144659
-seed_sha256 = "ef551ba9942eeb29249bc90c3ddd63d65d99b5939b3456b3d1ac000fc58e306f"
-observation_sha256 = "acfa90bb9cce9a5063b1813788437791b1d99464191164438ffeed1c1d9d0349"
 nmi = 35706
 
 [[seed]]
@@ -2174,8 +1740,6 @@ room = "D104"
 movie_frame = 145618
 next_input_index = 145618
 movie_subframe_index = 145617
-seed_sha256 = "ed2b5a09d5acacefc83c4cbc62df64dbffd9c7685029486f38c1733949e24770"
-observation_sha256 = "af2b09254c2bdef9d094556fac516e70ecc52af7965112ca993b87a61843ccfd"
 nmi = 36597
 
 [[seed]]
@@ -2184,8 +1748,6 @@ room = "D0B9"
 movie_frame = 146003
 next_input_index = 146003
 movie_subframe_index = 146002
-seed_sha256 = "44fb52b4c998cdb447f78c317bd6cc6ade003c1cc1cbbf36fefe2f3fc6559f52"
-observation_sha256 = "90d02f4a2175fe945916cd030317a119fcd95a91645b832335a9599fa6d50167"
 nmi = 36897
 
 [[seed]]
@@ -2194,8 +1756,6 @@ room = "D017"
 movie_frame = 146309
 next_input_index = 146309
 movie_subframe_index = 146308
-seed_sha256 = "94bd88140708bf497627734d4dee3e8b5b45afcf264a162bad15809cf9c80734"
-observation_sha256 = "8a66f1236cbf45b1e38b3d196d18a240e561c23f019b04d0df32a160aeb8d806"
 nmi = 37126
 
 [[seed]]
@@ -2204,8 +1764,6 @@ room = "D055"
 movie_frame = 146762
 next_input_index = 146762
 movie_subframe_index = 146761
-seed_sha256 = "ec1b03025b266ea4e98b2485cca1b53e07082bf1f08a19dfe372e26558fe2005"
-observation_sha256 = "083ccc681b2aa53f4c650fb9cdefd64a1cf77698de5ec01561ce6410158e2fb7"
 nmi = 37507
 
 [[seed]]
@@ -2214,8 +1772,6 @@ room = "D017"
 movie_frame = 148238
 next_input_index = 148238
 movie_subframe_index = 148237
-seed_sha256 = "50a6e238dd3eb8129198fe72a00cfbc1d080deb7cde133acf0ef9ccef159d29e"
-observation_sha256 = "3d97cf8aa21ad6fa89adc61ebb449a64f1a1a9210b6ffa10532cc96611d879c0"
 nmi = 38112
 
 [[seed]]
@@ -2224,8 +1780,6 @@ room = "CFC9"
 movie_frame = 148740
 next_input_index = 148740
 movie_subframe_index = 148739
-seed_sha256 = "4a4c506f470f50874222626072b47a40b6071d45051cd46ab414dbc5e0339039"
-observation_sha256 = "af8e031d02d7d37a0b6c4306b08808c4344ee1776e3d63b40437fd16c5a46615"
 nmi = 38526
 
 [[seed]]
@@ -2234,8 +1788,6 @@ room = "D0B9"
 movie_frame = 150122
 next_input_index = 150122
 movie_subframe_index = 150121
-seed_sha256 = "ed767b1e24312a35853594735ab9e8f314e72d6243c2c24970b62f41a4aad3ee"
-observation_sha256 = "2d60b082bf5cf15355f7d6e646b886b4f1b631ac8b7381e2c536747f694dc0e0"
 nmi = 39011
 
 [[seed]]
@@ -2244,8 +1796,6 @@ room = "D1A3"
 movie_frame = 150499
 next_input_index = 150499
 movie_subframe_index = 150498
-seed_sha256 = "f073d13f06ba107aaa575f48d69c941d3bbeb077f984ac84144373b56728cbed"
-observation_sha256 = "99da69bd6787933503f00dfe4434a6977db22b02a7de02d295d89cc6d153eec5"
 nmi = 39316
 
 [[seed]]
@@ -2254,8 +1804,6 @@ room = "D1DD"
 movie_frame = 150824
 next_input_index = 150824
 movie_subframe_index = 150823
-seed_sha256 = "f71dfc16ac92b992c20e4bb30dcad2714fd63764defaf2c08ba519e37a5c132d"
-observation_sha256 = "e155092eaa24872396c098665db40a92dc0dd3c47f12f05db401df63f871eb8b"
 nmi = 39558
 
 [[seed]]
@@ -2264,8 +1812,6 @@ room = "D16D"
 movie_frame = 151637
 next_input_index = 151637
 movie_subframe_index = 151636
-seed_sha256 = "5c48217b96e269977fd0e8c03768fed6fbb61e84463791dae8cde59e278766c4"
-observation_sha256 = "91b813d4433a2bdadc4fc6b65702d07d80cae935addf3e8897f028b58047c5ab"
 nmi = 39900
 
 [[seed]]
@@ -2274,8 +1820,6 @@ room = "D13B"
 movie_frame = 152101
 next_input_index = 152101
 movie_subframe_index = 152100
-seed_sha256 = "6d57c34ce95d29158e0350081e8e7aaaf79cd4222f526eb9e79e64d2a135fcec"
-observation_sha256 = "aca586181d0ea9c5932ffa7e8188f16344df3ad4c806ce4b87b82586f0104a12"
 nmi = 40299
 
 [[seed]]
@@ -2284,8 +1828,6 @@ room = "D16D"
 movie_frame = 153517
 next_input_index = 153517
 movie_subframe_index = 153516
-seed_sha256 = "5d243e7ca401be7444398bd5852a3e9ee11fed46d8b7d801975acefa978cd9d4"
-observation_sha256 = "4ed8de93a3933173ce0920aa64f75be338d64b8a1d62dda4032a24ce9db03be0"
 nmi = 40850
 
 [[seed]]
@@ -2294,8 +1836,6 @@ room = "D1DD"
 movie_frame = 153963
 next_input_index = 153963
 movie_subframe_index = 153962
-seed_sha256 = "7a3b204bcf1883a3e70af8fa00acb612ff731c205ab28ba81175a2cdd06c7d63"
-observation_sha256 = "4a707910b3cfbc325435578b45ef008827f4ac92d03244daa95938222dd4e5a0"
 nmi = 41209
 
 [[seed]]
@@ -2304,8 +1844,6 @@ room = "D1A3"
 movie_frame = 154266
 next_input_index = 154266
 movie_subframe_index = 154265
-seed_sha256 = "7cb25bb9874a75b8761ecc75d472aa98a0b9182e2bcf9ed2e0c6b7f845a95955"
-observation_sha256 = "8fb15a12246f858c997f5e77ec94af3801894713ba42007b023dde3bc4c2b6eb"
 nmi = 41438
 
 [[seed]]
@@ -2314,8 +1852,6 @@ room = "D5A7"
 movie_frame = 154674
 next_input_index = 154674
 movie_subframe_index = 154673
-seed_sha256 = "c83e0e465b30dbc99c3c6d54809b711442bf1808cb511bb0ad15dc7f61efc8a6"
-observation_sha256 = "c9cb60593ae42f39970bc126d309ce60f0584275db910012420ab8d2ec254f72"
 nmi = 41768
 
 [[seed]]
@@ -2324,8 +1860,6 @@ room = "D57A"
 movie_frame = 155306
 next_input_index = 155306
 movie_subframe_index = 155305
-seed_sha256 = "cefea0f6035c615eeee2b3ff5fc8e3546f2e0e183f18098d2731589ca945544f"
-observation_sha256 = "541e623fae81ff12265bd2225b17ee22e078b30372ef181bcac1bbf2b27c085b"
 nmi = 42275
 
 [[seed]]
@@ -2334,8 +1868,6 @@ room = "D51E"
 movie_frame = 155669
 next_input_index = 155669
 movie_subframe_index = 155668
-seed_sha256 = "064416f09d3f8b288a24d65c0ccdd8c63f47081ba52d3c292984010cdb392b68"
-observation_sha256 = "e78adf0a347048784aa0c2fadfa9613b38cdf527e8dbbe9c5539e25d7d03982d"
 nmi = 42574
 
 [[seed]]
@@ -2344,8 +1876,6 @@ room = "D4C2"
 movie_frame = 157227
 next_input_index = 157227
 movie_subframe_index = 157226
-seed_sha256 = "19b7d0735c71d9e3251ad93b308629195f95706ef773bd384f9b0e2b097122c3"
-observation_sha256 = "c8919d8e2b78a6d21e1223d98d86674ded00db446a2df41e7f25f30697a010c7"
 nmi = 43273
 
 [[seed]]
@@ -2354,8 +1884,6 @@ room = "D646"
 movie_frame = 157513
 next_input_index = 157513
 movie_subframe_index = 157512
-seed_sha256 = "8742d7a483d9acebb7b21bfcb020b657a14d9caa38dce3bb79472c39d0ef4e7d"
-observation_sha256 = "4d02265092eed103d5aa6dde42728da4abe6e3835b97f1c744324c61ec40292b"
 nmi = 43492
 
 [[seed]]
@@ -2364,8 +1892,6 @@ room = "D69A"
 movie_frame = 157739
 next_input_index = 157739
 movie_subframe_index = 157738
-seed_sha256 = "fc1d87bc91bd7b9446454cb00f10a4963c9518f4e7142a7ef76491e8dadf485e"
-observation_sha256 = "22bbcf1da5a8b4b0f412530e17a3fbf01c100d11005d31f8c22ae3ab8fde503e"
 nmi = 43655
 
 [[seed]]
@@ -2374,8 +1900,6 @@ room = "D8C5"
 movie_frame = 157997
 next_input_index = 157997
 movie_subframe_index = 157996
-seed_sha256 = "407f3f85803482be3ec0735f5208ad3a190af37697e577627ee83afc216342c6"
-observation_sha256 = "4d550e9434f7f6811120450176d94e79304a89f2c1e60060526f2dbe18954f91"
 nmi = 43850
 
 [[seed]]
@@ -2384,8 +1908,6 @@ room = "D6D0"
 movie_frame = 160476
 next_input_index = 160476
 movie_subframe_index = 160475
-seed_sha256 = "ca0a0ade822db1564fd30dec9896306faa2472471bb32eb476922e61e26ff60f"
-observation_sha256 = "e28e802654031bc7131d46518ccee4eaf7068cca36f656dca935e53b77cf5359"
 nmi = 46223
 
 [[seed]]
@@ -2394,8 +1916,6 @@ room = "D8C5"
 movie_frame = 161712
 next_input_index = 161712
 movie_subframe_index = 161711
-seed_sha256 = "13697bb5a7c7601de7f58c06b5a6217a0578f5c2152bb1dd43d6e77c3d04dd15"
-observation_sha256 = "29e3346cf149047c93ec4fb955d127b0966c9005bde086b6adcc1b8a1db2bdce"
 nmi = 46999
 
 [[seed]]
@@ -2404,8 +1924,6 @@ room = "D69A"
 movie_frame = 162049
 next_input_index = 162049
 movie_subframe_index = 162048
-seed_sha256 = "53d8597d1527c062ecd7a12caaaa6f7ce2c40e546563a130fc89700d99a5f989"
-observation_sha256 = "e7f3871b70840f882f5dd047cc0ea1d9a0bb5683f1968a1fe9e307e4f7802009"
 nmi = 47268
 
 [[seed]]
@@ -2414,8 +1932,6 @@ room = "D646"
 movie_frame = 162319
 next_input_index = 162319
 movie_subframe_index = 162318
-seed_sha256 = "28df9575a740a6952ae0ebd0fe47eacd43974cd6475f3d5ebb5bfaa41612e8b9"
-observation_sha256 = "29718c2dca24e78471f7f3f1cbac9572176f9466ffabb7198e49a46cbb763b6b"
 nmi = 47469
 
 [[seed]]
@@ -2424,8 +1940,6 @@ room = "D4C2"
 movie_frame = 162541
 next_input_index = 162541
 movie_subframe_index = 162540
-seed_sha256 = "9aabaa7d38d9198af985e1a3d50240cb5c750aecbb80261bf46b00a1e15417bd"
-observation_sha256 = "90b82c405d180880d9f0b2662904170c016674288dd07391ac97341f1a9368ca"
 nmi = 47629
 
 [[seed]]
@@ -2434,8 +1948,6 @@ room = "D48E"
 movie_frame = 162832
 next_input_index = 162832
 movie_subframe_index = 162831
-seed_sha256 = "afb4770c3dd68e802ef423527f63e3f0318b6d05626a860cbf7933b988a3d168"
-observation_sha256 = "246d1fdd435f1e9a445e306764c8a53986f92627487392f48680e191daee6510"
 nmi = 47852
 
 [[seed]]
@@ -2444,8 +1956,6 @@ room = "D408"
 movie_frame = 163103
 next_input_index = 163103
 movie_subframe_index = 163102
-seed_sha256 = "b920aa8a7527e2baf7d932661dfedd4b1b114d72e4073eb2345bb3140256527d"
-observation_sha256 = "bfdb159ccb145c0c77a941e93f3f686b96ddf822960978ca9fb0af7290bf997b"
 nmi = 48055
 
 [[seed]]
@@ -2454,8 +1964,6 @@ room = "D340"
 movie_frame = 163523
 next_input_index = 163523
 movie_subframe_index = 163522
-seed_sha256 = "9c14a0daea5feec052c42865ffbf73bf575c05ba754d9753b8eb5e295970e21e"
-observation_sha256 = "84fc8db33465723aa6becc7fc5d21957296857349e08084ea2aa9556eb0a70ec"
 nmi = 48376
 
 [[seed]]
@@ -2464,8 +1972,6 @@ room = "D387"
 movie_frame = 164056
 next_input_index = 164056
 movie_subframe_index = 164055
-seed_sha256 = "c07b669c653c636634e7b6c54247a9bf257fed21f23ce74a39d9c66c7058b71c"
-observation_sha256 = "ce8e188586084dd4e456c6eb8929879c4f2a122a7c74f6ff7f3ef7e600837932"
 nmi = 48835
 
 [[seed]]
@@ -2474,8 +1980,6 @@ room = "D27E"
 movie_frame = 164313
 next_input_index = 164313
 movie_subframe_index = 164312
-seed_sha256 = "4d2face7e9ca57161064d59388076b2f09192f1bff6aadc90d0fac62c7ad6a26"
-observation_sha256 = "23b0789c11c8af6ca144cca6c0c1271208aa20530685dbecb26cb8b7d2b8e0e9"
 nmi = 49032
 
 [[seed]]
@@ -2484,8 +1988,6 @@ room = "D2AA"
 movie_frame = 164529
 next_input_index = 164529
 movie_subframe_index = 164528
-seed_sha256 = "04d6c3f8eeccf2ad774c80436df07254f693aef12b9a24ec811e232ec6df39dc"
-observation_sha256 = "b8ad0ccd73552e36f11da94344456594e2c5f2a6163b2372b0f651812c838f62"
 nmi = 49183
 
 [[seed]]
@@ -2494,8 +1996,6 @@ room = "D27E"
 movie_frame = 165521
 next_input_index = 165521
 movie_subframe_index = 165520
-seed_sha256 = "a65b12b74a361e6188c161f73419d366e42e5887cc133de78ee63fb3c1b4956c"
-observation_sha256 = "ddaa62cd878936890e883c85d8328e26349bee59bfe62256b2373b62c9d2899d"
 nmi = 49716
 
 [[seed]]
@@ -2504,8 +2004,6 @@ room = "D387"
 movie_frame = 165762
 next_input_index = 165762
 movie_subframe_index = 165761
-seed_sha256 = "d0625dea1f24579d093d19970bc36fa378129d1d8d0bca381a1ca9f79e2d9189"
-observation_sha256 = "200a71cea497342a9455b5e53c0bb6c2f98d23a6bbce6572473a8f611ba612e3"
 nmi = 49893
 
 [[seed]]
@@ -2514,8 +2012,6 @@ room = "D340"
 movie_frame = 166141
 next_input_index = 166141
 movie_subframe_index = 166140
-seed_sha256 = "56bc444e193bfe168b417562874648624d14caf58a9394907c12b267deb37533"
-observation_sha256 = "75d6071eb95080508f7f925f7bcaeb9b1d0d503a3222365ff4a3034df6f38b3a"
 nmi = 50173
 
 [[seed]]
@@ -2524,8 +2020,6 @@ room = "D5EC"
 movie_frame = 166539
 next_input_index = 166539
 movie_subframe_index = 166538
-seed_sha256 = "af37c479b2f89fe454791c3ac331552e380febf97458b02d27127b6e600d3f0a"
-observation_sha256 = "aa56639fefb4c3590413551de3a28118cc6de1eb7df11e99df3fb3d759a1ab52"
 nmi = 50500
 
 [[seed]]
@@ -2534,8 +2028,6 @@ room = "D9FE"
 movie_frame = 166989
 next_input_index = 166989
 movie_subframe_index = 166988
-seed_sha256 = "1e184eaa8d6805065b13185503390f47a9a2729f91af21a983f8ed70b35ef51e"
-observation_sha256 = "3d0c18fc59aee64f858ec2f0b41abe502ced20eb8bfab1895438dbf14c7b6d38"
 nmi = 50884
 
 [[seed]]
@@ -2544,8 +2036,6 @@ room = "DA2B"
 movie_frame = 167259
 next_input_index = 167259
 movie_subframe_index = 167258
-seed_sha256 = "719ab289b2a9ee5e7ce06d4d2ecba3a73ea76ce768a6f6e356c718a7564cf11a"
-observation_sha256 = "f5f9999dd3010d158ded94cdfd834d5f3394943e73b6aec8de87eb355de7fd61"
 nmi = 51079
 
 [[seed]]
@@ -2554,8 +2044,6 @@ room = "D913"
 movie_frame = 167827
 next_input_index = 167827
 movie_subframe_index = 167826
-seed_sha256 = "0f5b728e9d0c79cfdfc062d4bb2bf3882a3a98344f0d3a19bc2bc4e95cba8110"
-observation_sha256 = "4cb030aa691e610f863f2746c9efdba8afbe2abf08ad023ca5ca2f8a7c5d7c2b"
 nmi = 51571
 
 [[seed]]
@@ -2564,8 +2052,6 @@ room = "D72A"
 movie_frame = 168096
 next_input_index = 168096
 movie_subframe_index = 168095
-seed_sha256 = "25189e036ddb9fcf924042cb32d83ce168d31d891e309111b69b9a55e6736bf3"
-observation_sha256 = "40aed0ecd42ac5f6b0bc1a19ddd9903f8151417e75e011f62551cbd3913c760a"
 nmi = 51760
 
 [[seed]]
@@ -2574,8 +2060,6 @@ room = "D78F"
 movie_frame = 168584
 next_input_index = 168584
 movie_subframe_index = 168583
-seed_sha256 = "f596c15dc4d00aa5534d54d3a62466be32c996fa983b9b39f412cdbfa062e70a"
-observation_sha256 = "81bcd845ab9475b6023b540b53b667c4b942b193c1be26eaec3bce428e615fa6"
 nmi = 52183
 
 [[seed]]
@@ -2584,8 +2068,6 @@ room = "DA60"
 movie_frame = 169581
 next_input_index = 169581
 movie_subframe_index = 169580
-seed_sha256 = "d3758b1c3be2541bff442419e31b27567a2cb952a99b20ebc5febdf5bfaa138a"
-observation_sha256 = "583b07242fb5d6a38282a6e08eca499e0ea32c1f684b0958685b61e05fa6efb9"
 nmi = 52721
 
 [[seed]]
@@ -2594,8 +2076,6 @@ room = "D9AA"
 movie_frame = 172069
 next_input_index = 172069
 movie_subframe_index = 172068
-seed_sha256 = "9004e6b423fa82796baf0aa837cf96012cef6454b07bea3a06c95b3317495ba6"
-observation_sha256 = "3ba4c27de6796e66585341d97eb8c9dc2acf19fb87dccf38e3b6a6ec1df05441"
 nmi = 55118
 
 [[seed]]
@@ -2604,8 +2084,6 @@ room = "DA60"
 movie_frame = 172724
 next_input_index = 172724
 movie_subframe_index = 172723
-seed_sha256 = "8d69f2dd431d4d0e3adf788ffe5689d55765eaa2f952f94d863da1c36ee21249"
-observation_sha256 = "69b1ff3e25b45bad97a0c8c08e1c88b235d39ac44b31b02adb87f93c17dd4be3"
 nmi = 55316
 
 [[seed]]
@@ -2614,8 +2092,6 @@ room = "D78F"
 movie_frame = 173087
 next_input_index = 173087
 movie_subframe_index = 173086
-seed_sha256 = "229c0f34e8a6d76e11f9ba213e4f14e9487d7f6a3e7f6f703d8168b04419a651"
-observation_sha256 = "51de79ffbf2ba8b0d3fa69ba47fa7dfc88e717949fd695bd975cae5f3787f2c6"
 nmi = 55614
 
 [[seed]]
@@ -2624,8 +2100,6 @@ room = "D72A"
 movie_frame = 173394
 next_input_index = 173394
 movie_subframe_index = 173393
-seed_sha256 = "fc64f34bd90b17a3771156036024d3652d433a5ade9167d9c086a461edafd49e"
-observation_sha256 = "2d4dde67a5496de4a4524e66724db2ac5b585da297830d513703d233d9ebf4a1"
 nmi = 55846
 
 [[seed]]
@@ -2634,8 +2108,6 @@ room = "D913"
 movie_frame = 173853
 next_input_index = 173853
 movie_subframe_index = 173852
-seed_sha256 = "bb752149e5395cf64fc488bba38f9e1c5d393729c2d334dcf7572d633261f6db"
-observation_sha256 = "70870b67299398e3e6161168eed36fceff3cd7aa46f3e1f23c99544f088f708e"
 nmi = 56234
 
 [[seed]]
@@ -2644,8 +2116,6 @@ room = "D7E4"
 movie_frame = 174179
 next_input_index = 174179
 movie_subframe_index = 174178
-seed_sha256 = "b13fca10ba465d4b87a917e685dfe84dac24bd762e6e6b3d68fca290e476051f"
-observation_sha256 = "af8c8d4e6909862ecfa514955e446d2f0d34edd021c6bacb62d4b6bdffa340b6"
 nmi = 56490
 
 [[seed]]
@@ -2654,8 +2124,6 @@ room = "D898"
 movie_frame = 174979
 next_input_index = 174979
 movie_subframe_index = 174978
-seed_sha256 = "0b0a935f58d0ae04d46be7ca5f01eb25811d89e4c2941e367d1ca0e6a30bbcd6"
-observation_sha256 = "50e892c8f1eeaee3262008794f4efd70ea460e6f7e00fca730423855a33ad9c4"
 nmi = 56829
 
 [[seed]]
@@ -2664,8 +2132,6 @@ room = "D6FD"
 movie_frame = 175256
 next_input_index = 175256
 movie_subframe_index = 175255
-seed_sha256 = "c23d5d5e46fada93990775baead534b5e82b333de8093afbcd98b21b36d3fb56"
-observation_sha256 = "b374e13fb923a2f2f9420743cccf5ecba84c0d3d7bf52ca4da25c052031f736f"
 nmi = 57041
 
 [[seed]]
@@ -2674,8 +2140,6 @@ room = "D5A7"
 movie_frame = 175595
 next_input_index = 175595
 movie_subframe_index = 175594
-seed_sha256 = "4a2dd1195ad04f268fb2aad028256a8d9a9a1aa9d61b05a03ebd2f7803896bb0"
-observation_sha256 = "788aea0e91f0f1b8032f31b82264b10274dbe96401ff06b677d7b6a473231eb8"
 nmi = 57301
 
 [[seed]]
@@ -2684,8 +2148,6 @@ room = "D54D"
 movie_frame = 177138
 next_input_index = 177138
 movie_subframe_index = 177137
-seed_sha256 = "1e3ff3f05d60f54ba9ce9d9df218cc179584e30d2ea62a69d3365d5d27f9e1e4"
-observation_sha256 = "5dfdf681d304cf0d07579b7f49f931fbe7cb1c2efa8fffd79cc425f968db88f9"
 nmi = 57981
 
 [[seed]]
@@ -2694,8 +2156,6 @@ room = "D4EF"
 movie_frame = 177502
 next_input_index = 177502
 movie_subframe_index = 177501
-seed_sha256 = "1358d0702036bc3173230b413e679ddc41f0b6f101cddcacf868c3cab70d6907"
-observation_sha256 = "18e9ca37eccbe323d20866e31d804a7db8bc08580d89ccb0f6d208d52e160e5a"
 nmi = 58281
 
 [[seed]]
@@ -2704,8 +2164,6 @@ room = "D461"
 movie_frame = 179092
 next_input_index = 179092
 movie_subframe_index = 179091
-seed_sha256 = "1e8a436f3f50a253de5208d382c4eeffe4517948d4fa31317ba47e34d4b9bff0"
-observation_sha256 = "d1c9004f1793290bb6538ebb4c35f0a0625dc430bcd9638139dc3bbc7ec9726b"
 nmi = 59011
 
 [[seed]]
@@ -2714,8 +2172,6 @@ room = "D252"
 movie_frame = 179455
 next_input_index = 179455
 movie_subframe_index = 179454
-seed_sha256 = "9852aeb2a1bd77795c6d13a788f18cc9c7fbcfc314998d71e2bb7a3b80006d26"
-observation_sha256 = "dc66d68b02017b63831c114187ff736d9c972bfbe39f8c46a6b942f77fe6947f"
 nmi = 59314
 
 [[seed]]
@@ -2724,8 +2180,6 @@ room = "D21C"
 movie_frame = 179662
 next_input_index = 179662
 movie_subframe_index = 179661
-seed_sha256 = "99f916cda81861a838e6a7e66637a07428b5b18fddd843061f44db304bfa0fbc"
-observation_sha256 = "7bee079a71800aeca0e60276eaecba2cd85a0c58d29459de643233c7d4aed3e1"
 nmi = 59460
 
 [[seed]]
@@ -2734,8 +2188,6 @@ room = "CF80"
 movie_frame = 180010
 next_input_index = 180010
 movie_subframe_index = 180009
-seed_sha256 = "7ef9d7993caa7107ae5417fad36b7163598fd3817d866c22cc775722a197f9c6"
-observation_sha256 = "800678623e8aa291c066528f0e3dab89611b15e0d3df93aa87b3638c772e4ac6"
 nmi = 59742
 
 [[seed]]
@@ -2744,8 +2196,6 @@ room = "CEFB"
 movie_frame = 180480
 next_input_index = 180480
 movie_subframe_index = 180479
-seed_sha256 = "94e20ecede4333cfb18b0c25408a67159a095dbef3574bb538d1cba26895383b"
-observation_sha256 = "b5d123c6d32e630b5dc92d277038df76a533b35db0aaf95c22e830d7fcd8c03f"
 nmi = 60150
 
 [[seed]]
@@ -2754,8 +2204,6 @@ room = "CF54"
 movie_frame = 180683
 next_input_index = 180683
 movie_subframe_index = 180682
-seed_sha256 = "5bc568ec6a04216a72d03f322eaa63388c1d2e4521e3970d224b09f2d6267efd"
-observation_sha256 = "2762e724468c2c23262219e2c23f5dd71d5f0beb25a51862660765866dd12c47"
 nmi = 60290
 
 [[seed]]
@@ -2764,8 +2212,6 @@ room = "A408"
 movie_frame = 180870
 next_input_index = 180870
 movie_subframe_index = 180869
-seed_sha256 = "797b13eff544d277e458b2fdb1a440d8ae4b79a8b2328fd8754d8c74899f0356"
-observation_sha256 = "e5927d798c0974e747b6c9d015eb5db350defbfbf82c9c8d6d0174ef1b56ed5a"
 nmi = 60422
 
 [[seed]]
@@ -2774,8 +2220,6 @@ room = "A3DD"
 movie_frame = 181102
 next_input_index = 181102
 movie_subframe_index = 181101
-seed_sha256 = "766cd68ef4a1d7fe64c572c11d405fa3cfe721233679eca57d2fec7772d87b3c"
-observation_sha256 = "6005466291664cad694de88f954cfb8ca3112efbb224a4259ce4ffda5a6abae7"
 nmi = 60596
 
 [[seed]]
@@ -2784,8 +2228,6 @@ room = "A253"
 movie_frame = 181382
 next_input_index = 181382
 movie_subframe_index = 181381
-seed_sha256 = "3b2ec9215faa599188f70a9025ae6f09d5e8bb50bebe076cf18047150e8945b8"
-observation_sha256 = "a2adbf7e7fcdf40f0e0ce1f55a013fba971b4aa0940c92b9855562914c98d1ce"
 nmi = 60811
 
 [[seed]]
@@ -2794,8 +2236,6 @@ room = "9FBA"
 movie_frame = 181754
 next_input_index = 181754
 movie_subframe_index = 181753
-seed_sha256 = "00f35acee9d9acb54c5ac3e82ec81efba136ecef83fb6a8085ff2db13a322ba6"
-observation_sha256 = "a6756f67af6c858cad6f529486f497f79bf253410c2da11c11ce9384769c58f4"
 nmi = 61121
 
 [[seed]]
@@ -2804,8 +2244,6 @@ room = "9E52"
 movie_frame = 182170
 next_input_index = 182170
 movie_subframe_index = 182169
-seed_sha256 = "c490032a2f1da36fc5c2947c31465b1acff21b89ee468a8b51d800f72a96bdcd"
-observation_sha256 = "3d6361fc04bde0df4c87c195631a702bccf33570517b2cbc9297a2d646a616db"
 nmi = 61466
 
 [[seed]]
@@ -2814,8 +2252,6 @@ room = "9D19"
 movie_frame = 182620
 next_input_index = 182620
 movie_subframe_index = 182619
-seed_sha256 = "77f1400587c7f09f2465dd6e179c1e70c80f2ea0d57db057ed2f8a18f0f1ddb7"
-observation_sha256 = "4df24642722c49755afb0a1c5d24f8779dc6646f9c2bba6045b337616421dfe0"
 nmi = 61834
 
 [[seed]]
@@ -2824,8 +2260,6 @@ room = "A0D2"
 movie_frame = 183358
 next_input_index = 183358
 movie_subframe_index = 183357
-seed_sha256 = "62c1d8057003588d8687d1d065f6d059ee7436a7dcda6369fa77596289893141"
-observation_sha256 = "c517a04edf6986f3113eb7c5508a12b96a06ee1373544002871c1feac72589ad"
 nmi = 62485
 
 [[seed]]
@@ -2834,8 +2268,6 @@ room = "9D19"
 movie_frame = 184388
 next_input_index = 184388
 movie_subframe_index = 184387
-seed_sha256 = "19153f067e192bc83d978f85f343db4845d3d07fc1708a9ce65d52106fd7ba1e"
-observation_sha256 = "6f2b8d7d1124ac9d3fb470aec6365958d30e3efe6fc491f5bf0b061e592cef8e"
 nmi = 63026
 
 [[seed]]
@@ -2844,8 +2276,6 @@ room = "9E52"
 movie_frame = 185089
 next_input_index = 185089
 movie_subframe_index = 185088
-seed_sha256 = "218818ca4f92d6066214e308c1630f4f4d4a724dfbe9f852a4b97616f2196ff4"
-observation_sha256 = "047135fc7cd72dd97f4b0f9d2cc5c0e12403ac4a3483f24b4b989171a2580070"
 nmi = 63639
 
 [[seed]]
@@ -2854,8 +2284,6 @@ room = "9E9F"
 movie_frame = 185405
 next_input_index = 185405
 movie_subframe_index = 185404
-seed_sha256 = "0039d43bf0a3ab85155cb3eb20f8263e21edf82470f6fb6a54dfe4875ed799ab"
-observation_sha256 = "a37dfb5f66d3c30d9b7215317cd6a1c54e58a42b40acdc4067070276cc0bd6fe"
 nmi = 63887
 
 [[seed]]
@@ -2864,8 +2292,6 @@ room = "9F11"
 movie_frame = 186457
 next_input_index = 186457
 movie_subframe_index = 186456
-seed_sha256 = "d3de05c615081f227193654d310e660d3ef7d0e83d218bff2e324da201c9de49"
-observation_sha256 = "2b689ca6e31a65ddcf440f7043f6b85cce5e09bca9ac15b51b8dab2811918bb8"
 nmi = 64460
 
 [[seed]]
@@ -2874,8 +2300,6 @@ room = "9F64"
 movie_frame = 186666
 next_input_index = 186666
 movie_subframe_index = 186665
-seed_sha256 = "c69a519868ef9d4b7ffd2ef056262476b862da108f379eff10ff806c2e31c902"
-observation_sha256 = "0b99e81885f9b38c623119e143b8c58fd2a115df45ef1d8a82fb1625847258cc"
 nmi = 64596
 
 [[seed]]
@@ -2884,8 +2308,6 @@ room = "A1AD"
 movie_frame = 187590
 next_input_index = 187590
 movie_subframe_index = 187589
-seed_sha256 = "f4ec4948bb7a631878b2a32235636325ae4679c4f0a163a78660908a814ca75a"
-observation_sha256 = "057f26172a6d888b9ff65c0ea028b6b3ca99c4bc7a6f1d719e81147d3c88b5d7"
 nmi = 65050
 
 [[seed]]
@@ -2894,8 +2316,6 @@ room = "A1D8"
 movie_frame = 187868
 next_input_index = 187868
 movie_subframe_index = 187867
-seed_sha256 = "1c883e3c1cfaa329e240823de292155c03ae5345910eaf0896995401f53240ee"
-observation_sha256 = "36aff2eab99e21e66105b8911253fcf45824c8c82723dc792ecce94ecc9bb115"
 nmi = 65271
 
 [[seed]]
@@ -2904,8 +2324,6 @@ room = "A1AD"
 movie_frame = 188934
 next_input_index = 188934
 movie_subframe_index = 188933
-seed_sha256 = "fb94a9df5bab851aba6305ca881c7da3e33f2e1bbb49251d3787f77ac02b0d52"
-observation_sha256 = "1b3ac919e8da37cf2e11d4bb796ed84e43a6bde4f851e6e0c7b3e41bd8e982e5"
 nmi = 65486
 
 [[seed]]
@@ -2914,8 +2332,6 @@ room = "9F64"
 movie_frame = 189196
 next_input_index = 189196
 movie_subframe_index = 189195
-seed_sha256 = "5cd2e44661b5cf6d87b39880ffe2e4fa17d008518e5fd0e9d06672d2c97524d0"
-observation_sha256 = "9a8c04b772261f3a3e672af635927b1151f1f61f2b9f1a36066d4a1416997907"
 nmi = 151
 
 [[seed]]
@@ -2924,8 +2340,6 @@ room = "9F11"
 movie_frame = 190089
 next_input_index = 190089
 movie_subframe_index = 190088
-seed_sha256 = "0cb38f67009e2a0961036a07c63c5df08cd6c240a4543aab6f6a77421d6f1795"
-observation_sha256 = "8301846b18c8911e6f23edf8d1ccd550bba27d2eb7801cb1752fa04d783de69d"
 nmi = 569
 
 [[seed]]
@@ -2934,8 +2348,6 @@ room = "9E9F"
 movie_frame = 190289
 next_input_index = 190289
 movie_subframe_index = 190288
-seed_sha256 = "0ec7491e2ce57cbfdbb996cc60d7d1eff01521f16321c6ef9722ee1f69d6c14e"
-observation_sha256 = "2c9c8be811083deed4862bfae43a5783e777a4bd40ef33c3cfb9f0b1712c15c2"
 nmi = 701
 
 [[seed]]
@@ -2944,8 +2356,6 @@ room = "97B5"
 movie_frame = 190982
 next_input_index = 190982
 movie_subframe_index = 190981
-seed_sha256 = "bd33e9fb1145e49f521b8aaf13354ee08bdeba003a5a28159bbb194f47a51df7"
-observation_sha256 = "a56bac2d388b438bd9a2cd1baf4bfca27f1e0f0ecfb715ce9fdc06cf20a91f4d"
 nmi = 1336
 
 [[seed]]
@@ -2954,8 +2364,6 @@ room = "975C"
 movie_frame = 191290
 next_input_index = 191290
 movie_subframe_index = 191289
-seed_sha256 = "b8503ab1022c5e2c9f6b494f662b6c30dba0402f30d283db0f83b7da9fba59cd"
-observation_sha256 = "1eb418dc124d73fe48aad016b625f637d34c106f999750d31a5fe571f2f6d7a2"
 nmi = 1586
 
 [[seed]]
@@ -2964,8 +2372,6 @@ room = "96BA"
 movie_frame = 192258
 next_input_index = 192258
 movie_subframe_index = 192257
-seed_sha256 = "bf60f795314ad82784c1dcfbe6e861d83b4cbe8d0f641bcadea0c91a86468e2f"
-observation_sha256 = "154bca1ab28fbfcb129016d484a9fa7ef867a27c15cdaa3523040bdc761c1da4"
 nmi = 2084
 
 [[seed]]
@@ -2974,8 +2380,6 @@ room = "99F9"
 movie_frame = 192697
 next_input_index = 192697
 movie_subframe_index = 192696
-seed_sha256 = "54f393490e0dc66cd2904ebe8edfb853e88859b0e3c9819c0790ce461f1a7e76"
-observation_sha256 = "b2542153fa0b038c7b202a6d0a47a4980c1087a1862c0b44b3cf59d71a2d4a28"
 nmi = 2449
 
 [[seed]]
@@ -2984,8 +2388,6 @@ room = "96BA"
 movie_frame = 193859
 next_input_index = 193859
 movie_subframe_index = 193858
-seed_sha256 = "ea333cc3e0208d699c3010bf853775eeb889b252f7a8c8bab7ae655b1ea5cd5a"
-observation_sha256 = "0f3c841e0eabef58903e6386ad59b5eab49db241f7f187070f993a6b176f48c4"
 nmi = 3141
 
 [[seed]]
@@ -2994,8 +2396,6 @@ room = "92FD"
 movie_frame = 194103
 next_input_index = 194103
 movie_subframe_index = 194102
-seed_sha256 = "7273994e5d8e7e7b991d54a2e9000f75696bd3bef860a38c2e5f24a1b0972414"
-observation_sha256 = "ed99b4fb0a01b907f76a031a5a3d2145875553f1d94905f14e9aae1908d0a9f2"
 nmi = 3314
 
 [[seed]]
@@ -3004,8 +2404,6 @@ room = "9A44"
 movie_frame = 194366
 next_input_index = 194366
 movie_subframe_index = 194365
-seed_sha256 = "6fd6d70d6463d6c18231a1e7826ad122b43521ebdd9b004f7407ee44dc9ae9fa"
-observation_sha256 = "e8fb3e5aa15582035755151981dabb1800febb42b048429d80b98604f7a66368"
 nmi = 3514
 
 [[seed]]
@@ -3014,8 +2412,6 @@ room = "9A90"
 movie_frame = 194767
 next_input_index = 194767
 movie_subframe_index = 194766
-seed_sha256 = "e2f58dcc85278051ecf00094465d5b4575eed4b8859fad693a0d95f1ddd7ed5e"
-observation_sha256 = "258db989d5d1dcf38d1e597a1626a025bb5daed0d556f41f5348c57bd4f1b7a1"
 nmi = 3834
 
 [[seed]]
@@ -3024,8 +2420,6 @@ room = "9A44"
 movie_frame = 195388
 next_input_index = 195388
 movie_subframe_index = 195387
-seed_sha256 = "dddc411019d8a5d11df7f82fc92b66795502b9300ca3edde2f7a6af3029dcf6f"
-observation_sha256 = "fbbc1b3888043b6e2203b4594018be350e932d1fe43b31fcea74d60b2a794390"
 nmi = 4001
 
 [[seed]]
@@ -3034,8 +2428,6 @@ room = "92FD"
 movie_frame = 195694
 next_input_index = 195694
 movie_subframe_index = 195693
-seed_sha256 = "d24debee9abffb84058a9e8ba6e3fbd3262f5f92e627447852d27a689f0017f3"
-observation_sha256 = "0fe5eccd462db528a446818a044b2d759302d9713b40ebb82adc685f87cd30d5"
 nmi = 4237
 
 [[seed]]
@@ -3044,8 +2436,6 @@ room = "91F8"
 movie_frame = 196264
 next_input_index = 196264
 movie_subframe_index = 196263
-seed_sha256 = "4f272938377feacb4b006c578cfc1fda58a7b12af142ef1a48ebe9c2df5849ec"
-observation_sha256 = "91997d56d8e560a6fa69dab7d4bf46fe023c3a76414c29c2cc2a64c835c977b5"
 nmi = 4709
 
 [[seed]]
@@ -3054,8 +2444,6 @@ room = "93AA"
 movie_frame = 196873
 next_input_index = 196873
 movie_subframe_index = 196872
-seed_sha256 = "29251573b7854e362881c02b1d5bbe8bd84e77786aef747af2200fb4506ff03e"
-observation_sha256 = "5824a59a58bafb4eae002b00ad6c59d479449e60f4e3dd8d2f9edbdaaa18a8f4"
 nmi = 5253
 
 [[seed]]
@@ -3064,8 +2452,6 @@ room = "91F8"
 movie_frame = 197672
 next_input_index = 197672
 movie_subframe_index = 197671
-seed_sha256 = "44bf9c60f2c145246f6780d2db0c7caa9100e816c32785fafacf8494689aa690"
-observation_sha256 = "9957edef99e6578b022d6f6e42dec622fd488d57533c5568040d5c0f86debafa"
 nmi = 5559
 
 [[seed]]
@@ -3074,8 +2460,6 @@ room = "92B3"
 movie_frame = 198214
 next_input_index = 198214
 movie_subframe_index = 198213
-seed_sha256 = "04595a250584ef03fb088dd321871feb7230f2524a7a53c667cfbbba0349505f"
-observation_sha256 = "f90a363076d2296a55f8a37cd8ed71c90997ec30426bcc14607639337b209768"
 nmi = 6041
 
 [[seed]]
@@ -3084,8 +2468,6 @@ room = "965B"
 movie_frame = 198601
 next_input_index = 198601
 movie_subframe_index = 198600
-seed_sha256 = "a9edf411b3919aa5dfd0fdb2d61dcef3bf64a8ef5a238f7546eeb3c425e9b62c"
-observation_sha256 = "ae66c9637aeea1de9d222a87da52f661863f99f7686a4e0bbd3ac8d25d53088f"
 nmi = 6366
 
 [[seed]]
@@ -3094,8 +2476,6 @@ room = "99BD"
 movie_frame = 199533
 next_input_index = 199533
 movie_subframe_index = 199532
-seed_sha256 = "a0ec6edfcf2e70f5104f7ab61a3a4589e046aa6ebd94b69be590db6799fc36aa"
-observation_sha256 = "2a896939168c1e04a1b8c429f8b3072ab5c199ddcf5ad101db9a21de0aa9ecb8"
 nmi = 6834
 
 [[seed]]
@@ -3104,8 +2484,6 @@ room = "A5ED"
 movie_frame = 201124
 next_input_index = 201124
 movie_subframe_index = 201123
-seed_sha256 = "aa403012e81e417ce4efcc5fede954d500f4582cbbce6909a0e6feab08f7f8e2"
-observation_sha256 = "661c4d80a8c27bb3816c2612250c5a437b593f339787c7d63db95edf11a8720d"
 nmi = 7567
 
 [[seed]]
@@ -3114,8 +2492,6 @@ room = "A66A"
 movie_frame = 201466
 next_input_index = 201466
 movie_subframe_index = 201465
-seed_sha256 = "23a6a4f3c31a631e6d0e795a4a3ef2bc66d36b64c875e40eb7125449d0f81e9e"
-observation_sha256 = "f60217c63b5105f68b53fb0c63b1b28e9b846066df6d5737629202900d4e3834"
 nmi = 7840
 
 [[seed]]
@@ -3124,8 +2500,6 @@ room = "DAAE"
 movie_frame = 204623
 next_input_index = 204623
 movie_subframe_index = 204622
-seed_sha256 = "bdf818c3e491974feaec7848d0ae5c3bed26d206643631820ade1580a9f05315"
-observation_sha256 = "f7028b2201494907076496b64687863434c13d60bdd25396be2591934cd6f95f"
 nmi = 10934
 
 [[seed]]
@@ -3134,8 +2508,6 @@ room = "DAE1"
 movie_frame = 205364
 next_input_index = 205364
 movie_subframe_index = 205363
-seed_sha256 = "49e41d1424934815961acd3bb4501f789e7fbc20dd0f24021a3ed6f64d7abb90"
-observation_sha256 = "cb82592efbb270ac88c7e7c53ba0207e8d8e5dda9f0bf8d66f32ebff6e92aa37"
 nmi = 11617
 
 [[seed]]
@@ -3144,8 +2516,6 @@ room = "DB31"
 movie_frame = 205814
 next_input_index = 205814
 movie_subframe_index = 205813
-seed_sha256 = "63e0b32d1417d847ea8aaf305ebb6ae91ac8b099c556e3c335b51a01e0528982"
-observation_sha256 = "2f4f2b388f6ac73227874168588b000a8a3479f11815a63a4a155a23987ed8d5"
 nmi = 12004
 
 [[seed]]
@@ -3154,8 +2524,6 @@ room = "DB7D"
 movie_frame = 206092
 next_input_index = 206092
 movie_subframe_index = 206091
-seed_sha256 = "77a3296e7b374b29676f1a1bc438119de3c0733b26f7fc1d7ae07ad390422b92"
-observation_sha256 = "8b149e8ebba09ebc5bb1619aa36611ec23807a192fcfe2052012882a64ddf2b1"
 nmi = 12221
 
 [[seed]]
@@ -3164,8 +2532,6 @@ room = "DBCD"
 movie_frame = 206530
 next_input_index = 206530
 movie_subframe_index = 206529
-seed_sha256 = "2f30974838d77842d800b055c99ff6ca38392189b3c6e6118a2df62c849e5f09"
-observation_sha256 = "1c9cc34eab4edb2dd78b551b18bf1209d0051a50d3c70fd52ce21213fc1625c1"
 nmi = 12598
 
 [[seed]]
@@ -3174,8 +2540,6 @@ room = "DC19"
 movie_frame = 206961
 next_input_index = 206961
 movie_subframe_index = 206960
-seed_sha256 = "56aa8d42c7a64eb0d2d0f5b6f565426f5c70582a4bfe16cef1867cbd2a9543af"
-observation_sha256 = "140bf26e77ac72e9e1acedae3da5cc51ae6882264140731443639253c2c14ccf"
 nmi = 12968
 
 [[seed]]
@@ -3184,8 +2548,6 @@ room = "DC65"
 movie_frame = 207201
 next_input_index = 207201
 movie_subframe_index = 207200
-seed_sha256 = "336a5082145983ff03fa197df5de404e7459690f0dddab242db2a318eed3a4ec"
-observation_sha256 = "16c73e2fa0860132de1b555e00e7cd5477fb6825e9233919629c9e6683c366f0"
 nmi = 13151
 
 [[seed]]
@@ -3194,8 +2556,6 @@ room = "DCB1"
 movie_frame = 207447
 next_input_index = 207447
 movie_subframe_index = 207446
-seed_sha256 = "e964f8b6acdf915ff8116e8271d971d01639f8e3c7cefcab62b925023bedfa06"
-observation_sha256 = "6961910d9f8fede22a12461cecd4b582357ef20568d5f1d5a7be8f1e9dfbadfb"
 nmi = 13338
 
 [[seed]]
@@ -3204,8 +2564,6 @@ room = "DCFF"
 movie_frame = 208871
 next_input_index = 208871
 movie_subframe_index = 208870
-seed_sha256 = "adf152ee6d73f853436239dea1f195146e10ecd24dbaa93d9227c134d8941579"
-observation_sha256 = "26b07dacf52e7022b8f6bd494325fbc33fe22d7230b4cf73f67dfe5d1594e3aa"
 nmi = 14699
 
 [[seed]]
@@ -3214,8 +2572,6 @@ room = "DDC4"
 movie_frame = 209160
 next_input_index = 209160
 movie_subframe_index = 209159
-seed_sha256 = "5d9030644f42970551447a1b4bd458ef9697bfedc5ae0ad7a25e11b45355311c"
-observation_sha256 = "d88314079321c018ec64fa8e6ded3bf8ed9c50987c158d7b204a5bc3018b93ca"
 nmi = 14932
 
 [[seed]]
@@ -3224,8 +2580,6 @@ room = "DDF3"
 movie_frame = 209664
 next_input_index = 209664
 movie_subframe_index = 209663
-seed_sha256 = "ddde600cc7a32a7f46b99d5ee1f5bce849e5e1264d5fb125f829457e91169b87"
-observation_sha256 = "04b6285e8e3b5a3c1d7547b747d1d5b08d13110b8243dd2d70d10542909e4df8"
 nmi = 15380
 
 [[seed]]
@@ -3234,8 +2588,6 @@ room = "DD58"
 movie_frame = 209945
 next_input_index = 209945
 movie_subframe_index = 209944
-seed_sha256 = "d18986fb5b2f1ab43e1e473f0149a0eb0a75542cc28cb1f9b6da4dfd71ac8709"
-observation_sha256 = "16b73130458176f5fcd5bbee5ff84cddd013c432e711d60184ed10ad1aed3362"
 nmi = 15590
 
 [[seed]]
@@ -3244,8 +2596,6 @@ room = "DE4D"
 movie_frame = 220079
 next_input_index = 220079
 movie_subframe_index = 220078
-seed_sha256 = "7ac9e602447d9e1a66afde9fe88fa4cace0c9b3a5fbcdf8da12cb3b3023bedb6"
-observation_sha256 = "70ce26e6e1e513c0b3facb81e0428b940b21b415aaf4c04d5a31a0b1eed16f3c"
 nmi = 25546
 
 [[seed]]
@@ -3254,8 +2604,6 @@ room = "DE7A"
 movie_frame = 220336
 next_input_index = 220336
 movie_subframe_index = 220335
-seed_sha256 = "6b38f2423e5ca2914b687a60e1cff65da5fe01da20a9accbb9e41e9674476836"
-observation_sha256 = "ea3102429e388c06021228454dd49d9cd74da25244300f7dec02020ded0220ae"
 nmi = 25728
 
 [[seed]]
@@ -3264,8 +2612,6 @@ room = "DEA7"
 movie_frame = 220592
 next_input_index = 220592
 movie_subframe_index = 220591
-seed_sha256 = "9139edc4ce17525efbcd20d07d28904d9f3c945ee97c96f438932d8e6410650e"
-observation_sha256 = "dafe11b90634d6adc023b7aba404df40017076be374e0e797cd56e21b3e0b3da"
 nmi = 25923
 
 [[seed]]
@@ -3274,8 +2620,6 @@ room = "DEDE"
 movie_frame = 221032
 next_input_index = 221032
 movie_subframe_index = 221031
-seed_sha256 = "e323ecad27c65fea062427979a98b4595913be9399b840f966fc3d4e28be4d04"
-observation_sha256 = "15ff0e7ba8c7fa5167316c16fcaacfa7ca4c69f0238a6ef3f7b8b53798485f3a"
 nmi = 26295
 
 [[seed]]
@@ -3284,8 +2628,6 @@ room = "96BA"
 movie_frame = 221974
 next_input_index = 221974
 movie_subframe_index = 221973
-seed_sha256 = "e224018a39750dcd8dc64b9c85e7b90d930980f7daf06c42c687100c76076956"
-observation_sha256 = "8fdd8f95dc69d0acdf700c45ccf7398b13c44a4806a15eb40585d0032a77a24a"
 nmi = 27162
 
 [[seed]]
@@ -3294,8 +2636,6 @@ room = "92FD"
 movie_frame = 222267
 next_input_index = 222267
 movie_subframe_index = 222266
-seed_sha256 = "f607c00a0024feb56f56f4a3616206d80f0e114495c5076c90df8a05021ee3d9"
-observation_sha256 = "5a2bc2b24f306bbb1f70924b019465c9e5046930b54ae414747f4ccd73157485"
 nmi = 27385
 
 [[seed]]
@@ -3304,6 +2644,4 @@ room = "91F8"
 movie_frame = 222657
 next_input_index = 222657
 movie_subframe_index = 222656
-seed_sha256 = "fb08f18f93585990f4abbba4d47106d016e3f1ca7d7871a0eadb275c7f5e1ced"
-observation_sha256 = "e8432d4418a3f8815f4d37b105dbac13da32ab99ef4089145cdf322b5109996c"
 nmi = 27677

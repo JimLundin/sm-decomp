@@ -4,6 +4,4 @@ room = "91F8"
 movie_frame = 222657
 next_input_index = 222657
 movie_subframe_index = 222656
-seed_sha256 = "b56cab6593f46ec35db0534903820423cc1b3e76da4526d3f640d5161b13da10"
-observation_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
 nmi = 27678
