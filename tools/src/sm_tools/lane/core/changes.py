@@ -32,6 +32,7 @@ RUST = FrozenList((
     "docs/architecture",
     "docs/cleanroom",
     "tools/cleanroom",
+    "tools/src/sm_tools/cleanroom",
     "tools/oracle",
     "tools/lsnes_lag_log.lua",
     "tools/src/sm_tools/oracle",
@@ -40,7 +41,7 @@ RUST = FrozenList((
 ))
 GROUPS = FrozenOrderedDict({
     "rust": RUST,
-    "python": FrozenList((*RUST, "tools", "pyproject.toml")),
+    "python": FrozenList((*RUST, "tools")),
     "rom": FrozenList((
         "crates",
         "!crates/app",
@@ -65,6 +66,9 @@ GROUPS = FrozenOrderedDict({
         "crates/vector_file",
         *BUILD,
         "tools/cleanroom/adjusted_*",
+        "tools/src/sm_tools/cleanroom/*/adjusted_vectors_run.py",
+        "tools/pyproject.toml",
+        "tools/uv.lock",
     )),
     "engine": FrozenList((
         "crates/app",

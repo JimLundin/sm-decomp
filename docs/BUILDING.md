@@ -155,8 +155,10 @@ docker container from the image `sm-cleanroom-root:1`, with no network, whose fi
 the export, a temporary `/tmp`, and read-only `/usr`, toolchain, CLI and the `cleanroom` binary
 with the files it reads. The session needs an API key: `ANTHROPIC_API_KEY` in the environment,
 an `apiKeyHelper` or `ANTHROPIC_*` lines in `~/.claude/settings.json`, or a settings file named
-by `CLEANROOM_AUTH`. A relay outside the box (`tools/cleanroom/box_relay.py`) adds it to each
-request, so it never enters the box.
+by `CLEANROOM_AUTH`. A relay outside the box adds it to each request, so it never enters the
+box. The relay is the tools project's `box-relay`, which the tool runs on a Python of its own in
+`target/cleanroom-relay`, synced to the lock without the dev group. The box's first process is
+`tools/src/sm_tools/cleanroom/shell/box.py`, which the host's `/usr/bin/python3` runs inside it.
 
 ### Before any confined session on the box
 

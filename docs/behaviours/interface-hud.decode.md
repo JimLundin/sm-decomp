@@ -736,7 +736,7 @@ The spec gate of the Ceres delta (`$TEMP/collab/reviews/adversary-110.md`, its s
    item select or item cancel, so the opening stays outside play and can switch drops it (§Inputs,
    can switch). The opening's selection stays §7 question 2.
 6. **Adjusted vectors:** C-flash-adjusted (`n` = 4), C-blink-adjusted (`n` = 4) and
-   C-mm-boss-adjusted (Kraid's screens (2, 0) and (0, 2)); `adjusted_vectors_run.py --missing
+   C-mm-boss-adjusted (Kraid's screens (2, 0) and (0, 2)); `adjusted-vectors-run --missing
    interface-hud` passes 3 of 3. The vector test's `rules` is the implementer's (§The harness).
 7. **The selection's writers:** §The selection's writers lists every store with its owner and
    whether it is compared. Its gameplay writers the spec lacked join `the selection dropped`: the

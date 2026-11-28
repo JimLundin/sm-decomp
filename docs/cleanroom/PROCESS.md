@@ -89,9 +89,9 @@ Each step names its owner, what it waits for, and its done-condition.
    - each entry whose switch is `Parameter` has at least one vector at a value other than the
      reference one: a vector that names the entry and overrides the reference rules (the
      vector's `rules` table), so adjusting the behaviour is proven, not assumed.
-     `uv run --locked --project tools gate` holds every domain whose spec or vectors a branch changes to
-     this rule, through `tools/cleanroom/adjusted_vectors_run.py --missing`. Once the model exists,
-     `tools/cleanroom/adjusted_vectors_run.py` checks that each such vector depends on its
+     `uv run --locked --project tools gate` holds every domain whose spec or vectors a branch
+     changes to this rule, through `uv run --locked --project tools adjusted-vectors-run --missing`.
+     Once the model exists, `adjusted-vectors-run` checks that each such vector depends on its
      rules. It builds the vector test once and runs it on probes of the file, each passed in
      `SM_VECTOR_FILE`;
    - `docs/behaviours/<domain>.decode.md` holds the sources and the harness note;

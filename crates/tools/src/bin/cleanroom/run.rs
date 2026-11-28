@@ -30,6 +30,12 @@ const PROXIES: &[&str] = &[
     "rustup",
 ];
 const TRUSTED: &[&str] = &["Cargo.toml", "tools/cleanroom/allowed_deps.txt"];
+/// The box's first process, which the host's `/usr/bin/python3` runs inside the box: it imports
+/// only the standard library and runs on Python 3.12.
+const BOX: &str = "tools/src/sm_tools/cleanroom/shell/box.py";
+/// The relay outside the box, a module of the tools project.
+const RELAY: &str = "sm_tools.cleanroom.shell.box_relay";
+const RELAY_ENVIRONMENT: &str = "target/cleanroom-relay";
 /// The relay's socket in the box. The name scan is served there, from outside, so the
 /// lexicon never enters the box.
 const SOCKET: &str = "/opt/cleanroom/api.sock";
@@ -188,14 +194,35 @@ impl Sandbox {
     }
 }
 
+/// The tools project's Python, in an environment of its own that uv syncs to the project's
+/// lock without the dev group, so no test or coverage tool's start-up hook runs in the relay.
+/// The relay runs on it directly rather than under `uv run`, whose Python is uv's child:
+/// `serve` exits when its parent is not this process.
+fn tools_python(repo: &Path) -> Result<PathBuf, String> {
+    let path = output(
+        Command::new("uv")
+            .env("UV_PROJECT_ENVIRONMENT", repo.join(RELAY_ENVIRONMENT))
+            .arg("run")
+            .arg("--project")
+            .arg(repo.join("tools"))
+            .args([
+                "--locked", "--no-dev", "--exact", "-q", "python", "-I", "-c",
+            ])
+            .arg("import sys; print(sys.executable)"),
+    )?;
+    Ok(PathBuf::from(path.trim()))
+}
+
+/// The relay's command on PYTHON. `-I` keeps the working directory and the `PYTHON*`
+/// environment off its import path.
+fn box_relay(python: &Path) -> Command {
+    let mut cmd = Command::new(python);
+    cmd.args(["-I", "-m", RELAY]);
+    cmd
+}
+
 pub fn image(repo: &Path) -> Result<(), String> {
-    output(
-        Command::new("python3")
-            .arg("-I")
-            .arg(repo.join("tools/cleanroom/box_relay.py"))
-            .args(["image", IMAGE]),
-    )
-    .map(drop)
+    output(box_relay(&tools_python(repo)?).args(["image", IMAGE])).map(drop)
 }
 
 struct Relay(Child);
@@ -209,7 +236,6 @@ impl Drop for Relay {
 
 fn relay(repo: &Path, lane: &Path, model: &str) -> Result<(Relay, Vec<String>), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let script = repo.join("tools/cleanroom/box_relay.py");
     let auth = std::env::var_os("CLEANROOM_AUTH").map_or_else(
         || {
             std::env::var_os("HOME")
@@ -218,20 +244,12 @@ fn relay(repo: &Path, lane: &Path, model: &str) -> Result<(Relay, Vec<String>), 
         },
         PathBuf::from,
     );
-    let env = output(
-        Command::new("python3")
-            .arg("-I")
-            .arg(&script)
-            .arg("env")
-            .arg(&auth)
-            .arg(PORT),
-    )?;
+    let python = tools_python(repo)?;
+    let env = output(box_relay(&python).arg("env").arg(&auth).arg(PORT))?;
     let socket = lane.join("api.sock");
     let _ = fs::remove_file(&socket);
     let log = File::create(lane.join("relay.log")).map_err(|e| e.to_string())?;
-    let child = Command::new("python3")
-        .arg("-I")
-        .arg(&script)
+    let child = box_relay(&python)
         .arg("serve")
         .arg(&socket)
         .arg(&auth)
@@ -400,17 +418,13 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
     }
     cell.env("DISABLE_AUTOUPDATER", "1");
     cell.mount(&cli, &Path::new(TOOLS).join("claude"), false)?;
-    cell.mount(
-        &repo.join("tools/cleanroom/box_relay.py"),
-        &Path::new(TOOLS).join("box_relay.py"),
-        false,
-    )?;
+    cell.mount(&repo.join(BOX), &Path::new(TOOLS).join("box.py"), false)?;
     cell.mount(&lane.dir.join("api.sock"), Path::new(SOCKET), true)?;
     let model = std::env::var("CLEANROOM_MODEL").unwrap_or_else(|_| "opus".to_owned());
     let mut argv = vec![
         "/usr/bin/python3".to_owned(),
         "-I".to_owned(),
-        format!("{TOOLS}/box_relay.py"),
+        format!("{TOOLS}/box.py"),
         "box".to_owned(),
         PORT.to_owned(),
         SOCKET.to_owned(),

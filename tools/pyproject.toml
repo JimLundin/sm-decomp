@@ -10,6 +10,8 @@ dependencies = [
 ]
 
 [project.scripts]
+adjusted-vectors-run = "sm_tools.cleanroom.shell.adjusted_vectors_run:main"
+box-relay = "sm_tools.cleanroom.shell.box_relay:main"
 changes = "sm_tools.lane.shell.changes:main"
 check-mutants = "sm_tools.faults.shell.check_mutants:main"
 check-replay-transition = "sm_tools.ci.shell.check_replay_transition:main"
@@ -49,7 +51,7 @@ root_package = "sm_tools"
 [[tool.importlinter.contracts]]
 name = "core is the bottom layer"
 type = "layers"
-containers = ["sm_tools.ci", "sm_tools.faults", "sm_tools.lane", "sm_tools.oracle"]
+containers = ["sm_tools.ci", "sm_tools.cleanroom", "sm_tools.faults", "sm_tools.lane", "sm_tools.oracle"]
 layers = ["(__main__)", "shell", "core"]
 exhaustive = true
 

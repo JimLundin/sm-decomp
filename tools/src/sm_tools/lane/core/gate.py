@@ -27,7 +27,13 @@ LANE = "tools/src/sm_tools/lane"
 LANE_TESTS = "tools/tests/lane"
 CLEAN = "tools/cleanroom"
 CHECK_MUTANTS = FrozenList(("check-mutants", "validate"))
-ADJUSTED_VECTORS_RUN = f"{CLEAN}/adjusted_vectors_run.py"
+CLEAN_SOURCE = "tools/src/sm_tools/cleanroom"
+CLEAN_TESTS = "tools/tests/cleanroom"
+ADJUSTED_VECTORS_RUN = "adjusted-vectors-run"
+ADJUSTED_SOURCES = FrozenList(
+    f"{CLEAN_SOURCE}/{layer}/adjusted_vectors_run.py"
+    for layer in ("core", "shell")
+)
 PREREVIEW = "prereview"
 PYTEST = FrozenList(("-m", "pytest", "-p", "no:cacheprovider", "-q"))
 PROCESS = "tools/src/sm_tools/shell/process.py"
@@ -42,7 +48,6 @@ SCRATCH = f"{LANE}/shell/scratch.py"
 @dataclass(frozen=True, slots=True)
 class Suite:
     subjects: FrozenList[str]
-    runner: FrozenList[str] = field(default_factory=FrozenList[str])
 
 
 SUITES = FrozenOrderedDict({
@@ -52,8 +57,7 @@ SUITES = FrozenOrderedDict({
             f"{LANE}/shell/worktree.py",
             PROCESS,
             SCRATCH,
-        )),
-        PYTEST,
+        ))
     ),
     f"{LANE_TESTS}/test_gate.py": Suite(
         FrozenList((
@@ -63,11 +67,10 @@ SUITES = FrozenOrderedDict({
             f"{LANE}/shell/changes.py",
             PROCESS,
             SCRATCH,
-        )),
-        PYTEST,
+        ))
     ),
-    f"{CLEAN}/test_adjusted_vectors_run.py": Suite(
-        FrozenList((ADJUSTED_VECTORS_RUN, f"{CLEAN}/adjusted_vectors_fixtures"))
+    f"{CLEAN_TESTS}/test_adjusted_vectors_run.py": Suite(
+        FrozenList((*ADJUSTED_SOURCES, f"{CLEAN}/adjusted_vectors_fixtures"))
     ),
 })
 OWN_TESTS = FrozenList((
@@ -82,11 +85,17 @@ OWN_TESTS = FrozenList((
     f"{LANE}/core/__init__.py",
     f"{LANE}/shell/__init__.py",
     f"{LANE_TESTS}/__init__.py",
-    f"{CLEAN}/__init__.py",
+    f"{CLEAN_SOURCE}/__init__.py",
+    f"{CLEAN_SOURCE}/core/__init__.py",
+    f"{CLEAN_SOURCE}/shell/__init__.py",
+    f"{CLEAN_SOURCE}/core/box_relay.py",
+    f"{CLEAN_SOURCE}/shell/box_relay.py",
+    f"{CLEAN_SOURCE}/shell/box.py",
+    f"{CLEAN_TESTS}/__init__.py",
+    f"{CLEAN_TESTS}/test_box_relay.py",
+    f"{CLEAN_TESTS}/test_box.py",
     f"{CLEAN}/adjusted_probe_tests.toml",
     f"{CLEAN}/adjusted_rule_owners",
-    f"{CLEAN}/box_relay.py",
-    f"{CLEAN}/test_box_relay.py",
     f"{CLEAN}/scan_lexicon",
     f"{CLEAN}/scan_allow.txt",
     f"{CLEAN}/allowed_deps.txt",
@@ -120,7 +129,7 @@ FAULTS = FrozenList((
 OWNERS = FrozenList((
     f"{CLEAN}/adjusted_rule_owners",
     f"{CLEAN}/adjusted_probe_tests.toml",
-    ADJUSTED_VECTORS_RUN,
+    *ADJUSTED_SOURCES,
     "scenarios/vectors",
     "docs/behaviours",
     "crates/clean",
@@ -214,16 +223,12 @@ class Homes:
     temp: PurePath
 
 
-def adjusted_command(python: str, *arguments: str) -> FrozenList[str]:
-    return FrozenList((python, "-I", ADJUSTED_VECTORS_RUN, *arguments))
-
-
 def tool_command(python: str, *command: str) -> FrozenList[str]:
     return FrozenList((str(PurePath(python).parent / command[0]), *command[1:]))
 
 
 def suite_command(suite: str, python: str) -> FrozenList[str]:
-    return FrozenList((python, *SUITES[suite].runner, suite))
+    return FrozenList((python, *PYTEST, suite))
 
 
 def unknown_tool_files() -> FrozenList[str]:
@@ -239,6 +244,8 @@ def unknown_tool_files() -> FrozenList[str]:
         LANE,
         LANE_TESTS,
         CLEAN,
+        CLEAN_SOURCE,
+        CLEAN_TESTS,
         *TOOLS_PROJECT,
         *(f":(exclude){path}" for path in known),
     ))
@@ -462,7 +469,6 @@ def always(tools: Tools, changed: Changed) -> FrozenList[Check]:
 
 def selected(tools: Tools, changed: Changed) -> FrozenList[Check]:
     cargo = str(tools.rust / "cargo")
-    python = tools.python
     on_path = FrozenOrderedDict({"PATH": tools.path})
     verify = Check(
         "verify-lib",
@@ -483,13 +489,20 @@ def selected(tools: Tools, changed: Changed) -> FrozenList[Check]:
     owners = Check(
         "owners",
         f"OWNERS FAIL: {ADJUSTED_VECTORS_RUN} --owners",
-        commands(adjusted_command(python, "--owners")),
+        commands(tool_command(tools.python, ADJUSTED_VECTORS_RUN, "--owners")),
         Matching(r"^adjusted_vectors_run: "),
     )
     adjusted = Check(
         "adjusted",
         f"ADJUSTED FAIL: {ADJUSTED_VECTORS_RUN} --missing",
-        commands(adjusted_command(python, "--missing", *changed.domains)),
+        commands(
+            tool_command(
+                tools.python,
+                ADJUSTED_VECTORS_RUN,
+                "--missing",
+                *changed.domains,
+            )
+        ),
         Matching(r" has no adjusted vector$"),
     )
     return FrozenList(

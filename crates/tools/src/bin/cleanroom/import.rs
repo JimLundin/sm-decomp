@@ -1209,22 +1209,35 @@ mod tests {
         assert_eq!(run(&round.repo, &["rev-parse", "HEAD"]), before);
     }
 
-    /// The lane branch of ROUND with the trusted files cargo reads and the clean crates `types`
-    /// and the model, with FILES over them, committed as if `git am` had applied them; and an
-    /// import of it, with the commit before them.
+    /// The lane branch of ROUND with the trusted files cargo reads, the tools project's files
+    /// the relay's `image` runs from, and the clean crates `types` and the model, with FILES
+    /// over them, committed as if `git am` had applied them; and an import of it, with the
+    /// commit before them.
     fn applied(round: &Round, files: &[(&str, &str)]) -> (Import, String) {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .and_then(Path::parent)
             .unwrap();
+        let relay = run(
+            repo,
+            &[
+                "ls-files",
+                "tools/pyproject.toml",
+                "tools/uv.lock",
+                "tools/src/sm_tools/__init__.py",
+                "tools/src/sm_tools/cleanroom",
+            ],
+        );
         for path in [
             "Cargo.toml",
             "Cargo.lock",
             "rust-toolchain.toml",
             "tools/cleanroom/allowed_deps.txt",
             "crates/clean/.clippy.toml",
-            "tools/cleanroom/box_relay.py",
-        ] {
+        ]
+        .into_iter()
+        .chain(relay.lines())
+        {
             write(
                 &round.repo,
                 path,

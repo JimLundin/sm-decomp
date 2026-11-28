@@ -277,3 +277,78 @@ reason = "runs the oracle and openssl with argument lists the core builds, never
 path = "src/sm_tools/oracle/shell/relock.py"
 rule = "subprocess-without-shell-equals-true"
 reason = "runs the oracle and openssl with argument lists the core builds, never through a shell"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/adjusted_vectors_run.py"
+rule = "banned-api"
+reason = "the adjusted vectors' shell reads argv and the environment, runs cargo and each domain's vector test and writes stdout and stderr for the core"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/adjusted_vectors_run.py"
+rule = "print"
+reason = "the adjusted vectors' shell prints each domain's verdicts and the refusals the core makes"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/adjusted_vectors_run.py"
+rule = "suspicious-subprocess-import"
+reason = "runs cargo by name from PATH and the vector test executables cargo built, with arguments the core makes"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/adjusted_vectors_run.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs cargo by name from PATH and the vector test executables cargo built, with arguments the core makes"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box.py"
+rule = "banned-api"
+reason = "the box's first process reads argv, listens on a loopback socket, forwards each connection to the relay's Unix socket on threads, runs the session and writes stderr"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box.py"
+rule = "print"
+reason = "the box's first process prints its usage and the session's passed deadline to stderr"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box.py"
+rule = "suspicious-subprocess-import"
+reason = "runs the session's command line, which cleanroom run gives it, inside the box"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs the session's command line, which cleanroom run gives it, inside the box"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "banned-api"
+reason = "the relay's shell reads argv, stdin and the environment, serves a Unix socket on threads, reads the clock for the key helper and the scan log, runs the scanner, the key helper and docker, and writes stderr"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "print"
+reason = "the relay's shell prints the box's environment, its usage and its refusals"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "suspicious-subprocess-import"
+reason = "runs the cleanroom scanner and docker with fixed arguments, and the settings' apiKeyHelper as Claude Code does"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs the cleanroom scanner and docker with fixed arguments, and the settings' apiKeyHelper as Claude Code does"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "subprocess-popen-with-shell-equals-true"
+reason = "the settings' apiKeyHelper is a shell command, which Claude Code runs through the shell too"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "start-process-with-partial-path"
+reason = "runs docker by name from PATH, as cleanroom run does"
+
+[[exception]]
+path = "src/sm_tools/cleanroom/shell/box_relay.py"
+rule = "unused"
+reason = "http.server and socketserver read the handler's hooks and settings and the server's daemon_threads by name"

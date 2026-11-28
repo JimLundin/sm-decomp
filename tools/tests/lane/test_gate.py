@@ -165,9 +165,11 @@ def fixture(
         + FAKE_PYTHON.format(ran=str(made.ran), name="faults")
     )
     faults.chmod(0o755)
-    _ = (made.repo / "tools/cleanroom/adjusted_vectors_run.py").write_text(
-        FAKE_ADJUSTED.format(ran=str(made.ran))
+    adjusted = made.bin / "adjusted-vectors-run"
+    _ = adjusted.write_text(
+        f"#!{sys.executable}\n" + FAKE_ADJUSTED.format(ran=str(made.ran))
     )
+    adjusted.chmod(0o755)
     _ = made.git("init", "-q", "-b", "lane/test")
     made.commit("Invented tree", "-A")
     return made
@@ -446,7 +448,7 @@ SELECTION_FILES = FrozenList((
     *SUITES,
     *(subject for suite in SUITES.values() for subject in suite.subjects),
     f"{LANE}/shell/land.py",
-    "tools/cleanroom/box_relay.py",
+    "tools/src/sm_tools/cleanroom/shell/box_relay.py",
     f"{LANE}/__init__.py",
     *TOOLS_PROJECT,
 ))
@@ -513,7 +515,7 @@ def test_a_tool_with_its_own_tests_or_a_package_marker_runs_no_suite(
 ) -> None:
     for path in (
         f"{LANE}/shell/land.py",
-        "tools/cleanroom/box_relay.py",
+        "tools/src/sm_tools/cleanroom/shell/box_relay.py",
         f"{LANE}/__init__.py",
     ):
         selection.append(path)
@@ -522,7 +524,9 @@ def test_a_tool_with_its_own_tests_or_a_package_marker_runs_no_suite(
 
 
 def test_an_adjusted_vector_input_runs_its_suite(selection: Selection) -> None:
-    selection.append("tools/cleanroom/adjusted_vectors_run.py")
+    selection.append(
+        "tools/src/sm_tools/cleanroom/core/adjusted_vectors_run.py"
+    )
     assert selected() == ("test_adjusted_vectors_run",)
     selection.append(f"{LANE}/core/changes.py")
     assert selected() == ("test_adjusted_vectors_run", "test_gate")

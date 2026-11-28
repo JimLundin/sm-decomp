@@ -1,4 +1,4 @@
-# Demo: a spec for adjusted_vectors_run.py --missing
+# Demo: a spec for adjusted-vectors-run --missing
 
 ### Fixed
 

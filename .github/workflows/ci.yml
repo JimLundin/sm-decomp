@@ -118,13 +118,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/tools
-      - name: Install the Python tools
-        run: |
-          python3 -m venv "$RUNNER_TEMP/mypy"
-          "$RUNNER_TEMP/mypy/bin/pip" install --only-binary=:all: mypy==2.4.1
-      - name: Type-check the Python tooling
-        run: |
-          "$RUNNER_TEMP/mypy/bin/mypy"
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
@@ -145,10 +138,11 @@ jobs:
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
+      - uses: ./.github/actions/tools
       - name: Require each adjusted vector to fail at the reference rules
         # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
         # answer depends on the value it changes.
-        run: python3 tools/cleanroom/adjusted_vectors_run.py
+        run: uv run --project tools --locked adjusted-vectors-run
 
   engine-size:
     needs: changes
