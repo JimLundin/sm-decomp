@@ -31,7 +31,7 @@ SM_RUST_BIN (the toolchain's bin), SM_GATE_PASSED (where passes are recorded).""
 LANE = "tools/lane"
 CLEAN = "tools/cleanroom"
 SUITES = {
-    f"{LANE}/test_worktree.py": (f"{LANE}/worktree.py",),
+    f"{LANE}/test_worktree.py": (f"{LANE}/worktree.py", "tools/ci/mtimes.py"),
     f"{LANE}/test_gate.py": (f"{LANE}/gate.py", f"{LANE}/changes.py"),
     f"{CLEAN}/test_adjusted_vectors_run.py": (f"{CLEAN}/adjusted_vectors_run.py", f"{CLEAN}/adjusted_vectors_fixtures"),
 }
