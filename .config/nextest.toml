@@ -1,0 +1,3 @@
+[[profile.default.overrides]]
+filter = "package(verify) & test(=report::readme::tests::the_committed_runs_agree_with_the_lock)"
+priority = 100

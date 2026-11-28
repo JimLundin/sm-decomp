@@ -11,8 +11,13 @@ cargo build --profile verify -p tools     # the verifiers: target/verify/tools
 python3 tools/lane/gate.py   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
 ```
 
-The tests are the `cargo test` line of Quality (`.github/workflows/quality.yml`), which names
-every crate but `oracle`.
+The tests are Quality's `cargo nextest run --locked --workspace --no-fail-fast`
+(`.github/workflows/quality.yml`), at the cargo-nextest version the home standards' `tools.env`
+pins. Nextest runs the test binaries and their tests at once across the cores, where `cargo test
+--workspace` runs the same tests one binary after another. `.config/nextest.toml` starts the
+longest test first, verify's check of the committed runs against the lock. The workspace has no
+doctests, which nextest would skip, so a crate that adds one also adds `cargo test --doc` to
+Quality.
 
 The application currently refuses power-on with an explicit missing-production-owner result.
 Building it does not imply playable boot or whole-movie support. Use indexed scoped cases to
