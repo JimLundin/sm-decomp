@@ -2,6 +2,7 @@
 //! Comparison and execution live in `verify::replay`.
 
 mod cache_check;
+mod engine_size;
 mod replay;
 
 use std::io::Write;
@@ -9,9 +10,10 @@ use std::process::ExitCode;
 
 fn usage() -> String {
     format!(
-        "usage: {}\n       {}\n       {}",
+        "usage: {}\n       {}\n       {}\n       {}",
         replay::USAGE,
         cache_check::USAGE,
+        engine_size::USAGE,
         verify::report::USAGE
     )
 }
@@ -19,6 +21,7 @@ fn usage() -> String {
 fn run(args: &[String]) -> Result<String, String> {
     match args {
         [command, rest @ ..] if command == "cache-check" => cache_check::run(rest),
+        [command, rest @ ..] if command == "engine-size" => engine_size::run(rest),
         [command, rest @ ..] if command == "report" => verify::report::run(rest),
         [command, rest @ ..] if command == "replay" => replay::run(rest),
         _ => Err(usage()),

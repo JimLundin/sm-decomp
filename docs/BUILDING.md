@@ -28,6 +28,13 @@ The oracle drives lsnes rr2-beta23 as a separate process and links no emulator c
 `SM_LSNES` to its executable or put it on `PATH` as `lsnes` to capture
 ([ORACLE §2](ORACLE.md#2-toolchain-and-layout)); building and testing the oracle crate need neither.
 
+`tools engine-size target/release/super-metroid scenarios/engine-size.toml` reports the release
+binary's file size, its approximate stripped size and its section sizes against the committed
+baseline, with the largest crates and functions by code bytes. `--write` records the build as the
+new baseline. The Engine size job beside Quality builds `app` in its release profile and puts that
+report in its job summary when the engine's inputs change and on scheduled and dispatched runs.
+No size fails it.
+
 CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
 the README) and verification jobs for the ROM content tests and the complete indexed replay
 baseline. [STATUS](STATUS.md) shows how to run them locally.

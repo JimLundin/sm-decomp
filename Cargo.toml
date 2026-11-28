@@ -13,6 +13,7 @@ publish = false
 
 [workspace.dependencies]
 enum-map = "=3.1.0"
+rustc-demangle = "=0.1.28"
 serde = "=1.0.229"
 serde-big-array = "=0.5.1"
 toml = "=1.2.1"

@@ -2,7 +2,7 @@ name: CI
 
 # The only entry point. Events call reusable proof workflows, then trusted main producers
 # retain recent clean caches after both workflows pass.
-#   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
+#   quality.yml  formatting, lints, tests, the crate rules, the doc links and the engine's size (no ROM).
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
 # Full runs start Quality and verification independently. Manual runs can select one check.
 # Main pushes run Quality only, to refresh its clean build cache. tools/lane/land.py fast-forwards
