@@ -1,7 +1,7 @@
 name: Quality
 
-# Quality: formatting, line endings, lints, tests, the crate plan's rules, the tools' self-tests and
-# the doc links. Adjusted vectors, beside it on its own runner: each Parameter entry's adjusted
+# Quality: formatting, line endings, lints, tests, the crate plan's rules, the tools' tests and the
+# doc links. Adjusted vectors, beside it on its own runner: each Parameter entry's adjusted
 # vector, run at the reference rules (its own job because it is the longest step, so the two
 # finish together rather than one after the other). Engine size, also beside it: the release app's
 # size against its baseline in the job summary.
@@ -68,12 +68,6 @@ jobs:
         run: cargo checks crate-rules
       - name: Hold the clean room's crate rules
         run: cargo cleanroom check
-      - name: Test the clean-room and lane tools
-        # Main pushes, scheduled and dispatched main runs test them all; any other ref only those
-        # whose subject it changes since main (tools/lane/self_tests.sh).
-        run: |
-          if [ "$GITHUB_REF" = refs/heads/main ]; then bash tools/lane/self_tests.sh
-          else bash tools/lane/self_tests.sh origin/main; fi
       - name: Keep every relative Markdown link and anchor valid
         run: cargo checks doc-links
       - name: Keep README.md what tools report --write generates
@@ -107,13 +101,10 @@ jobs:
       - name: Find whether an input of the adjusted vectors changed
         id: inputs
         if: github.event_name == 'pull_request' || github.event_name == 'push'
-        run: |
-          . tools/lane/changes.sh
-          if ! changed_since origin/main docs/behaviours scenarios/vectors crates/clean Cargo.toml Cargo.lock \
-            rust-toolchain.toml 'tools/cleanroom/adjusted_*' \
-            tools/lane/changes.sh .github/workflows/quality.yml .github/workflows/ci.yml; then
-            echo unchanged=true >>"$GITHUB_OUTPUT"
-          fi
+        run: >-
+          python3 tools/lane/changes.py origin/main docs/behaviours scenarios/vectors crates/clean Cargo.toml
+          Cargo.lock rust-toolchain.toml 'tools/cleanroom/adjusted_*' tools/lane/changes.py
+          .github/workflows/quality.yml .github/workflows/ci.yml >>"$GITHUB_OUTPUT"
       - name: Install the repository toolchain
         if: steps.inputs.outputs.unchanged != 'true'
         run: rustup toolchain install
@@ -153,13 +144,10 @@ jobs:
       - name: Find whether an input of the release app changed
         id: inputs
         if: github.event_name == 'pull_request' || github.event_name == 'push'
-        run: |
-          . tools/lane/changes.sh
-          if ! changed_since origin/main crates/app crates/game crates/runtime crates/data crates/clean \
-            Cargo.toml Cargo.lock rust-toolchain.toml 'crates/tools/src/engine_size*' scenarios/engine-size.toml \
-            tools/lane/changes.sh .github/workflows/quality.yml .github/workflows/ci.yml; then
-            echo unchanged=true >>"$GITHUB_OUTPUT"
-          fi
+        run: >-
+          python3 tools/lane/changes.py origin/main crates/app crates/game crates/runtime crates/data crates/clean
+          Cargo.toml Cargo.lock rust-toolchain.toml 'crates/tools/src/engine_size*' scenarios/engine-size.toml
+          tools/lane/changes.py .github/workflows/quality.yml .github/workflows/ci.yml >>"$GITHUB_OUTPUT"
       - name: Install the repository toolchain
         if: steps.inputs.outputs.unchanged != 'true'
         run: rustup toolchain install

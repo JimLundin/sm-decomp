@@ -216,7 +216,7 @@ Model the domain with types, not raw numbers:
 
 Quality and the local source gate use `cargo clippy --locked --workspace --all-targets --no-deps`
 to lint every workspace crate
-under its manifest policy. `tools/lane/gate.sh` also promotes all warnings to errors.
+under its manifest policy. `tools/lane/gate.py` also promotes all warnings to errors.
 Clippy loads `crates/clean/.clippy.toml` for the clean crates and `clippy.toml` for the other crates.
 Fix findings at the source.
 

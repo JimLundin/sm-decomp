@@ -1,11 +1,16 @@
+import contextlib
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import gate
+
 FAKE_PYTHON = """import os, pathlib, sys
 pathlib.Path({ran!r}, "{name}").write_text("")
 print(os.environ.get("GATE_TEST_OUT_{name}", ""))
@@ -20,6 +25,19 @@ if name == "adjusted":
 print(os.environ.get("GATE_TEST_OUT_owners", ""))
 sys.exit(int(os.environ.get("GATE_TEST_STATUS_owners", "0")))
 """
+FAKE_TOOL = f"""#!{sys.executable}
+import os, pathlib, sys
+arguments = " ".join(sys.argv[1:])
+name = next((check for word, check in (("crate-rules", "crate_rules"), ("cleanroom", "clean_room"),
+                                       ("doc-links", "doc_links"), ("test", "verify_lib")) if word in sys.argv[1:]),
+            "{{name}}")
+pathlib.Path({{ran!r}}, name).write_text(arguments)
+if "SM_VECTOR_FILE" in os.environ:
+    pathlib.Path({{ran!r}}, "inherited").write_text(name)
+if os.environ.get("GATE_TEST_OUT_" + name):
+    print(os.environ["GATE_TEST_OUT_" + name])
+sys.exit(int(os.environ.get("GATE_TEST_STATUS_" + name, "0")))
+"""
 CARGO_INCLUDES = ('include = [{ path = "more.toml" }]', '"include" = ["more.toml"]', "'include' = [\"more.toml\"]",
                   '[[include]]\npath = "more.toml"')
 
@@ -33,36 +51,22 @@ class Gate(unittest.TestCase):
         self.ran = self.scratch / "ran"
         for path in (self.repo / "tools/lane", self.repo / "tools/cleanroom", self.repo / "scenarios", self.bin, self.ran):
             path.mkdir(parents=True)
-        for name in ("gate.sh", "changes.sh"):
+        for name in ("gate.py", "changes.py"):
             shutil.copy(HERE / name, self.repo / "tools/lane" / name)
+        (self.repo / ".gitignore").write_text("__pycache__/\n")
         (self.repo / "rust-toolchain.toml").write_text('channel = "0.0.0"\n')
         (self.repo / "scenarios/demo.toml").write_text("Invented vectors.\n")
-        if dash := shutil.which("dash"):
-            self.executable(self.bin / "sh", f'#!/bin/sh\nexec "{dash}" "$@"\n')
         self.fake("cargo", self.bin / "cargo")
         self.fake("deny", self.bin / "cargo-deny")
-        self.fake("self_tests", self.repo / "tools/lane/self_tests.sh")
-        self.fake("verify_lib", self.repo / "tools/lane/run_tests.sh")
         for name, script in (("faults", "tools/check_mutants.py"), ("prereview", "tools/lane/prereview.py")):
             (self.repo / script).write_text(FAKE_PYTHON.format(ran=str(self.ran), name=name))
         (self.repo / "tools/cleanroom/adjusted_vectors_run.py").write_text(FAKE_ADJUSTED.format(ran=str(self.ran)))
         self.git("init", "-q", "-b", "lane/test")
         self.commit("Invented tree", "-A")
 
-    def executable(self, path: Path, text: str) -> None:
-        path.write_text(text)
-        path.chmod(0o755)
-
     def fake(self, name: str, path: Path) -> None:
-        if name == "cargo":
-            name = '$(case "$*" in *crate-rules*) echo crate_rules ;; *doc-links*) echo doc_links ;; *) echo cargo ;; esac)'
-            self.executable(path, f'#!/bin/sh\nname={name}\necho >"{self.ran}/$name"\n'
-                                  'eval "out=\\${GATE_TEST_OUT_$name-} status=\\${GATE_TEST_STATUS_$name:-0}"\n'
-                                  '[ -z "$out" ] || echo "$out"\nexit "$status"\n')
-            return
-        self.executable(path, f'#!/bin/sh\necho >"{self.ran}/{name}"\n'
-                              f'[ -z "${{GATE_TEST_OUT_{name}-}}" ] || echo "$GATE_TEST_OUT_{name}"\n'
-                              f'exit "${{GATE_TEST_STATUS_{name}:-0}}"\n')
+        path.write_text(FAKE_TOOL.format(name=name, ran=str(self.ran)))
+        path.chmod(0o755)
 
     def git(self, *args: str) -> str:
         return subprocess.run(["git", *args], cwd=self.repo, check=True, capture_output=True, text=True).stdout.strip()
@@ -77,9 +81,9 @@ class Gate(unittest.TestCase):
         for record in self.ran.iterdir():
             record.unlink()
         settings = {"PATH": f"{self.bin}:{os.environ['PATH']}", "SM_RUST_BIN": str(self.bin),
-                    "SM_GATE_DIR": str(self.scratch / "gate"), "SM_GATE_PASSED": str(self.scratch / "passed"),
-                    "CARGO_HOME": str(self.scratch / "no-cargo-home"), "SM_GATE_BASE": "HEAD"}
-        result = subprocess.run(["bash", "tools/lane/gate.sh"], cwd=self.repo, env=os.environ | settings | env,
+                    "SM_GATE_PASSED": str(self.scratch / "passed"),
+                    "CARGO_HOME": str(self.scratch / "no-cargo-home"), "SM_GATE_BASE": "HEAD", "SM_GATE_FRESH": ""}
+        result = subprocess.run([sys.executable, "tools/lane/gate.py"], cwd=self.repo, env=os.environ | settings | env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
         return result.returncode, result.stdout
 
@@ -124,6 +128,13 @@ class Gate(unittest.TestCase):
         self.assertNotIn("GATE REUSED: ", out)
         self.assertEqual(self.ran_checks(), ["prereview"])
 
+    def test_no_check_inherits_a_vector_file(self) -> None:
+        (self.repo / "crates").mkdir()
+        (self.repo / "crates/lib.rs").write_text("Invented source.\n")
+        self.passes(SM_VECTOR_FILE=str(self.scratch / "stale.toml"))
+        self.assertIn("verify_lib", self.ran_checks())
+        self.assertNotIn("inherited", self.ran_checks())
+
     def test_other_compiler_flags_run_again(self) -> None:
         self.settled()
         self.assertFalse(self.reuses(RUSTFLAGS="--cap-lints=allow"))
@@ -151,10 +162,6 @@ class Gate(unittest.TestCase):
         (self.scratch / "rustfmt.toml").unlink()
         self.settled()
         self.assertFalse(self.reuses(CLEANROOM_PY="/elsewhere/python"))
-        self.settled()
-        self.fake("shellcheck", self.bin / "shellcheck")
-        self.assertFalse(self.reuses(), "a gate with shellcheck installed reused a pass made without it")
-        (self.bin / "shellcheck").unlink()
 
     def test_a_cargo_configuration_outside_the_tree_runs_again(self) -> None:
         self.settled()
@@ -229,6 +236,23 @@ class Gate(unittest.TestCase):
         self.assertIn("invented link failure", out.splitlines())
         self.assertIn("invented decode error", out.splitlines())
 
+    def test_a_failing_check_shows_its_finding_and_the_tools_tests_run_with_verify(self) -> None:
+        (self.repo / "crates").mkdir()
+        (self.repo / "crates/lib.rs").write_text("Invented source.\n")
+        status, out = self.gate(GATE_TEST_STATUS_crate_rules="3", GATE_TEST_OUT_crate_rules="rule 5: invented hit")
+        self.assertEqual(status, 1, out)
+        self.assertEqual(out.splitlines()[:2], ["CRATE RULES FAIL", "rule 5: invented hit"])
+        self.assertEqual((self.ran / "verify_lib").read_text(), "test -p tools")
+
+    def test_the_clean_room_and_crate_rules_both_report_their_findings(self) -> None:
+        status, out = self.gate(GATE_TEST_STATUS_clean_room="1", GATE_TEST_OUT_clean_room="invented clean-room hit",
+                                GATE_TEST_STATUS_crate_rules="1", GATE_TEST_OUT_crate_rules="rule 4: invented hit")
+        self.assertEqual(status, 1, out)
+        lines = out.splitlines()
+        for failure, finding in (("CLEAN ROOM FAIL", "invented clean-room hit"),
+                                 ("CRATE RULES FAIL", "rule 4: invented hit")):
+            self.assertEqual(lines[lines.index(failure) + 1], finding)
+
     def test_a_changed_domain_gates_its_adjusted_vectors(self) -> None:
         (self.repo / "docs/behaviours").mkdir(parents=True)
         (self.repo / "scenarios/vectors").mkdir()
@@ -240,6 +264,67 @@ class Gate(unittest.TestCase):
         self.assertNotEqual(status, 0, out)
         self.assertEqual((self.ran / "adjusted").read_text(), "--missing demo\n")
         self.assertIn("adjusted: demo: Entry has no adjusted vector", out.splitlines())
+
+
+class SelfTestSelection(unittest.TestCase):
+    def setUp(self) -> None:
+        self.repo = Path(self.enterContext(tempfile.TemporaryDirectory(
+            dir=os.environ.get("TEMP") or os.environ.get("TMPDIR"))))
+        for path in (*gate.SUITES, *(subject for subjects in gate.SUITES.values() for subject in subjects),
+                     "tools/lane/land.py", "tools/cleanroom/box_relay.py", "tools/lane/__init__.py"):
+            (self.repo / path).parent.mkdir(parents=True, exist_ok=True)
+            (self.repo / path).write_text("invented\n")
+        self.git("init", "-q")
+        for setting in ("user.name=Fixture", "user.email=fixture@example.invalid", "commit.gpgsign=false",
+                        "status.showUntrackedFiles=no"):
+            self.git("config", *setting.split("="))
+        self.git("add", "-A")
+        self.git("commit", "-qm", "base")
+        self.base = self.git("rev-parse", "HEAD")
+        self.enterContext(contextlib.chdir(self.repo))
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(["git", *args], cwd=self.repo, check=True, capture_output=True, text=True).stdout.strip()
+
+    def append(self, path: str) -> None:
+        with (self.repo / path).open("a") as text:
+            text.write("edited\n")
+
+    def selected(self, base: str = "HEAD") -> list[str]:
+        return sorted(Path(suite).stem for suite in gate.self_tests(base))
+
+    def test_an_unchanged_branch_runs_nothing(self) -> None:
+        self.assertEqual(self.selected(), [])
+
+    def test_a_subject_edit_runs_its_suite_staged_unstaged_or_committed(self) -> None:
+        self.append("tools/lane/gate.py")
+        self.assertEqual(self.selected(), ["test_gate"])
+        self.git("add", "tools/lane/gate.py")
+        self.assertEqual(self.selected(), ["test_gate"])
+        self.git("commit", "-qm", "Edit the gate")
+        self.assertEqual(self.selected(), [])
+        self.assertEqual(self.selected(self.base), ["test_gate"])
+
+    def test_a_tool_with_its_own_tests_or_a_package_marker_runs_no_suite(self) -> None:
+        for path in ("tools/lane/land.py", "tools/cleanroom/box_relay.py", "tools/lane/__init__.py"):
+            with self.subTest(path=path):
+                self.append(path)
+                self.assertEqual(self.selected(), [])
+                self.git("restore", "--", path)
+
+    def test_an_adjusted_vector_input_runs_its_suite(self) -> None:
+        self.append("tools/cleanroom/adjusted_vectors_run.py")
+        self.assertEqual(self.selected(), ["test_adjusted_vectors_run"])
+        self.append("tools/lane/changes.py")
+        self.assertEqual(self.selected(), ["test_adjusted_vectors_run", "test_gate"])
+
+    def test_an_unknown_tool_file_runs_every_suite(self) -> None:
+        self.git("mv", "tools/lane/gate.py", "tools/lane/renamed.py")
+        self.assertEqual(self.selected(), sorted(Path(suite).stem for suite in gate.SUITES))
+
+    def test_a_subject_moved_out_of_its_folder_still_runs_its_suite(self) -> None:
+        self.git("mv", "tools/lane/worktree.py", "removed-worktree.py")
+        self.assertEqual(self.selected(), ["test_worktree"])
 
 
 if __name__ == "__main__":

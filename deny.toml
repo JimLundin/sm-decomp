@@ -1,5 +1,5 @@
 # The crate plan's dependency rules (ARCHITECTURE §4.2, D1; crates/README.md), held by
-# `cargo deny check bans` in Quality and, where cargo-deny is on PATH, by tools/lane/gate.sh.
+# `cargo deny check bans` in Quality and, where cargo-deny is on PATH, by tools/lane/gate.py.
 #
 # Each workspace crate is denied to every crate but its wrappers: the crates the table in
 # crates/README.md lets depend on it directly. A crate reached any other way, directly or

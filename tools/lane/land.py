@@ -123,8 +123,8 @@ def identity(repo: Path, revisions: str) -> set[str]:
 def pick(landing: Landing) -> None:
     worktree = landing.worktree
     if not worktree.exists():
-        add = [str(HERE / "worktree.sh"), "add", landing.branch, str(worktree), base(landing)]
-        if subprocess.run(["bash", *add], cwd=landing.repo, check=False).returncode != 0:
+        add = [sys.executable, str(HERE / "worktree.py"), "add", landing.branch, str(worktree), base(landing)]
+        if subprocess.run(add, cwd=landing.repo, check=False).returncode != 0:
             raise Failed(f"could not add the landing worktree {worktree}")
     elif tip(worktree, "CHERRY_PICK_HEAD"):
         raise Failed(f"finish or abort the cherry-pick in {worktree}, then run this again", 2)
@@ -298,7 +298,7 @@ def main(argv: Sequence[str]) -> int:
     title = None if args.dry_run else args.title
     landing = Landing(repo, args.name, tuple(args.lanes), args.after, title, args.body_file)
     try:
-        land(landing, Gh(), ["bash", "tools/lane/gate.sh"], lambda: time.sleep(120))
+        land(landing, Gh(), [sys.executable, "tools/lane/gate.py"], lambda: time.sleep(120))
     except Failed as error:
         print(error, file=sys.stderr)
         return error.code

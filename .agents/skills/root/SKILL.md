@@ -132,7 +132,7 @@ lands on `main` only by fast-forward, onto a head whose CI passed: Quality, cont
    reading every hunk, run `git cherry-pick --continue`, then the same command again. It skips
    a commit that `main` already has, as the same patch, under the same author, date and subject,
    or as a pick that changes nothing.
-2. It runs `tools/lane/gate.sh` there. A gate that already passed the same tree over the same
+2. It runs `tools/lane/gate.py` there. A gate that already passed the same tree over the same
    base with the same tools, a lane's included, prints `GATE REUSED` and runs nothing, and the
    landing may rest on that pass (Jim, 2026-11-25). The PR's CI still runs every check.
 3. It pushes `land/NAME`, opens its PR, retrying `gh pr create`, and stops when no PR opens. It

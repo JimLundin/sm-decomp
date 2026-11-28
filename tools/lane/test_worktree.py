@@ -1,10 +1,11 @@
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-WORKTREE = Path(__file__).resolve().with_name("worktree.sh")
+WORKTREE = Path(__file__).resolve().with_name("worktree.py")
 IDENTITY = {"GIT_AUTHOR_NAME": "worktree-check", "GIT_AUTHOR_EMAIL": "worktree-check@localhost",
             "GIT_COMMITTER_NAME": "worktree-check", "GIT_COMMITTER_EMAIL": "worktree-check@localhost"}
 LOCKS = (".cargo-lock", ".cargo-build-lock", ".cargo-artifact-lock")
@@ -54,7 +55,7 @@ class WorktreeAdd(unittest.TestCase):
                               capture_output=True, text=True).stdout.strip()
 
     def add(self, lane: str, base: str, **env: str) -> str:
-        return subprocess.run(["bash", str(WORKTREE), "add", lane, str(self.tmp / lane), base], cwd=self.repo,
+        return subprocess.run([sys.executable, str(WORKTREE), "add", lane, str(self.tmp / lane), base], cwd=self.repo,
                               env=self.env | env, check=True, capture_output=True, text=True).stdout
 
     def test_an_unbuilt_seed_starts_cold(self) -> None:

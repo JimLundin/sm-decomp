@@ -8,7 +8,7 @@ Credits and licences for the tools and data the project uses are [below](#credit
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
-bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
+python3 tools/lane/gate.py   # fmt, clippy, crate rules, doc links; tests and fault manifest validation for what changed
 ```
 
 The tests are the `cargo test` line of Quality (`.github/workflows/quality.yml`), which names
@@ -102,10 +102,10 @@ CI runs on Ubuntu 24.04. The following setup also supports local builds and repl
 
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
-(`build-essential`), git, `jq`, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
+(`build-essential`), git, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
 `SM_PY` overrides it), the [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
 `claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally
-`shellcheck` and `cargo-deny` 0.22.0, which the gate runs where it is installed.
+`cargo-deny` 0.22.0, which the gate runs where it is installed.
 
 **Folders.** The tools keep their scratch, the lanes' worktrees and the seed under `$TEMP`
 (else `$TMPDIR`, else `/tmp`). `/tmp` is often a RAM file system and is cleared on reboot, and the
@@ -133,7 +133,7 @@ Then point the variables of `verify.yml`'s witness environment at it: `SM_CACHE`
 `SM_SEARCH_PACKET` at `native/native-search-inputs-v1`, `SM_TOUCH_PACKET` at
 `native/native-search-order-v1`, and the rest as that list names them.
 
-**The seed** is the warm build new lanes start from: `bash tools/lane/worktree.sh seed` once, and
+**The seed** is the warm build new lanes start from: `python3 tools/lane/worktree.py seed` once, and
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
 **The clean room.** `cargo cleanroom export` writes exports under `$CLEANROOM_ROOT` (default
@@ -163,15 +163,15 @@ request, so it never enters the box.
 
 ### First run on the box
 
-1. `bash tools/lane/gate.sh` prints `GATE OK`, and `bash tools/lane/self_tests.sh` (all of them,
-   with no base) prints `SELF TESTS OK`.
-2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.sh` plays them
+1. `python3 tools/lane/gate.py` prints `GATE OK`, and `python3 -m unittest discover -s tools/lane`
+   passes.
+2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.py` plays them
    all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree has no `rom/`).
    Each `PLAYED` line shows the observed and reviewed counts and outcomes. The test passes
    when every run holds:
 
    ```sh
-   SM_ROM=$PWD/rom/sm.smc bash tools/lane/played.sh
+   SM_ROM=$PWD/rom/sm.smc python3 tools/lane/played.py
    ```
 
 ## The README

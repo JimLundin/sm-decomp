@@ -104,7 +104,7 @@ vectors' heights were the game's too. `$TEMP/collab/camera-spec-r5/` holds the c
   (their camera and results unchanged, her y and the seen y moved; C-wrap gains a third row,
   `SC`, which it doesn't read), then the twins, named and described in `names.toml`.
 - `vecrun.py` (round 4's) agrees with 80 of 80; the camera model at main agrees with 80 of 80
-  (`run_tests.sh world_camera`).
+  (`cargo test -p world_camera`).
 
 **The dump's screen table** (camera round 3). `camera-spec/dump` wrote each of the table's 50
 bytes in decimal with no separator, and `model.py` read it a digit a screen. Inside the room the
