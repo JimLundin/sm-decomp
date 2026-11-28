@@ -76,7 +76,7 @@ jobs:
       - name: Keep README.md what tools report --write generates
         run: cargo run --locked -q -p tools --bin tools -- report --check
       - name: Test the shared and parallel replay entrypoints
-        run: bash tools/ci/replay_test.sh && bash tools/ci/replay_parallel_test.sh
+        run: python3 -m unittest discover -s tools/ci -p test_replay_entrypoints.py
       - name: Test exact historical replay claim accounting
         run: python3 tools/check_replay_transition_test.py
       - name: Test the planted-fault runner

@@ -36,8 +36,8 @@ suite "$clean/launch_test.sh" "${launch[@]}" "${brief[@]}" "${source_checks[@]}"
 suite "$clean/launch_config_test.sh" "${launch[@]}" "${brief[@]}" "$clean/export.sh" "$lane/worktree.sh"
 suite "$clean/code_check_test.sh" "${source_checks[@]}" "${runner[@]}" "$clean"/{code_check_fixtures,vector_runner_test.py}
 suite "$clean/canary_test.sh" "$clean"/{canary.sh,canary_plant_test.sh,lib.sh,allowlist.txt}
-suite "$lane/worktree_test.sh" "$lane/worktree.sh"
-suite "$lane/gate_test.sh" "$lane/gate.sh" "$clean/lib.sh"
+suite "$lane/test_worktree.py" "$lane/worktree.sh"
+suite "$lane/test_gate.py" "$lane/gate.sh" "$clean/lib.sh"
 suite "$clean/blind_copy_test.sh" "$clean"/{blind_copy.sh,lib.sh,allowlist.txt} .agents/skills/blind-reviewer/SKILL.md
 suite "$clean/adjusted_vectors_test.sh" "$clean"/{adjusted_vectors.sh,adjusted_vectors_fixtures}
 # The fixture changes shared types and requires the importer to name world_blocks when it breaks.
@@ -45,7 +45,7 @@ suite "$clean/import_check_test.sh" "${scanner[@]}" "${source_checks[@]}" \
   "$clean"/{import.sh,export.sh,export_workspace.py,lib.sh,allowlist.txt} crates/clean/.clippy.toml clippy.toml \
   crates/clean/{types,world_blocks,import_test} docs/cleanroom/DESIGN.md .agents/skills/implementer/SKILL.md \
   docs/behaviours/import-test.md docs/behaviours/import-test.decode.md scenarios/vectors/import-test.toml
-suite "$lane/self_tests_test.sh"
+suite "$lane/test_self_tests.py"
 
 # These operator entrypoints have no self-test in this suite. New or unclassified tooling
 # files (including this selector and its change detector) run every suite. The landing tool,
@@ -66,7 +66,8 @@ slots=$(nproc 2>/dev/null || echo 2)
 for t in "${tests[@]}"; do
   while [ "$(jobs -rp | wc -l)" -ge "$slots" ]; do wait -n; done
   name=${t//\//_}
-  { bash "$t" >"$out/$name.out" 2>&1; echo $? >"$out/$name.status"; } &
+  case $t in *.py) run=("${SM_PY:-python3}" "$t") ;; *) run=(bash "$t") ;; esac
+  { "${run[@]}" >"$out/$name.out" 2>&1; echo $? >"$out/$name.status"; } &
 done
 wait
 bad=0
