@@ -104,8 +104,8 @@ the room's other kinds (slopes, spikes, doors, ...) are samus-movement's and the
 - `Inert`: a cell that reacts to nothing and takes no place (`BlocksMarkedNothing`);
 - `Other`: a cell of another part (a door's cap, an item, a station, quicksand). This part keeps
   its mark; its part answers it, and its starts come here as that part's requests. A block marked
-  `Other` may also be met as crumble blocks by a blast, as a station's access cells and a save
-  station are (`BlocksMarkedNothing`).
+  `Other` may also be met as crumble blocks by the hits, as a station's access cells and a save
+  station are by a blast (`BlocksMarkedNothing`).
 
 A mark that names a reaction always names one of the room's reactions: the room's loading
 refuses a room with a mark that names none (R2), so this domain never meets one. A reacting cell's
@@ -203,14 +203,14 @@ is `none`. A row holds:
 
 - **her touches:** either none of them asks the cell to react, so she meets it by its body; or the
   touches that do, which are every touch, the touches by one way (`Down`, `Left`, `Look`, `Right` or
-  `Up`), or the touches by any way while she moves in one of a list of ways (dashing, shinesparking,
-  screw attacking). With every place taken, a touch of a cell whose touches ask it to react lets
-  her through (`FullPlacesLetHerThrough`). Otherwise a touch the row names acts, and any other
-  meets the cell by its body.
+  `Up`), or the touches by any way while she is in one of a list of motions (dashing,
+  shinesparking, screw attacking). With every place taken, a touch of a cell whose row's touches
+  ask it to react lets her through, by any way and in any motion (`FullPlacesLetHerThrough`).
+  Otherwise a touch the row names acts, and any other meets the cell by its body.
 - **its hits:** a list, each naming what reaches the cell (some of `Beam`, `Bomb`, `Grapple`,
   `Missile`, `PowerBomb` and `SuperMissile`), the bodies it acts on (a block and reacting air, or a
-  block only) and its act. A hit acts by the first item of the list that names what reaches the
-  cell and the cell's body; a hit no item names does nothing.
+  block only) and its act. A hit acts by the first item of the list that names both what reaches
+  the cell and the cell's body; a hit that no item names in both does nothing.
 - **the act** of each touch and hit that acts. In a family's row it is a start: which script runs
   (`broken`, `touched` or `revealed`), from its first step or past its leading `Sound` step if it
   has one, and how the cell changes at once. It stops reacting (a block becomes `Solid`, reacting
@@ -219,6 +219,11 @@ is `none`. A row holds:
   block meets it as the start leaves it. In a row for the cells marked `Nothing` the act is always
   the same: the request takes the highest free place until this frame's run, and a touch that
   takes one meets the cell as `Air`.
+
+A cell marked `Other` and met as crumble blocks follows the hits of the row for the cells marked
+`Nothing` met as crumble blocks, as that row has them; the row's touches never govern it, for a
+touch of a cell marked `Other` is its part's, with places free or none. No other row governs a
+cell marked `Other`.
 
 The reference rows name five starts: **breaks**, the `broken` script from its first step, the
 cell stopping reacting; **breaks quietly**, the same past its leading `Sound` step; **shatters**,
@@ -534,11 +539,13 @@ names; "the whole look" is that reaction's (§2).
 - summary: a cell marked `Nothing` reacts to nothing, but what would ask a block of its family to
   react still takes a place until the run, and a touch of one passes through; a cell marked
   `Inert` takes none; a cell marked `Other` is its part's, but for the place its mark may hold
-  when she is inside it, and for a blast on one met as crumble blocks.
+  when she is inside it, and for the hits of the row for cells marked `Nothing` met as crumble
+  blocks, which govern one met as them (at the reference rows, a blast on a block).
 - params: none.
 - switch: parameter (the three rows of §2 for the cells marked `Nothing`, one for each family they
-  are met as: the touches and the hits that take a place; the reference rules hold the rows this
-  entry states) [C-adj-nothing-shot-touch].
+  are met as: the touches and the hits that take a place; the crumble row's hits also govern a
+  cell marked `Other` met as crumble blocks; the reference rules hold the rows this entry states)
+  [C-adj-nothing-shot-touch].
 - A touch of a cell marked `Nothing`, met as crumble or bomb blocks, by any way → `Air`, and the
   touch takes the highest free place until this frame's run [C-nothing-touch,
   C-nothing-bomb-touch]
@@ -572,15 +579,20 @@ names; "the whole look" is that reaction's (§2).
 
 ### FullPlacesLetHerThrough
 - kind: quirk.
-- summary: with every place taken, a reacting block lets her through when she touches it.
+- summary: with every place taken, a cell whose row's touches ask it to react lets her through
+  when she touches it.
 - params: none.
 - switch: none.
-- A touch of a crumble, speed or bomb block, or of a cell marked `Nothing` met as crumble or bomb
-  blocks, with every place taken → `Air` [C-place-full, C-place-full-side, C-place-full-speed,
-  C-place-last]
+- A touch of a cell whose row's touches ask it to react (§2), by any way and in any motion, with
+  every place taken → `Air`, and nothing starts or takes a place; at the reference rows these
+  are the crumble, speed and bomb blocks and the cells marked `Nothing` met as crumble or bomb
+  blocks [C-place-full, C-place-full-side, C-place-full-speed, C-place-last,
+  C-adj-shot-touch-full]
 - So with 40 reactions running (a room full of crumbling bridges and doors), she falls through a
-  crumble block or walks through a speed block without breaking it, while a shot, super missile or
-  power bomb block still stops her (C-shot-touch-full).
+  crumble block or walks through a speed block without breaking it, while a block whose row asks
+  nothing of her touches still stops her: at the reference rows a shot, super missile or power
+  bomb block (C-shot-touch-full), but a shot block whose row breaks it at a touch lets her
+  through (C-adj-shot-touch-full).
 - checked: constructed.
 
 ---

@@ -29,11 +29,13 @@
 #   name, and a field of a row it doesn't give, is the reference one; a field it gives replaces
 #   that field whole.
 #   - touch: "ByBody" (no touch asks the cell to react), or { when, start }: when is "Any" (every
-#     touch), a way ("Down", "Left", "Look", "Right" or "Up") or a list of how she moves
-#     ("Dashing", "Shinesparking", "ScrewAttacking"; a touch by any way while she moves in one).
+#     touch), a way ("Down", "Left", "Look", "Right" or "Up") or a list of motions ("Dashing",
+#     "Shinesparking", "ScrewAttacking"; a touch by any way while she is in one). With every
+#     place taken, a touch of a cell whose touch is not "ByBody" lets her through.
 #   - hits: a list, each { by, on, start }: by, a list of what reaches the cell, named as a hit's
 #     by; on, "Both" (a block and reacting air) or "Block" (a block only). A hit acts by the
-#     first item that names it and the cell's body; one no item names does nothing.
+#     first item that names both it and the cell's body; one that no item names in both does
+#     nothing.
 #   - start: { script ("broken", "touched" or "revealed"), from ("First", or "PastSound": past
 #     its leading Sound step, if it has one), change ("Plain": a block becomes Solid, reacting
 #     air Air; "Air"; or "AsItIs": left as it is until the script's show) }. A row of
@@ -63,7 +65,7 @@
 #   "StandInDown"); look ("310", the picture's index in hex, ":x", ":y" or ":xy" when flipped);
 #   reaction (a reaction's name, one of the [reaction.*] tables above), mark ("Nothing", "Scroll",
 #   "Inert" or "Other", for a mark that isn't a reaction; with met_as = "Bomb", "Crumble" or
-#   "Shot" for "Nothing", and met_as = "Crumble" for an "Other" a blast meets as crumble blocks) or
+#   "Shot" for "Nothing", and met_as = "Crumble" for an "Other" that the hits of marked_nothing.crumble govern) or
 #   reach (a stand-in's, in cells); inside = "HoldsPlace" for a cell whose mark holds a place
 #   when she is inside it: it holds one only while the cell is reacting air, and a cell that is
 #   a block keeps the key; a scroll cell never has it (RoomStart). A cell's mark is given
@@ -2900,6 +2902,9 @@ sounds = []
 #   C-bomb-by-bomb).
 # - C-adj-shot-touch (ShotBlocks, a shot block broken by any touch): walking into one breaks it
 #   (the reference: C-shot-touch, it stops her and nothing starts).
+# - C-adj-shot-touch-full (ShotBlocks with FullPlacesLetHerThrough, the same row with every
+#   place taken): she walks through it and nothing starts (the reference: C-shot-touch-full, it
+#   stops her).
 # - C-adj-super-by-missile (SuperMissileBlocks, a missile breaks one as a super missile does): a
 #   missile breaks it (the reference: C-super-by-missile, nothing starts).
 # - C-adj-pb-by-bomb (PowerBombBlocks, a bomb's blast breaks one as a power bomb's does): a bomb
@@ -3017,6 +3022,32 @@ places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
 answers = ["Solid"]
+written = []
+sounds = []
+
+[[vector]]
+# shot blocks break to any touch, with every place taken: she walks through one and it doesn't start
+id = "C-adj-shot-touch-full"
+source = "constructed"
+entries = ["ShotBlocks", "FullPlacesLetHerThrough"]
+rules = { shot = { touch = { when = "Any", start = { script = "broken", from = "First", change = "Plain" } } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+]
+places = [
+]
+other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+[vector.frame]
+requests = [{ touch = [4, 7], way = "Right" }]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "350", reaction = "shot" },
+]
+places = [
+]
+other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+answers = ["Air"]
 written = []
 sounds = []
 

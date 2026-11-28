@@ -1,17 +1,17 @@
 # Reviewed ownership of vector-format rule subtrees by Parameter entry.
 # Remove the whole subtree to restore reference semantics at the vector adapter.
 [owners]
-# BombBlocks: docs/behaviours/world-blocks.md:418
+# BombBlocks: docs/behaviours/world-blocks.md:423
 bomb = ["BombBlocks"]
-# CrumbleBlocks: docs/behaviours/world-blocks.md:388; BombsReveal: docs/behaviours/world-blocks.md:496
+# CrumbleBlocks: docs/behaviours/world-blocks.md:393; BombsReveal: docs/behaviours/world-blocks.md:501
 crumble = ["CrumbleBlocks", "BombsReveal"]
-# PowerBombBlocks: docs/behaviours/world-blocks.md:478
+# PowerBombBlocks: docs/behaviours/world-blocks.md:483
 power_bomb = ["PowerBombBlocks"]
-# ShotBlocks: docs/behaviours/world-blocks.md:446
+# ShotBlocks: docs/behaviours/world-blocks.md:451
 shot = ["ShotBlocks"]
-# SpeedBlocks: docs/behaviours/world-blocks.md:405; BombsReveal: docs/behaviours/world-blocks.md:496
+# SpeedBlocks: docs/behaviours/world-blocks.md:410; BombsReveal: docs/behaviours/world-blocks.md:501
 speed = ["SpeedBlocks", "BombsReveal"]
-# SuperMissileBlocks: docs/behaviours/world-blocks.md:461
+# SuperMissileBlocks: docs/behaviours/world-blocks.md:466
 super_missile = ["SuperMissileBlocks"]
-# BlocksMarkedNothing: docs/behaviours/world-blocks.md:532
+# BlocksMarkedNothing: docs/behaviours/world-blocks.md:537
 marked_nothing = ["BlocksMarkedNothing"]
