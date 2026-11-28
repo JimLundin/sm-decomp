@@ -350,7 +350,7 @@ crates; the crate rules, `cleanroom test` in the box and the import run it. Test
   `cleanroom check`'s L2 exempts the same values.
 - **Gates** are hard ceilings on the clean crates.
   - **G5, the clean room's clippy configuration** (`crates/clean/.clippy.toml`, which
-    `cleanroom export` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
+    `cleanroom export` copies to the same place and the trunk's gate and Quality run on its
     clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
     deep (`excessive_nesting`, denied in `[workspace.lints]` and off wherever no threshold is
     set), cognitive complexity at most 15. `too-many-arguments-threshold` stays at 7: a lower

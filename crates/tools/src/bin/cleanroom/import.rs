@@ -651,7 +651,7 @@ impl Import {
         unpack(
             &branch,
             &head,
-            &["crates/clean", "rust-toolchain.toml"],
+            &["crates/clean", rules::VECTOR_FILE, "rust-toolchain.toml"],
             dir,
         )?;
         let mut packages = Vec::new();
@@ -807,6 +807,7 @@ mod tests {
         for path in [
             "crates/clean/world_hazel/src/lib.rs",
             "crates/clean/samus_movement/src/lib.rs",
+            "crates/vector_file/src/lib.rs",
             "docs/behaviours/world-haze.md",
             "Cargo.toml",
             ".cargo/config.toml",

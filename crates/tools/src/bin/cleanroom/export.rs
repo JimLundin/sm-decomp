@@ -49,8 +49,11 @@ impl Export<'_> {
         let mut entries = vec![
             "crates/clean/types".to_owned(),
             model,
+            rules::VECTOR_FILE.to_owned(),
             format!("scenarios/vectors/{}.toml", self.domain),
             "rust-toolchain.toml".to_owned(),
+            "clippy.toml".to_owned(),
+            "crates/clean/.clippy.toml".to_owned(),
         ];
         entries.extend(match self.role {
             Role::Implementer => vec![
@@ -163,14 +166,9 @@ impl Export<'_> {
             dest,
             &model,
             &format!("The {} model, built from its behaviour spec", self.domain),
-            "[dependencies]\ntypes = { path = \"../types\" }\nenum-map.workspace = true\n\n[dev-dependencies]\nserde = { workspace = true, features = [\"derive\"] }\ntoml.workspace = true\n",
+            "[dependencies]\ntypes = { path = \"../types\" }\nenum-map.workspace = true\n\n[dev-dependencies]\nserde = { workspace = true, features = [\"derive\"] }\ntoml.workspace = true\nvector_file = { path = \"../../vector_file\" }\n",
         )?;
         write(dest, ".gitignore", "/target\n/vendor\n")?;
-        write(
-            dest,
-            "clippy.toml",
-            &output(host_git(repo).args(["show", &format!("{sha}:crates/clean/.clippy.toml")]))?,
-        )?;
         vendor(repo, sha, dest)
     }
 }

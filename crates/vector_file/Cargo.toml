@@ -1,0 +1,13 @@
+[package]
+name = "vector_file"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "A clean model's vector file, read by its vector test when the test runs"
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true

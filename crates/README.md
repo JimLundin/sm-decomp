@@ -16,6 +16,7 @@ The rebuild's crates, as planned in
 | `tools` | `tools replay` delegates to `verify::replay`. Oracle capture has its own `oracle` binary. | `verify`, `oracle`, `runtime`, `import` |
 | `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. `canonical::model` holds a clean model's State, which derives serde's traits, by the same codec (MODEL §1 decision 29). | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
+| `vector_file` | a clean model's vector file, which its vector test reads when it runs: the file `SM_VECTOR_FILE` names, or else `scenarios/vectors/<domain>.toml` (MODEL §4). Only the clean models' tests depend on it. | none |
 | `types` | the clean room's shared domain types (`crates/clean/types`, MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
 | `samus_movement` | Samus moving through the world (`crates/clean/samus_movement`), built from its spec in the clean room, and its catalogue. | `types` |
 | `world_blocks` | the blocks that break and come back, and the scroll cells (`crates/clean/world_blocks`): the places reactions run in, their scripts, the starts by family and the room's stand-ins, built from its spec in the clean room, and its catalogue. | `types` |

@@ -2,7 +2,7 @@
 resolver = "3"
 members = [
     # The rebuild (docs/architecture/ARCHITECTURE.md §4, crates/README.md).
-    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean/*", "crates/data", "crates/game", "crates/import", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
+    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean/*", "crates/data", "crates/game", "crates/import", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/vector_file", "crates/verify",
 ]
 
 [workspace.package]

@@ -3,6 +3,8 @@ use std::path::{Component, Path, PathBuf};
 
 use serde::Deserialize;
 
+use super::VECTOR_FILE;
+
 #[derive(Deserialize)]
 #[serde(untagged)]
 pub enum Dep {
@@ -447,10 +449,20 @@ impl Checked<'_> {
             return;
         }
         if let Some(path) = &table.path {
-            if !normal(&base.join(path)).is_some_and(|p| self.allowed_paths.contains(&p)) {
+            let allowed = normal(&base.join(path)).is_some_and(|p| {
+                self.allowed_paths.contains(&p)
+                    || (kind == "dev"
+                        && name == "vector_file"
+                        && table.package.is_none()
+                        && p == Path::new(VECTOR_FILE))
+            });
+            if !allowed {
                 out.push((
                     "dep-path",
-                    format!("{name}: path {path} resolves outside the clean crates"),
+                    format!(
+                        "{name}: path {path} is neither a clean crate nor {VECTOR_FILE} \
+                         as an unrenamed test dependency"
+                    ),
                 ));
             }
             return;

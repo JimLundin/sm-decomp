@@ -14,6 +14,7 @@ use manifest::{Approval, Checked, WorkspaceFile, normal};
 use source::Include;
 
 pub const DOCTEST_GUARD: &str = "#![cfg(not(doctest))]\n";
+pub const VECTOR_FILE: &str = "crates/vector_file";
 
 pub struct Finding {
     pub path: String,

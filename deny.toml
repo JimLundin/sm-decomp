@@ -5,9 +5,10 @@
 # crates/README.md lets depend on it directly. A crate reached any other way, directly or
 # through another package, fails, so the engine (data, game, runtime, app) reaching verify,
 # oracle or tools, game and runtime reaching each other or import, and a clean crate reaching
-# anything but `types` all fail here. A new workspace crate takes its line in the same change
-# that adds it: until then any crate may depend on it. The registry crates are not constrained
-# here; tools/cleanroom/allowed_deps.txt and `cleanroom check` hold the clean crates' ones.
+# anything but `types` and, for its tests, `vector_file` all fail here. A new workspace crate
+# takes its line in the same change that adds it: until then any crate may depend on it. The
+# registry crates are not constrained here; tools/cleanroom/allowed_deps.txt and
+# `cleanroom check` hold the clean crates' ones.
 
 [graph]
 all-features = true
@@ -63,6 +64,7 @@ deny = [
   { crate = "screens_blackout", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "screens_zebes", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "save_files", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "vector_file", wrappers = ["audio_transport", "boss_ceres_ridley", "enemy_interactions", "game_random", "game_time", "interface_hud", "run_progress", "samus_appearance", "samus_health", "samus_movement", "save_files", "screens_arrival", "screens_blackout", "screens_boot", "screens_discovery", "screens_explosion", "screens_file_select", "screens_flashback", "screens_flight", "screens_intro", "screens_options", "screens_playback", "screens_title", "screens_zebes", "weapons_projectiles", "world_blocks", "world_camera", "world_doors", "world_haze", "world_quake"], reason = "MODEL §4: the clean models' vector tests read their vector files through it" },
 ]
 
 # Only these versions may run a build script. check_crate_rules.sh requires a crates.io source.
