@@ -2914,6 +2914,10 @@ sounds = []
 # - C-adj-nothing-shot-touch (BlocksMarkedNothing, a touch of a cell marked Nothing met as shot
 #   blocks holds a place): she passes it and the crumble she lands on takes the place below
 #   (the reference: C-nothing-shot-touch, it stops her and the crumble takes 39).
+# - C-adj-other-crumble-by-beam (BlocksMarkedNothing, the hits of a cell marked Nothing met as
+#   crumble blocks are a beam's): a beam on each of two cells marked Other met as them holds a
+#   place and a bomb's blast holds none, so the crumble she lands on takes 37 (the reference:
+#   C-other-blast, the beams hold none, the blast holds 39 and the crumble takes 38).
 
 [[vector]]
 # crumble blocks break to a move right only: the one she walks into starts in 39, and the one she lands on stops her and doesn't start
@@ -3152,5 +3156,39 @@ places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Air", "Solid"]
+written = []
+sounds = []
+
+[[vector]]
+# the hits of a cell marked Nothing met as crumble blocks are a beam's: a beam on each of two blocks marked Other met as them holds 39 and 38 until the run, a bomb's blast holds none, and the crumble she lands on takes 37
+id = "C-adj-other-crumble-by-beam"
+source = "constructed"
+entries = ["BlocksMarkedNothing"]
+rules = { marked_nothing = { crumble = { hits = [{ by = ["Beam"], on = "Block" }] } } }
+[vector.before]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "3B2:x", mark = "Other", met_as = "Crumble" },
+  { at = [4, 8], kind = "Block", look = "310", reaction = "crumble" },
+]
+places = [
+]
+[vector.frame]
+requests = [
+  { hit = [4, 7], by = "Beam" },
+  { hit = [5, 7], by = "Beam" },
+  { hit = [5, 7], by = "Bomb" },
+  { touch = [4, 8], way = "Down" },
+]
+[vector.after]
+cells = [
+  { at = [4, 7], kind = "Block", look = "3B2", mark = "Other", met_as = "Crumble" },
+  { at = [5, 7], kind = "Block", look = "3B2:x", mark = "Other", met_as = "Crumble" },
+  { at = [4, 8], kind = "Solid", look = "310", reaction = "crumble" },
+]
+places = [
+  { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
+]
+answers = ["Solid"]
 written = []
 sounds = []

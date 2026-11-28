@@ -545,7 +545,7 @@ names; "the whole look" is that reaction's (§2).
 - switch: parameter (the three rows of §2 for the cells marked `Nothing`, one for each family they
   are met as: the touches and the hits that take a place; the crumble row's hits also govern a
   cell marked `Other` met as crumble blocks; the reference rules hold the rows this entry states)
-  [C-adj-nothing-shot-touch].
+  [C-adj-nothing-shot-touch, C-adj-other-crumble-by-beam].
 - A touch of a cell marked `Nothing`, met as crumble or bomb blocks, by any way → `Air`, and the
   touch takes the highest free place until this frame's run [C-nothing-touch,
   C-nothing-bomb-touch]
