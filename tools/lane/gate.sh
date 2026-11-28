@@ -32,6 +32,7 @@ git rev-parse --verify -q "$BASE^{commit}" >/dev/null || {
   echo "GATE: the base $BASE is not a commit here; set SM_GATE_BASE to the one the branch builds on"
   exit 2
 }
+unset SM_VECTOR_FILE  # The vector tests read the committed files, which the key holds.
 R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}"
 # The dependency rules (deny.toml). cargo-deny is a prebuilt binary, found on PATH or in cargo's
 # bin directory; where it is missing the gate says so and CI's Quality holds the rules.

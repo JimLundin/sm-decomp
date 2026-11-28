@@ -15,9 +15,9 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict, artifacts,
-                                  built_with, candidates, check_domains, check_domain_owners,
-                                  completed_test, main, padded, parameter_entries, patched_runs,
-                                  probe, prove, probe_test, rule_owners, test_target)
+                                  candidates, check_domains, check_domain_owners, completed_test,
+                                  file_runs, main, parameter_entries, passes, probe, prove,
+                                  probe_test, rule_owners, test_target)
 
 SPEC = """\
 ### Fixed
@@ -59,14 +59,17 @@ def model(step_rule: str = "step", id_ends: str = "") -> Callable[[str], bool]:
     return run
 
 
-def fake_test(directory: Path, text: bytes, receipt: Path, step_rule: str = "step") -> Path:
-    """An executable that holds TEXT verbatim, as a vector test built with it does, and answers
-    as libtest does for `model`, appending its arguments and the vectors it read to RECEIPT."""
+def fake_test(directory: Path, committed: Path, receipt: Path, step_rule: str = "step") -> Path:
+    """An executable that reads the file SM_VECTOR_FILE names, or else COMMITTED, as a vector
+    test does, and answers as libtest does for `model`, appending its arguments and the vectors
+    it read to RECEIPT."""
     executable = directory / "vectors-fake"
     executable.write_bytes(
         f"#!{sys.executable}\n".encode()
-        + b"import sys, tomllib\nTEXT = rb\'\'\'" + text + b"\'\'\'\n"
-        + f"""rows = tomllib.loads(TEXT.decode())["vector"]
+        + f"""import os, sys, tomllib
+with open(os.environ.get("SM_VECTOR_FILE", {str(committed)!r}), "rb") as vectors:
+    TEXT = vectors.read()
+rows = tomllib.loads(TEXT.decode())["vector"]
 with open({str(receipt)!r}, "a") as receipt:
     receipt.write(repr((sys.argv[1:], TEXT.decode().rstrip())) + "\\n")
 if "rules" not in rows[-1] and {step_rule!r} == "crash":
@@ -224,7 +227,7 @@ class AdjustedVectors(unittest.TestCase):
         path.write_bytes(text.encode())
         return path
 
-    def test_one_build_per_domain_answers_every_probe_of_its_vectors(self) -> None:
+    def test_one_build_answers_every_probe_of_its_vectors(self) -> None:
         text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
                       'before = 2\nafter = 5\n') + '[[dependent]]\nbase = "adjusted"\n'
         with tempfile.TemporaryDirectory() as directory:
@@ -238,15 +241,14 @@ class AdjustedVectors(unittest.TestCase):
                 builds.append(path.read_bytes())
                 built = root / f"build-{len(builds)}"
                 built.mkdir()
-                return {"demo": fake_test(built, path.read_bytes(), receipt)}
+                return {"demo": fake_test(built, path, receipt)}
 
             with patch("adjusted_vectors_run.build", side_effect=build), \
                     contextlib.redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(check_domains(root, ["demo"]), 0)
             self.assertIn("adjusted: demo: Step depends on its rules in adjusted", output.getvalue())
             self.assertEqual(path.read_bytes(), text.encode())
-            self.assertEqual(builds[0], text.encode())
-            self.assertEqual(builds[1].rstrip(b"\n"), text.encode().rstrip(b"\n"))
+            self.assertEqual(builds, [text.encode()])
             runs = [eval(line) for line in receipt.read_text().splitlines()]
             self.assertEqual([arguments for arguments, _ in runs],
                              [[]] + [["direct", "--exact"]] * 3)
@@ -255,43 +257,23 @@ class AdjustedVectors(unittest.TestCase):
             self.assertEqual(["rules" in tomllib.loads(t)["vector"][1] for _, t in runs],
                              [True, True, False, True])
 
-    def test_patched_runs_write_every_copy_and_refuse_a_test_without_one(self) -> None:
+    def test_a_probe_reaches_the_test_through_its_own_file(self) -> None:
+        committed = vector('id = "a"\nbefore = 2\nafter = 3\n')
+        probed = vector('id = "b"\nbefore = 2\nafter = 4\n')
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            built = padded('[[vector]]\nid = "a"\nbefore = 2\nafter = 3\n', 64)
-            executable = root / "image"
-            executable.write_bytes(b"head" + built + b"middle" + built + b"tail")
-            executable.chmod(0o555)
+            path = root / "demo.toml"
+            path.write_text(committed, encoding="utf-8")
+            receipt = root / "receipt"
+            executable = fake_test(root, path, receipt)
             scratch = root / "scratch"
             scratch.mkdir()
-            with patch("adjusted_vectors_run.passes", return_value=True) as passes:
-                run = patched_runs(executable, built, root, None, scratch)
-                self.assertTrue(run('[[vector]]\nid = "b"\n'))
-                probe_bytes = padded('[[vector]]\nid = "b"\n', 64)
-                self.assertEqual((scratch / "image").read_bytes(),
-                                 b"head" + probe_bytes + b"middle" + probe_bytes + b"tail")
-                self.assertEqual(passes.call_args.args, (scratch / "image", root, None))
-                with self.assertRaises(CannotProbe):
-                    run("x" * 65)
-            self.assertEqual(executable.read_bytes(), b"head" + built + b"middle" + built + b"tail")
-            with self.assertRaises(CannotProbe):
-                patched_runs(executable, padded("other", 64), root, None, scratch)
-
-    def test_the_build_files_are_restored_whatever_happens(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "demo.toml"
-            path.write_bytes(b"committed\n")
-            seen: list[bytes] = []
-
-            def build(_root: Path, _crates: list[str]) -> dict[str, Path]:
-                seen.append(path.read_bytes())
-                raise CannotProbe("the vector tests don't build")
-
-            with patch("adjusted_vectors_run.build", side_effect=build), \
-                    self.assertRaises(CannotProbe):
-                built_with(Path(directory), {path: b"padded\n\n"}, ["demo"])
-            self.assertEqual(seen, [b"padded\n\n"])
-            self.assertEqual(path.read_bytes(), b"committed\n")
+            with patch.dict("os.environ", {"SM_VECTOR_FILE": str(root / "stale.toml")}):
+                self.assertTrue(passes(executable, root, None))
+                self.assertFalse(file_runs(executable, root, None, scratch)(probed))
+            runs = [eval(line) for line in receipt.read_text().splitlines()]
+            self.assertEqual([t for _, t in runs], [committed.rstrip(), probed.rstrip()])
+            self.assertEqual(path.read_text(encoding="utf-8"), committed)
 
     def test_cargo_messages_name_each_executable_and_its_package(self) -> None:
         output = b"\n".join([
@@ -481,7 +463,7 @@ class AdjustedVectors(unittest.TestCase):
             def build(_root: Path, _crates: list[str]) -> dict[str, Path]:
                 built = root / f"build-{len(list(root.glob('build-*')))}"
                 built.mkdir()
-                return {"demo": fake_test(built, path.read_bytes(), receipt, "crash")}
+                return {"demo": fake_test(built, path, receipt, "crash")}
 
             with patch("adjusted_vectors_run.build", side_effect=build):
                 with self.assertRaises(CannotProbe):
