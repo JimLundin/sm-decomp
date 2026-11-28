@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import fcntl
 import functools
 import hashlib
 import json
@@ -9,7 +10,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import time
 import tomllib
 from collections.abc import Callable, Generator, Mapping, Sequence
@@ -23,6 +23,8 @@ from typing import Any, TypeVar
 PLAYED = "played "
 PLAYED_LOCK = "scenarios/locks/lsnes.toml"
 PLAYED_RUNNER = "crates/verify/src/replay/played.rs"
+SELECTABLE = Path("target/selectable-faults")
+SELECTOR_VERSION = "0.8.0"
 
 @dataclass(frozen=True)
 class Fault:
@@ -67,15 +69,6 @@ class FrozenInputs:
     def capture(cls, root: Path, listing: Callable[[Path], set[Path]] | None = None) -> "FrozenInputs":
         paths = (listing or input_paths)(root)
         return cls({path: input_bytes(path) for path in paths}, listing)
-
-    def copy_to(self, root: Path, tree: Path) -> None:
-        for path, original in self.files.items():
-            if original is not None:
-                copied = tree / path.relative_to(root)
-                copied.parent.mkdir(parents=True, exist_ok=True)
-                copied.write_bytes(original)
-                shutil.copymode(path, copied)
-        print(self.check(root), flush=True)
 
     def check(self, root: Path) -> str:
         started = time.perf_counter()
@@ -312,27 +305,49 @@ def replay_dependencies(tree: Path, *, locked: bool) -> set[str]:
     return {line.removesuffix(" (*)") for line in output.splitlines()}
 
 
-def plant_selectors(tree: Path, faults: Sequence[Fault], callers: Mapping[str, Sequence[str]]) -> None:
+def selectable_sources(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
+                       callers: Mapping[str, Sequence[str]]) -> dict[Path, bytes]:
     from selectable_faults import Replacement, instrument_file
+    files = {path.relative_to(root): data for path, data in inputs.files.items() if data is not None}
     edits: dict[str, list[tuple[int, Fault]]] = {}
     for ordinal, fault in enumerate(faults, 1):
         edits.setdefault(fault.file, []).append((ordinal, fault))
     for file in dict.fromkeys((*edits, *callers)):
-        source = source_path(tree, file)
-        original = source.read_bytes()
+        source = source_path(root, file).relative_to(root)
+        original = files[source]
         changes = [
             Replacement(ordinal, require_unique_anchor(fault, original), fault.before.encode(), fault.after.encode())
             for ordinal, fault in edits.get(file, ())
         ]
-        source.write_bytes(instrument_file(original, changes, callers.get(file, ())))
-    normal = replay_dependencies(tree, locked=True)
+        files[source] = instrument_file(original, changes, callers.get(file, ()))
+    for crate in sorted({Path(file).parts[1] for file in edits}):
+        manifest = Path("crates", crate, "Cargo.toml")
+        files[manifest] += f'\n[dependencies.cargo-gamma-rt]\nversion = "={SELECTOR_VERSION}"\n'.encode()
+    return files
+
+
+def sync_tree(root: Path, tree: Path, files: Mapping[Path, bytes]) -> None:
+    for directory, _, names in os.walk(tree, topdown=False):
+        folder = Path(directory)
+        for name in names:
+            if (folder / name).relative_to(tree) not in files:
+                (folder / name).unlink()
+        if folder != tree and not any(folder.iterdir()):
+            folder.rmdir()
+    for relative, data in files.items():
+        copied = tree / relative
+        if copied.is_symlink() or not copied.is_file() or copied.read_bytes() != data:
+            copied.unlink(missing_ok=True)
+            copied.parent.mkdir(parents=True, exist_ok=True)
+            copied.write_bytes(data)
+        shutil.copymode(root / relative, copied)
+
+
+def check_selector_dependencies(root: Path, tree: Path) -> None:
+    normal = {package.replace(f"({root}/", f"({tree}/") for package in replay_dependencies(root, locked=True)}
     if any(package.startswith("cargo-gamma-rt v") for package in normal):
         raise ValueError("normal replay already links the fault selector")
-    version = "0.8.0"
-    for crate in sorted({Path(file).parts[1] for file in edits}):
-        with (tree / "crates" / crate / "Cargo.toml").open("a", encoding="utf-8", newline="\n") as manifest:
-            manifest.write(f'\n[dependencies.cargo-gamma-rt]\nversion = "={version}"\n')
-    if replay_dependencies(tree, locked=False) != normal | {f"cargo-gamma-rt v{version} []"}:
+    if replay_dependencies(tree, locked=False) != normal | {f"cargo-gamma-rt v{SELECTOR_VERSION} []"}:
         raise ValueError("the selectable build changed another dependency or feature")
 
 
@@ -417,13 +432,14 @@ def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
     for name in ("SM_ROM", "SM_CACHE", "SM_AUDIO_NATIVE"):
         if value := env.get(name):
             env[name] = str((root / value).resolve())
-    target = root / "target"
-    target.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=target, prefix="selectable-faults-") as directory:
-        scratch = Path(directory)
+    scratch = root / SELECTABLE
+    scratch.mkdir(parents=True, exist_ok=True)
+    with (scratch / "lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
         tree = scratch / "source"
-        inputs.copy_to(root, tree)
-        plant_selectors(tree, faults, callers)
+        sync_tree(root, tree, selectable_sources(root, inputs, faults, callers))
+        print(inputs.check(root), flush=True)
+        check_selector_dependencies(root, tree)
         frozen = FrozenInputs.capture(tree, scratch_files)
         executable = build_executable(tree, target=scratch / "build")
         print(frozen.check(tree), flush=True)

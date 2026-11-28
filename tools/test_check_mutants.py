@@ -2,6 +2,7 @@ import tempfile
 from contextlib import redirect_stdout
 from io import StringIO
 import json
+import os
 import subprocess
 import tomllib
 import unittest
@@ -10,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 import check_mutants
 from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, detected, receipt,
-                           replay_selectable, scratch_files, source_path, validate_coverage)
+                           replay_selectable, scratch_files, source_path, sync_tree, validate_coverage)
 
 def outcome(status: str, case: str = "audio/example") -> str:
     text = f'format = 1\n[[cases]]\nid = "{case}"\nobservation_sha256 = "original"\n[cases.outcome]\nstatus = "{status}"\n'
@@ -164,6 +165,27 @@ class MutantCheck(unittest.TestCase):
             untracked.unlink()
             with self.assertRaises(ValueError):
                 inputs.check(root)
+
+    def test_synced_tree_rewrites_only_changed_files_and_drops_the_rest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root, tree = Path(directory, "root"), Path(directory, "tree")
+            (root / "crates/kept").mkdir(parents=True)
+            (root / "crates/kept/lib.rs").write_bytes(b"kept\n")
+            (root / "patched.rs").write_bytes(b"original\n")
+            first = {Path("crates/kept/lib.rs"): b"kept\n", Path("patched.rs"): b"fault 1\n",
+                     Path("crates/gone/lib.rs"): b"gone\n"}
+            (root / "crates/gone").mkdir()
+            (root / "crates/gone/lib.rs").write_bytes(b"gone\n")
+            sync_tree(root, tree, first)
+            built = 1_000_000_000
+            for path in scratch_files(tree):
+                os.utime(path, ns=(built, built))
+            sync_tree(root, tree, {Path("crates/kept/lib.rs"): b"kept\n", Path("patched.rs"): b"fault 2\n"})
+            self.assertEqual(scratch_files(tree), {tree / "crates/kept/lib.rs", tree / "patched.rs"})
+            self.assertFalse((tree / "crates/gone").exists())
+            self.assertEqual((tree / "crates/kept/lib.rs").stat().st_mtime_ns, built)
+            self.assertGreater((tree / "patched.rs").stat().st_mtime_ns, built)
+            self.assertEqual((tree / "patched.rs").read_bytes(), b"fault 2\n")
 
     def exercise(self, result: tuple[int, str], restored: tuple[int, str] | None = None) -> bool:
         fault = Fault("zero", "audio", "source.rs", "before", "after", "audio/example")

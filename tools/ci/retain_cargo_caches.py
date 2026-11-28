@@ -98,7 +98,7 @@ def main() -> None:
     toolchain, lock = (hashlib.sha256(hashlib.sha256(Path(name).read_bytes()).digest()).hexdigest()
                        for name in ("rust-toolchain.toml", "Cargo.lock"))
     prefixes = [f"cargo-{job}-Linux-{toolchain}-{lock}-"
-                for job in ("quality", "engine-size", "replay")]
+                for job in ("quality", "engine-size", "replay", "faults")]
     Api(os.environ["GITHUB_REPOSITORY"], os.environ["GH_TOKEN"]).prune(prefixes, revision)
 
 

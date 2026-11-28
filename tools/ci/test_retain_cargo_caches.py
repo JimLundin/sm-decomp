@@ -101,7 +101,7 @@ class RetentionTests(unittest.TestCase):
             main()
         self.assertEqual(prune.call_args.args,
                          ([f"cargo-{job}-Linux-{expected}-{expected}-"
-                           for job in ("quality", "engine-size", "replay")], CURRENT))
+                           for job in ("quality", "engine-size", "replay", "faults")], CURRENT))
 
     def test_consumer_cannot_prune(self):
         with patch.dict(os.environ, {"GITHUB_REF": "refs/pull/1/merge", "GITHUB_EVENT_NAME": "pull_request"}), \

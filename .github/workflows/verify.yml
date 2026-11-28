@@ -127,6 +127,20 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      # As the replay job's build: main publishes, other refs restore. tools/check_mutants.py
+      # rewrites only the copied sources that differ, so Cargo rebuilds what changed.
+      - name: Restore the cargo registry and the selectable build
+        if: github.ref != 'refs/heads/main'
+        uses: actions/cache/restore@v4
+        with:
+          path: &selectable_cache |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/selectable-faults
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - *rom
       - *replay_data
       - name: Install the Rust parser for selectable replay faults
@@ -140,3 +154,9 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
             "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
+      - name: Save the cargo registry and the selectable build
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: *selectable_cache
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
