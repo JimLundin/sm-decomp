@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict, artifacts,
                                   candidates, check_domains, check_domain_owners, completed_test,
                                   file_runs, main, parameter_entries, passes, probe, prove,
-                                  probe_test, rule_owners, test_target)
+                                  probe_test, rule_owners, test_target as target_of)
 
 SPEC = """\
 ### Fixed
@@ -482,12 +482,12 @@ class AdjustedVectors(unittest.TestCase):
             root = Path(directory)
             tests = root / "crates/clean/demo/tests"
             tests.mkdir(parents=True)
-            self.assertEqual(test_target("demo", root), ("--lib",))
+            self.assertEqual(target_of("demo", root), ("--lib",))
             # An unrelated integration target doesn't replace a unit-based adapter.
             (tests / "other.rs").write_text("// Invented target.\n", encoding="utf-8")
-            self.assertEqual(test_target("demo", root), ("--lib",))
+            self.assertEqual(target_of("demo", root), ("--lib",))
             (tests / "vectors.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-            self.assertEqual(test_target("demo", root), ("--test", "vectors"))
+            self.assertEqual(target_of("demo", root), ("--test", "vectors"))
 
     def test_nested_vectors_select_the_integration_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -495,7 +495,7 @@ class AdjustedVectors(unittest.TestCase):
             tests = root / "crates/clean/demo/tests/vectors"
             tests.mkdir(parents=True)
             (tests / "main.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
-            self.assertEqual(test_target("demo", root), ("--test", "vectors"))
+            self.assertEqual(target_of("demo", root), ("--test", "vectors"))
 
     def test_owners_selects_the_check_and_its_domains(self) -> None:
         for arguments, owners, probed in ((["--owners"], ["alpha", "beta"], []),

@@ -1,0 +1,54 @@
+[project]
+name = "sm-tools"
+version = "0.1.0"
+description = "The repository's tools: the lane, CI, oracle, clean-room and fault tools"
+requires-python = ">=3.15"
+dependencies = [
+    "ordered",
+    "tree-sitter==0.25.2",
+    "tree-sitter-rust==0.24.2",
+]
+
+[project.scripts]
+run-tests = "sm_tools.ci.shell.run_tests:main"
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff", "basedpyright", "vulture", "import-linter",
+    "pytest", "coverage", "hypothesis",
+    "mutmut; sys_platform != 'win32'",
+]
+
+[tool.uv]
+required-version = ">=0.13"
+
+[tool.uv.sources]
+ordered = { git = "https://github.com/JimLundin/standards", subdirectory = "python/ordered", rev = "462b13bc8f1997bd5ebb801b90c607fd0a39121b" }
+
+[tool.importlinter]
+root_package = "sm_tools"
+
+[[tool.importlinter.contracts]]
+name = "core is the bottom layer"
+type = "layers"
+containers = ["sm_tools.ci"]
+layers = ["(__main__)", "shell", "core"]
+exhaustive = true
+
+[tool.pytest]
+strict = true
+testpaths = ["."]
+addopts = ["--hypothesis-profile=fast", "-m", "not slow"]
+markers = ["slow: runs only in the full profile"]
+
+[tool.mutmut]
+source_paths = ["src/"]
+pytest_add_cli_args = ["--hypothesis-profile=mutation"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]

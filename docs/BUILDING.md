@@ -19,6 +19,11 @@ longest test first, verify's check of the committed runs against the lock. The w
 doctests, which nextest would skip, so a crate that adds one also adds `cargo test --doc` to
 the rust job.
 
+The Python tools are one uv project in `tools/`, on the Python the
+[standards](https://github.com/JimLundin/standards)' `tools.env` pins, which uv installs.
+`tools/pyproject.toml` names each tool's command, and `uv run --locked --project tools run-tests`
+runs their tests with pytest, each test module in its own process.
+
 The application currently refuses power-on with an explicit missing-production-owner result.
 Building it does not imply playable boot or whole-movie support. Use indexed scoped cases to
 exercise available production entries; [STATUS](STATUS.md) gives selection and baseline commands.
@@ -108,7 +113,8 @@ CI runs on Ubuntu 24.04. The following setup also supports local builds and repl
 
 **Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
 components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
-(`build-essential`), git, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
+(`build-essential`), git, [uv](https://docs.astral.sh/uv/) at the standards' `UV` pin,
+Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
 `SM_PY` overrides the one `tools/ci/replay.py` runs its helpers with), the
 [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
 `claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally

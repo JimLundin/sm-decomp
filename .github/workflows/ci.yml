@@ -116,6 +116,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: ./.github/actions/tools
       - name: Install the Python tools
         run: |
           python3 -m venv "$RUNNER_TEMP/fault-tools"
@@ -129,7 +130,8 @@ jobs:
       - name: Build the tools binary the oracle tests run
         run: cargo build --locked -p tools --bin tools
       - name: Test the tools
-        run: SM_TOOLS="$PWD/target/debug/tools" "$RUNNER_TEMP/fault-tools/bin/python" tools/run_tests.py
+        # Every test pytest collects in the tools project, one module per process across the cores.
+        run: SM_TOOLS="$PWD/target/debug/tools" uv run --project tools --locked run-tests
 
   adjusted:
     needs: changes

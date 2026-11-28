@@ -1,0 +1,23 @@
+name: Python tools
+description: >-
+  Checks out the standards at the commit tools/pyproject.toml pins `ordered` to, and installs the
+  uv and Python its tools.env pins, with uv's cache keyed by tools/uv.lock. Every later step gets
+  the pins in its environment and the standards' checkout as STANDARDS.
+runs:
+  using: composite
+  steps:
+    - name: Check out the pinned standards
+      shell: bash
+      run: |
+        rev=$(python3 -c 'import tomllib; print(tomllib.load(open("tools/pyproject.toml", "rb"))["tool"]["uv"]["sources"]["ordered"]["rev"])')
+        git init -q "$RUNNER_TEMP/standards"
+        git -C "$RUNNER_TEMP/standards" fetch -q --depth 1 https://github.com/JimLundin/standards "$rev"
+        git -C "$RUNNER_TEMP/standards" checkout -q FETCH_HEAD
+        grep -v '^#' "$RUNNER_TEMP/standards/tools.env" >>"$GITHUB_ENV"
+        echo "STANDARDS=$RUNNER_TEMP/standards" >>"$GITHUB_ENV"
+    - uses: astral-sh/setup-uv@v6
+      with:
+        version: ${{ env.UV }}
+        python-version: ${{ env.PYTHON }}
+        enable-cache: true
+        cache-dependency-glob: tools/uv.lock

@@ -1,0 +1,24 @@
+[[exception]]
+path = "src/sm_tools/ci/shell/run_tests.py"
+rule = "banned-api"
+reason = "the test runner's shell reads argv and the clock, runs pytest in a process per module and writes stdout for the core"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/run_tests.py"
+rule = "print"
+reason = "the test runner's shell prints each module's result and the summary the core makes"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/run_tests.py"
+rule = "suspicious-subprocess-import"
+reason = "runs this interpreter's pytest with fixed arguments, one process per test module"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/run_tests.py"
+rule = "subprocess-without-shell-equals-true"
+reason = "runs this interpreter's pytest with fixed arguments, one process per test module"
+
+[[exception]]
+path = "src/sm_tools/ci/shell/results_plugin.py"
+rule = "unused"
+reason = "pytest calls a plugin's hooks by name"
