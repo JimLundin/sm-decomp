@@ -50,6 +50,8 @@ TRANSITION = ["python", "tools/check_replay_transition.py"]
 CHECK = ["tools", "replay", "check", "scenarios/replay/index.toml"]
 INPUTS = ["--baseline", "scenarios/replay/baseline.toml", "--cache", "recorded-cache", "--rom", "player-rom",
           "--native", "recorded-native", "--bundle", ""]
+MERGE = ["tools", "replay", "merge", "scenarios/replay/index.toml", "--all",
+         "--baseline", "scenarios/replay/baseline.toml"]
 
 
 class ReplayEntrypoints(unittest.TestCase):
@@ -110,6 +112,9 @@ class ParallelEntrypoint(ReplayEntrypoints):
         for call in calls:
             if call[:3] == CHECK[:3]:
                 self.assertEqual(call[:len(CHECK) + 1 + len(INPUTS)], [*CHECK, "--all", *INPUTS])
+        merges = [call for call in calls if call[:3] == MERGE[:3]]
+        self.assertEqual(len(merges), 1)
+        self.assertEqual(merges[0][:merges[0].index("--receipt")], MERGE)
 
     def test_a_failed_shard_fails_before_merging(self) -> None:
         result = self.run_parallel(FAILING_SHARD="1/3")

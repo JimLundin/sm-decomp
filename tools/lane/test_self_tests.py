@@ -87,6 +87,11 @@ class SelfTestSelection(unittest.TestCase):
         self.append("tools/lane/land.py")
         self.assertEqual(self.run_selector("HEAD"), [])
 
+    def test_a_package_marker_runs_no_suite(self) -> None:
+        self.append("tools/lane/__init__.py")
+        self.append("tools/cleanroom/__init__.py")
+        self.assertEqual(self.run_selector("HEAD"), [])
+
     def test_an_import_input_runs_the_import_check(self) -> None:
         self.append("tools/cleanroom/import.sh")
         self.assertEqual(self.run_selector("HEAD"), ["import_check"])
