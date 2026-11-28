@@ -9,8 +9,6 @@ const fn room_seed(room_index: u32, room: u32, movie_frame: u64) -> RoomSeed {
         room_index,
         room: Room(room),
         movie_frame,
-        next_input_index: None,
-        movie_subframe_index: None,
         nmi: None,
     }
 }

@@ -2,1574 +2,1180 @@
 room_index = 1
 room = "DF45"
 movie_frame = 8538
-next_input_index = 8538
-movie_subframe_index = 8537
 nmi = 7840
 
 [[seed]]
 room_index = 2
 room = "DF8D"
 movie_frame = 8950
-next_input_index = 8950
-movie_subframe_index = 8949
 nmi = 8195
 
 [[seed]]
 room_index = 3
 room = "DFD7"
 movie_frame = 9232
-next_input_index = 9232
-movie_subframe_index = 9231
 nmi = 8420
 
 [[seed]]
 room_index = 4
 room = "E021"
 movie_frame = 9577
-next_input_index = 9577
-movie_subframe_index = 9576
 nmi = 8707
 
 [[seed]]
 room_index = 5
 room = "E06B"
 movie_frame = 9841
-next_input_index = 9841
-movie_subframe_index = 9840
 nmi = 8914
 
 [[seed]]
 room_index = 6
 room = "E0B5"
 movie_frame = 10162
-next_input_index = 10162
-movie_subframe_index = 10161
 nmi = 9178
 
 [[seed]]
 room_index = 7
 room = "E06B"
 movie_frame = 11939
-next_input_index = 11939
-movie_subframe_index = 11938
 nmi = 10893
 
 [[seed]]
 room_index = 8
 room = "E021"
 movie_frame = 12198
-next_input_index = 12198
-movie_subframe_index = 12197
 nmi = 11094
 
 [[seed]]
 room_index = 9
 room = "DFD7"
 movie_frame = 12462
-next_input_index = 12462
-movie_subframe_index = 12461
 nmi = 11300
 
 [[seed]]
 room_index = 10
 room = "DF8D"
 movie_frame = 12793
-next_input_index = 12793
-movie_subframe_index = 12792
 nmi = 11574
 
 [[seed]]
 room_index = 11
 room = "DF45"
 movie_frame = 13072
-next_input_index = 13072
-movie_subframe_index = 13071
 nmi = 11793
 
 [[seed]]
 room_index = 12
 room = "91F8"
 movie_frame = 15428
-next_input_index = 15428
-movie_subframe_index = 15427
 nmi = 13955
 
 [[seed]]
 room_index = 13
 room = "92FD"
 movie_frame = 16459
-next_input_index = 16459
-movie_subframe_index = 16458
 nmi = 14915
 
 [[seed]]
 room_index = 14
 room = "96BA"
 movie_frame = 17058
-next_input_index = 17058
-movie_subframe_index = 17057
 nmi = 15444
 
 [[seed]]
 room_index = 15
 room = "975C"
 movie_frame = 17443
-next_input_index = 17443
-movie_subframe_index = 17442
 nmi = 15770
 
 [[seed]]
 room_index = 16
 room = "97B5"
 movie_frame = 17829
-next_input_index = 17829
-movie_subframe_index = 17828
 nmi = 16099
 
 [[seed]]
 room_index = 17
 room = "9E9F"
 movie_frame = 18109
-next_input_index = 18109
-movie_subframe_index = 18108
 nmi = 16317
 
 [[seed]]
 room_index = 18
 room = "9F11"
 movie_frame = 19514
-next_input_index = 19514
-movie_subframe_index = 19513
 nmi = 17268
 
 [[seed]]
 room_index = 19
 room = "A107"
 movie_frame = 19809
-next_input_index = 19809
-movie_subframe_index = 19808
 nmi = 17507
 
 [[seed]]
 room_index = 20
 room = "9F11"
 movie_frame = 20432
-next_input_index = 20432
-movie_subframe_index = 20431
 nmi = 17680
 
 [[seed]]
 room_index = 21
 room = "9E9F"
 movie_frame = 20732
-next_input_index = 20732
-movie_subframe_index = 20731
 nmi = 17912
 
 [[seed]]
 room_index = 22
 room = "97B5"
 movie_frame = 21476
-next_input_index = 21476
-movie_subframe_index = 21475
 nmi = 18601
 
 [[seed]]
 room_index = 23
 room = "975C"
 movie_frame = 21833
-next_input_index = 21833
-movie_subframe_index = 21832
 nmi = 18902
 
 [[seed]]
 room_index = 24
 room = "96BA"
 movie_frame = 22226
-next_input_index = 22226
-movie_subframe_index = 22225
 nmi = 19224
 
 [[seed]]
 room_index = 25
 room = "92FD"
 movie_frame = 22983
-next_input_index = 22983
-movie_subframe_index = 22982
 nmi = 19911
 
 [[seed]]
 room_index = 26
 room = "9879"
 movie_frame = 23687
-next_input_index = 23687
-movie_subframe_index = 23686
 nmi = 20556
 
 [[seed]]
 room_index = 27
 room = "9804"
 movie_frame = 24080
-next_input_index = 24080
-movie_subframe_index = 24079
 nmi = 20892
 
 [[seed]]
 room_index = 28
 room = "9879"
 movie_frame = 24802
-next_input_index = 24802
-movie_subframe_index = 24801
 nmi = 21153
 
 [[seed]]
 room_index = 29
 room = "92FD"
 movie_frame = 25135
-next_input_index = 25135
-movie_subframe_index = 25134
 nmi = 21416
 
 [[seed]]
 room_index = 30
 room = "990D"
 movie_frame = 25713
-next_input_index = 25713
-movie_subframe_index = 25712
 nmi = 21927
 
 [[seed]]
 room_index = 31
 room = "99BD"
 movie_frame = 26555
-next_input_index = 26555
-movie_subframe_index = 26554
 nmi = 22308
 
 [[seed]]
 room_index = 32
 room = "9969"
 movie_frame = 27065
-next_input_index = 27065
-movie_subframe_index = 27064
 nmi = 22759
 
 [[seed]]
 room_index = 33
 room = "9938"
 movie_frame = 27453
-next_input_index = 27453
-movie_subframe_index = 27452
 nmi = 23089
 
 [[seed]]
 room_index = 34
 room = "9AD9"
 movie_frame = 27813
-next_input_index = 27813
-movie_subframe_index = 27812
 nmi = 23359
 
 [[seed]]
 room_index = 35
 room = "9BC8"
 movie_frame = 28721
-next_input_index = 28721
-movie_subframe_index = 28720
 nmi = 24196
 
 [[seed]]
 room_index = 36
 room = "9C07"
 movie_frame = 29079
-next_input_index = 29079
-movie_subframe_index = 29078
 nmi = 24491
 
 [[seed]]
 room_index = 37
 room = "9BC8"
 movie_frame = 29754
-next_input_index = 29754
-movie_subframe_index = 29753
 nmi = 24701
 
 [[seed]]
 room_index = 38
 room = "9AD9"
 movie_frame = 30656
-next_input_index = 30656
-movie_subframe_index = 30655
 nmi = 25105
 
 [[seed]]
 room_index = 39
 room = "9FE5"
 movie_frame = 31507
-next_input_index = 31507
-movie_subframe_index = 31506
 nmi = 25899
 
 [[seed]]
 room_index = 40
 room = "A011"
 movie_frame = 31739
-next_input_index = 31739
-movie_subframe_index = 31738
 nmi = 26070
 
 [[seed]]
 room_index = 41
 room = "A051"
 movie_frame = 32393
-next_input_index = 32393
-movie_subframe_index = 32392
 nmi = 26268
 
 [[seed]]
 room_index = 42
 room = "A011"
 movie_frame = 33010
-next_input_index = 33010
-movie_subframe_index = 33009
 nmi = 26430
 
 [[seed]]
 room_index = 43
 room = "9AD9"
 movie_frame = 33603
-next_input_index = 33603
-movie_subframe_index = 33602
 nmi = 26929
 
 [[seed]]
 room_index = 44
 room = "9CB3"
 movie_frame = 35201
-next_input_index = 35201
-movie_subframe_index = 35200
 nmi = 27913
 
 [[seed]]
 room_index = 45
 room = "9D19"
 movie_frame = 35852
-next_input_index = 35852
-movie_subframe_index = 35851
 nmi = 28462
 
 [[seed]]
 room_index = 46
 room = "9E52"
 movie_frame = 37217
-next_input_index = 37217
-movie_subframe_index = 37216
 nmi = 29355
 
 [[seed]]
 room_index = 47
 room = "9FBA"
 movie_frame = 37879
-next_input_index = 37879
-movie_subframe_index = 37878
 nmi = 29958
 
 [[seed]]
 room_index = 48
 room = "A253"
 movie_frame = 38438
-next_input_index = 38438
-movie_subframe_index = 38437
 nmi = 30452
 
 [[seed]]
 room_index = 49
 room = "A293"
 movie_frame = 38871
-next_input_index = 38871
-movie_subframe_index = 38870
 nmi = 30812
 
 [[seed]]
 room_index = 50
 room = "A2CE"
 movie_frame = 39608
-next_input_index = 39608
-movie_subframe_index = 39607
 nmi = 31491
 
 [[seed]]
 room_index = 51
 room = "A293"
 movie_frame = 40675
-next_input_index = 40675
-movie_subframe_index = 40674
 nmi = 32089
 
 [[seed]]
 room_index = 52
 room = "A253"
 movie_frame = 41420
-next_input_index = 41420
-movie_subframe_index = 41419
 nmi = 32769
 
 [[seed]]
 room_index = 53
 room = "A3DD"
 movie_frame = 41918
-next_input_index = 41918
-movie_subframe_index = 41917
 nmi = 33205
 
 [[seed]]
 room_index = 54
 room = "A408"
 movie_frame = 42207
-next_input_index = 42207
-movie_subframe_index = 42206
 nmi = 33435
 
 [[seed]]
 room_index = 55
 room = "CF54"
 movie_frame = 42530
-next_input_index = 42530
-movie_subframe_index = 42529
 nmi = 33698
 
 [[seed]]
 room_index = 56
 room = "CEFB"
 movie_frame = 42731
-next_input_index = 42731
-movie_subframe_index = 42730
 nmi = 33842
 
 [[seed]]
 room_index = 57
 room = "CF80"
 movie_frame = 42937
-next_input_index = 42937
-movie_subframe_index = 42936
 nmi = 33981
 
 [[seed]]
 room_index = 58
 room = "A6A1"
 movie_frame = 43141
-next_input_index = 43141
-movie_subframe_index = 43140
 nmi = 34125
 
 [[seed]]
 room_index = 59
 room = "A471"
 movie_frame = 43470
-next_input_index = 43470
-movie_subframe_index = 43469
 nmi = 34398
 
 [[seed]]
 room_index = 60
 room = "A4DA"
 movie_frame = 43904
-next_input_index = 43904
-movie_subframe_index = 43903
 nmi = 34770
 
 [[seed]]
 room_index = 61
 room = "A521"
 movie_frame = 44290
-next_input_index = 44290
-movie_subframe_index = 44289
 nmi = 35096
 
 [[seed]]
 room_index = 62
 room = "A56B"
 movie_frame = 44781
-next_input_index = 44781
-movie_subframe_index = 44780
 nmi = 35525
 
 [[seed]]
 room_index = 63
 room = "A59F"
 movie_frame = 45139
-next_input_index = 45139
-movie_subframe_index = 45138
 nmi = 35825
 
 [[seed]]
 room_index = 64
 room = "A6E2"
 movie_frame = 46405
-next_input_index = 46405
-movie_subframe_index = 46404
 nmi = 37015
 
 [[seed]]
 room_index = 65
 room = "A59F"
 movie_frame = 47210
-next_input_index = 47210
-movie_subframe_index = 47209
 nmi = 37374
 
 [[seed]]
 room_index = 66
 room = "A56B"
 movie_frame = 47498
-next_input_index = 47498
-movie_subframe_index = 47497
 nmi = 37600
 
 [[seed]]
 room_index = 67
 room = "A521"
 movie_frame = 47784
-next_input_index = 47784
-movie_subframe_index = 47783
 nmi = 37826
 
 [[seed]]
 room_index = 68
 room = "A4DA"
 movie_frame = 48292
-next_input_index = 48292
-movie_subframe_index = 48291
 nmi = 38270
 
 [[seed]]
 room_index = 69
 room = "A471"
 movie_frame = 48610
-next_input_index = 48610
-movie_subframe_index = 48609
 nmi = 38524
 
 [[seed]]
 room_index = 70
 room = "A6A1"
 movie_frame = 49006
-next_input_index = 49006
-movie_subframe_index = 49005
 nmi = 38860
 
 [[seed]]
 room_index = 71
 room = "A7DE"
 movie_frame = 49489
-next_input_index = 49489
-movie_subframe_index = 49488
 nmi = 39285
 
 [[seed]]
 room_index = 72
 room = "A7B3"
 movie_frame = 50225
-next_input_index = 50225
-movie_subframe_index = 50224
 nmi = 39955
 
 [[seed]]
 room_index = 73
 room = "A788"
 movie_frame = 50664
-next_input_index = 50664
-movie_subframe_index = 50663
 nmi = 40328
 
 [[seed]]
 room_index = 74
 room = "AFA3"
 movie_frame = 51110
-next_input_index = 51110
-movie_subframe_index = 51109
 nmi = 40713
 
 [[seed]]
 room_index = 75
 room = "ACB3"
 movie_frame = 51634
-next_input_index = 51634
-movie_subframe_index = 51633
 nmi = 41165
 
 [[seed]]
 room_index = 76
 room = "B07A"
 movie_frame = 52075
-next_input_index = 52075
-movie_subframe_index = 52074
 nmi = 41545
 
 [[seed]]
 room_index = 77
 room = "ACF0"
 movie_frame = 52408
-next_input_index = 52408
-movie_subframe_index = 52407
 nmi = 41805
 
 [[seed]]
 room_index = 78
 room = "AD1B"
 movie_frame = 53121
-next_input_index = 53121
-movie_subframe_index = 53120
 nmi = 42459
 
 [[seed]]
 room_index = 79
 room = "ACF0"
 movie_frame = 53814
-next_input_index = 53814
-movie_subframe_index = 53813
 nmi = 42682
 
 [[seed]]
 room_index = 80
 room = "B07A"
 movie_frame = 54325
-next_input_index = 54325
-movie_subframe_index = 54324
 nmi = 43132
 
 [[seed]]
 room_index = 81
 room = "ACB3"
 movie_frame = 54671
-next_input_index = 54671
-movie_subframe_index = 54670
 nmi = 43408
 
 [[seed]]
 room_index = 82
 room = "AD5E"
 movie_frame = 54942
-next_input_index = 54942
-movie_subframe_index = 54941
 nmi = 43601
 
 [[seed]]
 room_index = 83
 room = "ADAD"
 movie_frame = 55322
-next_input_index = 55322
-movie_subframe_index = 55321
 nmi = 43894
 
 [[seed]]
 room_index = 84
 room = "ADDE"
 movie_frame = 56166
-next_input_index = 56166
-movie_subframe_index = 56165
 nmi = 44271
 
 [[seed]]
 room_index = 85
 room = "ADAD"
 movie_frame = 56846
-next_input_index = 56846
-movie_subframe_index = 56845
 nmi = 44471
 
 [[seed]]
 room_index = 86
 room = "AD5E"
 movie_frame = 57284
-next_input_index = 57284
-movie_subframe_index = 57283
 nmi = 44823
 
 [[seed]]
 room_index = 87
 room = "ACB3"
 movie_frame = 57934
-next_input_index = 57934
-movie_subframe_index = 57933
 nmi = 45409
 
 [[seed]]
 room_index = 88
 room = "AD5E"
 movie_frame = 58143
-next_input_index = 58143
-movie_subframe_index = 58142
 nmi = 45537
 
 [[seed]]
 room_index = 89
 room = "B656"
 movie_frame = 58944
-next_input_index = 58944
-movie_subframe_index = 58943
 nmi = 46252
 
 [[seed]]
 room_index = 90
 room = "B510"
 movie_frame = 59873
-next_input_index = 59873
-movie_subframe_index = 59872
 nmi = 47111
 
 [[seed]]
 room_index = 91
 room = "B6EE"
 movie_frame = 60244
-next_input_index = 60244
-movie_subframe_index = 60243
 nmi = 47407
 
 [[seed]]
 room_index = 92
 room = "B585"
 movie_frame = 60866
-next_input_index = 60866
-movie_subframe_index = 60865
 nmi = 47959
 
 [[seed]]
 room_index = 93
 room = "B5D5"
 movie_frame = 61815
-next_input_index = 61815
-movie_subframe_index = 61814
 nmi = 48805
 
 [[seed]]
 room_index = 94
 room = "B62B"
 movie_frame = 63159
-next_input_index = 63159
-movie_subframe_index = 63158
 nmi = 49646
 
 [[seed]]
 room_index = 95
 room = "B482"
 movie_frame = 63728
-next_input_index = 63728
-movie_subframe_index = 63727
 nmi = 50155
 
 [[seed]]
 room_index = 96
 room = "B37A"
 movie_frame = 64017
-next_input_index = 64017
-movie_subframe_index = 64016
 nmi = 50381
 
 [[seed]]
 room_index = 97
 room = "B32E"
 movie_frame = 64569
-next_input_index = 64569
-movie_subframe_index = 64568
 nmi = 50866
 
 [[seed]]
 room_index = 98
 room = "B37A"
 movie_frame = 67241
-next_input_index = 67241
-movie_subframe_index = 67240
 nmi = 53345
 
 [[seed]]
 room_index = 99
 room = "B482"
 movie_frame = 67694
-next_input_index = 67694
-movie_subframe_index = 67693
 nmi = 53738
 
 [[seed]]
 room_index = 100
 room = "B62B"
 movie_frame = 68087
-next_input_index = 68087
-movie_subframe_index = 68086
 nmi = 54067
 
 [[seed]]
 room_index = 101
 room = "B5D5"
 movie_frame = 68405
-next_input_index = 68405
-movie_subframe_index = 68404
 nmi = 54305
 
 [[seed]]
 room_index = 102
 room = "B585"
 movie_frame = 69111
-next_input_index = 69111
-movie_subframe_index = 69110
 nmi = 54933
 
 [[seed]]
 room_index = 103
 room = "B6EE"
 movie_frame = 69806
-next_input_index = 69806
-movie_subframe_index = 69805
 nmi = 55545
 
 [[seed]]
 room_index = 104
 room = "B510"
 movie_frame = 70154
-next_input_index = 70154
-movie_subframe_index = 70153
 nmi = 55825
 
 [[seed]]
 room_index = 105
 room = "B656"
 movie_frame = 70640
-next_input_index = 70640
-movie_subframe_index = 70639
 nmi = 56229
 
 [[seed]]
 room_index = 106
 room = "AD5E"
 movie_frame = 71442
-next_input_index = 71442
-movie_subframe_index = 71441
 nmi = 56931
 
 [[seed]]
 room_index = 107
 room = "ACB3"
 movie_frame = 72252
-next_input_index = 72252
-movie_subframe_index = 72251
 nmi = 57673
 
 [[seed]]
 room_index = 108
 room = "AF72"
 movie_frame = 72827
-next_input_index = 72827
-movie_subframe_index = 72826
 nmi = 58157
 
 [[seed]]
 room_index = 109
 room = "B106"
 movie_frame = 73085
-next_input_index = 73085
-movie_subframe_index = 73084
 nmi = 58352
 
 [[seed]]
 room_index = 110
 room = "B167"
 movie_frame = 73446
-next_input_index = 73446
-movie_subframe_index = 73445
 nmi = 58656
 
 [[seed]]
 room_index = 111
 room = "A7DE"
 movie_frame = 73661
-next_input_index = 73661
-movie_subframe_index = 73660
 nmi = 58812
 
 [[seed]]
 room_index = 112
 room = "AA41"
 movie_frame = 73869
-next_input_index = 73869
-movie_subframe_index = 73868
 nmi = 58956
 
 [[seed]]
 room_index = 113
 room = "A9E5"
 movie_frame = 75019
-next_input_index = 75019
-movie_subframe_index = 75018
 nmi = 59249
 
 [[seed]]
 room_index = 114
 room = "AA41"
 movie_frame = 75762
-next_input_index = 75762
-movie_subframe_index = 75761
 nmi = 59532
 
 [[seed]]
 room_index = 115
 room = "A7DE"
 movie_frame = 76179
-next_input_index = 76179
-movie_subframe_index = 76178
 nmi = 59882
 
 [[seed]]
 room_index = 116
 room = "A815"
 movie_frame = 76492
-next_input_index = 76492
-movie_subframe_index = 76491
 nmi = 60123
 
 [[seed]]
 room_index = 117
 room = "A75D"
 movie_frame = 76781
-next_input_index = 76781
-movie_subframe_index = 76780
 nmi = 60347
 
 [[seed]]
 room_index = 118
 room = "A8B9"
 movie_frame = 77003
-next_input_index = 77003
-movie_subframe_index = 77002
 nmi = 60507
 
 [[seed]]
 room_index = 119
 room = "A890"
 movie_frame = 77345
-next_input_index = 77345
-movie_subframe_index = 77344
 nmi = 60789
 
 [[seed]]
 room_index = 120
 room = "A8B9"
 movie_frame = 77988
-next_input_index = 77988
-movie_subframe_index = 77987
 nmi = 60971
 
 [[seed]]
 room_index = 121
 room = "A75D"
 movie_frame = 78335
-next_input_index = 78335
-movie_subframe_index = 78334
 nmi = 61254
 
 [[seed]]
 room_index = 122
 room = "A815"
 movie_frame = 78634
-next_input_index = 78634
-movie_subframe_index = 78633
 nmi = 61481
 
 [[seed]]
 room_index = 123
 room = "A7DE"
 movie_frame = 78961
-next_input_index = 78961
-movie_subframe_index = 78960
 nmi = 61740
 
 [[seed]]
 room_index = 124
 room = "A6A1"
 movie_frame = 79670
-next_input_index = 79670
-movie_subframe_index = 79669
 nmi = 62389
 
 [[seed]]
 room_index = 125
 room = "CF80"
 movie_frame = 79986
-next_input_index = 79986
-movie_subframe_index = 79985
 nmi = 62643
 
 [[seed]]
 room_index = 126
 room = "D21C"
 movie_frame = 80680
-next_input_index = 80680
-movie_subframe_index = 80679
 nmi = 63276
 
 [[seed]]
 room_index = 127
 room = "D252"
 movie_frame = 81016
-next_input_index = 81016
-movie_subframe_index = 81015
 nmi = 63552
 
 [[seed]]
 room_index = 128
 room = "D461"
 movie_frame = 81266
-next_input_index = 81266
-movie_subframe_index = 81265
 nmi = 63740
 
 [[seed]]
 room_index = 129
 room = "D48E"
 movie_frame = 81598
-next_input_index = 81598
-movie_subframe_index = 81597
 nmi = 64005
 
 [[seed]]
 room_index = 130
 room = "D408"
 movie_frame = 81971
-next_input_index = 81971
-movie_subframe_index = 81970
 nmi = 64310
 
 [[seed]]
 room_index = 131
 room = "D340"
 movie_frame = 82391
-next_input_index = 82391
-movie_subframe_index = 82390
 nmi = 64631
 
 [[seed]]
 room_index = 132
 room = "D387"
 movie_frame = 82962
-next_input_index = 82962
-movie_subframe_index = 82961
 nmi = 65126
 
 [[seed]]
 room_index = 133
 room = "D27E"
 movie_frame = 83225
-next_input_index = 83225
-movie_subframe_index = 83224
 nmi = 65329
 
 [[seed]]
 room_index = 134
 room = "D2AA"
 movie_frame = 83464
-next_input_index = 83464
-movie_subframe_index = 83463
 nmi = 65505
 
 [[seed]]
 room_index = 135
 room = "D27E"
 movie_frame = 84481
-next_input_index = 84481
-movie_subframe_index = 84480
 nmi = 526
 
 [[seed]]
 room_index = 136
 room = "D387"
 movie_frame = 84731
-next_input_index = 84731
-movie_subframe_index = 84730
 nmi = 714
 
 [[seed]]
 room_index = 137
 room = "D340"
 movie_frame = 85135
-next_input_index = 85135
-movie_subframe_index = 85134
 nmi = 1031
 
 [[seed]]
 room_index = 138
 room = "D5EC"
 movie_frame = 85875
-next_input_index = 85875
-movie_subframe_index = 85874
 nmi = 1704
 
 [[seed]]
 room_index = 139
 room = "D9FE"
 movie_frame = 86336
-next_input_index = 86336
-movie_subframe_index = 86335
 nmi = 2100
 
 [[seed]]
 room_index = 140
 room = "DA2B"
 movie_frame = 86747
-next_input_index = 86747
-movie_subframe_index = 86746
 nmi = 2439
 
 [[seed]]
 room_index = 141
 room = "D913"
 movie_frame = 87801
-next_input_index = 87801
-movie_subframe_index = 87800
 nmi = 3423
 
 [[seed]]
 room_index = 142
 room = "D72A"
 movie_frame = 88124
-next_input_index = 88124
-movie_subframe_index = 88123
 nmi = 3659
 
 [[seed]]
 room_index = 143
 room = "D78F"
 movie_frame = 89049
-next_input_index = 89049
-movie_subframe_index = 89048
 nmi = 4515
 
 [[seed]]
 room_index = 144
 room = "DA60"
 movie_frame = 89497
-next_input_index = 89497
-movie_subframe_index = 89496
 nmi = 4904
 
 [[seed]]
 room_index = 145
 room = "D78F"
 movie_frame = 92086
-next_input_index = 92086
-movie_subframe_index = 92085
 nmi = 7398
 
 [[seed]]
 room_index = 146
 room = "D72A"
 movie_frame = 92454
-next_input_index = 92454
-movie_subframe_index = 92453
 nmi = 7692
 
 [[seed]]
 room_index = 147
 room = "D913"
 movie_frame = 93305
-next_input_index = 93305
-movie_subframe_index = 93304
 nmi = 8473
 
 [[seed]]
 room_index = 148
 room = "DA2B"
 movie_frame = 93595
-next_input_index = 93595
-movie_subframe_index = 93594
 nmi = 8686
 
 [[seed]]
 room_index = 149
 room = "D9FE"
 movie_frame = 94677
-next_input_index = 94677
-movie_subframe_index = 94676
 nmi = 9701
 
 [[seed]]
 room_index = 150
 room = "D5EC"
 movie_frame = 94980
-next_input_index = 94980
-movie_subframe_index = 94979
 nmi = 9944
 
 [[seed]]
 room_index = 151
 room = "D340"
 movie_frame = 95404
-next_input_index = 95404
-movie_subframe_index = 95403
 nmi = 10269
 
 [[seed]]
 room_index = 152
 room = "D433"
 movie_frame = 95649
-next_input_index = 95649
-movie_subframe_index = 95648
 nmi = 10447
 
 [[seed]]
 room_index = 153
 room = "D2D9"
 movie_frame = 95966
-next_input_index = 95966
-movie_subframe_index = 95965
 nmi = 10692
 
 [[seed]]
 room_index = 154
 room = "D30B"
 movie_frame = 96599
-next_input_index = 96599
-movie_subframe_index = 96598
 nmi = 11256
 
 [[seed]]
 room_index = 155
 room = "94CC"
 movie_frame = 96890
-next_input_index = 96890
-movie_subframe_index = 96889
 nmi = 11483
 
 [[seed]]
 room_index = 156
 room = "95A8"
 movie_frame = 97174
-next_input_index = 97174
-movie_subframe_index = 97173
 nmi = 11712
 
 [[seed]]
 room_index = 157
 room = "957D"
 movie_frame = 97377
-next_input_index = 97377
-movie_subframe_index = 97376
 nmi = 11857
 
 [[seed]]
 room_index = 158
 room = "9552"
 movie_frame = 97960
-next_input_index = 97960
-movie_subframe_index = 97959
 nmi = 12378
 
 [[seed]]
 room_index = 159
 room = "94FD"
 movie_frame = 98531
-next_input_index = 98531
-movie_subframe_index = 98530
 nmi = 12857
 
 [[seed]]
 room_index = 160
 room = "CBD5"
 movie_frame = 99265
-next_input_index = 99265
-movie_subframe_index = 99264
 nmi = 13519
 
 [[seed]]
 room_index = 161
 room = "CB8B"
 movie_frame = 99581
-next_input_index = 99581
-movie_subframe_index = 99580
 nmi = 13776
 
 [[seed]]
 room_index = 162
 room = "CD5C"
 movie_frame = 99876
-next_input_index = 99876
-movie_subframe_index = 99875
 nmi = 14015
 
 [[seed]]
 room_index = 163
 room = "CAF6"
 movie_frame = 100171
-next_input_index = 100171
-movie_subframe_index = 100170
 nmi = 14232
 
 [[seed]]
 room_index = 164
 room = "CC6F"
 movie_frame = 100678
-next_input_index = 100678
-movie_subframe_index = 100677
 nmi = 14678
 
 [[seed]]
 room_index = 165
 room = "CD13"
 movie_frame = 101197
-next_input_index = 101197
-movie_subframe_index = 101196
 nmi = 15139
 
 [[seed]]
 room_index = 166
 room = "CC6F"
 movie_frame = 103412
-next_input_index = 103412
-movie_subframe_index = 103411
 nmi = 17248
 
 [[seed]]
 room_index = 167
 room = "CAF6"
 movie_frame = 103869
-next_input_index = 103869
-movie_subframe_index = 103868
 nmi = 17624
 
 [[seed]]
 room_index = 168
 room = "CA08"
 movie_frame = 104171
-next_input_index = 104171
-movie_subframe_index = 104170
 nmi = 17864
 
 [[seed]]
 room_index = 169
 room = "93FE"
 movie_frame = 104532
-next_input_index = 104532
-movie_subframe_index = 104531
 nmi = 18112
 
 [[seed]]
 room_index = 170
 room = "95FF"
 movie_frame = 104974
-next_input_index = 104974
-movie_subframe_index = 104973
 nmi = 18487
 
 [[seed]]
 room_index = 171
 room = "948C"
 movie_frame = 105220
-next_input_index = 105220
-movie_subframe_index = 105219
 nmi = 18672
 
 [[seed]]
 room_index = 172
 room = "95D4"
 movie_frame = 105511
-next_input_index = 105511
-movie_subframe_index = 105510
 nmi = 18906
 
 [[seed]]
 room_index = 173
 room = "91F8"
 movie_frame = 105725
-next_input_index = 105725
-movie_subframe_index = 105724
 nmi = 19030
 
 [[seed]]
 room_index = 174
 room = "92FD"
 movie_frame = 106159
-next_input_index = 106159
-movie_subframe_index = 106158
 nmi = 19394
 
 [[seed]]
 room_index = 175
 room = "990D"
 movie_frame = 106502
-next_input_index = 106502
-movie_subframe_index = 106501
 nmi = 19670
 
 [[seed]]
 room_index = 176
 room = "99BD"
 movie_frame = 106837
-next_input_index = 106837
-movie_subframe_index = 106836
 nmi = 19943
 
 [[seed]]
 room_index = 177
 room = "A5ED"
 movie_frame = 107329
-next_input_index = 107329
-movie_subframe_index = 107328
 nmi = 20375
 
 [[seed]]
 room_index = 178
 room = "A66A"
 movie_frame = 107677
-next_input_index = 107677
-movie_subframe_index = 107676
 nmi = 20655
 
 [[seed]]
 room_index = 179
 room = "DAAE"
 movie_frame = 110837
-next_input_index = 110837
-movie_subframe_index = 110836
 nmi = 23753
 
 [[seed]]
 room_index = 180
 room = "DAE1"
 movie_frame = 111578
-next_input_index = 111578
-movie_subframe_index = 111577
 nmi = 24435
 
 [[seed]]
 room_index = 181
 room = "DB31"
 movie_frame = 112069
-next_input_index = 112069
-movie_subframe_index = 112068
 nmi = 24864
 
 [[seed]]
 room_index = 182
 room = "DB7D"
 movie_frame = 112362
-next_input_index = 112362
-movie_subframe_index = 112361
 nmi = 25096
 
 [[seed]]
 room_index = 183
 room = "DBCD"
 movie_frame = 112883
-next_input_index = 112883
-movie_subframe_index = 112882
 nmi = 25554
 
 [[seed]]
 room_index = 184
 room = "DC19"
 movie_frame = 113332
-next_input_index = 113332
-movie_subframe_index = 113331
 nmi = 25942
 
 [[seed]]
 room_index = 185
 room = "DC65"
 movie_frame = 113575
-next_input_index = 113575
-movie_subframe_index = 113574
 nmi = 26128
 
 [[seed]]
 room_index = 186
 room = "DCB1"
 movie_frame = 113829
-next_input_index = 113829
-movie_subframe_index = 113828
 nmi = 26323
 
 [[seed]]
 room_index = 187
 room = "DCFF"
 movie_frame = 115275
-next_input_index = 115275
-movie_subframe_index = 115274
 nmi = 27677
 
 [[seed]]
 room_index = 188
 room = "DDC4"
 movie_frame = 115560
-next_input_index = 115560
-movie_subframe_index = 115559
 nmi = 27906
 
 [[seed]]
 room_index = 189
 room = "DDF3"
 movie_frame = 116079
-next_input_index = 116079
-movie_subframe_index = 116078
 nmi = 28370
 
 [[seed]]
 room_index = 190
 room = "DD58"
 movie_frame = 116359
-next_input_index = 116359
-movie_subframe_index = 116358
 nmi = 28580
 
 [[seed]]
 room_index = 191
 room = "DE4D"
 movie_frame = 126534
-next_input_index = 126534
-movie_subframe_index = 126533
 nmi = 38557
 
 [[seed]]
 room_index = 192
 room = "DE7A"
 movie_frame = 126793
-next_input_index = 126793
-movie_subframe_index = 126792
 nmi = 38743
 
 [[seed]]
 room_index = 193
 room = "DEA7"
 movie_frame = 127049
-next_input_index = 127049
-movie_subframe_index = 127048
 nmi = 38938
 
 [[seed]]
 room_index = 194
 room = "DEDE"
 movie_frame = 127489
-next_input_index = 127489
-movie_subframe_index = 127488
 nmi = 39310
 
 [[seed]]
 room_index = 195
 room = "96BA"
 movie_frame = 128517
-next_input_index = 128517
-movie_subframe_index = 128516
 nmi = 40255
 
 [[seed]]
 room_index = 196
 room = "92FD"
 movie_frame = 128976
-next_input_index = 128976
-movie_subframe_index = 128975
 nmi = 40641
 
 [[seed]]
 room_index = 197
 room = "91F8"
 movie_frame = 129581
-next_input_index = 129581
-movie_subframe_index = 129580
 nmi = 41152

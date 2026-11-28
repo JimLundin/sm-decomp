@@ -27,7 +27,6 @@ local seed_mb_form = nil
 local seed_pending = false
 local seed_count = 0
 local seed_origin_frame = nil
-local seed_origin_subframe = nil
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
@@ -52,10 +51,7 @@ local function capture_room(frame, boundary)
     end
     if not seed_pending or memory.readword(0x7E0998) ~= 8 then return end
     if not boundary then
-        if not seed_origin_frame then
-            seed_origin_frame = frame
-            seed_origin_subframe = movie.current_first_subframe()
-        end
+        if not seed_origin_frame then seed_origin_frame = frame end
         return
     end
     if not seed_origin_frame then return end
@@ -77,9 +73,8 @@ local function capture_room(frame, boundary)
         assert(output:write(table.concat(encoded)))
         assert(output:close())
     end
-    seeds:write(string.format("[[seed]]\nroom_index = %d\nroom = \"%04X\"\nmovie_frame = %d\n" ..
-        "next_input_index = %d\nmovie_subframe_index = %d\n\n", seed_count, room, frame, frame,
-        seed_origin_subframe))
+    seeds:write(string.format("[[seed]]\nroom_index = %d\nroom = \"%04X\"\nmovie_frame = %d\n\n",
+        seed_count, room, frame))
     seeds:flush()
     print(string.format("Seed %d: room $%04X after movie frame %d", seed_count, room, frame))
     seed_pending = false

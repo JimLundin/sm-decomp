@@ -23,10 +23,6 @@ pub struct RoomSeed {
     pub room: Room,
     /// The movie frame (1-based) the capture followed.
     pub movie_frame: u64,
-    /// The next movie input, zero-based.
-    pub next_input_index: Option<u64>,
-    /// The movie subframe the capture's room began on.
-    pub movie_subframe_index: Option<u64>,
     /// The game's frame counter (`$7E:05B6`) at the capture.
     pub nmi: Option<u16>,
 }
