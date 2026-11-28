@@ -79,12 +79,12 @@ Set `SM_ROM`, `SM_CACHE` and `SM_AUDIO_NATIVE` to the same fixtures used by repl
 Run the full manifest locally with one build:
 
 ```sh
-uv run --no-project --with-requirements tools/fault-requirements.txt python tools/check_mutants.py
+uv run --locked --project tools check-mutants
 ```
 
 CI runs the same full manifest. The checker builds one executable in a private directory.
-Run `python3 tools/check_mutants.py validate` to check manifest coverage and source anchors
-without building or running replay. Tree-sitter finds the
+Run `uv run --locked --project tools check-mutants validate` to check manifest coverage and source
+anchors without building or running replay. Tree-sitter finds the
 Rust function containing each edit. Every alternative starts with the original
 function body and applies one manifest replacement. Cargo Gamma selects one
 alternative at process startup. The checker counts the fault as killed when the case reports a

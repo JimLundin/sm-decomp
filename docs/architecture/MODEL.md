@@ -149,7 +149,7 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     cases are run against planted one-line faults in the production paths that run its model,
     and a fault no vector or case catches is a finding against the cases. This runs in parallel
     with the rung's work, not ahead of it. A planted fault goes in production or in verify's
-    played runner, never in a clean crate: `tools/check_mutants.py` refuses any other file
+    played runner, never in a clean crate: the `check-mutants` tool refuses any other file
     (Jim, 2026-11-25).
 26. **The process freezes once the checks are shown to work** (Jim, 2026-11-12). When decision
     25's planted faults are caught on the rung's rows for the domains it needs, and the gain over

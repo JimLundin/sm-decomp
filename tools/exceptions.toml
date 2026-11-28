@@ -121,22 +121,22 @@ reason = "runs rustc for the pass key and each check's fixed commands, which the
 [[exception]]
 path = "src/sm_tools/shell/process.py"
 rule = "banned-api"
-reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+reason = "the tools' one runner of processes, which runs git by name from PATH and the commands the fault runner and its tests compose, never through a shell"
 
 [[exception]]
 path = "src/sm_tools/shell/process.py"
 rule = "suspicious-subprocess-import"
-reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+reason = "the tools' one runner of processes, which runs git by name from PATH and the commands the fault runner and its tests compose, never through a shell"
 
 [[exception]]
 path = "src/sm_tools/shell/process.py"
 rule = "subprocess-without-shell-equals-true"
-reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+reason = "the tools' one runner of processes, which runs git by name from PATH and the commands the fault runner and its tests compose, never through a shell"
 
 [[exception]]
 path = "src/sm_tools/shell/process.py"
 rule = "start-process-with-partial-path"
-reason = "the tools' one runner of processes, which runs git by name from PATH with the arguments its callers give, never through a shell"
+reason = "the tools' one runner of processes, which runs git by name from PATH and the commands the fault runner and its tests compose, never through a shell"
 
 [[exception]]
 path = "src/sm_tools/lane/shell/land.py"
@@ -222,3 +222,13 @@ reason = "runs the gate, cargo and du by name from PATH with fixed arguments to 
 path = "src/sm_tools/lane/shell/worktree.py"
 rule = "start-process-with-partial-path"
 reason = "runs uv, cargo and du by name from PATH, as the owner's shell does"
+
+[[exception]]
+path = "src/sm_tools/faults/shell/check_mutants.py"
+rule = "banned-api"
+reason = "the fault runner's shell reads argv, the environment and the clock, and writes the build's errors to stderr for the core"
+
+[[exception]]
+path = "src/sm_tools/faults/shell/check_mutants.py"
+rule = "print"
+reason = "the fault runner's shell prints the timings, each fault's log in manifest order and the rule coverage the core makes"

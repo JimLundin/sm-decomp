@@ -120,11 +120,11 @@ jobs:
       - uses: ./.github/actions/tools
       - name: Install the Python tools
         run: |
-          python3 -m venv "$RUNNER_TEMP/fault-tools"
-          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: mypy==2.4.1 -r tools/fault-requirements.txt
+          python3 -m venv "$RUNNER_TEMP/mypy"
+          "$RUNNER_TEMP/mypy/bin/pip" install --only-binary=:all: mypy==2.4.1
       - name: Type-check the Python tooling
         run: |
-          "$RUNNER_TEMP/fault-tools/bin/mypy"
+          "$RUNNER_TEMP/mypy/bin/mypy"
       - uses: ./.github/actions/cargo-restore
         with:
           cache: quality
@@ -258,7 +258,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      # tools/check_mutants.py rewrites only the copied sources that differ, so Cargo rebuilds what changed.
+      # check-mutants rewrites only the copied sources that differ, so Cargo rebuilds what changed.
       - uses: ./.github/actions/cargo-restore
         with:
           cache: faults
@@ -266,17 +266,13 @@ jobs:
       - *rom
       - uses: ./.github/actions/tools
       - *replay_data
-      - name: Install the Rust parser for selectable replay faults
-        run: |
-          python3 -m venv "$RUNNER_TEMP/fault-tools"
-          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: -r tools/fault-requirements.txt
       - name: Build one selectable replay binary and check every fault
         env:
           CARGO_INCREMENTAL: "1"
         run: |
           SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
-            "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
+            uv run --project tools --locked check-mutants selectable
       - uses: ./.github/actions/cargo-save
         with:
           cache: faults

@@ -159,9 +159,12 @@ def fixture(
         + FAKE_PYTHON.format(ran=str(made.ran), name="prereview")
     )
     prereview.chmod(0o755)
-    _ = (made.repo / "tools/check_mutants.py").write_text(
-        FAKE_PYTHON.format(ran=str(made.ran), name="faults")
+    faults = made.bin / "check-mutants"
+    _ = faults.write_text(
+        f"#!{sys.executable}\n"
+        + FAKE_PYTHON.format(ran=str(made.ran), name="faults")
     )
+    faults.chmod(0o755)
     _ = (made.repo / "tools/cleanroom/adjusted_vectors_run.py").write_text(
         FAKE_ADJUSTED.format(ran=str(made.ran))
     )
@@ -345,6 +348,31 @@ def test_an_untracked_subject_file_runs_its_check(fixture: Gate) -> None:
     )
     _ = fixture.passes(UNTRACKED_HIDDEN)
     assert "verify_lib" in fixture.ran_checks()
+
+
+def test_the_tools_run_from_the_gates_environment_and_a_missing_one_fails(
+    fixture: Gate,
+) -> None:
+    _ = (fixture.repo / "tools/mutants.toml").write_text("Invented faults.\n")
+    fixture.commit("Changed faults", "-A")
+    _ = fixture.passes({"PATH": os.defpath, "SM_GATE_BASE": "HEAD~1"})
+    assert "faults" in fixture.ran_checks()
+    (fixture.bin / "check-mutants").unlink()
+    status, out = fixture.gate({"SM_GATE_BASE": "HEAD~1"})
+    assert status == 1, out
+    assert "FAULTS FAIL: check-mutants validate" in out.splitlines()
+    assert out.splitlines()[-1] == "GATE FAILED lane/test"
+
+
+def test_the_catalogue_the_fault_validation_reads_runs_it(
+    fixture: Gate,
+) -> None:
+    for path in ("docs/architecture/domains.toml", "docs/behaviours/demo.md"):
+        (fixture.repo / path).parent.mkdir(parents=True, exist_ok=True)
+        _ = (fixture.repo / path).write_text("Invented catalogue.\n")
+        fixture.commit(f"Changed {path}", path)
+        _ = fixture.passes({"SM_GATE_BASE": "HEAD~1"})
+        assert "faults" in fixture.ran_checks(), path
 
 
 def test_a_failing_check_shows_its_log(fixture: Gate) -> None:

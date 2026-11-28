@@ -687,8 +687,8 @@ played run. They do not prove all rules,
 borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
 
-Run `python3 tools/check_mutants.py rule-coverage LOG...` to see which catalogue rules a
-reviewed run detected. The report reads the entry IDs in the behaviour specs. Each credited
+Run `uv run --locked --project tools check-mutants rule-coverage LOG...` to see which catalogue
+rules a reviewed run detected. The report reads the entry IDs in the behaviour specs. Each credited
 rule names the fault whose log records its kill and a restored pass. Rules
 without that evidence appear as `unknown`. Omitting the logs lists the whole catalogue with
 unknown coverage. A fault without a rule assignment contributes only to the unassigned count.

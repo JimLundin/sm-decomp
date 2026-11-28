@@ -26,7 +26,7 @@ SM_RUST_BIN (the toolchain's bin), SM_GATE_PASSED (where passes are recorded).""
 LANE = "tools/src/sm_tools/lane"
 LANE_TESTS = "tools/tests/lane"
 CLEAN = "tools/cleanroom"
-CHECK_MUTANTS = "tools/check_mutants.py"
+CHECK_MUTANTS = FrozenList(("check-mutants", "validate"))
 ADJUSTED_VECTORS_RUN = f"{CLEAN}/adjusted_vectors_run.py"
 PREREVIEW = "prereview"
 PYTEST = FrozenList(("-m", "pytest", "-p", "no:cacheprovider", "-q"))
@@ -105,7 +105,12 @@ VERIFY_LIB = FrozenList((
 ))
 FAULTS = FrozenList((
     "tools/mutants.toml",
-    CHECK_MUTANTS,
+    "tools/src/sm_tools/faults",
+    PROCESS,
+    "tools/pyproject.toml",
+    "tools/uv.lock",
+    "docs/behaviours",
+    "docs/architecture/domains.toml",
     "crates/game/src/production",
     "crates/game/src/production.rs",
     "crates/verify/src/replay/played.rs",
@@ -207,10 +212,6 @@ class Homes:
     cargo: PurePath
     xdg: PurePath
     temp: PurePath
-
-
-def faults_command(python: str) -> FrozenList[str]:
-    return FrozenList((python, "-I", CHECK_MUTANTS, "validate"))
 
 
 def adjusted_command(python: str, *arguments: str) -> FrozenList[str]:
@@ -475,8 +476,8 @@ def selected(tools: Tools, changed: Changed) -> FrozenList[Check]:
     )
     faults = Check(
         "faults",
-        f"FAULTS FAIL: {CHECK_MUTANTS} validate",
-        commands(faults_command(python)),
+        f"FAULTS FAIL: {' '.join(CHECK_MUTANTS)}",
+        commands(tool_command(tools.python, *CHECK_MUTANTS)),
         "last",
     )
     owners = Check(
