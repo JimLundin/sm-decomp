@@ -61,6 +61,10 @@ disallowed_macros = "forbid"
 lto = "fat"
 codegen-units = 1
 
+# samus_movement's chart test checks every tie exhaustively: 45 s unoptimised, 5 s at level 1.
+[profile.test.package.samus_movement]
+opt-level = 1
+
 # The verifiers, their tests and the benchmarks: `--profile verify`, built into target/verify/.
 # Rebuilt on nearly every change, so it reuses unchanged code (incremental) and keeps the usual
 # partitioning; `lto = false` undoes what it would inherit from the shipped build.
