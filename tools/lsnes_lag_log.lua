@@ -73,8 +73,8 @@ local function capture_room(frame, boundary)
         assert(output:write(table.concat(encoded)))
         assert(output:close())
     end
-    seeds:write(string.format("[[seed]]\nroom_index = %d\nroom = \"%04X\"\nmovie_frame = %d\n\n",
-        seed_count, room, frame))
+    seeds:write(string.format("[[seed]]\nroom_index = %d\nroom = \"%04X\"\nmovie_frame = %d\nnmi = %d\n\n",
+        seed_count, room, frame, memory.readword(0x7E05B6)))
     seeds:flush()
     print(string.format("Seed %d: room $%04X after movie frame %d", seed_count, room, frame))
     seed_pending = false

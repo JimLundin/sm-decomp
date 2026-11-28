@@ -138,10 +138,11 @@ python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inpu
 ```
 
 `movies/room-seeds-*.toml` list the room captures each movie's seeds come from
-(`oracle_record::room_seeds`, read by `relock_plan.sh`, `relock_cut.sh`, `oracle --seeds` and the
-README report). An lsnes capture writes its own as `rooms.toml`. Movies, inputs, states and logs are
-ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows start
-from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
+(`oracle_record::room_seeds`, read by `tools/oracle/relock.py`, `oracle --seeds` and the README
+report). An lsnes capture writes its own as `rooms.toml`, with the frame counter at each capture as
+`nmi`. Movies, inputs, states and logs are ROM-derived and stay local (`.gitignore`) or in encrypted
+bundles. The Mother Brain phase rows start from the `100-mb-phases` captures (her form word
+`$7E:7800` changing), one per form.
 
 ## 4. The lock
 
@@ -175,14 +176,16 @@ native state files.
 
 ### Step a1: the cut plan
 
-`tools/oracle/relock_cut.sh PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]` runs one
-`movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first, `JOBS` (8)
-at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their movie but some
-follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut a step on.
+`python3 tools/oracle/relock.py plan NATIVE LADDERS` writes the plan. Then
+`python3 tools/oracle/relock.py cut PLAN OUT LOGS [cut|realign|derive|check|all] [MOVIE-RUNG...]`
+runs one `movie --from RUNG --native-seeds ... --no-memories --ppu` job per window, longest first,
+`JOBS` (8) at a time, `STAGGER` (4) s apart. `realign`: most captures follow step F-1 of their
+movie but some follow step F (the record's `$05B6` one short of the table's `nmi`); those are re-cut
+a step on.
 `check`: each seed's room and frame counter equal its table's, and its WRAM equals its capture's
-outside the stack page. `derive-seed` checks that each written word stuck: one step on it reads the
-written value, or something other than the plain base's step (physics moves Samus's position in that
-step).
+outside the stack page. A table without `nmi` takes the counter from the capture's WRAM.
+`derive-seed` checks that each written word stuck: one step on it reads the written value, or
+something other than the plain base's step (physics moves Samus's position in that step).
 
 ### Step b1: frame pads
 
@@ -206,9 +209,9 @@ are re-cut and re-locked the same way (§9).
 
 `oracle movie --ppu` asks lsnes for the PPU tier alone (`T 0 0 1`); the record is the lean record
 followed by `OHS1`, flag 4 and the 146 PPU bytes, and the emulation is unchanged.
-`tools/oracle/relock_ppu_recut.sh OLD PLAN WORK [ROW...]` re-cuts the records of a decrypted
-bundle, checks each against the old, packs deterministically, encrypts and prints the new
-`bundles` line. The native states must have the same members and identical contents except for
+`python3 tools/oracle/relock.py ppu-recut OLD PLAN WORK [ROW...]` re-cuts the records of a
+decrypted bundle, checks each against the old, packs deterministically, encrypts and prints the
+new `bundles` line. The native states must have the same members and identical contents except for
 `rrdata` and its derived `rerecords` history count. The lsnes manual §§10.22–10.23 defines these as
 load-history metadata; the bundled lsnes source, `src/core/moviedata.cpp`, adds a load ID even on
 a read-only load. The
@@ -236,7 +239,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | `oracle corpus ROM LOCK BUNDLE [--cache OUT] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
 | `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
-| `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
+| `tools/oracle/relock.py plan`, `cut`, `ppu-recut` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-check LOCK [BUNDLE CACHE ROW [[--carry-watches] WATCH_PCS]]` | checks that a cached row has the lock's pins, was recorded by the lsnes the oracle would run and the lock's server, and watched the addresses |
 | `python3 tools/ci/replay_data.py pack SOURCE ROM OUT` | packs `SOURCE/cache` and `SOURCE/native` as the replay data for ci-data |
